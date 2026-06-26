@@ -5,7 +5,6 @@ import { UrlForm } from "./url-form";
 export function Hero() {
   return (
     <section className="relative overflow-hidden">
-      {/* Fundo nativo de a11y: grade pontilhada (estrutura/inspeção) + glow */}
       <div aria-hidden className="ac-grid absolute inset-0 z-0" />
       <div
         aria-hidden
@@ -13,7 +12,6 @@ export function Hero() {
       />
 
       <div className="relative z-10 mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-12 px-6 py-16 lg:grid-cols-2 lg:gap-10 lg:px-10">
-        {/* Coluna esquerda */}
         <div className="relative">
           <Badge tone="brand" dot>
             WCAG 2.1 · A, AA &amp; AAA coverage
@@ -40,7 +38,6 @@ export function Hero() {
           </div>
         </div>
 
-        {/* Coluna direita — mockup do relatório */}
         <div className="relative lg:pl-6">
           <HeroReportCard />
         </div>

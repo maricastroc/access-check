@@ -3,14 +3,11 @@ import { faCheck } from "@fortawesome/free-solid-svg-icons";
 import { cn } from "@/lib/cn";
 
 export type ConformanceLevel = {
-  /** Rótulo do nível WCAG. */
   id: "A" | "AA" | "AAA";
-  /** Preenchimento 0–100 (passa = 100). */
   value: number;
   passed: boolean;
 };
 
-/** Cor própria de cada nível — a escada também é assinatura de cor. */
 const levelColor: Record<ConformanceLevel["id"], string> = {
   A: "var(--color-brand-300)",
   AA: "var(--color-brand-500)",
@@ -22,20 +19,14 @@ type ConformanceLadderProps = {
   className?: string;
 };
 
-/**
- * Escada de conformidade A → AA → AAA: barras ascendentes preenchidas até o
- * nível atingido. Elemento-assinatura do AccessCheck — só faz sentido em
- * acessibilidade, impossível de confundir com SEO/performance.
- */
 export function ConformanceLadder({ levels, className }: ConformanceLadderProps) {
-  // Nível mais alto totalmente aprovado vira o selo ("AA Ready").
   const reached = [...levels].reverse().find((l) => l.passed);
 
   return (
     <div className={cn("flex items-end gap-2.5", className)}>
       {levels.map((lvl, i) => {
         const isReached = reached?.id === lvl.id;
-        const height = 52 + i * 26; // degraus ascendentes
+        const height = 52 + i * 26;
         return (
           <div key={lvl.id} className="flex flex-1 flex-col items-center gap-2">
             {!lvl.passed && (

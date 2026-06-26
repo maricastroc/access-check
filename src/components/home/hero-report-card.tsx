@@ -3,10 +3,8 @@ import { faCheck, faEye } from "@fortawesome/free-solid-svg-icons";
 import { BrowserFrame, ConformanceLadder, StatusPill } from "@/components/ui";
 import { conformanceLevels, reportRows } from "./content";
 
-/** Issues = laranja (segunda cor do sistema, ao lado de azul/verde). */
 const ISSUE = "#f2820a";
 
-/** Mockup do relatório exibido ao lado do hero. */
 export function HeroReportCard() {
   return (
     <BrowserFrame
@@ -16,7 +14,6 @@ export function HeroReportCard() {
       chromeClassName="border-line-strong bg-[#f1f3f6]"
     >
       <div className="bg-linear-to-b from-card to-canvas/50 p-6">
-        {/* Assinatura: escada de conformidade + passport */}
         <div className="flex items-stretch gap-5">
           <ConformanceLadder levels={conformanceLevels} className="w-28" />
           <div className="flex flex-1 flex-col justify-center">
@@ -47,7 +44,6 @@ export function HeroReportCard() {
           </div>
         </div>
 
-        {/* Chip de contraste real — issues em laranja */}
         <div className="mt-5 flex items-center gap-3 rounded-field border border-line-strong bg-card px-3.5 py-2.5 shadow-soft">
           <span
             className="flex size-8 shrink-0 items-center justify-center rounded-lg text-[15px] font-bold text-white"
@@ -71,7 +67,6 @@ export function HeroReportCard() {
           </span>
         </div>
 
-        {/* Linhas do audit */}
         <div className="mt-3 divide-y divide-line-strong">
           {reportRows.map((row) => (
             <div key={row.label} className="flex items-center justify-between py-3">
@@ -81,7 +76,6 @@ export function HeroReportCard() {
           ))}
         </div>
 
-        {/* Rodapé — simulação de visão (humaniza a proposta) */}
         <div className="mt-4 flex items-center gap-2.5 rounded-field border border-brand-100 bg-brand-50/70 px-4 py-3 text-sm">
           <FontAwesomeIcon icon={faEye} className="text-sm text-brand-600" />
           <span className="text-ink-soft">Simulating vision:</span>

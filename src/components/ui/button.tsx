@@ -39,10 +39,6 @@ type ButtonAsLink = BaseProps &
 
 export type ButtonProps = ButtonAsButton | ButtonAsLink;
 
-/**
- * Botão polimórfico: vira <Link> quando recebe `href`, senão <button>.
- * Variantes e tamanhos compartilhados pelas duas telas.
- */
 export function Button({
   variant = "primary",
   size = "md",

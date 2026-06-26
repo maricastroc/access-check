@@ -21,7 +21,6 @@ export function Features() {
       <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {features.map(({ icon, title, body }) => (
           <Card key={title} className="group relative p-6 transition-shadow hover:shadow-card">
-            {/* device de focus ring — revela no hover */}
             <span
               aria-hidden
               className="pointer-events-none absolute -inset-1.5 rounded-[1.4rem] border-2 border-dashed border-brand-200 opacity-0 transition-opacity duration-200 group-hover:opacity-100"

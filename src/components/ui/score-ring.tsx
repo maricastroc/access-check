@@ -3,14 +3,11 @@ import { cn } from "@/lib/cn";
 type ScoreRingProps = {
   value: number;
   total?: number;
-  /** diâmetro em px */
   size?: number;
-  /** espessura do anel em px */
   stroke?: number;
   className?: string;
 };
 
-/** Medidor circular de pontuação (SVG) — reutilizado em ambas as telas. */
 export function ScoreRing({
   value,
   total = 100,

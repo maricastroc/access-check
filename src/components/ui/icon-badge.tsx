@@ -4,13 +4,10 @@ import { cn } from "@/lib/cn";
 
 type IconBadgeProps = {
   icon: IconDefinition;
-  /** classes do container (cor de fundo, tamanho, raio) */
   className?: string;
-  /** classes do ícone (tamanho, cor) */
   iconClassName?: string;
 };
 
-/** Quadrado arredondado com um ícone centralizado — feature tiles, etc. */
 export function IconBadge({ icon, className, iconClassName }: IconBadgeProps) {
   return (
     <span

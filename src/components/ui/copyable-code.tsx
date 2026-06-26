@@ -4,10 +4,6 @@ import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faCopy } from "@fortawesome/free-solid-svg-icons";
 
-/**
- * Trecho de código (CSS/HTML) com botão de copiar. Usado nos cards de
- * "Suggested fix" quando há um snippet determinístico pronto pra colar.
- */
 export function CopyableCode({ code }: { code: string }) {
   const [copied, setCopied] = useState(false);
 
@@ -17,7 +13,7 @@ export function CopyableCode({ code }: { code: string }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      // clipboard bloqueado (ex.: sem HTTPS) — ignora silenciosamente
+      // clipboard bloqueado (ex.: sem HTTPS)
     }
   };
 

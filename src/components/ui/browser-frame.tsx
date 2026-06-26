@@ -5,17 +5,13 @@ import { cn } from "@/lib/cn";
 
 type BrowserFrameProps = {
   url: string;
-  /** mostra cadeado antes da URL */
   secure?: boolean;
-  /** conteúdo à direita da barra (ex. "Report", "Live preview") */
   trailing?: ReactNode;
   children: ReactNode;
   className?: string;
-  /** classes da barra de chrome */
   chromeClassName?: string;
 };
 
-/** Moldura de janela de navegador (bolinhas mac + barra de URL). */
 export function BrowserFrame({
   url,
   secure = true,

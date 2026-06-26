@@ -24,12 +24,10 @@ const toneDot: Record<StatusTone, string> = {
 type StatusPillProps = {
   children: ReactNode;
   tone: StatusTone;
-  /** tamanho do ponto, default 1.5 (6px) */
   dotClassName?: string;
   className?: string;
 };
 
-/** Ponto colorido + rótulo (sem fundo) — ex. "Passed", "2 to fix". */
 export function StatusPill({
   children,
   tone,

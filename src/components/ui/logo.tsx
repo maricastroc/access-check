@@ -5,12 +5,10 @@ import { cn } from "@/lib/cn";
 
 type LogoProps = {
   href?: string;
-  /** texto auxiliar à direita do nome (ex. versão) */
   meta?: string;
   className?: string;
 };
 
-/** Marca AccessCheck: selo com check em gradiente + wordmark. */
 export function Logo({ href = "/", meta, className }: LogoProps) {
   return (
     <Link href={href} className={cn("flex items-center gap-2.5", className)}>

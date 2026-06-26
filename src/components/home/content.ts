@@ -12,7 +12,6 @@ import type { ConformanceLevel, StatusTone } from "@/components/ui";
 
 export const navLinks = ["Product", "Docs", "Pricing"];
 
-/** Níveis da escada de conformidade exibida no mockup do hero. */
 export const conformanceLevels: ConformanceLevel[] = [
   { id: "A", value: 100, passed: true },
   { id: "AA", value: 100, passed: true },
