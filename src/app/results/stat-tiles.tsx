@@ -1,0 +1,49 @@
+import type { ScanResult } from "@/lib/scan/types";
+
+export function StatTiles({ result }: { result: ScanResult }) {
+  const { counts } = result;
+  const compliant = counts.critical === 0 && counts.serious === 0;
+  const warnings = counts.serious + counts.moderate + counts.minor;
+
+  const tiles = [
+    {
+      label: "Accessibility score",
+      value: result.score,
+      color: "text-brand-500",
+      sub: compliant ? "WCAG AA" : "needs work",
+    },
+    {
+      label: "Critical issues",
+      value: counts.critical,
+      color: "text-critical",
+      sub: "blocking AA",
+    },
+    {
+      label: "Warnings",
+      value: warnings,
+      color: "text-serious",
+      sub: "serious + moderate",
+    },
+    {
+      label: "Passed checks",
+      value: counts.passed,
+      color: "text-success",
+      sub: "auto-checks",
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-4 gap-2.5">
+      {tiles.map((t) => (
+        <div
+          key={t.label}
+          className="rounded-[13px] border border-line bg-card px-3.5 py-3.5 transition-colors hover:border-[#dfe1e6]"
+        >
+          <div className="h-6.5 text-[10.5px] leading-tight font-medium text-muted">{t.label}</div>
+          <div className={`mt-1.5 text-[26px] font-bold tracking-tight ${t.color}`}>{t.value}</div>
+          <div className="mt-0.5 text-[10.5px] text-faint">{t.sub}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
