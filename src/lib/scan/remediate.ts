@@ -27,6 +27,10 @@ export type ElementInfo = {
   role?: string;
   /** textContent visível, aparado e truncado — usado pra adivinhar nomes */
   text?: string;
+  /** atributo title do próprio elemento */
+  title?: string;
+  /** texto de contexto (figcaption, link/figura que envolve a imagem) */
+  nearbyText?: string;
 };
 
 /** "/assets/euro-flag@2x.png" → "Euro flag". Vazio se não der pra inferir. */
@@ -164,14 +168,27 @@ export function fixAriaAllowedAttr(invalid: string[]): FixResult | null {
   };
 }
 
-/** WCAG 1.1.1 — imagem sem alt. Tenta inferir do nome do arquivo. */
+/**
+ * WCAG 1.1.1 — imagem sem alt. Heurística em cascata: title do elemento →
+ * texto de contexto (figcaption/link) → nome do arquivo. Cai pro alt="" quando
+ * nada é inferível.
+ */
 export function fixImageAlt(el: ElementInfo): FixResult {
-  const guess = el.src ? altFromSrc(el.src) : "";
+  const clean = (s?: string) => (s ? s.replace(/\s+/g, " ").trim() : "");
+
+  // title costuma ser a descrição mais direta; depois o texto ao redor; por
+  // fim o nome do arquivo. Limita o tamanho pra um alt enxuto.
+  const guess = (
+    clean(el.title) ||
+    clean(el.nearbyText).slice(0, 80) ||
+    (el.src ? altFromSrc(el.src) : "")
+  ).trim();
+
   if (guess) {
     return {
       text:
-        `This image has no alt text. If it conveys meaning, describe it; if ` +
-        `it's purely decorative, use an empty alt ("") so it's skipped.`,
+        `This image has no alt text. Suggested description below — confirm it ` +
+        `matches the image, or use an empty alt ("") if it's purely decorative.`,
       code: `alt="${guess}"`,
     };
   }

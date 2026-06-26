@@ -97,6 +97,25 @@ html {
   );
 }
 
+/* Scrollbar fina e discreta pro painel de preview (rola sozinho, sticky) */
+.scroll-slim {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+.scroll-slim:hover {
+  scrollbar-color: rgba(16, 18, 29, 0.18) transparent;
+}
+.scroll-slim::-webkit-scrollbar {
+  width: 6px;
+}
+.scroll-slim::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 9999px;
+}
+.scroll-slim:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(16, 18, 29, 0.18);
+}
+
 /* Acordeão de violações (tela de resultado) */
 details > summary {
   list-style: none;

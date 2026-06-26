@@ -278,7 +278,9 @@ function PreviewPanel({
   const host = safeHost(result.finalUrl);
 
   return (
-    <section className="lg:sticky lg:top-[82px]">
+    <section className="scroll-slim lg:sticky lg:top-[82px] lg:max-h-[calc(100vh-98px)] lg:overflow-y-auto lg:pr-1.5">
+      {/* sticky mas com scroll próprio: o preview é mais alto que a viewport,
+          então ganha rolagem interna em vez de prender o scroll da página */}
       {/* meta + URL editável */}
       <div className="mb-3.5 flex items-center justify-between gap-3">
         <form
