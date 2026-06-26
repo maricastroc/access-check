@@ -15,6 +15,7 @@ import {
   type FixApply,
   type FixResult,
 } from "./remediate";
+import { clusterFixes, type FixCluster } from "./group";
 import {
   buildFixFirst,
   buildSummary,
@@ -32,8 +33,7 @@ import type {
 
 const VIEWPORT = { width: 1200, height: 800 };
 const MAX_MARKERS = 6;
-// Limites do agrupamento/validação pra não estourar payload nem tempo de scan.
-const MAX_GROUP_SELECTORS = 20;
+// Teto de validações por scan, pra não estourar o tempo total.
 const MAX_VERIFY_OPS = 40;
 
 // Caminho do axe-core no runtime (process.cwd() = raiz do projeto).
@@ -58,7 +58,6 @@ function checkData(node: AxeNode, id: string): unknown {
   return undefined;
 }
 
-/** Coage um valor desconhecido do axe pra array de strings. */
 function asStringArray(data: unknown): string[] {
   if (Array.isArray(data)) return data.filter((x) => typeof x === "string");
   if (typeof data === "string") return [data];
@@ -164,50 +163,6 @@ function firstTarget(target: unknown): string | null {
   if (Array.isArray(target) && typeof target[0] === "string") return target[0];
   if (typeof target === "string") return target;
   return null;
-}
-
-// Grupo interno de agrupamento: como FixGroup, mas carrega `apply` (a mutação)
-// e a contagem total, que não saem no payload final.
-type FixCluster = {
-  text: string;
-  code?: string;
-  apply?: FixApply;
-  count: number;
-  selectors: string[];
-  verification?: FixVerification;
-};
-
-/**
- * Agrupa os nós de uma violação por assinatura do conserto. Nós cujo fix gera
- * exatamente o mesmo trecho (ex.: vários elementos com o mesmo `color: #xxx`)
- * caem no mesmo cluster — é o que vira "este fix resolve N elementos".
- */
-function clusterFixes(
-  perNode: { selector: string | null; result: FixResult | null }[],
-): FixCluster[] {
-  const map = new Map<string, FixCluster>();
-  for (const { selector, result } of perNode) {
-    if (!result) continue;
-    // A assinatura é o trecho copiável quando há; senão o texto em prosa.
-    const sig = result.code ?? result.text;
-    let cluster = map.get(sig);
-    if (!cluster) {
-      cluster = {
-        text: result.text,
-        code: result.code,
-        apply: result.apply,
-        count: 0,
-        selectors: [],
-      };
-      map.set(sig, cluster);
-    }
-    cluster.count++;
-    if (selector && cluster.selectors.length < MAX_GROUP_SELECTORS)
-      cluster.selectors.push(selector);
-  }
-  // Maiores grupos primeiro: o conserto que cobre mais elementos é o que mais
-  // compensa aplicar.
-  return [...map.values()].sort((a, b) => b.count - a.count);
 }
 
 // Operação de validação: aplica `apply` no DOM e re-roda o axe escopado na

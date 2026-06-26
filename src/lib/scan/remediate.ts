@@ -302,12 +302,15 @@ function nearestPassingFg(fg: Rgb, bg: Rgb, target: number): Rgb | null {
   if (contrastRatio(goal, bg) < target) return null; // impossível nesse fundo
 
   // Busca binária no fator de mistura fg→goal (0 = original, 1 = goal).
+  // Mistura em canais inteiros (0–255): é o que a cor vira depois de virar
+  // hex, então a busca enxerga o mesmo valor que o usuário vai colar — sem
+  // isso o resultado arredondado pode cair logo abaixo do alvo.
   let lo = 0;
   let hi = 1;
   const mix = (t: number): Rgb => ({
-    r: fg.r + (goal.r - fg.r) * t,
-    g: fg.g + (goal.g - fg.g) * t,
-    b: fg.b + (goal.b - fg.b) * t,
+    r: Math.round(fg.r + (goal.r - fg.r) * t),
+    g: Math.round(fg.g + (goal.g - fg.g) * t),
+    b: Math.round(fg.b + (goal.b - fg.b) * t),
   });
 
   for (let i = 0; i < 24; i++) {
@@ -315,7 +318,13 @@ function nearestPassingFg(fg: Rgb, bg: Rgb, target: number): Rgb | null {
     if (contrastRatio(mix(mid), bg) >= target) hi = mid;
     else lo = mid;
   }
-  return mix(hi);
+  // O arredondamento pode fazer mix(hi) recuar; caminha em direção ao goal até
+  // a cor inteira passar de fato (goal já foi garantido lá em cima).
+  for (let t = hi; t <= 1; t += 1 / 255) {
+    const c = mix(t);
+    if (contrastRatio(c, bg) >= target) return c;
+  }
+  return goal;
 }
 
 /**
