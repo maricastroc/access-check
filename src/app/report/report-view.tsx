@@ -80,6 +80,7 @@ export function ReportView({ initialUrl }: { initialUrl: string }) {
         <CenterState
           icon={faSpinner}
           spin
+          progress
           title="Building report…"
           subtitle={`Rendering ${url} and running the WCAG audit.`}
         />
@@ -146,6 +147,7 @@ function CenterState({
   tone = "brand",
   title,
   subtitle,
+  progress,
   action,
 }: {
   icon: typeof faSpinner;
@@ -153,6 +155,7 @@ function CenterState({
   tone?: "brand" | "critical";
   title: string;
   subtitle: string;
+  progress?: boolean;
   action?: React.ReactNode;
 }) {
   return (
@@ -173,6 +176,15 @@ function CenterState({
         <p className="text-lg font-semibold">{title}</p>
         <p className="mt-1.5 text-sm text-muted">{subtitle}</p>
       </div>
+      {progress && (
+        <div
+          role="progressbar"
+          aria-label="Running accessibility audit"
+          className="relative mt-1 h-1 w-full max-w-[260px] overflow-hidden rounded-full bg-line"
+        >
+          <span className="ac-indeterminate" />
+        </div>
+      )}
       {action}
     </div>
   );

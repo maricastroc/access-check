@@ -60,7 +60,19 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
     });
     const page = await context.newPage();
 
-    await page.goto(url, { waitUntil: "load", timeout: 30_000 });
+    const response = await page.goto(url, {
+      waitUntil: "load",
+      timeout: 30_000,
+    });
+
+    // Um 404/500 ainda "carrega" uma página de erro, então sem checar o
+    // status o scan analisaria essa página e geraria um relatório enganoso.
+    const httpStatus = response?.status() ?? 0;
+    if (httpStatus >= 400) {
+      throw new Error(
+        `The page responded with HTTP ${httpStatus}. Check the URL — it may be wrong, removed, or behind authentication.`,
+      );
+    }
     // Espera a rede assentar pra SPAs montarem o conteúdo. Sites "ao vivo"
     // (placares, ads) podem nunca ficar idle, então ignoramos o timeout.
     await page
@@ -140,6 +152,10 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
       if (!r || r.w === 0 || r.h === 0) return;
       // só conta o que está visível na área capturada
       if (r.y < 0 || r.y > VIEWPORT.height || r.x > VIEWPORT.width) return;
+      // pula violações a nível de documento (ex. <title> ausente, mapeadas
+      // ao <html>): a caixa cobre a viewport toda e viraria um overlay
+      // gigante tingindo o preview inteiro. A violação segue no relatório.
+      if (r.w >= VIEWPORT.width * 0.9 && r.h >= VIEWPORT.height * 0.9) return;
       if (markers.length >= MAX_MARKERS) return;
       markers.push({
         n: markers.length + 1,

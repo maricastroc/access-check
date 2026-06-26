@@ -11,6 +11,9 @@ const CACHE_TTL = 5 * 60_000;
 const cache = new Map<string, { at: number; result: ScanResult }>();
 
 // --- rate-limit leve por IP (5 / min) ---
+// Desativado em dev: local cai no IP fallback "local", então todos os
+// testes dividiriam o mesmo balde de 5/min.
+const RATE_ENABLED = process.env.NODE_ENV === "production";
 const RATE_MAX = 5;
 const RATE_WINDOW = 60_000;
 const hits = new Map<string, number[]>();
@@ -37,7 +40,7 @@ export async function POST(req: Request) {
 
   const ip =
     req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
-  if (rateLimited(ip)) {
+  if (RATE_ENABLED && rateLimited(ip)) {
     return NextResponse.json(
       { error: "Too many scans. Try again in a minute." },
       { status: 429 },

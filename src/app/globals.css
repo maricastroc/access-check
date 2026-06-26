@@ -77,3 +77,28 @@ body {
   color: var(--color-ink);
   font-family: var(--font-sans);
 }
+
+/* Barra de progresso indeterminada (loading do relatório).
+   Sem percentual — só comunica "trabalhando", já que o scan não
+   reporta progresso granular. */
+.ac-indeterminate {
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  border-radius: inherit;
+  background: var(--color-brand-500);
+  animation: ac-indeterminate 1.15s ease-in-out infinite;
+}
+@keyframes ac-indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ac-indeterminate {
+    animation-duration: 2.4s;
+  }
+}
