@@ -1,0 +1,123 @@
+// Prisma schema — AccessCheck
+// Auth.js (NextAuth v5) standard models + domain models (Scan/Screenshot).
+// docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/**
+ * ===================== Auth.js (NextAuth) =====================
+ */
+// Conjunto padrão que o @auth/prisma-adapter espera. Usamos o campo
+// convencional `image` (não `avatarUrl`), pra o adapter oficial funcionar
+// sem código custom.
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+
+  accounts Account[]
+  sessions Session[]
+  scans    Scan[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+/**
+ * ===================== Domínio: histórico de scans =====================
+ */
+
+model Scan {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  url      String // URL normalizada (input)
+  finalUrl String
+  title    String
+  score    Int
+
+  // Contagens desnormalizadas → lista/ordenação/tendência sem parsear o JSON.
+  critical Int
+  serious  Int
+  moderate Int
+  minor    Int
+  passed   Int
+
+  durationMs Int
+
+  // ScanResult completo SEM o screenshot — é o que a /report já consome.
+  // O screenshot vira a rota /api/scan/<id>/screenshot.
+  result Json
+
+  createdAt DateTime @default(now())
+
+  screenshot Screenshot?
+
+  @@index([userId, createdAt]) // tela de histórico
+  @@index([userId, url, createdAt]) // tendência de score por URL
+  @@map("scans")
+}
+
+// Tabela separada DE PROPÓSITO: mantém os bytes da imagem fora da linha
+// principal, pra queries de lista/histórico nunca arrastarem o blob.
+model Screenshot {
+  scanId   String @id
+  scan     Scan   @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  data     Bytes // JPEG comprimido (~80KB)
+  mimeType String @default("image/jpeg")
+
+  @@map("screenshots")
+}
