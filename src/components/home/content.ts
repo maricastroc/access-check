@@ -10,8 +10,6 @@ import {
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import type { ConformanceLevel, StatusTone } from "@/components/ui";
 
-export const navLinks = ["Product", "Docs", "Pricing"];
-
 export const conformanceLevels: ConformanceLevel[] = [
   { id: "A", value: 100, passed: true },
   { id: "AA", value: 100, passed: true },

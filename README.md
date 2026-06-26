@@ -25,6 +25,7 @@ The scan runs server-side in a Node runtime (`/api/scan`) because Playwright nee
 ## Features
 
 ### Concrete, copy-paste fixes
+
 Instead of restating the rule, each violation gets a generated snippet. Covered rules include:
 
 - **Color contrast** — computes the nearest passing text color to the original via binary search (operating on rounded RGB so the suggested hex actually passes the target ratio), rather than dumping pure black/white.
@@ -35,6 +36,7 @@ Instead of restating the rule, each violation gets a generated snippet. Covered 
 - **ARIA attributes** — lists the exact required-but-missing or not-allowed attributes axe reports.
 
 ### Fix validation (re-run the audit)
+
 Each generated fix carries a structured DOM mutation. After the scan, AccessCheck applies that mutation in the page, re-runs axe scoped to the specific rule, then reverts — labeling each fix:
 
 - **Verified** — the rule no longer flags the element. The fix is proven.
@@ -42,21 +44,29 @@ Each generated fix carries a structured DOM mutation. After the scan, AccessChec
 - _(unchecked)_ — fixes that can't be auto-applied safely (e.g. removing ARIA attributes) are not validated.
 
 ### Grouped fixes
+
 When many nodes of the same violation share an identical fix (e.g. 14 buttons with the same contrast problem), they're collapsed into a single group — _"Resolves N elements"_ — validated once per group via a representative selector.
 
 ### Live preview with issue markers
+
 A real screenshot of the scanned page with bounding-box overlays pointing at offending elements, ranked by severity.
 
 ### Vision simulations
+
 Preview the page through filters: **Deuteranopia**, **Protanopia**, **Tritanopia**, **Low Vision**, and **Grayscale** — to check meaning survives without color.
 
 ### Accessibility score & prioritization
+
 - A 0–100 score weighted by severity and occurrence count (with damping so it degrades gracefully).
 - A **Fix First** list ordered by impact ÷ effort.
 - Severity breakdown (critical / serious / moderate / minor) and passed-checks count.
 
-### PDF export
-Generate a shareable PDF report of the scan — useful for handing an audit to a client, manager, or compliance review.
+### Export (PDF & Markdown)
+
+Generate a shareable report of the scan — useful for handing an audit to a client, manager, or compliance review.
+
+- **PDF** — a formatted report view at `/report`.
+- **Markdown** — generated and downloaded entirely in the browser; includes the score, severity summary table, Fix First list, and every violation with its suggested fix, "Resolves N elements" grouping, and verification status. Perfect for pasting into an issue, PR, or ticket.
 
 ---
 
@@ -83,15 +93,15 @@ Open [http://localhost:3000](http://localhost:3000), enter a URL, and run a scan
 
 ### Scripts
 
-| Command | Description |
-| --- | --- |
-| `npm run dev` | Start the dev server |
-| `npm run build` | Production build |
-| `npm run start` | Serve the production build |
-| `npm test` | Run the unit test suite (Vitest) |
-| `npm run test:watch` | Vitest in watch mode |
-| `npm run lint` | ESLint |
-| `npm run format` | Format with Prettier |
+| Command              | Description                      |
+| -------------------- | -------------------------------- |
+| `npm run dev`        | Start the dev server             |
+| `npm run build`      | Production build                 |
+| `npm run start`      | Serve the production build       |
+| `npm test`           | Run the unit test suite (Vitest) |
+| `npm run test:watch` | Vitest in watch mode             |
+| `npm run lint`       | ESLint                           |
+| `npm run format`     | Format with Prettier             |
 
 ---
 
@@ -116,6 +126,7 @@ src/
     ├── remediate.ts            # deterministic fix generators (+ structured apply)
     ├── group.ts                # cluster identical fixes
     ├── derive.ts               # score, Fix First, summary
+    ├── markdown.ts             # render a scan result as a Markdown report
     ├── wcag.ts                 # WCAG criterion mapping
     ├── browser.ts              # browser executor (local vs serverless)
     └── types.ts                # shared scan types

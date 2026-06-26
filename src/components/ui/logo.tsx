@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck } from "@fortawesome/free-solid-svg-icons";
+import Image from "next/image";
 import { cn } from "@/lib/cn";
 
 type LogoProps = {
@@ -12,10 +11,14 @@ type LogoProps = {
 export function Logo({ href = "/", meta, className }: LogoProps) {
   return (
     <Link href={href} className={cn("flex items-center gap-2.5", className)}>
-      <span className="ac-focusring flex size-9 items-center justify-center rounded-xl bg-linear-to-br from-brand-400 to-brand-600 text-white shadow-soft">
-        <FontAwesomeIcon icon={faCheck} className="text-base" />
-      </span>
-      <span className="text-lg font-semibold tracking-tight text-ink">AccessCheck</span>
+      <Image
+        src="/lockup-horizontal.svg"
+        alt="AccessCheck"
+        width={101}
+        height={28}
+        priority
+        className="h-7 w-auto"
+      />
       {meta && (
         <span className="ml-0.5 border-l border-line-strong pl-2.5 font-mono text-[11px] text-muted">
           {meta}

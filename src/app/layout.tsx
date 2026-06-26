@@ -20,6 +20,10 @@ export const metadata: Metadata = {
   title: "AccessCheck — Audit any website for accessibility in seconds",
   description:
     "Paste a URL. AccessCheck runs a full WCAG 2.1 audit, simulates real visual impairments, and hands you an exportable report you can act on.",
+  icons: {
+    icon: "/app-icon-512.png",
+    apple: "/app-icon-512.png",
+  },
 };
 
 export default function RootLayout({

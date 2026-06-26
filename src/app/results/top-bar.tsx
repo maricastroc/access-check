@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft, faArrowRotateRight } from "@fortawesome/free-solid-svg-icons";
 import type { Status } from "./shared";
@@ -17,10 +18,14 @@ export function TopBar({
   return (
     <header className="sticky top-0 z-30 flex h-14.5 items-center justify-between border-b border-line bg-card px-7">
       <Link href="/" className="flex items-center gap-2.5">
-        <span className="flex size-5.5 items-center justify-center rounded-md bg-ink">
-          <span className="size-2.25 rotate-45 rounded-xs bg-brand-500" />
-        </span>
-        <span className="text-[15px] font-semibold tracking-tight">AccessCheck</span>
+        <Image
+          src="/lockup-horizontal.svg"
+          alt="AccessCheck"
+          width={94}
+          height={26}
+          priority
+          className="h-6.5 w-auto"
+        />
         <span className="ml-0.5 border-l border-line-strong pl-2.5 font-mono text-[11px] text-muted">
           v2.1 · WCAG 2.1
         </span>

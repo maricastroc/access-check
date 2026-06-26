@@ -1,11 +1,26 @@
+"use client";
+
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFileCode, faFilePdf } from "@fortawesome/free-solid-svg-icons";
 import type { ScanResult } from "@/lib/scan/types";
+import { buildMarkdown, markdownFilename } from "@/lib/scan/markdown";
 
 export function ScoreCard({ result }: { result: ScanResult }) {
   const { counts } = result;
   const compliant = counts.critical === 0 && counts.serious === 0;
+
+  const exportMarkdown = () => {
+    const blob = new Blob([buildMarkdown(result)], {
+      type: "text/markdown;charset=utf-8",
+    });
+    const href = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = href;
+    a.download = markdownFilename(result);
+    a.click();
+    URL.revokeObjectURL(href);
+  };
 
   const countChips = [
     { label: "Critical", value: counts.critical, dot: "bg-critical" },
@@ -69,7 +84,10 @@ export function ScoreCard({ result }: { result: ScanResult }) {
           <FontAwesomeIcon icon={faFilePdf} className="text-sm" />
           Export PDF
         </Link>
-        <button className="flex h-10.5 flex-1 items-center justify-center gap-2 rounded-[10px] border border-line-strong bg-card text-[13.5px] font-semibold text-ink transition-colors hover:bg-[#f6f7f9]">
+        <button
+          onClick={exportMarkdown}
+          className="flex h-10.5 flex-1 items-center justify-center gap-2 rounded-[10px] border border-line-strong bg-card text-[13.5px] font-semibold text-ink transition-colors hover:bg-[#f6f7f9]"
+        >
           <FontAwesomeIcon icon={faFileCode} className="text-sm text-muted" />
           Export Markdown
         </button>
