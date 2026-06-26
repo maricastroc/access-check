@@ -48,7 +48,9 @@ export function ScoreRing({
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-bold leading-none text-ink">{value}</span>
+        <span className="text-2xl leading-none font-bold text-ink">
+          {value}
+        </span>
         <span className="text-[11px] text-muted">/ {total}</span>
       </div>
     </div>

@@ -246,17 +246,41 @@ function Page1({ result }: { result: ScanResult }) {
 
   const meta = [
     { label: "Analysis Date", value: date },
-    { label: "Scan Duration", value: `${(result.durationMs / 1000).toFixed(1)}s` },
+    {
+      label: "Scan Duration",
+      value: `${(result.durationMs / 1000).toFixed(1)}s`,
+    },
     { label: "WCAG Version", value: "2.1 — Level AA" },
     { label: "Elements Scanned", value: String(result.scannedElements) },
   ];
 
-  const counts: { label: string; sub: string; value: number; color: string }[] = [
-    { label: "Critical", sub: "Must fix", value: result.counts.critical, color: sevHex.critical },
-    { label: "Serious", sub: "High priority", value: result.counts.serious, color: sevHex.serious },
-    { label: "Moderate", sub: "To review", value: result.counts.moderate, color: sevHex.moderate },
-    { label: "Passed", sub: "Conformant", value: result.counts.passed, color: "#1f9d6b" },
-  ];
+  const counts: { label: string; sub: string; value: number; color: string }[] =
+    [
+      {
+        label: "Critical",
+        sub: "Must fix",
+        value: result.counts.critical,
+        color: sevHex.critical,
+      },
+      {
+        label: "Serious",
+        sub: "High priority",
+        value: result.counts.serious,
+        color: sevHex.serious,
+      },
+      {
+        label: "Moderate",
+        sub: "To review",
+        value: result.counts.moderate,
+        color: sevHex.moderate,
+      },
+      {
+        label: "Passed",
+        sub: "Conformant",
+        value: result.counts.passed,
+        color: "#1f9d6b",
+      },
+    ];
 
   const fixes = result.fixFirst.map((f) => {
     const v = result.violations.find((x) => x.title === f.title);
@@ -270,7 +294,9 @@ function Page1({ result }: { result: ScanResult }) {
         <div className="flex items-center gap-2.5">
           <BrandMark size={34} />
           <div className="flex flex-col gap-0.5">
-            <span className="text-[15px] font-bold tracking-tight">AccessCheck</span>
+            <span className="text-[15px] font-bold tracking-tight">
+              AccessCheck
+            </span>
             <span className="text-[8.5px] font-semibold tracking-[0.17em] text-muted uppercase">
               Accessibility Platform
             </span>
@@ -281,7 +307,8 @@ function Page1({ result }: { result: ScanResult }) {
             WCAG 2.1 Audit
           </span>
           <span className="font-mono text-[11px] text-ink-soft">
-            Report&nbsp;#AC-{new Date().getFullYear()}-{shortId(result.finalUrl)}
+            Report&nbsp;#AC-{new Date().getFullYear()}-
+            {shortId(result.finalUrl)}
           </span>
         </div>
       </div>
@@ -304,7 +331,9 @@ function Page1({ result }: { result: ScanResult }) {
             <div className="text-[8.5px] font-semibold tracking-[0.14em] text-muted uppercase">
               {m.label}
             </div>
-            <div className="mt-1 text-[14px] font-medium text-ink">{m.value}</div>
+            <div className="mt-1 text-[14px] font-medium text-ink">
+              {m.value}
+            </div>
           </div>
         ))}
       </div>
@@ -377,7 +406,9 @@ function Page1({ result }: { result: ScanResult }) {
                   {c.value}
                 </span>
                 <div>
-                  <div className="text-[11px] font-semibold text-ink">{c.label}</div>
+                  <div className="text-[11px] font-semibold text-ink">
+                    {c.label}
+                  </div>
                   <div className="mt-px text-[9px] text-muted">{c.sub}</div>
                 </div>
               </div>
@@ -398,8 +429,8 @@ function Page1({ result }: { result: ScanResult }) {
             <>
               {" "}
               but {blockers} blocking issue{blockers > 1 ? "s" : ""} remain
-              {blockers > 1 ? "" : "s"}. Resolving the priority fixes below would
-              raise the score toward Level&nbsp;AA conformance.
+              {blockers > 1 ? "" : "s"}. Resolving the priority fixes below
+              would raise the score toward Level&nbsp;AA conformance.
             </>
           ) : (
             <> with no critical or serious blockers — a strong baseline.</>
@@ -446,11 +477,13 @@ function Page1({ result }: { result: ScanResult }) {
                   </div>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-[11.5px] text-muted">
                     <span>
-                      <b className="font-semibold text-ink">Effort</b> {f.effort}
+                      <b className="font-semibold text-ink">Effort</b>{" "}
+                      {f.effort}
                     </span>
                     <span className="text-line-strong">·</span>
                     <span>
-                      <b className="font-semibold text-ink">Impact</b> {f.impact}
+                      <b className="font-semibold text-ink">Impact</b>{" "}
+                      {f.impact}
                     </span>
                   </div>
                 </div>
@@ -458,9 +491,12 @@ function Page1({ result }: { result: ScanResult }) {
                   <span
                     className="rounded-lg px-2 py-1 text-[11px] font-semibold"
                     style={{
-                      color: f.impact === "High" ? sevHex.critical : sevHex.serious,
+                      color:
+                        f.impact === "High" ? sevHex.critical : sevHex.serious,
                       background:
-                        f.impact === "High" ? sevTint.critical : sevTint.serious,
+                        f.impact === "High"
+                          ? sevTint.critical
+                          : sevTint.serious,
                     }}
                   >
                     {f.impact} impact
@@ -490,8 +526,9 @@ function Page2({ result }: { result: ScanResult }) {
           Detailed Findings
         </h2>
         <p className="mt-1.5 max-w-[6in] text-[12px] leading-[1.45] text-muted">
-          Every flagged issue grouped by severity and mapped to its WCAG&nbsp;2.1
-          success criterion, with the impact and a concrete fix for each.
+          Every flagged issue grouped by severity and mapped to its
+          WCAG&nbsp;2.1 success criterion, with the impact and a concrete fix
+          for each.
         </p>
       </div>
 
@@ -502,7 +539,8 @@ function Page2({ result }: { result: ScanResult }) {
         ))}
         <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-3 py-1.5 text-[11px] font-semibold text-ink">
           <span className="size-2 rounded-full bg-success" />
-          Passed <b className="font-medium text-muted">{result.counts.passed}</b>
+          Passed{" "}
+          <b className="font-medium text-muted">{result.counts.passed}</b>
         </span>
       </div>
 
@@ -520,8 +558,10 @@ function Page2({ result }: { result: ScanResult }) {
                 <p className="px-1 text-[10px] text-muted">
                   + {items.length - (sev === "critical" ? 3 : 2)} more{" "}
                   {sevLabel[sev].toLowerCase()} item
-                  {items.length - (sev === "critical" ? 3 : 2) > 1 ? "s" : ""} in
-                  the full log
+                  {items.length - (sev === "critical" ? 3 : 2) > 1
+                    ? "s"
+                    : ""}{" "}
+                  in the full log
                 </p>
               )}
             </div>
@@ -548,7 +588,9 @@ function DetailedCard({ v }: { v: ScanResult["violations"][number] }) {
       <div className="grid grid-cols-[1fr_1.7in]">
         <div className="border-r border-line p-4">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[15px] font-semibold text-ink">{v.title}</span>
+            <span className="text-[15px] font-semibold text-ink">
+              {v.title}
+            </span>
             <span
               className="rounded-full border px-2 py-0.5 text-[9px] font-semibold tracking-wide uppercase"
               style={{
@@ -580,9 +622,13 @@ function DetailedCard({ v }: { v: ScanResult["violations"][number] }) {
             {v.where}
           </code>
           <FieldLabel>Instances</FieldLabel>
-          <span className="-mt-1.5 text-[20px] font-bold text-ink">{v.nodes}</span>
+          <span className="-mt-1.5 text-[20px] font-bold text-ink">
+            {v.nodes}
+          </span>
           <FieldLabel>Criterion</FieldLabel>
-          <span className="-mt-1.5 text-[11px] text-ink-soft">{v.criterion}</span>
+          <span className="-mt-1.5 text-[11px] text-ink-soft">
+            {v.criterion}
+          </span>
         </div>
       </div>
     </div>
@@ -601,9 +647,24 @@ function Page3({ result }: { result: ScanResult }) {
   const delta = estimated - result.score;
 
   const deltas = [
-    { label: "Critical", from: result.counts.critical, to: 0, sev: "critical" as Severity },
-    { label: "Serious", from: result.counts.serious, to: 0, sev: "serious" as Severity },
-    { label: "Moderate", from: result.counts.moderate, to: result.counts.moderate, sev: "moderate" as Severity },
+    {
+      label: "Critical",
+      from: result.counts.critical,
+      to: 0,
+      sev: "critical" as Severity,
+    },
+    {
+      label: "Serious",
+      from: result.counts.serious,
+      to: 0,
+      sev: "serious" as Severity,
+    },
+    {
+      label: "Moderate",
+      from: result.counts.moderate,
+      to: result.counts.moderate,
+      sev: "moderate" as Severity,
+    },
   ];
 
   const recs = [
@@ -641,7 +702,8 @@ function Page3({ result }: { result: ScanResult }) {
               className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
               style={{ color: sevHex.moderate, background: sevTint.moderate }}
             >
-              {result.counts.moderate} issue{result.counts.moderate === 1 ? "" : "s"}
+              {result.counts.moderate} issue
+              {result.counts.moderate === 1 ? "" : "s"}
             </span>
           </div>
           <div className="px-4 pt-1 pb-2">
@@ -649,7 +711,9 @@ function Page3({ result }: { result: ScanResult }) {
               <div
                 key={`${v.id}-${i}`}
                 className={`flex items-center justify-between py-2 ${
-                  i < Math.min(moderate.length, 4) - 1 ? "border-b border-line" : ""
+                  i < Math.min(moderate.length, 4) - 1
+                    ? "border-b border-line"
+                    : ""
                 }`}
               >
                 <div className="min-w-0 pr-2">
@@ -683,7 +747,9 @@ function Page3({ result }: { result: ScanResult }) {
         <div className="overflow-hidden rounded-2xl border border-[#cfe3dc] bg-[#f3f8f5]">
           <div className="flex items-center gap-2.5 border-b border-[#dceee3] px-4 py-3">
             <span className="size-2.5 rounded-[3px] bg-success" />
-            <span className="text-[13px] font-semibold text-ink">Passed Checks</span>
+            <span className="text-[13px] font-semibold text-ink">
+              Passed Checks
+            </span>
             <span className="rounded-full bg-[#e3efe8] px-2 py-0.5 text-[10px] font-semibold text-success">
               {result.counts.passed} conformant
             </span>
@@ -730,7 +796,10 @@ function Page3({ result }: { result: ScanResult }) {
               </div>
             </div>
             <div className="flex flex-col items-center gap-1">
-              <FontAwesomeIcon icon={faArrowRightLong} className="text-brand-500" />
+              <FontAwesomeIcon
+                icon={faArrowRightLong}
+                className="text-brand-500"
+              />
               <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-bold text-brand-600">
                 +{delta} pts
               </span>
@@ -808,7 +877,10 @@ function Page3({ result }: { result: ScanResult }) {
         </h2>
         <div className="mt-3.5 grid grid-cols-3 gap-3">
           {recs.map((r) => (
-            <div key={r.term} className="rounded-2xl border border-line bg-card p-4">
+            <div
+              key={r.term}
+              className="rounded-2xl border border-line bg-card p-4"
+            >
               <span
                 className="inline-block h-1 w-6 rounded-full"
                 style={{ background: r.color }}
@@ -858,7 +930,10 @@ function MiniHeader({ host }: { host: string }) {
 function LegendChip({ sev, count }: { sev: Severity; count: number }) {
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-3 py-1.5 text-[11px] font-semibold text-ink">
-      <span className="size-2 rounded-full" style={{ background: sevHex[sev] }} />
+      <span
+        className="size-2 rounded-full"
+        style={{ background: sevHex[sev] }}
+      />
       {sevLabel[sev]} <b className="font-medium text-muted">{count}</b>
     </span>
   );
@@ -867,8 +942,13 @@ function LegendChip({ sev, count }: { sev: Severity; count: number }) {
 function GroupHeading({ sev, count }: { sev: Severity; count: number }) {
   return (
     <div className="flex items-center gap-2.5">
-      <span className="size-2.5 rounded-[3px]" style={{ background: sevHex[sev] }} />
-      <span className="text-[13px] font-semibold text-ink">{sevLabel[sev]}</span>
+      <span
+        className="size-2.5 rounded-[3px]"
+        style={{ background: sevHex[sev] }}
+      />
+      <span className="text-[13px] font-semibold text-ink">
+        {sevLabel[sev]}
+      </span>
       <span
         className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
         style={{ color: sevHex[sev], background: sevTint[sev] }}
@@ -913,7 +993,14 @@ function HeroRing({ value }: { value: number }) {
   return (
     <div className="relative size-[138px]">
       <svg width="138" height="138" viewBox="0 0 138 138">
-        <circle cx="69" cy="69" r={r} fill="none" stroke="rgba(255,255,255,.18)" strokeWidth="11" />
+        <circle
+          cx="69"
+          cy="69"
+          r={r}
+          fill="none"
+          stroke="rgba(255,255,255,.18)"
+          strokeWidth="11"
+        />
         <circle
           cx="69"
           cy="69"
@@ -928,7 +1015,9 @@ function HeroRing({ value }: { value: number }) {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-[46px] leading-none font-bold text-white">{value}</span>
+        <span className="text-[46px] leading-none font-bold text-white">
+          {value}
+        </span>
         <span className="mt-0.5 text-[10px] font-semibold tracking-wide text-white/60">
           OUT OF 100
         </span>

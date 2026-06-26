@@ -291,7 +291,7 @@ function PreviewPanel({
               className="min-w-0 flex-1 bg-transparent py-1 font-medium focus:outline-none"
             />
           </div>
-          <span className="hidden whitespace-nowrap text-xs text-muted sm:block">
+          <span className="hidden text-xs whitespace-nowrap text-muted sm:block">
             Scanned {result.scannedElements} elements ·{" "}
             {(result.durationMs / 1000).toFixed(1)}s
           </span>
@@ -460,10 +460,30 @@ function ReportPanel({
   ];
 
   const tiles = [
-    { label: "Accessibility score", value: result.score, color: "text-brand-500", sub: compliant ? "WCAG AA" : "needs work" },
-    { label: "Critical issues", value: counts.critical, color: "text-critical", sub: "blocking AA" },
-    { label: "Warnings", value: warnings, color: "text-serious", sub: "serious + moderate" },
-    { label: "Passed checks", value: counts.passed, color: "text-success", sub: "auto-checks" },
+    {
+      label: "Accessibility score",
+      value: result.score,
+      color: "text-brand-500",
+      sub: compliant ? "WCAG AA" : "needs work",
+    },
+    {
+      label: "Critical issues",
+      value: counts.critical,
+      color: "text-critical",
+      sub: "blocking AA",
+    },
+    {
+      label: "Warnings",
+      value: warnings,
+      color: "text-serious",
+      sub: "serious + moderate",
+    },
+    {
+      label: "Passed checks",
+      value: counts.passed,
+      color: "text-success",
+      sub: "auto-checks",
+    },
   ];
 
   const groups = severityOrder
@@ -482,11 +502,21 @@ function ReportPanel({
 
   const showPassed = filter === "all" || filter === "passed";
 
-  const tabs: { key: FilterKey; label: string; count: number; dot: string | null }[] = [
+  const tabs: {
+    key: FilterKey;
+    label: string;
+    count: number;
+    dot: string | null;
+  }[] = [
     { key: "all", label: "All", count: result.violations.length, dot: null },
     ...severityOrder
       .filter((s) => counts[s] > 0)
-      .map((s) => ({ key: s, label: severityLabel[s], count: counts[s], dot: sevDot[s] })),
+      .map((s) => ({
+        key: s,
+        label: severityLabel[s],
+        count: counts[s],
+        dot: sevDot[s],
+      })),
     { key: "passed", label: "Passed", count: counts.passed, dot: "bg-success" },
   ];
 
@@ -581,7 +611,9 @@ function ReportPanel({
             <div className="h-[26px] text-[10.5px] leading-tight font-medium text-muted">
               {t.label}
             </div>
-            <div className={`mt-1.5 text-[26px] font-bold tracking-tight ${t.color}`}>
+            <div
+              className={`mt-1.5 text-[26px] font-bold tracking-tight ${t.color}`}
+            >
               {t.value}
             </div>
             <div className="mt-0.5 text-[10.5px] text-faint">{t.sub}</div>
@@ -594,12 +626,17 @@ function ReportPanel({
         <div className="mt-1 rounded-2xl border border-line bg-card px-[22px] py-5">
           <div className="mb-1.5 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <FontAwesomeIcon icon={faFire} className="text-base text-serious" />
+              <FontAwesomeIcon
+                icon={faFire}
+                className="text-base text-serious"
+              />
               <span className="text-base font-semibold tracking-tight">
                 Fix First
               </span>
             </div>
-            <span className="text-xs text-muted">Ordered by impact ÷ effort</span>
+            <span className="text-xs text-muted">
+              Ordered by impact ÷ effort
+            </span>
           </div>
           <p className="mb-1.5 text-[12.5px] leading-normal text-muted">
             Resolve these first for the biggest jump in your score.
@@ -668,7 +705,9 @@ function ReportPanel({
                     : "border-line-strong bg-card font-medium text-ink-soft hover:border-[#d6d9df]"
                 }`}
               >
-                {t.dot && <span className={`size-[7px] rounded-full ${t.dot}`} />}
+                {t.dot && (
+                  <span className={`size-[7px] rounded-full ${t.dot}`} />
+                )}
                 {t.label}
                 <span
                   className={`font-mono text-[11px] ${active ? "text-white/65" : "text-faint"}`}
@@ -749,7 +788,10 @@ function ReportPanel({
                   key={`${p}-${i}`}
                   className="inline-flex items-center gap-1.5 rounded-[7px] border border-[#dceee3] bg-[#eef7f1] px-2.5 py-1 text-[11.5px] text-[#3f7a5f]"
                 >
-                  <FontAwesomeIcon icon={faCheck} className="text-[10px] text-success" />
+                  <FontAwesomeIcon
+                    icon={faCheck}
+                    className="text-[10px] text-success"
+                  />
                   {p}
                 </span>
               ))}

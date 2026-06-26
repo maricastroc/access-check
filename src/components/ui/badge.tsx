@@ -37,9 +37,7 @@ export function Badge({
         className,
       )}
     >
-      {dot && (
-        <span className={cn("size-2 rounded-full", dotClasses[tone])} />
-      )}
+      {dot && <span className={cn("size-2 rounded-full", dotClasses[tone])} />}
       {children}
     </span>
   );

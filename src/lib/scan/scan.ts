@@ -1,13 +1,13 @@
 import path from "path";
 import { getBrowserExecutor } from "./browser";
 import { criterionFromTags } from "./wcag";
-import { buildFixFirst, buildSummary, computeScore, severityOrder } from "./derive";
-import type {
-  ScanMarker,
-  ScanResult,
-  ScanViolation,
-  Severity,
-} from "./types";
+import {
+  buildFixFirst,
+  buildSummary,
+  computeScore,
+  severityOrder,
+} from "./derive";
+import type { ScanMarker, ScanResult, ScanViolation, Severity } from "./types";
 
 const VIEWPORT = { width: 1200, height: 800 };
 const MAX_MARKERS = 6;
@@ -92,7 +92,7 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
       .map((v) => {
         const severity = (v.impact ?? "minor") as Severity;
         const firstNode = v.nodes[0];
-        const where = firstNode ? firstTarget(firstNode.target) ?? "—" : "—";
+        const where = firstNode ? (firstTarget(firstNode.target) ?? "—") : "—";
         const fix =
           firstNode?.failureSummary?.replace(/^Fix [^:]+:\s*/i, "").trim() ||
           v.help;

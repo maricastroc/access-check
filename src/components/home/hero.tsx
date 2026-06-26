@@ -17,7 +17,7 @@ export function Hero() {
             WCAG 2.1 · A, AA &amp; AAA coverage
           </Badge>
 
-          <h1 className="mt-6 text-5xl font-bold leading-[1.04] tracking-tight text-ink sm:text-6xl lg:text-[4.25rem]">
+          <h1 className="mt-6 text-5xl leading-[1.04] font-bold tracking-tight text-ink sm:text-6xl lg:text-[4.25rem]">
             Audit any website for accessibility in seconds.
           </h1>
 
