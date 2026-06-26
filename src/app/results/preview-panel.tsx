@@ -27,7 +27,7 @@ export function PreviewPanel({
   const host = safeHost(result.finalUrl);
 
   return (
-    <section className="scroll-slim lg:sticky lg:top-[82px] lg:max-h-[calc(100vh-98px)] lg:overflow-y-auto lg:pr-1.5">
+    <section className="scroll-slim lg:sticky lg:top-20.5 lg:max-h-[calc(100vh-98px)] lg:overflow-y-auto lg:pr-1.5">
       <div className="mb-3.5 flex items-center justify-between gap-3">
         <form
           onSubmit={(e) => {
@@ -36,8 +36,8 @@ export function PreviewPanel({
           }}
           className="flex min-w-0 items-center gap-2.5"
         >
-          <div className="flex h-[34px] max-w-[420px] items-center gap-2 overflow-hidden rounded-[9px] border border-line bg-card pr-2 pl-3 text-[13px]">
-            <span className="size-[7px] shrink-0 rounded-full bg-success" />
+          <div className="flex h-8.5 max-w-105 items-center gap-2 overflow-hidden rounded-[9px] border border-line bg-card pr-2 pl-3 text-[13px]">
+            <span className="size-1.75 shrink-0 rounded-full bg-success" />
             <input
               value={input}
               onChange={(e) => onInput(e.target.value)}
@@ -51,7 +51,7 @@ export function PreviewPanel({
         </form>
         <div className="flex items-center gap-2 text-xs text-ink-soft">
           <span className="text-muted">Viewing as</span>
-          <span className="rounded-[7px] bg-brand-50 px-2.5 py-[3px] font-semibold text-brand-600">
+          <span className="rounded-[7px] bg-brand-50 px-2.5 py-0.75 font-semibold text-brand-600">
             {simLabel}
           </span>
         </div>
@@ -65,7 +65,7 @@ export function PreviewPanel({
               <button
                 key={m.key}
                 onClick={() => setSim(m.key)}
-                className={`rounded-lg px-[13px] py-2 text-[12.5px] whitespace-nowrap transition-colors ${
+                className={`rounded-lg px-3.25 py-2 text-[12.5px] whitespace-nowrap transition-colors ${
                   active
                     ? "bg-card font-semibold text-ink shadow-[0_1px_2px_rgba(16,18,29,.1),0_0_0_1px_rgba(16,18,29,.04)]"
                     : "font-medium text-ink-soft hover:text-ink"
@@ -84,7 +84,7 @@ export function PreviewPanel({
               : "border-line-strong bg-card text-muted"
           }`}
         >
-          <span className={`size-[7px] rounded-full ${showMarkers ? "bg-brand-500" : "bg-faint"}`} />
+          <span className={`size-1.75 rounded-full ${showMarkers ? "bg-brand-500" : "bg-faint"}`} />
           {showMarkers ? "Markers on" : "Markers off"}
         </button>
       </div>
@@ -101,7 +101,7 @@ export function PreviewPanel({
             <span className="size-2.75 rounded-full bg-[#febc2e]" />
             <span className="size-2.75 rounded-full bg-[#28c840]" />
           </div>
-          <div className="flex h-6.25 flex-1 items-center gap-1.75 truncate rounded-[7px] border border-line-strong bg-card px-[11px] font-mono text-[11.5px] text-muted">
+          <div className="flex h-6.25 flex-1 items-center gap-1.75 truncate rounded-[7px] border border-line-strong bg-card px-2.75 font-mono text-[11.5px] text-muted">
             <span className="size-2.75 shrink-0 rounded-full border-[1.5px] border-[#b7bcc4]" />
             <span className="truncate">{host}</span>
           </div>
@@ -167,7 +167,7 @@ export function PreviewPanel({
           {result.markers.map((m) => (
             <span
               key={m.n}
-              className="inline-flex max-w-55 items-center gap-1.75 rounded-lg border border-line bg-card py-[5px] pr-2.5 pl-1.5 text-xs text-ink-soft"
+              className="inline-flex max-w-55 items-center gap-1.75 rounded-lg border border-line bg-card py-1.25 pr-2.5 pl-1.5 text-xs text-ink-soft"
             >
               <span
                 className="flex size-4.5 shrink-0 items-center justify-center rounded-full text-[10.5px] font-bold text-white"
