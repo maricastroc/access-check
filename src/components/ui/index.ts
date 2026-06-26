@@ -4,6 +4,8 @@ export { BrowserFrame } from "./browser-frame";
 export { Button } from "./button";
 export type { ButtonProps, ButtonVariant, ButtonSize } from "./button";
 export { Card } from "./card";
+export { ConformanceLadder } from "./conformance-ladder";
+export type { ConformanceLevel } from "./conformance-ladder";
 export { IconBadge } from "./icon-badge";
 export { Logo } from "./logo";
 export { ScoreRing } from "./score-ring";

@@ -14,7 +14,7 @@ type LogoProps = {
 export function Logo({ href = "/", meta, className }: LogoProps) {
   return (
     <Link href={href} className={cn("flex items-center gap-2.5", className)}>
-      <span className="flex size-9 items-center justify-center rounded-xl bg-linear-to-br from-brand-400 to-brand-600 text-white shadow-soft">
+      <span className="ac-focusring flex size-9 items-center justify-center rounded-xl bg-linear-to-br from-brand-400 to-brand-600 text-white shadow-soft">
         <FontAwesomeIcon icon={faCheck} className="text-base" />
       </span>
       <span className="text-lg font-semibold tracking-tight text-ink">

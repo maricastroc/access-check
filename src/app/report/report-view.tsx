@@ -625,6 +625,11 @@ function DetailedCard({ v }: { v: ScanResult["violations"][number] }) {
             <div className="mt-0.5 font-mono text-[11px] leading-[1.45] whitespace-pre-line text-ink">
               {v.fix}
             </div>
+            {v.fixCode && (
+              <code className="mt-1.5 block rounded-md border border-line bg-[#f6f8fa] px-2 py-1.5 font-mono text-[10.5px] leading-[1.5] whitespace-pre-wrap text-ink">
+                {v.fixCode}
+              </code>
+            )}
           </div>
         </div>
         {/* meta panel */}

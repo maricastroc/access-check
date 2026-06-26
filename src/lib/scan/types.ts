@@ -8,6 +8,8 @@ export type ScanViolation = {
   where: string;
   desc: string;
   fix: string;
+  /** trecho de código copiável (CSS/HTML), quando há fix determinístico */
+  fixCode?: string;
   nodes: number;
 };
 

@@ -56,6 +56,47 @@ html {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Dogfooding: uma ferramenta de acessibilidade precisa ter foco visível
+   exemplar. Indicador de foco WCAG em toda a página. */
+:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* Focus ring como device de marca — outline tracejado deslocado, o gesto
+   visual mais reconhecível de acessibilidade. Decorativo (aria-hidden). */
+.ac-focusring {
+  position: relative;
+}
+.ac-focusring::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: inherit;
+  border: 2px dashed var(--color-brand-300);
+  pointer-events: none;
+}
+
+/* Grade pontilhada de fundo — sugere estrutura/inspeção, com fade nas bordas. */
+.ac-grid {
+  background-image: radial-gradient(
+    var(--color-line-strong) 1px,
+    transparent 1px
+  );
+  background-size: 22px 22px;
+  -webkit-mask-image: radial-gradient(
+    ellipse 80% 80% at 50% 0%,
+    #000 40%,
+    transparent 100%
+  );
+  mask-image: radial-gradient(
+    ellipse 80% 80% at 50% 0%,
+    #000 40%,
+    transparent 100%
+  );
+}
+
 /* Acordeão de violações (tela de resultado) */
 details > summary {
   list-style: none;

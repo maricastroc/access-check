@@ -8,9 +8,16 @@ import {
   faTag,
 } from "@fortawesome/free-solid-svg-icons";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
-import type { StatusTone } from "@/components/ui";
+import type { ConformanceLevel, StatusTone } from "@/components/ui";
 
 export const navLinks = ["Product", "Docs", "Pricing"];
+
+/** Níveis da escada de conformidade exibida no mockup do hero. */
+export const conformanceLevels: ConformanceLevel[] = [
+  { id: "A", value: 100, passed: true },
+  { id: "AA", value: 100, passed: true },
+  { id: "AAA", value: 94, passed: false },
+];
 
 export type ReportRow = {
   label: string;
@@ -23,7 +30,6 @@ export const reportRows: ReportRow[] = [
   { label: "Alt text", status: "Passed", tone: "success" },
   { label: "Form labels", status: "1 to fix", tone: "warning" },
   { label: "Heading hierarchy", status: "Passed", tone: "success" },
-  { label: "Link accessibility", status: "Passed", tone: "success" },
 ];
 
 export type Feature = {

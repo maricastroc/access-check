@@ -16,6 +16,7 @@ import {
   faTriangleExclamation,
 } from "@fortawesome/free-solid-svg-icons";
 import type { ScanResult, Severity } from "@/lib/scan/types";
+import { CopyableCode } from "@/components/ui/copyable-code";
 import {
   modeDesc,
   modeList,
@@ -28,6 +29,11 @@ import {
 } from "./data";
 
 type Status = "loading" | "done" | "error";
+
+/** id de DOM estável pra uma violação, derivado do título (casa com Fix First). */
+function fixDomId(title: string): string {
+  return `fix-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")}`;
+}
 type FilterKey = "all" | Severity | "passed";
 
 const DEFAULT_URL = "example.com";
@@ -452,6 +458,29 @@ function ReportPanel({
   const compliant = counts.critical === 0 && counts.serious === 0;
   const warnings = counts.serious + counts.moderate + counts.minor;
 
+  // Violação que o "View fix" pediu pra focar (por título). Quando setado,
+  // garantimos que ela esteja visível, expandimos o <details> e rolamos até ela.
+  const [focusFix, setFocusFix] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!focusFix) return;
+    // espera o re-render do filtro antes de procurar o elemento
+    const t = setTimeout(() => {
+      const el = document.getElementById(fixDomId(focusFix));
+      if (el instanceof HTMLDetailsElement) {
+        el.open = true;
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      setFocusFix(null);
+    }, 60);
+    return () => clearTimeout(t);
+  }, [focusFix]);
+
+  const openFix = (title: string) => {
+    setFilter("all"); // tira qualquer filtro que esconderia a violação
+    setFocusFix(title);
+  };
+
   const countChips = [
     { label: "Critical", value: counts.critical, dot: "bg-critical" },
     { label: "Serious", value: counts.serious, dot: "bg-serious" },
@@ -675,7 +704,10 @@ function ReportPanel({
                   </span>
                 </div>
               </div>
-              <button className="h-[30px] shrink-0 rounded-lg border border-line-strong bg-card px-3 text-xs font-medium text-ink transition-colors hover:bg-[#f4f6f8]">
+              <button
+                onClick={() => openFix(f.title)}
+                className="h-[30px] shrink-0 rounded-lg border border-line-strong bg-card px-3 text-xs font-medium text-ink transition-colors hover:bg-[#f4f6f8]"
+              >
                 View fix
               </button>
             </div>
@@ -735,7 +767,8 @@ function ReportPanel({
             {g.items.map((it, i) => (
               <details
                 key={`${it.id}-${i}`}
-                className="mb-2 rounded-xl border border-line bg-card transition-[border-color] hover:border-[#dcdee4]"
+                id={fixDomId(it.title)}
+                className="mb-2 scroll-mt-24 rounded-xl border border-line bg-card transition-[border-color] hover:border-[#dcdee4]"
               >
                 <summary className="flex cursor-pointer items-center gap-3 px-[15px] py-[13px]">
                   <span
@@ -766,6 +799,7 @@ function ReportPanel({
                     <div className="font-mono text-[12.5px] leading-relaxed whitespace-pre-line text-ink">
                       {it.fix}
                     </div>
+                    {it.fixCode && <CopyableCode code={it.fixCode} />}
                   </div>
                 </div>
               </details>

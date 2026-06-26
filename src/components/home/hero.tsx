@@ -5,12 +5,14 @@ import { UrlForm } from "./url-form";
 export function Hero() {
   return (
     <section className="relative overflow-hidden">
-      {/* brilho suave de fundo */}
+      {/* Fundo nativo de a11y: grade pontilhada (estrutura/inspeção) + glow */}
+      <div aria-hidden className="ac-grid absolute inset-0 z-0" />
       <div
         aria-hidden
-        className="pointer-events-none absolute -top-40 right-0 h-144 w-xl rounded-full bg-brand-100/50 blur-3xl"
+        className="pointer-events-none absolute -top-40 right-0 z-0 h-144 w-xl rounded-full bg-brand-100/40 blur-3xl"
       />
-      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-12 px-6 py-16 lg:grid-cols-2 lg:gap-10 lg:px-10">
+
+      <div className="relative z-10 mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-12 px-6 py-16 lg:grid-cols-2 lg:gap-10 lg:px-10">
         {/* Coluna esquerda */}
         <div className="relative">
           <Badge tone="brand" dot>
@@ -18,7 +20,8 @@ export function Hero() {
           </Badge>
 
           <h1 className="mt-6 text-5xl leading-[1.04] font-bold tracking-tight text-ink sm:text-6xl lg:text-[4.25rem]">
-            Audit any website for accessibility in seconds.
+            Audit any website for{" "}
+            <span className="text-brand-600">accessibility</span> in seconds.
           </h1>
 
           <p className="mt-6 max-w-md text-lg leading-7 text-muted">

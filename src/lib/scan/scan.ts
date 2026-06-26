@@ -2,6 +2,19 @@ import path from "path";
 import { getBrowserExecutor } from "./browser";
 import { criterionFromTags } from "./wcag";
 import {
+  fixAriaAllowedAttr,
+  fixAriaName,
+  fixAriaRequiredAttr,
+  fixContrast,
+  fixDocumentTitle,
+  fixHtmlLang,
+  fixImageAlt,
+  fixLabel,
+  fixMetaViewport,
+  type ElementInfo,
+  type FixResult,
+} from "./remediate";
+import {
   buildFixFirst,
   buildSummary,
   computeScore,
@@ -16,7 +29,30 @@ const MAX_MARKERS = 6;
 const AXE_PATH = path.join(process.cwd(), "node_modules/axe-core/axe.min.js");
 
 // Tipos mínimos do retorno do axe.run (só o que usamos).
-type AxeNode = { target: unknown; failureSummary?: string };
+type AxeCheck = { id: string; data?: unknown };
+type AxeNode = {
+  target: unknown;
+  failureSummary?: string;
+  any?: AxeCheck[];
+  all?: AxeCheck[];
+  none?: AxeCheck[];
+};
+
+/** Acha o `data` de um check por id, procurando em any/all/none do nó. */
+function checkData(node: AxeNode, id: string): unknown {
+  for (const list of [node.any, node.all, node.none]) {
+    const found = list?.find((c) => c.id === id);
+    if (found) return found.data;
+  }
+  return undefined;
+}
+
+/** Coage um valor desconhecido do axe pra array de strings. */
+function asStringArray(data: unknown): string[] {
+  if (Array.isArray(data)) return data.filter((x) => typeof x === "string");
+  if (typeof data === "string") return [data];
+  return [];
+}
 type AxeRule = {
   id: string;
   impact?: string | null;
@@ -35,6 +71,81 @@ export function normalizeUrl(input: string): string {
   const trimmed = input.trim();
   if (!/^https?:\/\//i.test(trimmed)) return `https://${trimmed}`;
   return trimmed;
+}
+
+/**
+ * Tenta gerar um fix concreto e determinístico pra um nó. Hoje só contraste;
+ * cai pra null quando não há gerador, e o chamador usa o texto do axe.
+ */
+// Regras de "nome acessível ausente" — todas resolvidas com aria-label/texto.
+const ARIA_NAME_RULES = new Set([
+  "button-name",
+  "link-name",
+  "input-button-name",
+  "aria-command-name",
+  "aria-input-field-name",
+  "aria-toggle-field-name",
+]);
+
+// Regras cujo fix depende dos atributos do elemento (coletados na página).
+const ELEMENT_RULES = new Set([
+  "label",
+  "image-alt",
+  ...ARIA_NAME_RULES,
+]);
+
+function concreteFix(
+  ruleId: string,
+  node: AxeNode | undefined,
+  elInfo?: ElementInfo,
+): FixResult | null {
+  if (!node) return null;
+  // Regras com fix mecânico fixo (não dependem do DOM).
+  if (ruleId === "html-has-lang" || ruleId === "html-lang-valid")
+    return fixHtmlLang();
+  if (ruleId === "document-title") return fixDocumentTitle();
+  if (ruleId === "meta-viewport" || ruleId === "meta-viewport-large")
+    return fixMetaViewport();
+  // Regras que leem atributos do elemento.
+  if (ruleId === "label" && elInfo) return fixLabel(elInfo);
+  if (ruleId === "image-alt" && elInfo) return fixImageAlt(elInfo);
+  if (ARIA_NAME_RULES.has(ruleId) && elInfo) return fixAriaName(elInfo);
+  // Regras ARIA onde o axe lista os atributos exatos no check.
+  if (ruleId === "aria-required-attr")
+    return fixAriaRequiredAttr(asStringArray(checkData(node, "aria-required-attr")));
+  if (ruleId === "aria-allowed-attr")
+    return fixAriaAllowedAttr(asStringArray(checkData(node, "aria-allowed-attr")));
+  if (ruleId === "color-contrast") {
+    const check = node.any?.find((c) => c.id === "color-contrast");
+    // axe entrega expectedContrastRatio como string ("4.5:1"); contrastRatio
+    // como número.
+    const d = check?.data as
+      | {
+          fgColor?: string;
+          bgColor?: string;
+          contrastRatio?: number;
+          expectedContrastRatio?: string | number;
+        }
+      | undefined;
+    if (
+      d &&
+      typeof d.fgColor === "string" &&
+      typeof d.bgColor === "string" &&
+      typeof d.contrastRatio === "number"
+    ) {
+      const expected =
+        typeof d.expectedContrastRatio === "string"
+          ? parseFloat(d.expectedContrastRatio)
+          : (d.expectedContrastRatio ?? 4.5);
+      return fixContrast({
+        fgColor: d.fgColor,
+        bgColor: d.bgColor,
+        contrastRatio: d.contrastRatio,
+        expectedContrastRatio: Number.isFinite(expected) ? expected : 4.5,
+      });
+    }
+  }
+  return null;
 }
 
 /** Pega o primeiro seletor CSS do nó (axe devolve target como array). */
@@ -99,13 +210,51 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
       });
     });
 
+    // Coleta atributos dos elementos cujo fix depende do DOM (ex.: inputs sem
+    // rótulo), indexados pelo seletor do primeiro nó da violação.
+    const elementSelectors = axe.violations
+      .filter((v) => ELEMENT_RULES.has(v.id))
+      .map((v) => firstTarget(v.nodes[0]?.target))
+      .filter((s): s is string => Boolean(s));
+
+    const elementInfos: Record<string, ElementInfo> =
+      elementSelectors.length === 0
+        ? {}
+        : await page.evaluate((selectors) => {
+            const out: Record<string, ElementInfo> = {};
+            for (const sel of selectors) {
+              try {
+                const el = document.querySelector(sel);
+                if (!el) continue;
+                out[sel] = {
+                  tag: el.tagName.toLowerCase(),
+                  type: el.getAttribute("type") ?? undefined,
+                  id: el.id || undefined,
+                  name: el.getAttribute("name") ?? undefined,
+                  placeholder: el.getAttribute("placeholder") ?? undefined,
+                  ariaLabel: el.getAttribute("aria-label") ?? undefined,
+                  src: el.getAttribute("src") ?? undefined,
+                  role: el.getAttribute("role") ?? undefined,
+                  text: (el.textContent ?? "").replace(/\s+/g, " ").trim() || undefined,
+                };
+              } catch {
+                // seletor inválido — ignora
+              }
+            }
+            return out;
+          }, elementSelectors);
+
     // ---- mapear violações ----
     const violations: ScanViolation[] = axe.violations
       .map((v) => {
         const severity = (v.impact ?? "minor") as Severity;
         const firstNode = v.nodes[0];
         const where = firstNode ? (firstTarget(firstNode.target) ?? "—") : "—";
+        const elInfo = where in elementInfos ? elementInfos[where] : undefined;
+        // Prefere um fix concreto e determinístico; senão, cai no texto do axe.
+        const result = concreteFix(v.id, firstNode, elInfo);
         const fix =
+          result?.text ||
           firstNode?.failureSummary?.replace(/^Fix [^:]+:\s*/i, "").trim() ||
           v.help;
         return {
@@ -116,6 +265,7 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
           where,
           desc: v.description,
           fix,
+          fixCode: result?.code,
           nodes: v.nodes.length,
         } satisfies ScanViolation;
       })
