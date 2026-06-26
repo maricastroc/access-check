@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
+  faArrowLeft,
   faArrowRotateRight,
   faChevronRight,
   faCheck,
@@ -121,7 +123,7 @@ function TopBar({
 }) {
   return (
     <header className="sticky top-0 z-30 flex h-[58px] items-center justify-between border-b border-line bg-card px-7">
-      <div className="flex items-center gap-2.5">
+      <Link href="/" className="flex items-center gap-2.5">
         <span className="flex size-[22px] items-center justify-center rounded-md bg-ink">
           <span className="size-[9px] rotate-45 rounded-[2px] bg-brand-500" />
         </span>
@@ -131,8 +133,16 @@ function TopBar({
         <span className="ml-0.5 border-l border-line-strong pl-2.5 font-mono text-[11px] text-muted">
           v2.1 · WCAG 2.1
         </span>
-      </div>
+      </Link>
       <div className="flex items-center gap-3.5">
+        <Link
+          href="/"
+          className="flex h-[34px] items-center gap-2 rounded-[9px] px-2.5 text-[13px] font-medium text-ink-soft transition-colors hover:bg-[#f6f7f9] hover:text-ink"
+        >
+          <FontAwesomeIcon icon={faArrowLeft} className="text-xs" />
+          New scan
+        </Link>
+        <span className="h-5 w-px bg-line-strong" />
         <div className="flex items-center gap-[7px] text-[12.5px] text-ink-soft">
           <span
             className={`size-[7px] rounded-full ${
@@ -547,10 +557,13 @@ function ReportPanel({
         </div>
 
         <div className="mt-4 flex gap-2.5">
-          <button className="flex h-[42px] flex-1 items-center justify-center gap-2 rounded-[10px] bg-brand-500 text-[13.5px] font-semibold text-white transition-colors hover:bg-brand-600 active:translate-y-px">
+          <Link
+            href={`/report?url=${encodeURIComponent(result.finalUrl)}`}
+            className="flex h-[42px] flex-1 items-center justify-center gap-2 rounded-[10px] bg-brand-500 text-[13.5px] font-semibold text-white transition-colors hover:bg-brand-600 active:translate-y-px"
+          >
             <FontAwesomeIcon icon={faFilePdf} className="text-sm" />
             Export PDF
-          </button>
+          </Link>
           <button className="flex h-[42px] flex-1 items-center justify-center gap-2 rounded-[10px] border border-line-strong bg-card text-[13.5px] font-semibold text-ink transition-colors hover:bg-[#f6f7f9]">
             <FontAwesomeIcon icon={faFileCode} className="text-sm text-muted" />
             Export Markdown
