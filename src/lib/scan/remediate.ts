@@ -187,9 +187,7 @@ export function fixAriaRequiredAttr(missing: string[]): FixResult | null {
 /** WCAG 4.1.2 — atributos ARIA não permitidos pra esse role/elemento. */
 export function fixAriaAllowedAttr(invalid: string[]): FixResult | null {
   // axe entrega itens como 'aria-foo="bar"'; queremos só o nome do atributo.
-  const names = invalid
-    .map((s) => s.split("=")[0].trim())
-    .filter(Boolean);
+  const names = invalid.map((s) => s.split("=")[0].trim()).filter(Boolean);
   if (names.length === 0) return null;
   return {
     text:
@@ -295,9 +293,7 @@ export function contrastRatio(a: Rgb, b: Rgb): number {
 function nearestPassingFg(fg: Rgb, bg: Rgb, target: number): Rgb | null {
   // Decide o sentido: escurecer ou clarear, conforme o fundo.
   const towardBlack = luminance(bg) > 0.5;
-  const goal: Rgb = towardBlack
-    ? { r: 0, g: 0, b: 0 }
-    : { r: 255, g: 255, b: 255 };
+  const goal: Rgb = towardBlack ? { r: 0, g: 0, b: 0 } : { r: 255, g: 255, b: 255 };
 
   if (contrastRatio(goal, bg) < target) return null; // impossível nesse fundo
 

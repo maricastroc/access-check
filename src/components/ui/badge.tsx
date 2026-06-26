@@ -23,12 +23,7 @@ type BadgeProps = {
 };
 
 /** Pílula com texto (e ponto opcional) — selos tipo "WCAG 2.1", "WCAG AA". */
-export function Badge({
-  children,
-  tone = "neutral",
-  dot = false,
-  className,
-}: BadgeProps) {
+export function Badge({ children, tone = "neutral", dot = false, className }: BadgeProps) {
   return (
     <span
       className={cn(

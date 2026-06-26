@@ -15,11 +15,7 @@ import {
   faSpinner,
   faTriangleExclamation,
 } from "@fortawesome/free-solid-svg-icons";
-import type {
-  FixVerification,
-  ScanResult,
-  Severity,
-} from "@/lib/scan/types";
+import type { FixVerification, ScanResult, Severity } from "@/lib/scan/types";
 import { CopyableCode } from "@/components/ui/copyable-code";
 import {
   modeDesc,
@@ -34,27 +30,25 @@ import {
 
 type Status = "loading" | "done" | "error";
 
-/** id de DOM estável pra uma violação, derivado do título (casa com Fix First). */
 function fixDomId(title: string): string {
-  return `fix-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")}`;
+  return `fix-${title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")}`;
 }
 type FilterKey = "all" | Severity | "passed";
 
-/**
- * Selo de validação: provamos o conserto re-rodando o axe depois de aplicá-lo.
- * "unchecked" (fix sem mutação auto-aplicável) não rende selo.
- */
 function VerifyPill({ v }: { v: FixVerification }) {
   if (v === "verified")
     return (
-      <span className="inline-flex items-center gap-1 rounded-md bg-[#e7f6ee] px-1.5 py-[2px] text-[10.5px] font-semibold text-[#1a7f46]">
+      <span className="inline-flex items-center gap-1 rounded-md bg-[#e7f6ee] px-1.5 py-0.5 text-[10.5px] font-semibold text-[#1a7f46]">
         <FontAwesomeIcon icon={faCheck} className="text-[9px]" />
         Verified — re-scan passes
       </span>
     );
   if (v === "failed")
     return (
-      <span className="inline-flex items-center gap-1 rounded-md bg-[#fdf0e7] px-1.5 py-[2px] text-[10.5px] font-semibold text-[#b8651b]">
+      <span className="inline-flex items-center gap-1 rounded-md bg-[#fdf0e7] px-1.5 py-0.5 text-[10.5px] font-semibold text-[#b8651b]">
         <FontAwesomeIcon icon={faTriangleExclamation} className="text-[9px]" />
         Needs review — re-scan still flags
       </span>
@@ -107,21 +101,12 @@ export function ResultsView({ initialUrl }: { initialUrl: string }) {
   return (
     <div className="min-h-screen bg-canvas font-sans text-ink">
       <ColorBlindFilters />
-      <TopBar
-        status={status}
-        onRerun={() => scan(url)}
-        busy={status === "loading"}
-      />
+      <TopBar status={status} onRerun={() => scan(url)} busy={status === "loading"} />
 
       {status === "loading" && <ScanningState url={url} />}
 
       {status === "error" && (
-        <ErrorState
-          url={input}
-          message={error}
-          onChange={setInput}
-          onRetry={() => scan(input)}
-        />
+        <ErrorState url={input} message={error} onChange={setInput} onRetry={() => scan(input)} />
       )}
 
       {status === "done" && result && (
@@ -144,24 +129,14 @@ export function ResultsView({ initialUrl }: { initialUrl: string }) {
 }
 
 /* ---------------- Top bar ---------------- */
-function TopBar({
-  status,
-  onRerun,
-  busy,
-}: {
-  status: Status;
-  onRerun: () => void;
-  busy: boolean;
-}) {
+function TopBar({ status, onRerun, busy }: { status: Status; onRerun: () => void; busy: boolean }) {
   return (
     <header className="sticky top-0 z-30 flex h-[58px] items-center justify-between border-b border-line bg-card px-7">
       <Link href="/" className="flex items-center gap-2.5">
         <span className="flex size-[22px] items-center justify-center rounded-md bg-ink">
           <span className="size-[9px] rotate-45 rounded-[2px] bg-brand-500" />
         </span>
-        <span className="text-[15px] font-semibold tracking-tight">
-          AccessCheck
-        </span>
+        <span className="text-[15px] font-semibold tracking-tight">AccessCheck</span>
         <span className="ml-0.5 border-l border-line-strong pl-2.5 font-mono text-[11px] text-muted">
           v2.1 · WCAG 2.1
         </span>
@@ -220,8 +195,8 @@ function ScanningState({ url }: { url: string }) {
       <div>
         <p className="text-lg font-semibold">Auditing the page…</p>
         <p className="mt-1.5 text-sm text-muted">
-          Rendering <span className="font-medium text-ink">{url}</span>,
-          injecting axe-core and checking 50+ WCAG rules.
+          Rendering <span className="font-medium text-ink">{url}</span>, injecting axe-core and
+          checking 50+ WCAG rules.
         </p>
       </div>
       <div className="mt-1 flex items-center gap-2 font-mono text-xs text-faint">
@@ -326,8 +301,7 @@ function PreviewPanel({
             />
           </div>
           <span className="hidden text-xs whitespace-nowrap text-muted sm:block">
-            Scanned {result.scannedElements} elements ·{" "}
-            {(result.durationMs / 1000).toFixed(1)}s
+            Scanned {result.scannedElements} elements · {(result.durationMs / 1000).toFixed(1)}s
           </span>
         </form>
         <div className="flex items-center gap-2 text-xs text-ink-soft">
@@ -383,11 +357,11 @@ function PreviewPanel({
         <div className="flex h-[42px] items-center gap-3.5 border-b border-line bg-[#f7f8fa] px-3.5">
           <div className="flex gap-[7px]">
             <span className="size-[11px] rounded-full bg-[#ff5f57]" />
-            <span className="size-[11px] rounded-full bg-[#febc2e]" />
-            <span className="size-[11px] rounded-full bg-[#28c840]" />
+            <span className="size-2.75 rounded-full bg-[#febc2e]" />
+            <span className="size-2.75 rounded-full bg-[#28c840]" />
           </div>
           <div className="flex h-[25px] flex-1 items-center gap-[7px] truncate rounded-[7px] border border-line-strong bg-card px-[11px] font-mono text-[11.5px] text-muted">
-            <span className="size-[11px] shrink-0 rounded-full border-[1.5px] border-[#b7bcc4]" />
+            <span className="size-2.75 shrink-0 rounded-full border-[1.5px] border-[#b7bcc4]" />
             <span className="truncate">{host}</span>
           </div>
           <span className="text-[11px] text-faint">Live preview</span>
@@ -599,16 +573,12 @@ function ReportPanel({
               <div className="text-[34px] leading-none font-bold tracking-tight">
                 {result.score}
               </div>
-              <div className="mt-[3px] font-mono text-[11px] text-faint">
-                / 100
-              </div>
+              <div className="mt-[3px] font-mono text-[11px] text-faint">/ 100</div>
             </div>
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2.5">
-              <span className="text-[13px] font-semibold">
-                Accessibility score
-              </span>
+              <span className="text-[13px] font-semibold">Accessibility score</span>
               {compliant ? (
                 <span className="rounded-[7px] bg-[#e6f5ee] px-2.5 py-[3px] text-[11px] font-semibold tracking-wide text-success">
                   WCAG AA
@@ -620,9 +590,7 @@ function ReportPanel({
                 </span>
               )}
             </div>
-            <p className="mt-2.5 text-[13px] leading-normal text-ink-soft">
-              {result.summary}
-            </p>
+            <p className="mt-2.5 text-[13px] leading-normal text-ink-soft">{result.summary}</p>
           </div>
         </div>
 
@@ -634,9 +602,7 @@ function ReportPanel({
             >
               <div className="flex items-center gap-1.5">
                 <span className={`size-2 rounded-full ${c.dot}`} />
-                <span className="text-lg font-bold tracking-tight">
-                  {c.value}
-                </span>
+                <span className="text-lg font-bold tracking-tight">{c.value}</span>
               </div>
               <div className="mt-[3px] text-[11px] text-muted">{c.label}</div>
             </div>
@@ -668,9 +634,7 @@ function ReportPanel({
             <div className="h-[26px] text-[10.5px] leading-tight font-medium text-muted">
               {t.label}
             </div>
-            <div
-              className={`mt-1.5 text-[26px] font-bold tracking-tight ${t.color}`}
-            >
+            <div className={`mt-1.5 text-[26px] font-bold tracking-tight ${t.color}`}>
               {t.value}
             </div>
             <div className="mt-0.5 text-[10.5px] text-faint">{t.sub}</div>
@@ -683,17 +647,10 @@ function ReportPanel({
         <div className="mt-1 rounded-2xl border border-line bg-card px-[22px] py-5">
           <div className="mb-1.5 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <FontAwesomeIcon
-                icon={faFire}
-                className="text-base text-serious"
-              />
-              <span className="text-base font-semibold tracking-tight">
-                Fix First
-              </span>
+              <FontAwesomeIcon icon={faFire} className="text-base text-serious" />
+              <span className="text-base font-semibold tracking-tight">Fix First</span>
             </div>
-            <span className="text-xs text-muted">
-              Ordered by impact ÷ effort
-            </span>
+            <span className="text-xs text-muted">Ordered by impact ÷ effort</span>
           </div>
           <p className="mb-1.5 text-[12.5px] leading-normal text-muted">
             Resolve these first for the biggest jump in your score.
@@ -710,10 +667,7 @@ function ReportPanel({
                 <div className="text-sm font-semibold">{f.title}</div>
                 <div className="mt-1.5 flex items-center gap-3">
                   <span className="text-xs text-ink-soft">
-                    Effort{" "}
-                    <span className="font-mono font-semibold text-ink">
-                      {f.effort}
-                    </span>
+                    Effort <span className="font-mono font-semibold text-ink">{f.effort}</span>
                   </span>
                   <span className="h-[11px] w-px bg-line-strong" />
                   <span className="inline-flex items-center gap-1.5 text-xs text-ink-soft">
@@ -746,9 +700,7 @@ function ReportPanel({
       {/* WCAG Violations */}
       <div className="mt-1">
         <div className="mb-3 flex items-baseline justify-between">
-          <span className="text-base font-semibold tracking-tight">
-            WCAG Violations
-          </span>
+          <span className="text-base font-semibold tracking-tight">WCAG Violations</span>
           <span className="text-xs text-muted">{filterCountLabel}</span>
         </div>
 
@@ -765,9 +717,7 @@ function ReportPanel({
                     : "border-line-strong bg-card font-medium text-ink-soft hover:border-[#d6d9df]"
                 }`}
               >
-                {t.dot && (
-                  <span className={`size-[7px] rounded-full ${t.dot}`} />
-                )}
+                {t.dot && <span className={`size-[7px] rounded-full ${t.dot}`} />}
                 {t.label}
                 <span
                   className={`font-mono text-[11px] ${active ? "text-white/65" : "text-faint"}`}
@@ -783,12 +733,8 @@ function ReportPanel({
           <div key={g.sev} className="mb-[18px]">
             <div className="mb-2.5 flex items-center gap-2">
               <span className={`size-2 rounded-full ${sevDot[g.sev]}`} />
-              <span className="text-[12.5px] font-semibold">
-                {severityLabel[g.sev]}
-              </span>
-              <span className="font-mono text-[11.5px] text-faint">
-                {g.items.length}
-              </span>
+              <span className="text-[12.5px] font-semibold">{severityLabel[g.sev]}</span>
+              <span className="font-mono text-[11.5px] text-faint">{g.items.length}</span>
               <span className="h-px flex-1 bg-line" />
             </div>
 
@@ -799,14 +745,10 @@ function ReportPanel({
                 className="mb-2 scroll-mt-24 rounded-xl border border-line bg-card transition-[border-color] hover:border-[#dcdee4]"
               >
                 <summary className="flex cursor-pointer items-center gap-3 px-[15px] py-[13px]">
-                  <span
-                    className={`size-[7px] shrink-0 rounded-full ${sevDot[g.sev]}`}
-                  />
+                  <span className={`size-[7px] shrink-0 rounded-full ${sevDot[g.sev]}`} />
                   <div className="min-w-0 flex-1">
                     <div className="text-[13.5px] font-medium">{it.title}</div>
-                    <div className="mt-0.5 font-mono text-[11px] text-faint">
-                      {it.criterion}
-                    </div>
+                    <div className="mt-0.5 font-mono text-[11px] text-faint">{it.criterion}</div>
                   </div>
                   <span className="max-w-[140px] truncate rounded-md bg-[#f6f7f9] px-2 py-[3px] font-mono text-[11px] text-faint">
                     {it.where}
@@ -817,21 +759,14 @@ function ReportPanel({
                   />
                 </summary>
                 <div className="pr-[15px] pb-[15px] pl-[35px]">
-                  <p className="mb-2.5 text-[12.5px] leading-relaxed text-ink-soft">
-                    {it.desc}
-                  </p>
+                  <p className="mb-2.5 text-[12.5px] leading-relaxed text-ink-soft">{it.desc}</p>
                   <div className="rounded-[10px] border border-line bg-[#f7f8fa] px-3 py-[11px]">
                     <div className="mb-1.5 text-[10px] font-semibold tracking-wider text-muted uppercase">
                       Suggested fix
                     </div>
                     {it.fixGroups && it.fixGroups.length > 0 ? (
                       it.fixGroups.map((fg, gi) => (
-                        <div
-                          key={gi}
-                          className={
-                            gi > 0 ? "mt-3 border-t border-line pt-3" : ""
-                          }
-                        >
+                        <div key={gi} className={gi > 0 ? "mt-3 border-t border-line pt-3" : ""}>
                           <div className="font-mono text-[12.5px] leading-relaxed whitespace-pre-line text-ink">
                             {fg.text}
                           </div>
@@ -863,9 +798,7 @@ function ReportPanel({
             <div className="mb-3 flex items-center gap-2">
               <span className="size-2 rounded-full bg-success" />
               <span className="text-[12.5px] font-semibold">Passed</span>
-              <span className="font-mono text-[11.5px] text-faint">
-                {result.passed.length}
-              </span>
+              <span className="font-mono text-[11.5px] text-faint">{result.passed.length}</span>
             </div>
             <div className="flex flex-wrap gap-[7px]">
               {result.passed.map((p, i) => (
@@ -873,10 +806,7 @@ function ReportPanel({
                   key={`${p}-${i}`}
                   className="inline-flex items-center gap-1.5 rounded-[7px] border border-[#dceee3] bg-[#eef7f1] px-2.5 py-1 text-[11.5px] text-[#3f7a5f]"
                 >
-                  <FontAwesomeIcon
-                    icon={faCheck}
-                    className="text-[10px] text-success"
-                  />
+                  <FontAwesomeIcon icon={faCheck} className="text-[10px] text-success" />
                   {p}
                 </span>
               ))}
@@ -912,12 +842,7 @@ function safeHost(url: string): string {
 
 function ColorBlindFilters() {
   return (
-    <svg
-      aria-hidden="true"
-      width="0"
-      height="0"
-      className="absolute h-0 w-0 overflow-hidden"
-    >
+    <svg aria-hidden="true" width="0" height="0" className="absolute h-0 w-0 overflow-hidden">
       <defs>
         <filter id="cb-deut">
           <feColorMatrix

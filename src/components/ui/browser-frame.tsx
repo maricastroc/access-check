@@ -32,10 +32,7 @@ export function BrowserFrame({
       )}
     >
       <div
-        className={cn(
-          "flex items-center gap-3 border-b border-line px-5 py-3.5",
-          chromeClassName,
-        )}
+        className={cn("flex items-center gap-3 border-b border-line px-5 py-3.5", chromeClassName)}
       >
         <div className="flex gap-1.5">
           <span className="size-3 rounded-full bg-line" />
@@ -46,9 +43,7 @@ export function BrowserFrame({
           {secure && <FontAwesomeIcon icon={faLock} className="text-xs" />}
           {url}
         </div>
-        {trailing && (
-          <span className="text-sm font-medium text-muted">{trailing}</span>
-        )}
+        {trailing && <span className="text-sm font-medium text-muted">{trailing}</span>}
       </div>
       {children}
     </div>

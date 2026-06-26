@@ -1,13 +1,7 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
-export type StatusTone =
-  | "success"
-  | "warning"
-  | "critical"
-  | "serious"
-  | "moderate"
-  | "brand";
+export type StatusTone = "success" | "warning" | "critical" | "serious" | "moderate" | "brand";
 
 const toneText: Record<StatusTone, string> = {
   success: "text-success",

@@ -38,13 +38,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Missing 'url'." }, { status: 400 });
   }
 
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
   if (RATE_ENABLED && rateLimited(ip)) {
-    return NextResponse.json(
-      { error: "Too many scans. Try again in a minute." },
-      { status: 429 },
-    );
+    return NextResponse.json({ error: "Too many scans. Try again in a minute." }, { status: 429 });
   }
 
   const url = normalizeUrl(body.url);
@@ -66,11 +62,7 @@ export async function POST(req: Request) {
     cache.set(url, { at: Date.now(), result });
     return NextResponse.json(result);
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Unknown error during scan.";
-    return NextResponse.json(
-      { error: `Could not scan this page. ${message}` },
-      { status: 502 },
-    );
+    const message = err instanceof Error ? err.message : "Unknown error during scan.";
+    return NextResponse.json({ error: `Could not scan this page. ${message}` }, { status: 502 });
   }
 }

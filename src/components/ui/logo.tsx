@@ -17,9 +17,7 @@ export function Logo({ href = "/", meta, className }: LogoProps) {
       <span className="ac-focusring flex size-9 items-center justify-center rounded-xl bg-linear-to-br from-brand-400 to-brand-600 text-white shadow-soft">
         <FontAwesomeIcon icon={faCheck} className="text-base" />
       </span>
-      <span className="text-lg font-semibold tracking-tight text-ink">
-        AccessCheck
-      </span>
+      <span className="text-lg font-semibold tracking-tight text-ink">AccessCheck</span>
       {meta && (
         <span className="ml-0.5 border-l border-line-strong pl-2.5 font-mono text-[11px] text-muted">
           {meta}

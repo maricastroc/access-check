@@ -1,9 +1,5 @@
 import Link from "next/link";
-import type {
-  AnchorHTMLAttributes,
-  ButtonHTMLAttributes,
-  ReactNode,
-} from "react";
+import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { cn } from "@/lib/cn";
@@ -14,8 +10,7 @@ export type ButtonSize = "sm" | "md";
 const variantClasses: Record<ButtonVariant, string> = {
   primary: "bg-brand-500 text-white hover:bg-brand-600",
   dark: "bg-ink text-white hover:bg-ink-soft",
-  secondary:
-    "border border-line-strong bg-card text-ink hover:bg-canvas hover:border-[#d6d9df]",
+  secondary: "border border-line-strong bg-card text-ink hover:bg-canvas hover:border-[#d6d9df]",
   ghost: "text-ink-soft hover:text-ink",
 };
 

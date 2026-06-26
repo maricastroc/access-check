@@ -16,12 +16,7 @@ import {
   type FixResult,
 } from "./remediate";
 import { clusterFixes, type FixCluster } from "./group";
-import {
-  buildFixFirst,
-  buildSummary,
-  computeScore,
-  severityOrder,
-} from "./derive";
+import { buildFixFirst, buildSummary, computeScore, severityOrder } from "./derive";
 import type {
   FixGroup,
   FixVerification,
@@ -98,11 +93,7 @@ const ARIA_NAME_RULES = new Set([
 ]);
 
 // Regras cujo fix depende dos atributos do elemento (coletados na página).
-const ELEMENT_RULES = new Set([
-  "label",
-  "image-alt",
-  ...ARIA_NAME_RULES,
-]);
+const ELEMENT_RULES = new Set(["label", "image-alt", ...ARIA_NAME_RULES]);
 
 function concreteFix(
   ruleId: string,
@@ -111,11 +102,9 @@ function concreteFix(
 ): FixResult | null {
   if (!node) return null;
   // Regras com fix mecânico fixo (não dependem do DOM).
-  if (ruleId === "html-has-lang" || ruleId === "html-lang-valid")
-    return fixHtmlLang();
+  if (ruleId === "html-has-lang" || ruleId === "html-lang-valid") return fixHtmlLang();
   if (ruleId === "document-title") return fixDocumentTitle();
-  if (ruleId === "meta-viewport" || ruleId === "meta-viewport-large")
-    return fixMetaViewport();
+  if (ruleId === "meta-viewport" || ruleId === "meta-viewport-large") return fixMetaViewport();
   // Regras que leem atributos do elemento.
   if (ruleId === "label" && elInfo) return fixLabel(elInfo);
   if (ruleId === "image-alt" && elInfo) return fixImageAlt(elInfo);
@@ -174,16 +163,11 @@ type VerifyOp = { ruleId: string; selector: string | null; apply: FixApply };
  * só naquela regra, reverte, e devolve se a violação sumiu. É o que prova que
  * o conserto sugerido realmente resolve, em vez de só afirmar.
  */
-const VERIFY_IN_PAGE = async (
-  ops: VerifyOp[],
-): Promise<FixVerification[]> => {
+const VERIFY_IN_PAGE = async (ops: VerifyOp[]): Promise<FixVerification[]> => {
   // @ts-expect-error axe foi injetado no contexto da página
   const axe = window.axe;
 
-  const runRule = async (
-    context: Element | Document,
-    ruleId: string,
-  ): Promise<boolean> => {
+  const runRule = async (context: Element | Document, ruleId: string): Promise<boolean> => {
     const res = await axe.run(context, {
       runOnly: { type: "rule", values: [ruleId] },
     });
@@ -213,9 +197,7 @@ const VERIFY_IN_PAGE = async (
           document.title = prev;
           results.push(ok ? "verified" : "failed");
         } else if (a.kind === "viewport") {
-          let meta = document.querySelector(
-            'meta[name="viewport"]',
-          ) as HTMLMetaElement | null;
+          let meta = document.querySelector('meta[name="viewport"]') as HTMLMetaElement | null;
           const created = !meta;
           const prev = meta?.getAttribute("content") ?? null;
           if (!meta) {
@@ -296,9 +278,7 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
     }
     // Espera a rede assentar pra SPAs montarem o conteúdo. Sites "ao vivo"
     // (placares, ads) podem nunca ficar idle, então ignoramos o timeout.
-    await page
-      .waitForLoadState("networkidle", { timeout: 6_000 })
-      .catch(() => {});
+    await page.waitForLoadState("networkidle", { timeout: 6_000 }).catch(() => {});
     await page.waitForTimeout(1500);
 
     const title = (await page.title()) || url;
@@ -350,9 +330,7 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
                   ariaLabel: el.getAttribute("aria-label") ?? undefined,
                   src: el.getAttribute("src") ?? undefined,
                   role: el.getAttribute("role") ?? undefined,
-                  text:
-                    (el.textContent ?? "").replace(/\s+/g, " ").trim() ||
-                    undefined,
+                  text: (el.textContent ?? "").replace(/\s+/g, " ").trim() || undefined,
                   title: el.getAttribute("title") ?? undefined,
                   // Contexto pra alt: legenda da figura ou texto do link/figura
                   // que envolve a imagem (sem o próprio textContent da img).
@@ -391,13 +369,10 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
       const clusters = clusterFixes(perNode);
 
       // Campos legados (fix/fixCode) seguem vindo do primeiro nó.
-      const firstElInfo =
-        where in elementInfos ? elementInfos[where] : undefined;
+      const firstElInfo = where in elementInfos ? elementInfos[where] : undefined;
       const result = concreteFix(v.id, firstNode, firstElInfo);
       const fix =
-        result?.text ||
-        firstNode?.failureSummary?.replace(/^Fix [^:]+:\s*/i, "").trim() ||
-        v.help;
+        result?.text || firstNode?.failureSummary?.replace(/^Fix [^:]+:\s*/i, "").trim() || v.help;
 
       return {
         clusters,
@@ -424,8 +399,7 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
       for (const cluster of e.clusters) {
         if (verifyOps.length >= MAX_VERIFY_OPS) break;
         if (!cluster.apply) continue; // sem mutação auto-aplicável
-        const docLevel =
-          cluster.apply.kind === "doc" || cluster.apply.kind === "viewport";
+        const docLevel = cluster.apply.kind === "doc" || cluster.apply.kind === "viewport";
         const selector = docLevel ? null : (cluster.selectors[0] ?? null);
         if (!docLevel && !selector) continue; // sem alvo pra aplicar
         verifyOps.push({ ruleId: e.v.id, selector, apply: cluster.apply });
@@ -453,23 +427,17 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
               verification: c.verification ?? "unchecked",
             }) satisfies FixGroup,
         );
-        const main =
-          e.clusters.find((c) => c.selectors.includes(e.v.where)) ??
-          e.clusters[0];
+        const main = e.clusters.find((c) => c.selectors.includes(e.v.where)) ?? e.clusters[0];
         e.v.verification = main.verification ?? "unchecked";
       }
     }
 
     const violations: ScanViolation[] = enriched
       .map((e) => e.v)
-      .sort(
-        (a, b) =>
-          severityOrder.indexOf(a.severity) - severityOrder.indexOf(b.severity),
-      );
+      .sort((a, b) => severityOrder.indexOf(a.severity) - severityOrder.indexOf(b.severity));
 
     // ---- marcadores: bounding box dos nós acima da dobra ----
-    const targets: { selector: string; severity: Severity; label: string }[] =
-      [];
+    const targets: { selector: string; severity: Severity; label: string }[] = [];
     for (const v of axe.violations) {
       const severity = (v.impact ?? "minor") as Severity;
       const sel = firstTarget(v.nodes[0]?.target);
@@ -526,8 +494,7 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
       url,
       finalUrl,
       title,
-      scannedElements:
-        axe.passes.length + axe.violations.length + axe.incomplete.length,
+      scannedElements: axe.passes.length + axe.violations.length + axe.incomplete.length,
       durationMs: Date.now() - startedAt,
       screenshot,
       score: computeScore(violations),

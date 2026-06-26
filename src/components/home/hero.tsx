@@ -20,14 +20,12 @@ export function Hero() {
           </Badge>
 
           <h1 className="mt-6 text-5xl leading-[1.04] font-bold tracking-tight text-ink sm:text-6xl lg:text-[4.25rem]">
-            Audit any website for{" "}
-            <span className="text-brand-600">accessibility</span> in seconds.
+            Audit any website for <span className="text-brand-600">accessibility</span> in seconds.
           </h1>
 
           <p className="mt-6 max-w-md text-lg leading-7 text-muted">
-            Paste a URL. AccessCheck runs a full WCAG 2.1 audit, simulates real
-            visual impairments, and hands you an exportable report you can act
-            on.
+            Paste a URL. AccessCheck runs a full WCAG 2.1 audit, simulates real visual impairments,
+            and hands you an exportable report you can act on.
           </p>
 
           <UrlForm />

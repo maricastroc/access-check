@@ -1,71 +1,53 @@
 @import "tailwindcss";
 
-/*
-  AccessCheck — tema próprio (estende o tema padrão do Tailwind v4).
-  Tokens declarados em @theme viram utilitários automaticamente:
-  bg-brand-500, text-ink, shadow-card, rounded-card, etc.
-*/
 @theme {
-  /* Tipografia */
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
-  /* Marca — azul AccessCheck */
---color-brand-50:  #eef2ff;
---color-brand-100: #e0e7ff;
---color-brand-200: #c7d2fe;
---color-brand-300: #a5b4fc;
---color-brand-400: #818cf8;
---color-brand-500: #6366f1;
---color-brand-600: #4f46e5;
---color-brand-700: #4338ca;
---color-brand-800: #3730a3;
---color-brand-900: #312e81;
+  --color-brand-50: #eff6ff;
+  --color-brand-100: #dbeafe;
+  --color-brand-200: #bfdbfe;
+  --color-brand-300: #93c5fd;
+  --color-brand-400: #60a5fa;
+  --color-brand-500: #3b82f6;
+  --color-brand-600: #2563eb;
+  --color-brand-700: #1d4ed8;
+  --color-brand-800: #1e40af;
+  --color-brand-900: #1e3a8a;
 
-  /* Tinta / texto */
   --color-ink: #16181d;
   --color-ink-soft: #5b616e;
   --color-muted: #8a909c;
   --color-faint: #9ca1ab;
 
-  /* Superfícies */
   --color-canvas: #f4f5f7;
   --color-card: #ffffff;
   --color-line: #ecedf0;
   --color-line-strong: #e2e4e9;
 
-  /* Estados / severidade */
   --color-success: #1f9d6b;
   --color-warning: #d98b0b;
   --color-critical: #e5484d;
   --color-serious: #f2820a;
   --color-moderate: #d9a400;
 
-  /* Raios */
   --radius-card: 1.25rem;
   --radius-field: 1rem;
 
-  /* Sombras */
-  --shadow-card:
-    0 1px 2px rgba(16, 24, 40, 0.04), 0 12px 32px -8px rgba(16, 24, 40, 0.12);
-  --shadow-soft:
-    0 1px 2px rgba(16, 24, 40, 0.05), 0 2px 8px rgba(16, 24, 40, 0.04);
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 12px 32px -8px rgba(16, 24, 40, 0.12);
+  --shadow-soft: 0 1px 2px rgba(16, 24, 40, 0.05), 0 2px 8px rgba(16, 24, 40, 0.04);
 }
 
 html {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Dogfooding: uma ferramenta de acessibilidade precisa ter foco visível
-   exemplar. Indicador de foco WCAG em toda a página. */
 :focus-visible {
   outline: 2px solid var(--color-brand-500);
   outline-offset: 2px;
   border-radius: 3px;
 }
 
-/* Focus ring como device de marca — outline tracejado deslocado, o gesto
-   visual mais reconhecível de acessibilidade. Decorativo (aria-hidden). */
 .ac-focusring {
   position: relative;
 }
@@ -78,26 +60,13 @@ html {
   pointer-events: none;
 }
 
-/* Grade pontilhada de fundo — sugere estrutura/inspeção, com fade nas bordas. */
 .ac-grid {
-  background-image: radial-gradient(
-    var(--color-line-strong) 1px,
-    transparent 1px
-  );
+  background-image: radial-gradient(var(--color-line-strong) 1px, transparent 1px);
   background-size: 22px 22px;
-  -webkit-mask-image: radial-gradient(
-    ellipse 80% 80% at 50% 0%,
-    #000 40%,
-    transparent 100%
-  );
-  mask-image: radial-gradient(
-    ellipse 80% 80% at 50% 0%,
-    #000 40%,
-    transparent 100%
-  );
+  -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 0%, #000 40%, transparent 100%);
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 0%, #000 40%, transparent 100%);
 }
 
-/* Scrollbar fina e discreta pro painel de preview (rola sozinho, sticky) */
 .scroll-slim {
   scrollbar-width: thin;
   scrollbar-color: transparent transparent;
@@ -116,7 +85,6 @@ html {
   background-color: rgba(16, 18, 29, 0.18);
 }
 
-/* Acordeão de violações (tela de resultado) */
 details > summary {
   list-style: none;
 }
@@ -138,9 +106,6 @@ body {
   font-family: var(--font-sans);
 }
 
-/* Barra de progresso indeterminada (loading do relatório).
-   Sem percentual — só comunica "trabalhando", já que o scan não
-   reporta progresso granular. */
 .ac-indeterminate {
   position: absolute;
   inset: 0;

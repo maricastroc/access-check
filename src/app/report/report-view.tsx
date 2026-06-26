@@ -162,15 +162,10 @@ function CenterState({
     <div className="flex min-h-[70vh] flex-col items-center justify-center gap-4 px-6 text-center">
       <span
         className={`flex size-14 items-center justify-center rounded-2xl ${
-          tone === "critical"
-            ? "bg-[#fdecec] text-critical"
-            : "bg-brand-50 text-brand-500"
+          tone === "critical" ? "bg-[#fdecec] text-critical" : "bg-brand-50 text-brand-500"
         }`}
       >
-        <FontAwesomeIcon
-          icon={icon}
-          className={`text-xl ${spin ? "animate-spin" : ""}`}
-        />
+        <FontAwesomeIcon icon={icon} className={`text-xl ${spin ? "animate-spin" : ""}`} />
       </span>
       <div className="max-w-md">
         <p className="text-lg font-semibold">{title}</p>
@@ -266,33 +261,32 @@ function Page1({ result }: { result: ScanResult }) {
     { label: "Elements Scanned", value: String(result.scannedElements) },
   ];
 
-  const counts: { label: string; sub: string; value: number; color: string }[] =
-    [
-      {
-        label: "Critical",
-        sub: "Must fix",
-        value: result.counts.critical,
-        color: sevHex.critical,
-      },
-      {
-        label: "Serious",
-        sub: "High priority",
-        value: result.counts.serious,
-        color: sevHex.serious,
-      },
-      {
-        label: "Moderate",
-        sub: "To review",
-        value: result.counts.moderate,
-        color: sevHex.moderate,
-      },
-      {
-        label: "Passed",
-        sub: "Conformant",
-        value: result.counts.passed,
-        color: "#1f9d6b",
-      },
-    ];
+  const counts: { label: string; sub: string; value: number; color: string }[] = [
+    {
+      label: "Critical",
+      sub: "Must fix",
+      value: result.counts.critical,
+      color: sevHex.critical,
+    },
+    {
+      label: "Serious",
+      sub: "High priority",
+      value: result.counts.serious,
+      color: sevHex.serious,
+    },
+    {
+      label: "Moderate",
+      sub: "To review",
+      value: result.counts.moderate,
+      color: sevHex.moderate,
+    },
+    {
+      label: "Passed",
+      sub: "Conformant",
+      value: result.counts.passed,
+      color: "#1f9d6b",
+    },
+  ];
 
   const fixes = result.fixFirst.map((f) => {
     const v = result.violations.find((x) => x.title === f.title);
@@ -306,9 +300,7 @@ function Page1({ result }: { result: ScanResult }) {
         <div className="flex items-center gap-2.5">
           <BrandMark size={34} />
           <div className="flex flex-col gap-0.5">
-            <span className="text-[15px] font-bold tracking-tight">
-              AccessCheck
-            </span>
+            <span className="text-[15px] font-bold tracking-tight">AccessCheck</span>
             <span className="text-[8.5px] font-semibold tracking-[0.17em] text-muted uppercase">
               Accessibility Platform
             </span>
@@ -319,8 +311,7 @@ function Page1({ result }: { result: ScanResult }) {
             WCAG 2.1 Audit
           </span>
           <span className="font-mono text-[11px] text-ink-soft">
-            Report&nbsp;#AC-{new Date().getFullYear()}-
-            {shortId(result.finalUrl)}
+            Report&nbsp;#AC-{new Date().getFullYear()}-{shortId(result.finalUrl)}
           </span>
         </div>
       </div>
@@ -343,9 +334,7 @@ function Page1({ result }: { result: ScanResult }) {
             <div className="text-[8.5px] font-semibold tracking-[0.14em] text-muted uppercase">
               {m.label}
             </div>
-            <div className="mt-1 text-[14px] font-medium text-ink">
-              {m.value}
-            </div>
+            <div className="mt-1 text-[14px] font-medium text-ink">{m.value}</div>
           </div>
         ))}
       </div>
@@ -410,17 +399,12 @@ function Page1({ result }: { result: ScanResult }) {
                 key={c.label}
                 className="flex flex-col gap-2 rounded-xl border border-line bg-card p-3"
               >
-                <span
-                  className="h-1 w-5 rounded-full"
-                  style={{ background: c.color }}
-                />
+                <span className="h-1 w-5 rounded-full" style={{ background: c.color }} />
                 <span className="text-[27px] leading-none font-bold tracking-tight text-ink">
                   {c.value}
                 </span>
                 <div>
-                  <div className="text-[11px] font-semibold text-ink">
-                    {c.label}
-                  </div>
+                  <div className="text-[11px] font-semibold text-ink">{c.label}</div>
                   <div className="mt-px text-[9px] text-muted">{c.sub}</div>
                 </div>
               </div>
@@ -441,8 +425,8 @@ function Page1({ result }: { result: ScanResult }) {
             <>
               {" "}
               but {blockers} blocking issue{blockers > 1 ? "s" : ""} remain
-              {blockers > 1 ? "" : "s"}. Resolving the priority fixes below
-              would raise the score toward Level&nbsp;AA conformance.
+              {blockers > 1 ? "" : "s"}. Resolving the priority fixes below would raise the score
+              toward Level&nbsp;AA conformance.
             </>
           ) : (
             <> with no critical or serious blockers — a strong baseline.</>
@@ -460,9 +444,7 @@ function Page1({ result }: { result: ScanResult }) {
                 Top Priority Fixes
               </h2>
             </div>
-            <span className="pb-0.5 text-[11px] text-muted">
-              Ranked by impact ÷ effort
-            </span>
+            <span className="pb-0.5 text-[11px] text-muted">Ranked by impact ÷ effort</span>
           </div>
 
           <div className="mt-2.5 overflow-hidden rounded-2xl border border-line">
@@ -473,14 +455,10 @@ function Page1({ result }: { result: ScanResult }) {
                   i < fixes.length - 1 ? "border-b border-line" : ""
                 }`}
               >
-                <span className="text-[28px] leading-none font-bold text-brand-600">
-                  {i + 1}
-                </span>
+                <span className="text-[28px] leading-none font-bold text-brand-600">{i + 1}</span>
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-[14px] font-semibold text-ink">
-                      {f.title}
-                    </span>
+                    <span className="text-[14px] font-semibold text-ink">{f.title}</span>
                     {f.criterion && (
                       <span className="rounded-md border border-line bg-canvas px-1.5 py-0.5 font-mono text-[9.5px] font-semibold text-ink-soft">
                         {f.criterion.replace(/^WCAG\s/, "").split(" · ")[0]}
@@ -489,13 +467,11 @@ function Page1({ result }: { result: ScanResult }) {
                   </div>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-[11.5px] text-muted">
                     <span>
-                      <b className="font-semibold text-ink">Effort</b>{" "}
-                      {f.effort}
+                      <b className="font-semibold text-ink">Effort</b> {f.effort}
                     </span>
                     <span className="text-line-strong">·</span>
                     <span>
-                      <b className="font-semibold text-ink">Impact</b>{" "}
-                      {f.impact}
+                      <b className="font-semibold text-ink">Impact</b> {f.impact}
                     </span>
                   </div>
                 </div>
@@ -503,12 +479,8 @@ function Page1({ result }: { result: ScanResult }) {
                   <span
                     className="rounded-lg px-2 py-1 text-[11px] font-semibold"
                     style={{
-                      color:
-                        f.impact === "High" ? sevHex.critical : sevHex.serious,
-                      background:
-                        f.impact === "High"
-                          ? sevTint.critical
-                          : sevTint.serious,
+                      color: f.impact === "High" ? sevHex.critical : sevHex.serious,
+                      background: f.impact === "High" ? sevTint.critical : sevTint.serious,
                     }}
                   >
                     {f.impact} impact
@@ -534,13 +506,10 @@ function Page2({ result }: { result: ScanResult }) {
 
       <div className="mt-5">
         <SectionKicker>Section 02</SectionKicker>
-        <h2 className="mt-1.5 text-[30px] font-bold tracking-tight text-ink">
-          Detailed Findings
-        </h2>
+        <h2 className="mt-1.5 text-[30px] font-bold tracking-tight text-ink">Detailed Findings</h2>
         <p className="mt-1.5 max-w-[6in] text-[12px] leading-[1.45] text-muted">
-          Every flagged issue grouped by severity and mapped to its
-          WCAG&nbsp;2.1 success criterion, with the impact and a concrete fix
-          for each.
+          Every flagged issue grouped by severity and mapped to its WCAG&nbsp;2.1 success criterion,
+          with the impact and a concrete fix for each.
         </p>
       </div>
 
@@ -551,8 +520,7 @@ function Page2({ result }: { result: ScanResult }) {
         ))}
         <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-3 py-1.5 text-[11px] font-semibold text-ink">
           <span className="size-2 rounded-full bg-success" />
-          Passed{" "}
-          <b className="font-medium text-muted">{result.counts.passed}</b>
+          Passed <b className="font-medium text-muted">{result.counts.passed}</b>
         </span>
       </div>
 
@@ -568,12 +536,9 @@ function Page2({ result }: { result: ScanResult }) {
               ))}
               {items.length > (sev === "critical" ? 3 : 2) && (
                 <p className="px-1 text-[10px] text-muted">
-                  + {items.length - (sev === "critical" ? 3 : 2)} more{" "}
-                  {sevLabel[sev].toLowerCase()} item
-                  {items.length - (sev === "critical" ? 3 : 2) > 1
-                    ? "s"
-                    : ""}{" "}
-                  in the full log
+                  + {items.length - (sev === "critical" ? 3 : 2)} more {sevLabel[sev].toLowerCase()}{" "}
+                  item
+                  {items.length - (sev === "critical" ? 3 : 2) > 1 ? "s" : ""} in the full log
                 </p>
               )}
             </div>
@@ -600,9 +565,7 @@ function DetailedCard({ v }: { v: ScanResult["violations"][number] }) {
       <div className="grid grid-cols-[1fr_1.7in]">
         <div className="border-r border-line p-4">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[15px] font-semibold text-ink">
-              {v.title}
-            </span>
+            <span className="text-[15px] font-semibold text-ink">{v.title}</span>
             <span
               className="rounded-full border px-2 py-0.5 text-[9px] font-semibold tracking-wide uppercase"
               style={{
@@ -617,9 +580,7 @@ function DetailedCard({ v }: { v: ScanResult["violations"][number] }) {
               {v.criterion.split(" · ")[0]}
             </span>
           </div>
-          <p className="mt-2 text-[11.5px] leading-[1.45] text-ink-soft">
-            {v.desc}
-          </p>
+          <p className="mt-2 text-[11.5px] leading-[1.45] text-ink-soft">{v.desc}</p>
           <div className="mt-2">
             <FieldLabel tone="brand">Suggested fix</FieldLabel>
             <div className="mt-0.5 font-mono text-[11px] leading-[1.45] whitespace-pre-line text-ink">
@@ -639,13 +600,9 @@ function DetailedCard({ v }: { v: ScanResult["violations"][number] }) {
             {v.where}
           </code>
           <FieldLabel>Instances</FieldLabel>
-          <span className="-mt-1.5 text-[20px] font-bold text-ink">
-            {v.nodes}
-          </span>
+          <span className="-mt-1.5 text-[20px] font-bold text-ink">{v.nodes}</span>
           <FieldLabel>Criterion</FieldLabel>
-          <span className="-mt-1.5 text-[11px] text-ink-soft">
-            {v.criterion}
-          </span>
+          <span className="-mt-1.5 text-[11px] text-ink-soft">{v.criterion}</span>
         </div>
       </div>
     </div>
@@ -728,15 +685,11 @@ function Page3({ result }: { result: ScanResult }) {
               <div
                 key={`${v.id}-${i}`}
                 className={`flex items-center justify-between py-2 ${
-                  i < Math.min(moderate.length, 4) - 1
-                    ? "border-b border-line"
-                    : ""
+                  i < Math.min(moderate.length, 4) - 1 ? "border-b border-line" : ""
                 }`}
               >
                 <div className="min-w-0 pr-2">
-                  <div className="truncate text-[12px] font-semibold text-ink">
-                    {v.title}
-                  </div>
+                  <div className="truncate text-[12px] font-semibold text-ink">{v.title}</div>
                   <div className="mt-px truncate text-[10px] text-muted">
                     {v.criterion.split(" · ")[1] ?? v.criterion}
                   </div>
@@ -753,9 +706,7 @@ function Page3({ result }: { result: ScanResult }) {
               </div>
             )}
             {moderate.length === 0 && (
-              <div className="py-3 text-[11px] text-muted">
-                No moderate issues found.
-              </div>
+              <div className="py-3 text-[11px] text-muted">No moderate issues found.</div>
             )}
           </div>
         </div>
@@ -764,9 +715,7 @@ function Page3({ result }: { result: ScanResult }) {
         <div className="overflow-hidden rounded-2xl border border-[#cfe3dc] bg-[#f3f8f5]">
           <div className="flex items-center gap-2.5 border-b border-[#dceee3] px-4 py-3">
             <span className="size-2.5 rounded-[3px] bg-success" />
-            <span className="text-[13px] font-semibold text-ink">
-              Passed Checks
-            </span>
+            <span className="text-[13px] font-semibold text-ink">Passed Checks</span>
             <span className="rounded-full bg-[#e3efe8] px-2 py-0.5 text-[10px] font-semibold text-success">
               {result.counts.passed} conformant
             </span>
@@ -813,10 +762,7 @@ function Page3({ result }: { result: ScanResult }) {
               </div>
             </div>
             <div className="flex flex-col items-center gap-1">
-              <FontAwesomeIcon
-                icon={faArrowRightLong}
-                className="text-brand-500"
-              />
+              <FontAwesomeIcon icon={faArrowRightLong} className="text-brand-500" />
               <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-bold text-brand-600">
                 +{delta} pts
               </span>
@@ -879,9 +825,8 @@ function Page3({ result }: { result: ScanResult }) {
         </div>
 
         <div className="mt-3.5 border-t border-[#cfe3dc] pt-3 text-[11px] leading-[1.5] text-ink-soft">
-          Resolving the critical and serious findings is projected to raise the
-          score to an estimated{" "}
-          <b className="text-brand-600">{estimated} / 100</b>, clearing every
+          Resolving the critical and serious findings is projected to raise the score to an
+          estimated <b className="text-brand-600">{estimated} / 100</b>, clearing every
           Level&nbsp;AA blocker.
         </div>
       </div>
@@ -894,36 +839,25 @@ function Page3({ result }: { result: ScanResult }) {
         </h2>
         <div className="mt-3.5 grid grid-cols-3 gap-3">
           {recs.map((r) => (
-            <div
-              key={r.term}
-              className="rounded-2xl border border-line bg-card p-4"
-            >
-              <span
-                className="inline-block h-1 w-6 rounded-full"
-                style={{ background: r.color }}
-              />
+            <div key={r.term} className="rounded-2xl border border-line bg-card p-4">
+              <span className="inline-block h-1 w-6 rounded-full" style={{ background: r.color }} />
               <div
                 className="mt-2.5 text-[9px] font-semibold tracking-[0.14em] uppercase"
                 style={{ color: r.color }}
               >
                 {r.term}
               </div>
-              <div className="mt-1.5 text-[14px] font-semibold text-ink">
-                {r.title}
-              </div>
-              <p className="mt-1.5 text-[11.5px] leading-[1.55] text-ink-soft">
-                {r.body}
-              </p>
+              <div className="mt-1.5 text-[14px] font-semibold text-ink">{r.title}</div>
+              <p className="mt-1.5 text-[11.5px] leading-[1.55] text-ink-soft">{r.body}</p>
             </div>
           ))}
         </div>
       </div>
 
       <p className="mt-4 max-w-[6.8in] text-[9.5px] leading-[1.5] text-muted">
-        This report reflects an automated scan against WCAG 2.1 Level&nbsp;AA.
-        Automated testing covers roughly 57% of success criteria; manual review
-        with assistive technology is recommended for full conformance
-        certification.
+        This report reflects an automated scan against WCAG 2.1 Level&nbsp;AA. Automated testing
+        covers roughly 57% of success criteria; manual review with assistive technology is
+        recommended for full conformance certification.
       </p>
     </PageShell>
   );
@@ -947,10 +881,7 @@ function MiniHeader({ host }: { host: string }) {
 function LegendChip({ sev, count }: { sev: Severity; count: number }) {
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-3 py-1.5 text-[11px] font-semibold text-ink">
-      <span
-        className="size-2 rounded-full"
-        style={{ background: sevHex[sev] }}
-      />
+      <span className="size-2 rounded-full" style={{ background: sevHex[sev] }} />
       {sevLabel[sev]} <b className="font-medium text-muted">{count}</b>
     </span>
   );
@@ -959,13 +890,8 @@ function LegendChip({ sev, count }: { sev: Severity; count: number }) {
 function GroupHeading({ sev, count }: { sev: Severity; count: number }) {
   return (
     <div className="flex items-center gap-2.5">
-      <span
-        className="size-2.5 rounded-[3px]"
-        style={{ background: sevHex[sev] }}
-      />
-      <span className="text-[13px] font-semibold text-ink">
-        {sevLabel[sev]}
-      </span>
+      <span className="size-2.5 rounded-[3px]" style={{ background: sevHex[sev] }} />
+      <span className="text-[13px] font-semibold text-ink">{sevLabel[sev]}</span>
       <span
         className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
         style={{ color: sevHex[sev], background: sevTint[sev] }}
@@ -977,13 +903,7 @@ function GroupHeading({ sev, count }: { sev: Severity; count: number }) {
   );
 }
 
-function FieldLabel({
-  children,
-  tone,
-}: {
-  children: React.ReactNode;
-  tone?: "brand";
-}) {
+function FieldLabel({ children, tone }: { children: React.ReactNode; tone?: "brand" }) {
   return (
     <div
       className={`text-[8.5px] font-semibold tracking-[0.13em] uppercase ${
@@ -1010,14 +930,7 @@ function HeroRing({ value }: { value: number }) {
   return (
     <div className="relative size-[138px]">
       <svg width="138" height="138" viewBox="0 0 138 138">
-        <circle
-          cx="69"
-          cy="69"
-          r={r}
-          fill="none"
-          stroke="rgba(255,255,255,.18)"
-          strokeWidth="11"
-        />
+        <circle cx="69" cy="69" r={r} fill="none" stroke="rgba(255,255,255,.18)" strokeWidth="11" />
         <circle
           cx="69"
           cy="69"
@@ -1032,9 +945,7 @@ function HeroRing({ value }: { value: number }) {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-[46px] leading-none font-bold text-white">
-          {value}
-        </span>
+        <span className="text-[46px] leading-none font-bold text-white">{value}</span>
         <span className="mt-0.5 text-[10px] font-semibold tracking-wide text-white/60">
           OUT OF 100
         </span>

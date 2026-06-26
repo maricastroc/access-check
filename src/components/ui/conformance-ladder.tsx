@@ -60,10 +60,7 @@ export function ConformanceLadder({ levels, className }: ConformanceLadderProps)
               />
               {lvl.passed && (
                 <span className="absolute inset-0 flex items-center justify-center">
-                  <FontAwesomeIcon
-                    icon={faCheck}
-                    className="text-sm text-white drop-shadow-sm"
-                  />
+                  <FontAwesomeIcon icon={faCheck} className="text-sm text-white drop-shadow-sm" />
                 </span>
               )}
             </div>

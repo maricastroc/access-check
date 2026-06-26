@@ -33,19 +33,11 @@ export function HeroReportCard() {
                         : "flex size-5 items-center justify-center rounded-full border-2 border-dashed border-warning"
                     }
                   >
-                    {lvl.passed && (
-                      <FontAwesomeIcon icon={faCheck} className="text-[10px]" />
-                    )}
+                    {lvl.passed && <FontAwesomeIcon icon={faCheck} className="text-[10px]" />}
                   </span>
-                  <span className="w-8 font-bold tracking-wide text-ink">
-                    {lvl.id}
-                  </span>
+                  <span className="w-8 font-bold tracking-wide text-ink">{lvl.id}</span>
                   <span
-                    className={
-                      lvl.passed
-                        ? "font-medium text-success"
-                        : "font-medium text-warning"
-                    }
+                    className={lvl.passed ? "font-medium text-success" : "font-medium text-warning"}
                   >
                     {lvl.passed ? "Pass" : `${lvl.value}%`}
                   </span>
@@ -64,9 +56,7 @@ export function HeroReportCard() {
             Aa
           </span>
           <div className="min-w-0 flex-1">
-            <div className="font-mono text-[12px] text-ink-soft">
-              #fff on #00a250
-            </div>
+            <div className="font-mono text-[12px] text-ink-soft">#fff on #00a250</div>
             <div className="text-[11px] text-muted">Contrast ratio</div>
           </div>
           <span className="font-mono text-sm font-semibold" style={{ color: ISSUE }}>
@@ -76,10 +66,7 @@ export function HeroReportCard() {
             className="inline-flex items-center gap-1.5 text-sm font-medium"
             style={{ color: ISSUE }}
           >
-            <span
-              className="size-1.5 rounded-full"
-              style={{ background: ISSUE }}
-            />
+            <span className="size-1.5 rounded-full" style={{ background: ISSUE }} />
             Fix
           </span>
         </div>
@@ -87,13 +74,8 @@ export function HeroReportCard() {
         {/* Linhas do audit */}
         <div className="mt-3 divide-y divide-line-strong">
           {reportRows.map((row) => (
-            <div
-              key={row.label}
-              className="flex items-center justify-between py-3"
-            >
-              <span className="text-[15px] font-medium text-ink">
-                {row.label}
-              </span>
+            <div key={row.label} className="flex items-center justify-between py-3">
+              <span className="text-[15px] font-medium text-ink">{row.label}</span>
               <StatusPill tone={row.tone}>{row.status}</StatusPill>
             </div>
           ))}

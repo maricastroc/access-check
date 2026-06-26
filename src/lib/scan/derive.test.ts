@@ -42,13 +42,7 @@ describe("computeScore", () => {
 
 describe("buildFixFirst", () => {
   it("ordena por severidade e devolve no máximo 4, numerados", () => {
-    const top = buildFixFirst([
-      v("minor"),
-      v("critical"),
-      v("moderate"),
-      v("serious"),
-      v("minor"),
-    ]);
+    const top = buildFixFirst([v("minor"), v("critical"), v("moderate"), v("serious"), v("minor")]);
     expect(top).toHaveLength(4);
     expect(top[0].impact).toBe("High");
     expect(top[0].n).toBe("01");

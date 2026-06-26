@@ -28,17 +28,13 @@ export const previewFilters: Record<SimKey, string> = {
 
 export const modeDesc: Record<SimKey, string> = {
   normal: "Default rendering — no vision filter applied.",
-  deuteranopia:
-    "Red-green color deficiency (missing green cones) — affects ~6% of men.",
-  protanopia:
-    "Red-green color deficiency (missing red cones) — affects ~2% of men.",
-  tritanopia:
-    "Blue-yellow color deficiency (missing blue cones) — rare, ~0.01%.",
+  deuteranopia: "Red-green color deficiency (missing green cones) — affects ~6% of men.",
+  protanopia: "Red-green color deficiency (missing red cones) — affects ~2% of men.",
+  tritanopia: "Blue-yellow color deficiency (missing blue cones) — rare, ~0.01%.",
   lowvision: "Reduced acuity and contrast sensitivity simulation.",
   grayscale: "All color removed — verifies meaning survives without hue.",
 };
 
-// Classes completas (literais p/ o Tailwind detectar — não usar concat dinâmica).
 export const sevDot: Record<Severity, string> = {
   critical: "bg-critical",
   serious: "bg-serious",
@@ -60,9 +56,4 @@ export const severityLabel: Record<Severity, string> = {
   minor: "Minor",
 };
 
-export const severityOrder: Severity[] = [
-  "critical",
-  "serious",
-  "moderate",
-  "minor",
-];
+export const severityOrder: Severity[] = ["critical", "serious", "moderate", "minor"];

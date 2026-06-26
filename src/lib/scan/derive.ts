@@ -7,12 +7,7 @@ const severityWeight: Record<Severity, number> = {
   minor: 1,
 };
 
-export const severityOrder: Severity[] = [
-  "critical",
-  "serious",
-  "moderate",
-  "minor",
-];
+export const severityOrder: Severity[] = ["critical", "serious", "moderate", "minor"];
 
 /** Pontuação 0–100: penalidade ponderada por severidade × nº de ocorrências. */
 export function computeScore(violations: ScanViolation[]): number {

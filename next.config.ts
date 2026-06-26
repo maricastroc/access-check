@@ -20,10 +20,7 @@ const nextConfig: NextConfig = {
   // O Playwright completo só roda local (devDep). Fora do bundle serverless —
   // o import dele é gated por ambiente e nunca executa na Vercel.
   outputFileTracingExcludes: {
-    "/api/scan": [
-      "./node_modules/playwright/**",
-      "./node_modules/@playwright/**",
-    ],
+    "/api/scan": ["./node_modules/playwright/**", "./node_modules/@playwright/**"],
   },
 };
 

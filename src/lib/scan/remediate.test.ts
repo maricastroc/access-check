@@ -111,7 +111,11 @@ describe("fixLabel", () => {
   it("usa <label for> quando há id, com aria-label como mutação de validação", () => {
     const fix = fixLabel(el({ id: "email", name: "email" }));
     expect(fix?.code).toBe('<label for="email">Email</label>');
-    expect(fix?.apply).toEqual({ kind: "attr", name: "aria-label", value: "Email" });
+    expect(fix?.apply).toEqual({
+      kind: "attr",
+      name: "aria-label",
+      value: "Email",
+    });
   });
 
   it("cai pra aria-label quando não há id", () => {
@@ -131,7 +135,11 @@ describe("fixImageAlt", () => {
   it("usa o title quando existe", () => {
     const fix = fixImageAlt(el({ tag: "img", title: "Company logo" }));
     expect(fix.code).toBe('alt="Company logo"');
-    expect(fix.apply).toEqual({ kind: "attr", name: "alt", value: "Company logo" });
+    expect(fix.apply).toEqual({
+      kind: "attr",
+      name: "alt",
+      value: "Company logo",
+    });
   });
 
   it("infere do nome do arquivo, tirando @2x e extensão", () => {
@@ -149,7 +157,11 @@ describe("fixAriaName", () => {
   it("usa o texto visível do controle", () => {
     const fix = fixAriaName(el({ tag: "button", text: "Submit" }));
     expect(fix.code).toBe('aria-label="Submit"');
-    expect(fix.apply).toEqual({ kind: "attr", name: "aria-label", value: "Submit" });
+    expect(fix.apply).toEqual({
+      kind: "attr",
+      name: "aria-label",
+      value: "Submit",
+    });
   });
 
   it("cai pra um placeholder genérico sem pistas", () => {
@@ -159,10 +171,17 @@ describe("fixAriaName", () => {
 
 describe("fixes a nível de documento", () => {
   it("html lang", () => {
-    expect(fixHtmlLang().apply).toEqual({ kind: "doc", target: "lang", value: "en" });
+    expect(fixHtmlLang().apply).toEqual({
+      kind: "doc",
+      target: "lang",
+      value: "en",
+    });
   });
   it("document title", () => {
-    expect(fixDocumentTitle().apply).toMatchObject({ kind: "doc", target: "title" });
+    expect(fixDocumentTitle().apply).toMatchObject({
+      kind: "doc",
+      target: "title",
+    });
   });
   it("viewport", () => {
     expect(fixMetaViewport().apply?.kind).toBe("viewport");

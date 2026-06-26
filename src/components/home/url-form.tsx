@@ -13,9 +13,7 @@ export function UrlForm() {
   function analyze(target?: string) {
     const value = (target ?? url).trim();
     // numa app real passaríamos a URL adiante; aqui só navegamos ao relatório
-    router.push(
-      value ? `/results?url=${encodeURIComponent(value)}` : "/results",
-    );
+    router.push(value ? `/results?url=${encodeURIComponent(value)}` : "/results");
   }
 
   return (
@@ -28,10 +26,7 @@ export function UrlForm() {
         className="mt-9 flex max-w-xl items-center gap-2 rounded-field border border-line bg-card p-2 shadow-card"
       >
         <div className="flex flex-1 items-center gap-3 px-3">
-          <FontAwesomeIcon
-            icon={faGlobe}
-            className="shrink-0 text-base text-muted"
-          />
+          <FontAwesomeIcon icon={faGlobe} className="shrink-0 text-base text-muted" />
           <input
             type="text"
             value={url}
