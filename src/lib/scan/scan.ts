@@ -12,6 +12,7 @@ import {
   fixLabel,
   fixMetaViewport,
   type ElementInfo,
+  type FixApply,
   type FixResult,
 } from "./remediate";
 import {
@@ -20,10 +21,20 @@ import {
   computeScore,
   severityOrder,
 } from "./derive";
-import type { ScanMarker, ScanResult, ScanViolation, Severity } from "./types";
+import type {
+  FixGroup,
+  FixVerification,
+  ScanMarker,
+  ScanResult,
+  ScanViolation,
+  Severity,
+} from "./types";
 
 const VIEWPORT = { width: 1200, height: 800 };
 const MAX_MARKERS = 6;
+// Limites do agrupamento/validação pra não estourar payload nem tempo de scan.
+const MAX_GROUP_SELECTORS = 20;
+const MAX_VERIFY_OPS = 40;
 
 // Caminho do axe-core no runtime (process.cwd() = raiz do projeto).
 const AXE_PATH = path.join(process.cwd(), "node_modules/axe-core/axe.min.js");
@@ -74,8 +85,8 @@ export function normalizeUrl(input: string): string {
 }
 
 /**
- * Tenta gerar um fix concreto e determinístico pra um nó. Hoje só contraste;
- * cai pra null quando não há gerador, e o chamador usa o texto do axe.
+ * Tenta gerar um fix concreto e determinístico pra um nó, despachando por regra
+ * do axe. Cai pra null quando não há gerador, e o chamador usa o texto do axe.
  */
 // Regras de "nome acessível ausente" — todas resolvidas com aria-label/texto.
 const ARIA_NAME_RULES = new Set([
@@ -155,6 +166,150 @@ function firstTarget(target: unknown): string | null {
   return null;
 }
 
+// Grupo interno de agrupamento: como FixGroup, mas carrega `apply` (a mutação)
+// e a contagem total, que não saem no payload final.
+type FixCluster = {
+  text: string;
+  code?: string;
+  apply?: FixApply;
+  count: number;
+  selectors: string[];
+  verification?: FixVerification;
+};
+
+/**
+ * Agrupa os nós de uma violação por assinatura do conserto. Nós cujo fix gera
+ * exatamente o mesmo trecho (ex.: vários elementos com o mesmo `color: #xxx`)
+ * caem no mesmo cluster — é o que vira "este fix resolve N elementos".
+ */
+function clusterFixes(
+  perNode: { selector: string | null; result: FixResult | null }[],
+): FixCluster[] {
+  const map = new Map<string, FixCluster>();
+  for (const { selector, result } of perNode) {
+    if (!result) continue;
+    // A assinatura é o trecho copiável quando há; senão o texto em prosa.
+    const sig = result.code ?? result.text;
+    let cluster = map.get(sig);
+    if (!cluster) {
+      cluster = {
+        text: result.text,
+        code: result.code,
+        apply: result.apply,
+        count: 0,
+        selectors: [],
+      };
+      map.set(sig, cluster);
+    }
+    cluster.count++;
+    if (selector && cluster.selectors.length < MAX_GROUP_SELECTORS)
+      cluster.selectors.push(selector);
+  }
+  // Maiores grupos primeiro: o conserto que cobre mais elementos é o que mais
+  // compensa aplicar.
+  return [...map.values()].sort((a, b) => b.count - a.count);
+}
+
+// Operação de validação: aplica `apply` no DOM e re-roda o axe escopado na
+// regra. `selector` null = mutação a nível de documento (lang, title, viewport).
+type VerifyOp = { ruleId: string; selector: string | null; apply: FixApply };
+
+/**
+ * Roda no contexto da página: pra cada op, aplica a mutação, re-executa o axe
+ * só naquela regra, reverte, e devolve se a violação sumiu. É o que prova que
+ * o conserto sugerido realmente resolve, em vez de só afirmar.
+ */
+const VERIFY_IN_PAGE = async (
+  ops: VerifyOp[],
+): Promise<FixVerification[]> => {
+  // @ts-expect-error axe foi injetado no contexto da página
+  const axe = window.axe;
+
+  const runRule = async (
+    context: Element | Document,
+    ruleId: string,
+  ): Promise<boolean> => {
+    const res = await axe.run(context, {
+      runOnly: { type: "rule", values: [ruleId] },
+    });
+    // verified = a regra não acusa mais nenhum nó no contexto avaliado
+    return res.violations.length === 0;
+  };
+
+  const results: FixVerification[] = [];
+  // Sequencial de propósito: cada op reverte sua mutação antes da próxima, então
+  // não há interferência cruzada entre consertos.
+  {
+    for (const op of ops) {
+      try {
+        const a = op.apply;
+        if (a.kind === "doc" && a.target === "lang") {
+          const el = document.documentElement;
+          const prev = el.getAttribute("lang");
+          el.setAttribute("lang", a.value);
+          const ok = await runRule(document, op.ruleId);
+          if (prev === null) el.removeAttribute("lang");
+          else el.setAttribute("lang", prev);
+          results.push(ok ? "verified" : "failed");
+        } else if (a.kind === "doc" && a.target === "title") {
+          const prev = document.title;
+          document.title = a.value;
+          const ok = await runRule(document, op.ruleId);
+          document.title = prev;
+          results.push(ok ? "verified" : "failed");
+        } else if (a.kind === "viewport") {
+          let meta = document.querySelector(
+            'meta[name="viewport"]',
+          ) as HTMLMetaElement | null;
+          const created = !meta;
+          const prev = meta?.getAttribute("content") ?? null;
+          if (!meta) {
+            meta = document.createElement("meta");
+            meta.setAttribute("name", "viewport");
+            document.head.appendChild(meta);
+          }
+          meta.setAttribute("content", a.value);
+          const ok = await runRule(document, op.ruleId);
+          if (created) meta.remove();
+          else if (prev !== null) meta.setAttribute("content", prev);
+          results.push(ok ? "verified" : "failed");
+        } else if (op.selector) {
+          const el = document.querySelector(op.selector);
+          if (!el) {
+            results.push("unchecked");
+            continue;
+          }
+          if (a.kind === "attr") {
+            const prev = el.getAttribute(a.name);
+            el.setAttribute(a.name, a.value);
+            const ok = await runRule(el, op.ruleId);
+            if (prev === null) el.removeAttribute(a.name);
+            else el.setAttribute(a.name, prev);
+            results.push(ok ? "verified" : "failed");
+          } else if (a.kind === "style") {
+            const style = (el as HTMLElement).style;
+            const prev = style.getPropertyValue(a.prop);
+            const prevPrio = style.getPropertyPriority(a.prop);
+            // !important pra vencer a folha de estilo da página durante o teste
+            style.setProperty(a.prop, a.value, "important");
+            const ok = await runRule(el, op.ruleId);
+            if (prev) style.setProperty(a.prop, prev, prevPrio);
+            else style.removeProperty(a.prop);
+            results.push(ok ? "verified" : "failed");
+          } else {
+            results.push("unchecked");
+          }
+        } else {
+          results.push("unchecked");
+        }
+      } catch {
+        results.push("unchecked");
+      }
+    }
+  }
+  return results;
+};
+
 export async function runScan(rawUrl: string): Promise<ScanResult> {
   const url = normalizeUrl(rawUrl);
   const startedAt = Date.now();
@@ -211,11 +366,16 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
     });
 
     // Coleta atributos dos elementos cujo fix depende do DOM (ex.: inputs sem
-    // rótulo), indexados pelo seletor do primeiro nó da violação.
-    const elementSelectors = axe.violations
-      .filter((v) => ELEMENT_RULES.has(v.id))
-      .map((v) => firstTarget(v.nodes[0]?.target))
-      .filter((s): s is string => Boolean(s));
+    // rótulo), indexados pelo seletor. Pega TODOS os nós (não só o primeiro):
+    // o agrupamento precisa do fix de cada elemento pra saber o que se repete.
+    const elementSelectors = [
+      ...new Set(
+        axe.violations
+          .filter((v) => ELEMENT_RULES.has(v.id))
+          .flatMap((v) => v.nodes.map((n) => firstTarget(n.target)))
+          .filter((s): s is string => Boolean(s)),
+      ),
+    ];
 
     const elementInfos: Record<string, ElementInfo> =
       elementSelectors.length === 0
@@ -259,20 +419,34 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
             return out;
           }, elementSelectors);
 
-    // ---- mapear violações ----
-    const violations: ScanViolation[] = axe.violations
-      .map((v) => {
-        const severity = (v.impact ?? "minor") as Severity;
-        const firstNode = v.nodes[0];
-        const where = firstNode ? (firstTarget(firstNode.target) ?? "—") : "—";
-        const elInfo = where in elementInfos ? elementInfos[where] : undefined;
-        // Prefere um fix concreto e determinístico; senão, cai no texto do axe.
-        const result = concreteFix(v.id, firstNode, elInfo);
-        const fix =
-          result?.text ||
-          firstNode?.failureSummary?.replace(/^Fix [^:]+:\s*/i, "").trim() ||
-          v.help;
-        return {
+    // ---- mapear violações + agrupar consertos por assinatura ----
+    type Enriched = { v: ScanViolation; clusters: FixCluster[] };
+    const enriched: Enriched[] = axe.violations.map((v) => {
+      const severity = (v.impact ?? "minor") as Severity;
+      const firstNode = v.nodes[0];
+      const where = firstNode ? (firstTarget(firstNode.target) ?? "—") : "—";
+
+      // Gera o fix de CADA nó e agrupa os idênticos — é daqui que sai o
+      // "este conserto resolve N elementos".
+      const perNode = v.nodes.map((n) => {
+        const sel = firstTarget(n.target);
+        const elInfo = sel && sel in elementInfos ? elementInfos[sel] : undefined;
+        return { selector: sel, result: concreteFix(v.id, n, elInfo) };
+      });
+      const clusters = clusterFixes(perNode);
+
+      // Campos legados (fix/fixCode) seguem vindo do primeiro nó.
+      const firstElInfo =
+        where in elementInfos ? elementInfos[where] : undefined;
+      const result = concreteFix(v.id, firstNode, firstElInfo);
+      const fix =
+        result?.text ||
+        firstNode?.failureSummary?.replace(/^Fix [^:]+:\s*/i, "").trim() ||
+        v.help;
+
+      return {
+        clusters,
+        v: {
           id: v.id,
           severity,
           title: v.help,
@@ -282,8 +456,57 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
           fix,
           fixCode: result?.code,
           nodes: v.nodes.length,
-        } satisfies ScanViolation;
-      })
+        } satisfies ScanViolation,
+      };
+    });
+
+    // ---- validar consertos: aplica cada fix no DOM e re-roda o axe ----
+    // Um op por cluster (não por nó): o representante já prova o conserto pro
+    // grupo todo, e isso é o que mantém a validação barata.
+    const verifyOps: VerifyOp[] = [];
+    const opClusters: FixCluster[] = [];
+    for (const e of enriched) {
+      for (const cluster of e.clusters) {
+        if (verifyOps.length >= MAX_VERIFY_OPS) break;
+        if (!cluster.apply) continue; // sem mutação auto-aplicável
+        const docLevel =
+          cluster.apply.kind === "doc" || cluster.apply.kind === "viewport";
+        const selector = docLevel ? null : (cluster.selectors[0] ?? null);
+        if (!docLevel && !selector) continue; // sem alvo pra aplicar
+        verifyOps.push({ ruleId: e.v.id, selector, apply: cluster.apply });
+        opClusters.push(cluster);
+      }
+    }
+
+    const verifications =
+      verifyOps.length > 0 ? await page.evaluate(VERIFY_IN_PAGE, verifyOps) : [];
+    verifications.forEach((res, i) => {
+      opClusters[i].verification = res;
+    });
+
+    // Materializa fixGroups (sem `apply`, que é interno) e a verificação
+    // principal de cada violação (o cluster que cobre o primeiro nó).
+    for (const e of enriched) {
+      if (e.clusters.length > 0) {
+        e.v.fixGroups = e.clusters.map(
+          (c) =>
+            ({
+              text: c.text,
+              code: c.code,
+              count: c.count,
+              selectors: c.selectors,
+              verification: c.verification ?? "unchecked",
+            }) satisfies FixGroup,
+        );
+        const main =
+          e.clusters.find((c) => c.selectors.includes(e.v.where)) ??
+          e.clusters[0];
+        e.v.verification = main.verification ?? "unchecked";
+      }
+    }
+
+    const violations: ScanViolation[] = enriched
+      .map((e) => e.v)
       .sort(
         (a, b) =>
           severityOrder.indexOf(a.severity) - severityOrder.indexOf(b.severity),

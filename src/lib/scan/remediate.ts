@@ -1,5 +1,7 @@
-// Geração de remediação determinística (sem IA). Hoje cobre contraste de cor;
-// novos geradores (label, alt, lang…) entram aqui com a mesma assinatura.
+// Geração de remediação determinística (sem IA). Cobre contraste, alt, rótulos,
+// nomes acessíveis, lang, title, viewport e atributos ARIA. Cada gerador
+// devolve `text` (prosa), `code` (trecho copiável) e, quando o conserto é
+// auto-aplicável, `apply` — a mutação DOM que o passo de validação re-testa.
 
 /** Dados de contraste que o axe-core já calcula por nó. */
 export type ContrastData = {
@@ -10,10 +12,26 @@ export type ContrastData = {
 };
 
 /**
- * Resultado de um gerador: `text` é a explicação em prosa; `code` é o trecho
- * copiável (CSS/HTML) exibido como chip, quando existe.
+ * Mutação DOM equivalente ao fix, para o passo de validação aplicar no próprio
+ * navegador e re-rodar o axe. É deliberadamente estruturada (não a string de
+ * UI) pra validação ser determinística em vez de re-parsear `code`.
+ *
+ * `attr`/`style` agem sobre o elemento da violação; `doc`/`viewport` agem a
+ * nível de documento. Geradores cujo conserto não dá pra aplicar com segurança
+ * (ex.: remover atributos ARIA) omitem `apply` e simplesmente não são validados.
  */
-export type FixResult = { text: string; code?: string };
+export type FixApply =
+  | { kind: "attr"; name: string; value: string }
+  | { kind: "style"; prop: string; value: string }
+  | { kind: "doc"; target: "lang" | "title"; value: string }
+  | { kind: "viewport"; value: string };
+
+/**
+ * Resultado de um gerador: `text` é a explicação em prosa; `code` é o trecho
+ * copiável (CSS/HTML) exibido como chip, quando existe; `apply` é a mutação
+ * estruturada usada pela validação (quando o fix é auto-aplicável).
+ */
+export type FixResult = { text: string; code?: string; apply?: FixApply };
 
 /** Atributos do elemento que os geradores de elemento usam pro snippet. */
 export type ElementInfo = {
@@ -72,12 +90,18 @@ export function fixLabel(el: ElementInfo): FixResult | null {
     (el.id && humanize(el.id)) ||
     "Describe this field";
 
+  // A validação aplica sempre um aria-label (nome acessível equivalente),
+  // mesmo quando recomendamos um <label for> na UI: inserir um <label> no DOM
+  // é mais frágil e o resultado pro leitor de tela é o mesmo.
+  const apply = { kind: "attr", name: "aria-label", value: guess } as const;
+
   if (el.id) {
     return {
       text:
         `This ${el.tag} has no accessible name. Add a <label> linked by its ` +
         `id ("${el.id}") so screen readers announce it.`,
       code: `<label for="${el.id}">${guess}</label>`,
+      apply,
     };
   }
 
@@ -86,6 +110,7 @@ export function fixLabel(el: ElementInfo): FixResult | null {
       `This ${el.tag} has no id to bind a <label> to. Add an aria-label ` +
       `(or give it an id and a <label for>) so it has an accessible name.`,
     code: `aria-label="${guess}"`,
+    apply,
   };
 }
 
@@ -96,6 +121,7 @@ export function fixHtmlLang(): FixResult {
       "The <html> element has no lang attribute, so assistive tech can't " +
       "tell which language to read. Set it to the page's primary language.",
     code: `<html lang="en">`,
+    apply: { kind: "doc", target: "lang", value: "en" },
   };
 }
 
@@ -106,6 +132,7 @@ export function fixDocumentTitle(): FixResult {
       "The page has no <title>, the first thing screen readers announce and " +
       "the label browsers show in tabs and history. Add a descriptive one.",
     code: `<title>Descriptive page title</title>`,
+    apply: { kind: "doc", target: "title", value: "Descriptive page title" },
   };
 }
 
@@ -116,6 +143,10 @@ export function fixMetaViewport(): FixResult {
       "The viewport meta tag blocks pinch-zoom, which low-vision users rely " +
       "on. Remove user-scalable=no and any maximum-scale below 5.",
     code: `<meta name="viewport" content="width=device-width, initial-scale=1">`,
+    apply: {
+      kind: "viewport",
+      value: "width=device-width, initial-scale=1",
+    },
   };
 }
 
@@ -137,6 +168,7 @@ export function fixAriaName(el: ElementInfo): FixResult {
       `This ${noun} has no accessible name, so screen readers announce it as ` +
       `just "${noun}". Add visible text inside it, or an aria-label.`,
     code: `aria-label="${guess}"`,
+    apply: { kind: "attr", name: "aria-label", value: guess },
   };
 }
 
@@ -190,6 +222,7 @@ export function fixImageAlt(el: ElementInfo): FixResult {
         `This image has no alt text. Suggested description below — confirm it ` +
         `matches the image, or use an empty alt ("") if it's purely decorative.`,
       code: `alt="${guess}"`,
+      apply: { kind: "attr", name: "alt", value: guess },
     };
   }
   return {
@@ -197,6 +230,7 @@ export function fixImageAlt(el: ElementInfo): FixResult {
       "This image has no alt text. Add a short description if it's meaningful, " +
       `or an empty alt ("") if it's decorative so screen readers skip it.`,
     code: `alt=""`,
+    apply: { kind: "attr", name: "alt", value: "" },
   };
 }
 
@@ -313,5 +347,6 @@ export function fixContrast(data: ContrastData): FixResult | null {
       `against ${toHex(bg)} (was ${data.contrastRatio.toFixed(2)}:1, needs ` +
       `${target.toFixed(1)}:1).`,
     code: `color: ${newHex};`,
+    apply: { kind: "style", prop: "color", value: newHex },
   };
 }

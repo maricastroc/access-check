@@ -15,7 +15,11 @@ import {
   faSpinner,
   faTriangleExclamation,
 } from "@fortawesome/free-solid-svg-icons";
-import type { ScanResult, Severity } from "@/lib/scan/types";
+import type {
+  FixVerification,
+  ScanResult,
+  Severity,
+} from "@/lib/scan/types";
 import { CopyableCode } from "@/components/ui/copyable-code";
 import {
   modeDesc,
@@ -35,6 +39,28 @@ function fixDomId(title: string): string {
   return `fix-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")}`;
 }
 type FilterKey = "all" | Severity | "passed";
+
+/**
+ * Selo de validação: provamos o conserto re-rodando o axe depois de aplicá-lo.
+ * "unchecked" (fix sem mutação auto-aplicável) não rende selo.
+ */
+function VerifyPill({ v }: { v: FixVerification }) {
+  if (v === "verified")
+    return (
+      <span className="inline-flex items-center gap-1 rounded-md bg-[#e7f6ee] px-1.5 py-[2px] text-[10.5px] font-semibold text-[#1a7f46]">
+        <FontAwesomeIcon icon={faCheck} className="text-[9px]" />
+        Verified — re-scan passes
+      </span>
+    );
+  if (v === "failed")
+    return (
+      <span className="inline-flex items-center gap-1 rounded-md bg-[#fdf0e7] px-1.5 py-[2px] text-[10.5px] font-semibold text-[#b8651b]">
+        <FontAwesomeIcon icon={faTriangleExclamation} className="text-[9px]" />
+        Needs review — re-scan still flags
+      </span>
+    );
+  return null;
+}
 
 const DEFAULT_URL = "example.com";
 
@@ -798,10 +824,33 @@ function ReportPanel({
                     <div className="mb-1.5 text-[10px] font-semibold tracking-wider text-muted uppercase">
                       Suggested fix
                     </div>
-                    <div className="font-mono text-[12.5px] leading-relaxed whitespace-pre-line text-ink">
-                      {it.fix}
-                    </div>
-                    {it.fixCode && <CopyableCode code={it.fixCode} />}
+                    {it.fixGroups && it.fixGroups.length > 0 ? (
+                      it.fixGroups.map((fg, gi) => (
+                        <div
+                          key={gi}
+                          className={
+                            gi > 0 ? "mt-3 border-t border-line pt-3" : ""
+                          }
+                        >
+                          <div className="font-mono text-[12.5px] leading-relaxed whitespace-pre-line text-ink">
+                            {fg.text}
+                          </div>
+                          {fg.code && <CopyableCode code={fg.code} />}
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            {fg.count > 1 && (
+                              <span className="inline-flex items-center rounded-md bg-[#eef0f3] px-1.5 py-[2px] text-[10.5px] font-semibold text-muted">
+                                Resolves {fg.count} elements
+                              </span>
+                            )}
+                            <VerifyPill v={fg.verification} />
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="font-mono text-[12.5px] leading-relaxed whitespace-pre-line text-ink">
+                        {it.fix}
+                      </div>
+                    )}
                   </div>
                 </div>
               </details>
