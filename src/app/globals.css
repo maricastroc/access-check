@@ -1,26 +1,79 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+  AccessCheck — tema próprio (estende o tema padrão do Tailwind v4).
+  Tokens declarados em @theme viram utilitários automaticamente:
+  bg-brand-500, text-ink, shadow-card, rounded-card, etc.
+*/
+@theme {
+  /* Tipografia */
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  /* Marca — azul AccessCheck */
+  --color-brand-50: #eef4ff;
+  --color-brand-100: #dbe7ff;
+  --color-brand-200: #bcd2ff;
+  --color-brand-300: #8eb4ff;
+  --color-brand-400: #588cff;
+  --color-brand-500: #2f6bf6;
+  --color-brand-600: #1d54e8;
+  --color-brand-700: #1843c7;
+  --color-brand-800: #1a3aa0;
+  --color-brand-900: #1b357f;
+
+  /* Tinta / texto */
+  --color-ink: #16181d;
+  --color-ink-soft: #5b616e;
+  --color-muted: #8a909c;
+  --color-faint: #9ca1ab;
+
+  /* Superfícies */
+  --color-canvas: #f4f5f7;
+  --color-card: #ffffff;
+  --color-line: #ecedf0;
+  --color-line-strong: #e2e4e9;
+
+  /* Estados / severidade */
+  --color-success: #1f9d6b;
+  --color-warning: #d98b0b;
+  --color-critical: #e5484d;
+  --color-serious: #f2820a;
+  --color-moderate: #d9a400;
+
+  /* Raios */
+  --radius-card: 1.25rem;
+  --radius-field: 1rem;
+
+  /* Sombras */
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04),
+    0 12px 32px -8px rgba(16, 24, 40, 0.12);
+  --shadow-soft: 0 1px 2px rgba(16, 24, 40, 0.05),
+    0 2px 8px rgba(16, 24, 40, 0.04);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+html {
+  -webkit-font-smoothing: antialiased;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Acordeão de violações (tela de resultado) */
+details > summary {
+  list-style: none;
+}
+details > summary::-webkit-details-marker {
+  display: none;
+}
+details[open] .v-chev {
+  transform: rotate(90deg);
+}
+details[open] {
+  box-shadow:
+    0 1px 2px rgba(16, 18, 29, 0.05),
+    0 6px 20px rgba(16, 18, 29, 0.05);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
 }
