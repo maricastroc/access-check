@@ -360,30 +360,37 @@ function PreviewPanel({
                 style={{ filter: previewFilters[sim] }}
               />
               {showMarkers &&
-                result.markers.map((m) => (
-                  <span key={m.n}>
-                    <span
-                      className="pointer-events-none absolute rounded-[6px]"
-                      style={{
-                        left: `${m.left}%`,
-                        top: `${m.top}%`,
-                        width: `${m.width}%`,
-                        height: `${m.height}%`,
-                        border: `1.5px dashed ${markerColor(m.severity)}`,
-                      }}
-                    />
-                    <span
-                      className="absolute z-[2] flex size-5 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white text-[11px] font-bold text-white shadow-[0_1px_3px_rgba(0,0,0,.22)]"
-                      style={{
-                        left: `${m.left}%`,
-                        top: `${m.top}%`,
-                        background: markerColor(m.severity),
-                      }}
-                    >
-                      {m.n}
+                result.markers.map((m) => {
+                  // número ancorado no canto sup. direito da caixa, travado
+                  // dentro do preview pra não ser cortado pela borda.
+                  const badgeX = clamp(m.left + m.width, 3.5, 96.5);
+                  const badgeY = clamp(m.top, 4, 96);
+                  return (
+                    <span key={m.n}>
+                      <span
+                        className="pointer-events-none absolute rounded-[6px]"
+                        style={{
+                          left: `${m.left}%`,
+                          top: `${m.top}%`,
+                          width: `${m.width}%`,
+                          height: `${m.height}%`,
+                          border: `2px dashed ${markerColor(m.severity)}`,
+                          background: `${markerColor(m.severity)}1f`,
+                        }}
+                      />
+                      <span
+                        className="absolute z-10 flex size-[22px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white text-[11px] font-bold text-white shadow-[0_2px_5px_rgba(0,0,0,.3)]"
+                        style={{
+                          left: `${badgeX}%`,
+                          top: `${badgeY}%`,
+                          background: markerColor(m.severity),
+                        }}
+                      >
+                        {m.n}
+                      </span>
                     </span>
-                  </span>
-                ))}
+                  );
+                })}
             </div>
           ) : (
             <div className="flex h-64 items-center justify-center text-sm text-muted">
@@ -742,6 +749,10 @@ function ReportPanel({
 }
 
 /* ---------------- helpers ---------------- */
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
+}
+
 function markerColor(sev: Severity): string {
   return {
     critical: "#e5484d",
