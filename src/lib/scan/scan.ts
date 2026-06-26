@@ -60,9 +60,13 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
     });
     const page = await context.newPage();
 
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30_000 });
-    // dá um respiro pra hidratar SPAs simples
-    await page.waitForTimeout(800);
+    await page.goto(url, { waitUntil: "load", timeout: 30_000 });
+    // Espera a rede assentar pra SPAs montarem o conteúdo. Sites "ao vivo"
+    // (placares, ads) podem nunca ficar idle, então ignoramos o timeout.
+    await page
+      .waitForLoadState("networkidle", { timeout: 6_000 })
+      .catch(() => {});
+    await page.waitForTimeout(1500);
 
     const title = (await page.title()) || url;
     const finalUrl = page.url();
