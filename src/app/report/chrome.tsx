@@ -22,7 +22,7 @@ export function Toolbar({ url, status }: { url: string; status: Status }) {
       <button
         onClick={() => window.print()}
         disabled={status !== "done"}
-        className="flex h-8.5 cursor-pointer items-center gap-2 rounded-[9px] bg-brand-500 px-4 text-[13px] font-semibold text-white transition-colors hover:bg-brand-600 disabled:opacity-50"
+        className="flex h-8.5 cursor-pointer items-center gap-2 rounded-[9px] bg-brand-600 px-4 text-[13px] font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-50"
       >
         <FontAwesomeIcon icon={faPrint} className="text-xs" />
         Print / Save as PDF

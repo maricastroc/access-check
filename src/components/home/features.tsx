@@ -20,11 +20,7 @@ export function Features() {
 
       <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {features.map(({ icon, title, body }) => (
-          <Card key={title} className="group relative p-6 transition-shadow hover:shadow-card">
-            <span
-              aria-hidden
-              className="pointer-events-none absolute -inset-1.5 rounded-[1.4rem] border-2 border-dashed border-brand-200 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-            />
+          <Card key={title} className="p-6 transition-shadow hover:shadow-card">
             <IconBadge icon={icon} />
             <h3 className="mt-5 text-base font-semibold text-ink">{title}</h3>
             <p className="mt-2 text-sm leading-6 text-muted">{body}</p>

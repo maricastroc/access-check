@@ -73,7 +73,7 @@ export default async function HistoryPage() {
 function ScanCard({ scan, prevScore }: { scan: ScanListItem; prevScore: number | null }) {
   const sev = [
     { label: "Critical", value: scan.counts.critical, color: "#e5484d" },
-    { label: "Serious", value: scan.counts.serious, color: "#f2820a" },
+    { label: "Serious", value: scan.counts.serious, color: "#b46107" },
     { label: "Moderate", value: scan.counts.moderate, color: "#d9a400" },
   ];
 
@@ -142,7 +142,7 @@ function EmptyState() {
       </p>
       <Link
         href="/"
-        className="mt-5 rounded-[10px] bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-600"
+        className="mt-5 rounded-[10px] bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
       >
         Run a scan
       </Link>

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useTransition } from "react";
 import Link from "next/link";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowRightFromBracket,
@@ -11,6 +12,9 @@ import {
 
 type UserData = { name?: string | null; email?: string | null; image?: string | null };
 
+const itemClasses =
+  "flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium text-ink-soft outline-none transition-colors hover:bg-canvas hover:text-ink data-[highlighted]:bg-canvas data-[highlighted]:text-ink";
+
 export function UserMenu({
   user,
   signOutAction,
@@ -18,47 +22,30 @@ export function UserMenu({
   user: UserData;
   signOutAction: () => Promise<void>;
 }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const [, startTransition] = useTransition();
   const firstName = user.name?.trim().split(/\s+/)[0] ?? user.email ?? "Account";
 
-  useEffect(() => {
-    if (!open) return;
-    function onPointer(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-    document.addEventListener("mousedown", onPointer);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onPointer);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
-
   return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        className="flex cursor-pointer items-center gap-2.5 rounded-full border border-line bg-card py-2 pr-4 pl-1.5 text-sm font-medium text-ink shadow-soft transition-all hover:bg-canvas hover:shadow-card"
-      >
-        <Avatar user={user} />
-        <span className="hidden sm:block">{firstName}</span>
-        <FontAwesomeIcon
-          icon={faChevronDown}
-          className={`text-[10px] text-muted transition-transform ${open ? "rotate-180" : ""}`}
-        />
-      </button>
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild>
+        <button
+          type="button"
+          className="group flex cursor-pointer items-center gap-2.5 rounded-full border border-line bg-card py-2 pr-4 pl-1.5 text-sm font-medium text-ink shadow-soft transition-all outline-none hover:bg-canvas hover:shadow-card"
+        >
+          <Avatar user={user} />
+          <span className="hidden sm:block">{firstName}</span>
+          <FontAwesomeIcon
+            icon={faChevronDown}
+            className="text-[10px] text-muted transition-transform group-data-[state=open]:rotate-180"
+          />
+        </button>
+      </DropdownMenu.Trigger>
 
-      {open && (
-        <div
-          role="menu"
-          className="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-xl border border-line bg-card shadow-card"
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          align="end"
+          sideOffset={8}
+          className="z-50 w-56 overflow-hidden rounded-xl border border-line bg-card shadow-card duration-150 data-[side=bottom]:slide-in-from-top-2 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"
         >
           <div className="border-b border-line px-4 py-3">
             <div className="truncate text-sm font-semibold text-ink">{user.name ?? "Account"}</div>
@@ -66,30 +53,24 @@ export function UserMenu({
           </div>
 
           <div className="p-1.5">
-            <Link
-              href="/history"
-              role="menuitem"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium text-ink-soft transition-colors hover:bg-canvas hover:text-ink"
-            >
-              <FontAwesomeIcon icon={faClockRotateLeft} className="w-4 text-muted" />
-              History
-            </Link>
+            <DropdownMenu.Item asChild>
+              <Link href="/history" className={itemClasses}>
+                <FontAwesomeIcon icon={faClockRotateLeft} className="w-4 text-muted" />
+                History
+              </Link>
+            </DropdownMenu.Item>
 
-            <form action={signOutAction}>
-              <button
-                type="submit"
-                role="menuitem"
-                className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium text-ink-soft transition-colors hover:bg-canvas hover:text-ink"
-              >
-                <FontAwesomeIcon icon={faArrowRightFromBracket} className="w-4 text-muted" />
-                Sign out
-              </button>
-            </form>
+            <DropdownMenu.Item
+              onSelect={() => startTransition(() => signOutAction())}
+              className={itemClasses}
+            >
+              <FontAwesomeIcon icon={faArrowRightFromBracket} className="w-4 text-muted" />
+              Sign out
+            </DropdownMenu.Item>
           </div>
-        </div>
-      )}
-    </div>
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
   );
 }
 

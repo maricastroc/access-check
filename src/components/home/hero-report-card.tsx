@@ -3,7 +3,7 @@ import { faCheck, faEye } from "@fortawesome/free-solid-svg-icons";
 import { BrowserFrame, ConformanceLadder, StatusPill } from "@/components/ui";
 import { conformanceLevels, reportRows } from "./content";
 
-const ISSUE = "#f2820a";
+const ISSUE = "#b46107";
 
 export function HeroReportCard() {
   return (
@@ -13,7 +13,7 @@ export function HeroReportCard() {
       className="border-line-strong shadow-[0_1px_2px_rgba(16,18,29,.05),0_28px_64px_-22px_rgba(16,18,29,.32)]"
       chromeClassName="border-line-strong bg-[#f1f3f6]"
     >
-      <div className="bg-linear-to-b from-card to-canvas/50 p-6">
+      <div className="bg-card p-6">
         <div className="flex items-stretch gap-5">
           <ConformanceLadder levels={conformanceLevels} className="w-28" />
           <div className="flex flex-1 flex-col justify-center">

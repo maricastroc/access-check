@@ -19,7 +19,7 @@ export function clamp(value: number, min: number, max: number): number {
 export function markerColor(sev: Severity): string {
   return {
     critical: "#e5484d",
-    serious: "#f2820a",
+    serious: "#b46107",
     moderate: "#d9a400",
     minor: "#9ca1ab",
   }[sev];

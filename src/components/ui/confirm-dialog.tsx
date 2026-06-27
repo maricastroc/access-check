@@ -53,7 +53,7 @@ export function ConfirmDialog({
                 className={`flex h-9 cursor-pointer items-center rounded-[10px] px-4 text-sm font-semibold text-white transition-colors ${
                   destructive
                     ? "bg-[#e5484d] hover:bg-[#d13b40]"
-                    : "bg-brand-500 hover:bg-brand-600"
+                    : "bg-brand-600 hover:bg-brand-700"
                 }`}
               >
                 {confirmLabel}

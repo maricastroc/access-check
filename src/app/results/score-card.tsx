@@ -79,7 +79,7 @@ export function ScoreCard({ result }: { result: ScanResult }) {
       <div className="mt-4 flex gap-2.5">
         <Link
           href={`/report?url=${encodeURIComponent(result.finalUrl)}`}
-          className="flex h-10.5 flex-1 items-center justify-center gap-2 rounded-[10px] bg-brand-500 text-[13.5px] font-semibold text-white transition-colors hover:bg-brand-600 active:translate-y-px"
+          className="flex h-10.5 flex-1 items-center justify-center gap-2 rounded-[10px] bg-brand-600 text-[13.5px] font-semibold text-white transition-colors hover:bg-brand-700 active:translate-y-px"
         >
           <FontAwesomeIcon icon={faFilePdf} className="text-sm" />
           Export PDF

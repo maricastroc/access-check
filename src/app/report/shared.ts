@@ -6,7 +6,7 @@ export const DEFAULT_URL = "example.com";
 
 export const sevHex: Record<Severity, string> = {
   critical: "#e5484d",
-  serious: "#f2820a",
+  serious: "#b46107",
   moderate: "#d9a400",
   minor: "#9ca1ab",
 };

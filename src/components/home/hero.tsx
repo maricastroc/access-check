@@ -4,14 +4,8 @@ import { UrlForm } from "./url-form";
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden">
-      <div aria-hidden className="ac-grid absolute inset-0 z-0" />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -top-40 right-0 z-0 h-144 w-xl rounded-full bg-brand-100/40 blur-3xl"
-      />
-
-      <div className="relative z-10 mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-12 px-6 py-12 lg:grid-cols-2 lg:gap-10">
+    <section>
+      <div className="mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-12 px-6 py-10 lg:grid-cols-2 lg:gap-10">
         <div className="relative">
           <Badge tone="brand" dot>
             WCAG 2.1 · A, AA &amp; AAA coverage

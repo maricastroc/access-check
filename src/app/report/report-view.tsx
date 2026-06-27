@@ -68,7 +68,7 @@ export function ReportView({ initialUrl }: { initialUrl: string }) {
           action={
             <Link
               href="/"
-              className="mt-2 rounded-[10px] bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-600"
+              className="mt-2 rounded-[10px] bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
             >
               New scan
             </Link>
