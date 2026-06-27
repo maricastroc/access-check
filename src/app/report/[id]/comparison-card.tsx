@@ -21,11 +21,10 @@ const dateFmt = new Intl.DateTimeFormat("en-US", {
 export function ComparisonCard({ diff, previousAt }: { diff: ScanDiff; previousAt: Date }) {
   const up = diff.scoreDelta > 0;
   const down = diff.scoreDelta < 0;
-  const deltaColor = up ? "#1f9d6b" : down ? "#e5484d" : "#9ca1ab";
+  const deltaColor = up ? "#1b865c" : down ? "#e5484d" : "#9ca1ab";
 
   return (
-    // print:hidden — o relatório (3 páginas) é o artefato exportável; isto é só tela.
-    <section className="w-full max-w-[8.5in] rounded-2xl border border-line bg-card p-6 shadow-card print:hidden">
+    <section className="w-full max-w-204 rounded-2xl border border-line bg-card p-6 shadow-card print:hidden">
       <div className="flex items-start justify-between gap-4">
         <div>
           <span className="text-[10px] font-semibold tracking-[0.2em] text-brand-600 uppercase">
@@ -71,7 +70,7 @@ export function ComparisonCard({ diff, previousAt }: { diff: ScanDiff; previousA
                 {c.delta !== 0 && (
                   <span
                     className="ml-auto text-[11px] font-bold"
-                    style={{ color: c.delta < 0 ? "#1f9d6b" : "#e5484d" }}
+                    style={{ color: c.delta < 0 ? "#1b865c" : "#e5484d" }}
                   >
                     {c.delta > 0 ? `+${c.delta}` : c.delta}
                   </span>
@@ -82,13 +81,12 @@ export function ComparisonCard({ diff, previousAt }: { diff: ScanDiff; previousA
         })}
       </div>
 
-      {/* fixed / regressed */}
       <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <DiffList
           title="Fixed"
           items={diff.fixed}
           icon={faCheck}
-          tone="#1f9d6b"
+          tone="#1b865c"
           empty="No rules cleared since last scan."
         />
         <DiffList

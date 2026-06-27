@@ -25,7 +25,7 @@ const dateFmt = new Intl.DateTimeFormat("en-US", {
 });
 
 function scoreColor(score: number): string {
-  if (score >= 90) return "#1f9d6b";
+  if (score >= 90) return "#1b865c";
   if (score >= 70) return "#d9a400";
   return "#e5484d";
 }
@@ -108,7 +108,7 @@ function ScanCard({ scan, prevScore }: { scan: ScanListItem; prevScore: number |
               {delta !== null && delta !== 0 && (
                 <span
                   className="shrink-0 text-[11px] font-bold"
-                  style={{ color: delta > 0 ? "#1f9d6b" : "#e5484d" }}
+                  style={{ color: delta > 0 ? "#1b865c" : "#e5484d" }}
                 >
                   {delta > 0 ? `▲ +${delta}` : `▼ ${delta}`}
                 </span>

@@ -47,7 +47,7 @@ export function SummaryPage({ result }: { result: ScanResult }) {
       label: "Passed",
       sub: "Conformant",
       value: result.counts.passed,
-      color: "#1f9d6b",
+      color: "#1b865c",
     },
   ];
 
@@ -120,7 +120,7 @@ export function SummaryPage({ result }: { result: ScanResult }) {
           >
             <span
               className="flex size-9 shrink-0 items-center justify-center rounded-full text-white"
-              style={{ background: compliant ? "#1f9d6b" : sevHex.serious }}
+              style={{ background: compliant ? "#1b865c" : sevHex.serious }}
             >
               <FontAwesomeIcon icon={compliant ? faCheck : faExclamation} />
             </span>
