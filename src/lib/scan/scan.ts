@@ -284,10 +284,15 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
     const title = (await page.title()) || url;
     const finalUrl = page.url();
 
+    // JPEG (q80) em vez de PNG: ~5–10× menor. Mantém o histórico leve, já que o
+    // screenshot é persistido como bytes quando o usuário está logado. Como
+    // preview, a perda é imperceptível.
     const screenshotBuf = await page.screenshot({
+      type: "jpeg",
+      quality: 80,
       clip: { x: 0, y: 0, ...VIEWPORT },
     });
-    const screenshot = `data:image/png;base64,${screenshotBuf.toString("base64")}`;
+    const screenshot = `data:image/jpeg;base64,${screenshotBuf.toString("base64")}`;
 
     await page.addScriptTag({ path: AXE_PATH });
     const axe: AxeResults = await page.evaluate(async () => {

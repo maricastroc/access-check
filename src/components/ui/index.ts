@@ -4,6 +4,7 @@ export { BrowserFrame } from "./browser-frame";
 export { Button } from "./button";
 export type { ButtonProps, ButtonVariant, ButtonSize } from "./button";
 export { Card } from "./card";
+export { ConfirmDialog } from "./confirm-dialog";
 export { ConformanceLadder } from "./conformance-ladder";
 export type { ConformanceLevel } from "./conformance-ladder";
 export { IconBadge } from "./icon-badge";

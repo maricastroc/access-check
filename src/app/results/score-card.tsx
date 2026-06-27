@@ -86,7 +86,7 @@ export function ScoreCard({ result }: { result: ScanResult }) {
         </Link>
         <button
           onClick={exportMarkdown}
-          className="flex h-10.5 flex-1 items-center justify-center gap-2 rounded-[10px] border border-line-strong bg-card text-[13.5px] font-semibold text-ink transition-colors hover:bg-[#f6f7f9]"
+          className="flex h-10.5 flex-1 cursor-pointer items-center justify-center gap-2 rounded-[10px] border border-line-strong bg-card text-[13.5px] font-semibold text-ink transition-colors hover:bg-[#f6f7f9]"
         >
           <FontAwesomeIcon icon={faFileCode} className="text-sm text-muted" />
           Export Markdown

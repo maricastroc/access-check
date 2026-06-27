@@ -65,7 +65,7 @@ export function PreviewPanel({
               <button
                 key={m.key}
                 onClick={() => setSim(m.key)}
-                className={`rounded-lg px-3.25 py-2 text-[12.5px] whitespace-nowrap transition-colors ${
+                className={`cursor-pointer rounded-lg px-3.25 py-2 text-[12.5px] whitespace-nowrap transition-colors ${
                   active
                     ? "bg-card font-semibold text-ink shadow-[0_1px_2px_rgba(16,18,29,.1),0_0_0_1px_rgba(16,18,29,.04)]"
                     : "font-medium text-ink-soft hover:text-ink"

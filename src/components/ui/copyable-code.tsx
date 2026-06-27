@@ -26,7 +26,7 @@ export function CopyableCode({ code }: { code: string }) {
         type="button"
         onClick={copy}
         aria-label={copied ? "Copied" : "Copy code"}
-        className="shrink-0 rounded-md px-2 py-1 text-[11px] font-medium text-[#8b949e] transition-colors hover:bg-white/10 hover:text-white"
+        className="shrink-0 cursor-pointer rounded-md px-2 py-1 text-[11px] font-medium text-[#8b949e] transition-colors hover:bg-white/10 hover:text-white"
       >
         <FontAwesomeIcon
           icon={copied ? faCheck : faCopy}

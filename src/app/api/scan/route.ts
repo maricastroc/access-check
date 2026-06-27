@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { runScan, normalizeUrl } from "@/lib/scan/scan";
 import type { ScanResult } from "@/lib/scan/types";
+import { auth } from "@/auth";
+import { saveScan } from "@/lib/scans";
 
 // Playwright precisa do runtime Node (não Edge) e de tempo pra renderizar.
 export const runtime = "nodejs";
@@ -52,14 +54,29 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid URL." }, { status: 400 });
   }
 
-  const cached = cache.get(url);
-  if (cached && Date.now() - cached.at < CACHE_TTL) {
-    return NextResponse.json(cached.result);
+  const userId = (await auth())?.user?.id;
+
+  // O cache é otimização do fluxo anônimo. Usuário logado sempre roda um scan
+  // fresh — pra o histórico ser um retrato real do momento — e o persiste.
+  if (!userId) {
+    const cached = cache.get(url);
+    if (cached && Date.now() - cached.at < CACHE_TTL) {
+      return NextResponse.json(cached.result);
+    }
   }
 
   try {
     const result = await runScan(url);
-    cache.set(url, { at: Date.now(), result });
+    if (userId) {
+      // Falhar ao salvar não deve derrubar o scan — o resultado já é válido.
+      try {
+        await saveScan(userId, result);
+      } catch (e) {
+        console.error("Failed to save scan to history:", e);
+      }
+    } else {
+      cache.set(url, { at: Date.now(), result });
+    }
     return NextResponse.json(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error during scan.";

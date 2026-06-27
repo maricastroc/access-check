@@ -1,35 +1,31 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft, faArrowRotateRight } from "@fortawesome/free-solid-svg-icons";
+import { Logo } from "@/components/ui";
+import { UserMenu } from "@/components/home/user-menu";
 import type { Status } from "./shared";
+
+type HeaderUser = { name?: string | null; email?: string | null; image?: string | null };
 
 export function TopBar({
   status,
   onRerun,
   busy,
+  user,
+  signOutAction,
 }: {
   status: Status;
   onRerun: () => void;
   busy: boolean;
+  user: HeaderUser | null;
+  signOutAction: () => Promise<void>;
 }) {
   return (
-    <header className="sticky top-0 z-30 flex h-14.5 items-center justify-between border-b border-line bg-card px-7">
-      <Link href="/" className="flex items-center gap-2.5">
-        <Image
-          src="/lockup-horizontal.svg"
-          alt="AccessCheck"
-          width={94}
-          height={26}
-          priority
-          className="h-6.5 w-auto"
-        />
-        <span className="ml-0.5 border-l border-line-strong pl-2.5 font-mono text-[11px] text-muted">
-          v2.1 · WCAG 2.1
-        </span>
-      </Link>
+    <header className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-6">
+      <Logo />
+
       <div className="flex items-center gap-3.5">
         <Link
           href="/"
@@ -58,7 +54,7 @@ export function TopBar({
         <button
           onClick={onRerun}
           disabled={busy}
-          className="flex h-8.5 items-center gap-2 rounded-[9px] border border-line-strong bg-card px-3.5 text-[13px] font-medium transition-colors hover:bg-[#f6f7f9] disabled:opacity-50"
+          className="flex h-8.5 cursor-pointer items-center gap-2 rounded-[9px] border border-line-strong bg-card px-3.5 text-[13px] font-medium transition-colors hover:bg-[#f6f7f9] disabled:opacity-50"
         >
           <FontAwesomeIcon
             icon={faArrowRotateRight}
@@ -66,9 +62,19 @@ export function TopBar({
           />
           Re-run analysis
         </button>
-        <span className="flex size-7.5 items-center justify-center rounded-full bg-linear-to-br from-brand-500 to-brand-300 text-xs font-semibold text-white">
-          QA
-        </span>
+
+        <span className="h-5 w-px bg-line-strong" />
+
+        {user ? (
+          <UserMenu user={user} signOutAction={signOutAction} />
+        ) : (
+          <Link
+            href="/login"
+            className="flex h-8.5 items-center rounded-[9px] px-2.5 text-[13px] font-medium text-ink-soft transition-colors hover:bg-[#f6f7f9] hover:text-ink"
+          >
+            Sign in
+          </Link>
+        )}
       </div>
     </header>
   );

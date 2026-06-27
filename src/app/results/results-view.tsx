@@ -10,7 +10,17 @@ import { ScanningState, ErrorState } from "./states";
 import { PreviewPanel } from "./preview-panel";
 import { ReportPanel } from "./report-panel";
 
-export function ResultsView({ initialUrl }: { initialUrl: string }) {
+type HeaderUser = { name?: string | null; email?: string | null; image?: string | null };
+
+export function ResultsView({
+  initialUrl,
+  user,
+  signOutAction,
+}: {
+  initialUrl: string;
+  user: HeaderUser | null;
+  signOutAction: () => Promise<void>;
+}) {
   const start = initialUrl || DEFAULT_URL;
   const [input, setInput] = useState(start);
   const [url, setUrl] = useState(start);
@@ -61,7 +71,13 @@ export function ResultsView({ initialUrl }: { initialUrl: string }) {
   return (
     <div className="min-h-screen bg-canvas font-sans text-ink">
       <ColorBlindFilters />
-      <TopBar status={status} onRerun={() => scan(url)} busy={status === "loading"} />
+      <TopBar
+        status={status}
+        onRerun={() => scan(url)}
+        busy={status === "loading"}
+        user={user}
+        signOutAction={signOutAction}
+      />
 
       {status === "loading" && <ScanningState url={url} />}
 
@@ -70,7 +86,7 @@ export function ResultsView({ initialUrl }: { initialUrl: string }) {
       )}
 
       {status === "done" && result && (
-        <div className="grid grid-cols-1 items-start gap-6 px-7 pt-6 pb-12 lg:grid-cols-[minmax(0,1fr)_524px]">
+        <div className="mx-auto grid w-full max-w-7xl grid-cols-1 items-start gap-6 px-6 pt-6 pb-12 lg:grid-cols-[minmax(0,1fr)_524px]">
           <PreviewPanel
             result={result}
             input={input}

@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import GitHub from "next-auth/providers/github";
+import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 
@@ -8,12 +9,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   // mas a sessão trafega via JWT — sem usar a tabela Session.
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
+  // Tela de login própria (em vez da página padrão do Auth.js).
+  pages: { signIn: "/login" },
   providers: [
-    // Só GitHub por enquanto. allowDangerousEmailAccountLinking fica ligado de
-    // propósito: quando adicionarmos o Google, logar com o mesmo email nos dois
-    // cai na MESMA conta. É seguro porque ambos verificam o email — sem isso,
-    // seria vetor de account-takeover.
+    // allowDangerousEmailAccountLinking ligado de propósito: logar com GitHub e
+    // Google no mesmo email cai na MESMA conta. É seguro porque ambos verificam
+    // o email — sem isso, seria vetor de account-takeover.
     GitHub({ allowDangerousEmailAccountLinking: true }),
+    Google({ allowDangerousEmailAccountLinking: true }),
   ],
   callbacks: {
     // No primeiro login o `user` (vindo do adapter) traz o id; guardamos no

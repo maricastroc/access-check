@@ -48,7 +48,7 @@ export function Button({
   ...rest
 }: ButtonProps) {
   const classes = cn(
-    "inline-flex items-center justify-center font-semibold transition-colors",
+    "cursor-pointer inline-flex items-center justify-center font-semibold transition-colors",
     sizeClasses[size],
     variantClasses[variant],
     className,

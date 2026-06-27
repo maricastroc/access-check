@@ -63,7 +63,7 @@ export function ErrorState({
         />
         <button
           type="submit"
-          className="rounded-[9px] bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-600"
+          className="cursor-pointer rounded-[9px] bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-600"
         >
           Try again
         </button>

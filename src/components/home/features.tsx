@@ -3,7 +3,7 @@ import { features } from "./content";
 
 export function Features() {
   return (
-    <section className="mx-auto w-full max-w-7xl px-6 pt-8 pb-28 lg:px-10">
+    <section className="mx-auto w-full max-w-7xl px-6 pt-8 pb-28">
       <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="text-sm font-semibold tracking-[0.16em] text-brand-600 uppercase">

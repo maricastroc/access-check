@@ -53,7 +53,7 @@ export function FixFirst({
           </div>
           <button
             onClick={() => onViewFix(f.title)}
-            className="h-7.5 shrink-0 rounded-lg border border-line-strong bg-card px-3 text-xs font-medium text-ink transition-colors hover:bg-[#f4f6f8]"
+            className="h-7.5 shrink-0 cursor-pointer rounded-lg border border-line-strong bg-card px-3 text-xs font-medium text-ink transition-colors hover:bg-[#f4f6f8]"
           >
             View fix
           </button>

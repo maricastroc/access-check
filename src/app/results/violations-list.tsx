@@ -72,7 +72,7 @@ export function ViolationsList({
             <button
               key={t.key}
               onClick={() => setFilter(t.key)}
-              className={`inline-flex items-center gap-1.75 rounded-[9px] border px-2.75 py-1.5 text-[12.5px] transition-colors ${
+              className={`inline-flex cursor-pointer items-center gap-1.75 rounded-[9px] border px-2.75 py-1.5 text-[12.5px] transition-colors ${
                 active
                   ? "border-ink bg-ink font-semibold text-white"
                   : "border-line-strong bg-card font-medium text-ink-soft hover:border-[#d6d9df]"

@@ -70,11 +70,27 @@ Generate a shareable report of the scan — useful for handing an audit to a cli
 
 ---
 
+## Accounts & history
+
+Accessibility scanning is **anonymous-first**: the full tool works with no account. Signing in (GitHub or Google — OAuth only, no passwords) only _adds_ a saved history of your audits; it never gates or degrades the core.
+
+- **Signed-in scans always run fresh.** The anonymous flow caches results per URL (5 min); signed-in scans bypass that cache, so each history entry is a real point-in-time snapshot rather than someone else's recent scan of the same URL.
+- **Persistence never blocks the scan.** Saving to the database is best-effort — if it fails, you still get the report. The scan result is independent of the history write.
+- **Screenshots live outside the row.** Each scan's JSON is stored without the image; the screenshot is a JPEG blob in a separate table, served via `/api/scan/<id>/screenshot` — so list and history queries stay light.
+
+History lives at `/history` (newest first, with thumbnails, score, and a delta vs the previous scan of the same URL); opening an entry renders the saved report from storage at `/report/<id>` without re-scanning.
+
+When a saved report has an earlier scan of the same URL, it opens with a **"Changes since last scan"** panel: score and per-severity deltas, plus exactly which rules were **fixed** (flagged before, gone now) and which **regressed** (new since). The diff is a pure, unit-tested function (`lib/scan/diff.ts`) — it extends the project's thesis from "I prove the fix" to "I show you what you fixed or broke over time."
+
+---
+
 ## Tech stack
 
 - **[Next.js 16](https://nextjs.org)** (App Router) + **React 19** + **TypeScript**
 - **[axe-core](https://github.com/dequelabs/axe-core)** — WCAG rule engine
 - **[Playwright](https://playwright.dev)** / `playwright-core` + `@sparticuz/chromium` — headless rendering
+- **[Auth.js (NextAuth v5)](https://authjs.dev)** — GitHub/Google OAuth, optional sign-in for history
+- **[Prisma 7](https://www.prisma.io)** + **[Neon](https://neon.tech) Postgres** (serverless driver) — scan-history persistence
 - **Tailwind CSS v4**
 - **Vitest** — unit tests for the deterministic core (remediation, scoring, grouping)
 
