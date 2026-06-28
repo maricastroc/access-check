@@ -40,17 +40,19 @@ export default async function HistoryPage() {
     <div className="flex min-h-screen flex-col bg-canvas font-sans text-ink">
       <SiteHeader />
 
-      <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-10">
-        <div className="mb-8 flex items-end justify-between gap-4">
+      <div className="border-b border-line bg-card">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-6 py-5">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-ink">Scan history</h1>
-            <p className="mt-2 text-sm text-muted">
-              Every audit you’ve run while signed in, newest first.
+            <p className="text-[11px] font-semibold tracking-[0.14em] text-muted uppercase">
+              History
             </p>
+            <h1 className="mt-0.5 text-2xl font-bold tracking-tight text-ink">Scan history</h1>
           </div>
           {scans.length > 0 && <ClearHistoryButton />}
         </div>
+      </div>
 
+      <main className="mx-auto w-full max-w-7xl flex-1 px-6 pt-8 pb-10">
         {scans.length === 0 ? (
           <EmptyState />
         ) : (
