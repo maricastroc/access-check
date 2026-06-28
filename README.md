@@ -74,7 +74,8 @@ Generate a shareable report of the scan — useful for handing an audit to a cli
 
 Accessibility scanning is **anonymous-first**: the full tool works with no account. Signing in (GitHub or Google — OAuth only, no passwords) only _adds_ a saved history of your audits; it never gates or degrades the core.
 
-- **Signed-in scans always run fresh.** The anonymous flow caches results per URL (5 min); signed-in scans bypass that cache, so each history entry is a real point-in-time snapshot rather than someone else's recent scan of the same URL.
+- **Signed-in scans always run fresh.** The anonymous flow caches results per URL (5 min) in **Redis (Upstash)** — a shared store, so the cache actually works across serverless instances rather than per-instance; signed-in scans bypass that cache, so each history entry is a real point-in-time snapshot rather than someone else's recent scan of the same URL. The cached payload drops the screenshot blob (it lives outside the row anyway), keeping cache values small.
+- **Rate limiting is global.** Scans are gated at 5/min per IP via an Upstash sliding-window limiter — shared across instances, so the limit holds on serverless (an in-memory counter would reset per instance and effectively not limit at all). Both cache and limiter degrade gracefully: with no Redis configured (e.g. local dev), the scan still runs, just without caching or limiting.
 - **Persistence never blocks the scan.** Saving to the database is best-effort — if it fails, you still get the report. The scan result is independent of the history write.
 - **Screenshots live outside the row.** Each scan's JSON is stored without the image; the screenshot is a JPEG blob in a separate table, served via `/api/scan/<id>/screenshot` — so list and history queries stay light.
 
@@ -91,6 +92,7 @@ When a saved report has an earlier scan of the same URL, it opens with a **"Chan
 - **[Playwright](https://playwright.dev)** / `playwright-core` + `@sparticuz/chromium` — headless rendering
 - **[Auth.js (NextAuth v5)](https://authjs.dev)** — GitHub/Google OAuth, optional sign-in for history
 - **[Prisma 7](https://www.prisma.io)** + **[Neon](https://neon.tech) Postgres** (serverless driver) — scan-history persistence
+- **[Upstash Redis](https://upstash.com)** (HTTP-based) — shared cache + rate limiting that survive a serverless, multi-instance runtime
 - **Tailwind CSS v4**
 - **Vitest** — unit tests for the deterministic core (remediation, scoring, grouping)
 
@@ -126,7 +128,7 @@ Open [http://localhost:3000](http://localhost:3000), enter a URL, and run a scan
 ```
 src/
 ├── app/
-│   ├── api/scan/route.ts       # scan endpoint (Node runtime, in-memory cache, rate limit)
+│   ├── api/scan/route.ts       # scan endpoint (Node runtime, Redis cache + rate limit)
 │   ├── results/                # results page, split by concern
 │   │   ├── results-view.tsx    #   orchestrator (state + fetch)
 │   │   ├── preview-panel.tsx   #   screenshot + markers + vision simulations

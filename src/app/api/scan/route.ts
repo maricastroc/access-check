@@ -3,30 +3,23 @@ import { runScan, normalizeUrl } from "@/lib/scan/scan";
 import type { ScanResult } from "@/lib/scan/types";
 import { auth } from "@/auth";
 import { saveScan } from "@/lib/scans";
+import { redis, ratelimit } from "@/lib/redis";
 
 // Playwright precisa do runtime Node (não Edge) e de tempo pra renderizar.
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-// --- cache em memória (TTL 5 min) ---
-const CACHE_TTL = 5 * 60_000;
-const cache = new Map<string, { at: number; result: ScanResult }>();
+// Cache anônimo: TTL de 5 min, agora no Redis (Upstash) pra valer entre
+// instâncias. O Redis expira a chave sozinho (`ex`), então não há mais
+// aritmética de timestamp aqui. Sem Redis configurado, `redis` é null e o
+// fluxo simplesmente roda sem cache.
+const CACHE_TTL_SECONDS = 5 * 60;
 
-// --- rate-limit leve por IP (5 / min) ---
-// Desativado em dev: local cai no IP fallback "local", então todos os
-// testes dividiriam o mesmo balde de 5/min.
-const RATE_ENABLED = process.env.NODE_ENV === "production";
-const RATE_MAX = 5;
-const RATE_WINDOW = 60_000;
-const hits = new Map<string, number[]>();
-
-function rateLimited(ip: string): boolean {
-  const now = Date.now();
-  const recent = (hits.get(ip) ?? []).filter((t) => now - t < RATE_WINDOW);
-  recent.push(now);
-  hits.set(ip, recent);
-  return recent.length > RATE_MAX;
-}
+// `ScanResult` sem o screenshot — é o que vai pro cache. O data URL base64 da
+// imagem pode passar do limite de tamanho por requisição do Upstash e é caro
+// de trafegar; o blob já vive à parte (ver saveScan), então o cache não precisa
+// dele. A UI anônima exibe o resultado sem o screenshot do cache.
+type CachedScan = Omit<ScanResult, "screenshot">;
 
 export async function POST(req: Request) {
   let body: { url?: string };
@@ -41,8 +34,11 @@ export async function POST(req: Request) {
   }
 
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
-  if (RATE_ENABLED && rateLimited(ip)) {
-    return NextResponse.json({ error: "Too many scans. Try again in a minute." }, { status: 429 });
+  if (ratelimit) {
+    const { success } = await ratelimit.limit(ip);
+    if (!success) {
+      return NextResponse.json({ error: "Too many scans. Try again in a minute." }, { status: 429 });
+    }
   }
 
   const url = normalizeUrl(body.url);
@@ -58,10 +54,10 @@ export async function POST(req: Request) {
 
   // O cache é otimização do fluxo anônimo. Usuário logado sempre roda um scan
   // fresh — pra o histórico ser um retrato real do momento — e o persiste.
-  if (!userId) {
-    const cached = cache.get(url);
-    if (cached && Date.now() - cached.at < CACHE_TTL) {
-      return NextResponse.json(cached.result);
+  if (!userId && redis) {
+    const cached = await redis.get<CachedScan>(`scan:${url}`);
+    if (cached) {
+      return NextResponse.json(cached);
     }
   }
 
@@ -74,8 +70,16 @@ export async function POST(req: Request) {
       } catch (e) {
         console.error("Failed to save scan to history:", e);
       }
-    } else {
-      cache.set(url, { at: Date.now(), result });
+    } else if (redis) {
+      // Cacheia sem o screenshot (ver CachedScan). Falha de cache nunca deve
+      // derrubar o scan — o resultado já é válido.
+      const { screenshot: _screenshot, ...light } = result;
+      void _screenshot;
+      try {
+        await redis.set(`scan:${url}`, light, { ex: CACHE_TTL_SECONDS });
+      } catch (e) {
+        console.error("Failed to cache scan result:", e);
+      }
     }
     return NextResponse.json(result);
   } catch (err) {
