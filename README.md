@@ -21,13 +21,13 @@ Not just a list of problems — the exact code to paste, proven to work.
 
 ## ♿ Features
 
-|  |  |
-|---|---|
-| **🔧 Copy-Paste Fixes** | Each violation gets a generated code snippet — the exact contrast color, alt text, or label to paste — not just a restated rule. |
-| **✅ Verified Fixes** | Every fix is applied in the page and the audit is re-run to prove it actually clears the violation before it's suggested. |
-| **👁️ Vision Simulations** | Preview the page through deuteranopia, protanopia, tritanopia, low vision, and grayscale filters to check meaning survives without color. |
-| **📊 Score & Export** | A weighted 0–100 score, a prioritized "Fix First" list, and an exportable PDF / Markdown report you can hand to a client or paste into a ticket. |
-| **🔍 Beyond Violations** | Surfaces axe's "best practice" recommendations and flags items that need manual review — the two buckets most tools silently discard. |
+|                           |                                                                                                                                                  |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **🔧 Copy-Paste Fixes**   | Each violation gets a generated code snippet — the exact contrast color, alt text, or label to paste — not just a restated rule.                 |
+| **✅ Verified Fixes**     | Every fix is applied in the page and the audit is re-run to prove it actually clears the violation before it's suggested.                        |
+| **👁️ Vision Simulations** | Preview the page through deuteranopia, protanopia, tritanopia, low vision, and grayscale filters to check meaning survives without color.        |
+| **📊 Score & Export**     | A weighted 0–100 score, a prioritized "Fix First" list, and an exportable PDF / Markdown report you can hand to a client or paste into a ticket. |
+| **🔍 Beyond Violations**  | Surfaces axe's "best practice" recommendations and flags items that need manual review — the two buckets most tools silently discard.            |
 
 <br/>
 
@@ -63,17 +63,17 @@ Not just a list of problems — the exact code to paste, proven to work.
   <img src="https://img.shields.io/badge/Auth.js-000000?style=for-the-badge&logo=auth0&logoColor=white" alt="Auth.js" />
 </p>
 
-| Category            | Technologies                                              |
-|---------------------|-----------------------------------------------------------|
-| **Framework**       | Next.js 16 (App Router), React 19                        |
-| **Language**        | TypeScript 5                                             |
-| **Styling**         | Tailwind CSS v4                                          |
-| **Audit Engine**    | axe-core, Playwright (`playwright-core` + `@sparticuz/chromium`) |
-| **Database**        | PostgreSQL (Neon, serverless driver) + Prisma 7          |
-| **Authentication**  | Auth.js / NextAuth v5 (GitHub, Google — OAuth only)      |
-| **Cache & Rate Limit** | Upstash Redis (HTTP-based, shared across instances)   |
-| **Testing**         | Vitest                                                   |
-| **Tooling**         | ESLint, Prettier                                         |
+| Category               | Technologies                                                     |
+| ---------------------- | ---------------------------------------------------------------- |
+| **Framework**          | Next.js 16 (App Router), React 19                                |
+| **Language**           | TypeScript 5                                                     |
+| **Styling**            | Tailwind CSS v4                                                  |
+| **Audit Engine**       | axe-core, Playwright (`playwright-core` + `@sparticuz/chromium`) |
+| **Database**           | PostgreSQL (Neon, serverless driver) + Prisma 7                  |
+| **Authentication**     | Auth.js / NextAuth v5 (GitHub, Google — OAuth only)              |
+| **Cache & Rate Limit** | Upstash Redis (HTTP-based, shared across instances)              |
+| **Testing**            | Vitest                                                           |
+| **Tooling**            | ESLint, Prettier                                                 |
 
 <br/>
 

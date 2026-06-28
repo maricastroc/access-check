@@ -10,10 +10,6 @@ import { SummaryPage } from "./summary-page";
 import { FindingsPage } from "./findings-page";
 import { ProgressPage } from "./progress-page";
 
-// The report pages render at a fixed Letter width (w-204 = 816px) so the PDF
-// stays print-accurate. On narrow screens we zoom the whole column to fit the
-// viewport — `zoom` reflows layout (unlike transform), so heights collapse and
-// centering still work. Reset to 1 around printing so the PDF prints full size.
 const PAGE_WIDTH = 816;
 
 function FitToWidth({ children }: { children: React.ReactNode }) {

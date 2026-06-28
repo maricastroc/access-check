@@ -37,7 +37,10 @@ export async function POST(req: Request) {
   if (ratelimit) {
     const { success } = await ratelimit.limit(ip);
     if (!success) {
-      return NextResponse.json({ error: "Too many scans. Try again in a minute." }, { status: 429 });
+      return NextResponse.json(
+        { error: "Too many scans. Try again in a minute." },
+        { status: 429 },
+      );
     }
   }
 

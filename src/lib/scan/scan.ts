@@ -300,7 +300,15 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
       return await window.axe.run(document, {
         runOnly: {
           type: "tag",
-          values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22a", "wcag22aa", "best-practice"],
+          values: [
+            "wcag2a",
+            "wcag2aa",
+            "wcag21a",
+            "wcag21aa",
+            "wcag22a",
+            "wcag22aa",
+            "best-practice",
+          ],
         },
       });
     });

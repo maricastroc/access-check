@@ -23,13 +23,19 @@ export function StatTiles({ result }: { result: ScanResult }) {
       label: "Critical issues",
       value: counts.critical,
       color: "text-critical",
-      sub: criticalElements > 0 ? `${criticalElements} element${criticalElements === 1 ? "" : "s"}` : "blocking AA",
+      sub:
+        criticalElements > 0
+          ? `${criticalElements} element${criticalElements === 1 ? "" : "s"}`
+          : "blocking AA",
     },
     {
       label: "Warnings",
       value: warnings,
       color: "text-serious",
-      sub: warningElements > 0 ? `${warningElements} element${warningElements === 1 ? "" : "s"}` : "serious + moderate",
+      sub:
+        warningElements > 0
+          ? `${warningElements} element${warningElements === 1 ? "" : "s"}`
+          : "serious + moderate",
     },
     {
       label: "Passed checks",

@@ -58,7 +58,7 @@ export function PreviewPanel({
       </div>
 
       <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="inline-flex flex-wrap gap-0.5 rounded-[11px] bg-[#eaebef] p-1">
+        <div className="inline-flex flex-wrap gap-0.5 rounded-[11px] bg-ui-bg p-1">
           {modeList.map((m) => {
             const active = m.key === sim;
             return (
@@ -78,7 +78,7 @@ export function PreviewPanel({
         </div>
         <button
           onClick={() => setShowMarkers(!showMarkers)}
-          className={`inline-flex h-8 shrink-0 items-center gap-2 rounded-[9px] border px-3 text-xs font-medium transition-colors ${
+          className={`inline-flex h-8 shrink-0 cursor-pointer items-center gap-2 rounded-[9px] border px-3 text-xs font-medium transition-colors ${
             showMarkers
               ? "border-brand-200 bg-brand-50 text-brand-600"
               : "border-line-strong bg-card text-muted"
@@ -90,19 +90,19 @@ export function PreviewPanel({
       </div>
 
       <div className="mb-2.5 flex items-center gap-2 text-xs leading-relaxed text-muted">
-        <span className="size-1.25 rounded-full bg-[#c2c6ce]" />
+        <span className="size-1.25 rounded-full bg-dot" />
         {modeDesc[sim]}
       </div>
 
       <div className="overflow-hidden rounded-[14px] border border-line-strong bg-card shadow-[0_1px_2px_rgba(16,18,29,.04),0_14px_40px_-12px_rgba(16,18,29,.14)]">
-        <div className="flex h-10.5 items-center gap-3.5 border-b border-line bg-[#f7f8fa] px-3.5">
+        <div className="flex h-10.5 items-center gap-3.5 border-b border-line bg-surface px-3.5">
           <div className="flex gap-1.75">
             <span className="size-2.75 rounded-full bg-[#ff5f57]" />
             <span className="size-2.75 rounded-full bg-[#febc2e]" />
             <span className="size-2.75 rounded-full bg-[#28c840]" />
           </div>
           <div className="flex h-6.25 flex-1 items-center gap-1.75 truncate rounded-[7px] border border-line-strong bg-card px-2.75 font-mono text-[11.5px] text-muted">
-            <span className="size-2.75 shrink-0 rounded-full border-[1.5px] border-[#b7bcc4]" />
+            <span className="size-2.75 shrink-0 rounded-full border-[1.5px] border-ui-border" />
             <span className="truncate">{host}</span>
           </div>
           <span className="text-[11px] text-faint">Live preview</span>

@@ -1,4 +1,3 @@
-/** Filtros SVG de daltonismo usados pelo preview (referenciados por id no CSS filter). */
 export function ColorBlindFilters() {
   return (
     <svg aria-hidden="true" width="0" height="0" className="absolute h-0 w-0 overflow-hidden">

@@ -17,8 +17,6 @@ export function ReportPanel({
   filter: FilterKey;
   setFilter: (f: FilterKey) => void;
 }) {
-  // Coordena o "View fix" do Fix First com a lista de violações: abre o
-  // <details> certo e rola até ele depois que o filtro volta pra "all".
   const [focusFix, setFocusFix] = useState<string | null>(null);
 
   useEffect(() => {

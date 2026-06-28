@@ -22,9 +22,22 @@
   --color-faint: #9ca1ab;
 
   --color-canvas: #f4f5f7;
+  --color-surface: #f7f8fa;
+  --color-ui-bg: #eaebef;
+  --color-ui-border: #b7bcc4;
   --color-card: #ffffff;
   --color-line: #ecedf0;
   --color-line-strong: #e2e4e9;
+  --color-line-hover: #dcdee4;
+  --color-chip: #f0f1f4;
+  --color-dot: #c2c6ce;
+
+  --color-success-surface: #eef7f1;
+  --color-success-border: #dceee3;
+  --color-success-fg: #3f7a5f;
+  --color-warning-surface: #fdf8ee;
+  --color-warning-border: #e8dfc8;
+  --color-warning-fg: #7a5c20;
 
   --color-success: #1b865c;
   --color-warning: #a56a08;

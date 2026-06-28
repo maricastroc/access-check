@@ -1,10 +1,11 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronRight, faCheck } from "@fortawesome/free-solid-svg-icons";
+import { faCheck } from "@fortawesome/free-solid-svg-icons";
 import type { ScanResult, Severity } from "@/lib/scan/types";
 import { CopyableCode } from "@/components/ui/copyable-code";
 import { sevDot, severityLabel, severityOrder } from "./data";
 import { fixDomId, type FilterKey } from "./shared";
 import { VerifyPill } from "./verify-pill";
+import { IssueCard } from "./issue-card";
 
 const MAX_SELECTORS = 5;
 
@@ -35,7 +36,6 @@ export function ViolationsList({
 
   const showPassed = filter === "all" || filter === "passed";
 
-  // Total de elementos afetados pelas violações WCAG
   const totalElements = result.violations.reduce((sum, v) => sum + v.nodes, 0);
 
   const tabs: {
@@ -80,7 +80,7 @@ export function ViolationsList({
               className={`inline-flex cursor-pointer items-center gap-1.75 rounded-[9px] border px-2.75 py-1.5 text-[12.5px] transition-colors ${
                 active
                   ? "border-ink bg-ink font-semibold text-white"
-                  : "border-line-strong bg-card font-medium text-ink-soft hover:border-[#d6d9df]"
+                  : "border-line-strong bg-card font-medium text-ink-soft hover:border-line-hover"
               }`}
             >
               {t.dot && <span className={`size-1.75 rounded-full ${t.dot}`} />}
@@ -103,61 +103,44 @@ export function ViolationsList({
           </div>
 
           {g.items.map((it, i) => (
-            <details
+            <IssueCard
               key={`${it.id}-${i}`}
-              id={fixDomId(it.title)}
-              className="mb-2 scroll-mt-24 rounded-xl border border-line bg-card transition-[border-color] hover:border-[#dcdee4]"
+              dot={sevDot[g.sev]}
+              title={it.title}
+              subtitle={it.criterion}
+              nodes={it.nodes}
+              where={it.where}
+              anchorId={fixDomId(it.title)}
             >
-              <summary className="flex cursor-pointer items-center gap-3 px-3.75 py-3.25">
-                <span className={`size-1.75 shrink-0 rounded-full ${sevDot[g.sev]}`} />
-                <div className="min-w-0 flex-1">
-                  <div className="text-[13.5px] font-medium">{it.title}</div>
-                  <div className="mt-0.5 font-mono text-[11px] text-faint">{it.criterion}</div>
+              <p className="mb-2.5 text-[12.5px] leading-relaxed text-ink-soft">{it.desc}</p>
+              <div className="rounded-[10px] border border-line bg-surface px-3 py-2.75">
+                <div className="mb-1.5 text-[10px] font-semibold tracking-wider text-muted uppercase">
+                  Suggested fix
                 </div>
-                {it.nodes > 1 && (
-                  <span className="shrink-0 rounded-md bg-[#f0f1f4] px-1.5 py-0.5 font-mono text-[10.5px] font-medium text-muted">
-                    {it.nodes} elem.
-                  </span>
-                )}
-                <span className="max-w-35 truncate rounded-md bg-[#f6f7f9] px-2 py-0.75 font-mono text-[11px] text-faint">
-                  {it.where}
-                </span>
-                <FontAwesomeIcon
-                  icon={faChevronRight}
-                  className="v-chev shrink-0 text-[13px] text-[#b7bcc4] transition-transform duration-200"
-                />
-              </summary>
-              <div className="pr-3.75 pb-3.75 pl-8.75">
-                <p className="mb-2.5 text-[12.5px] leading-relaxed text-ink-soft">{it.desc}</p>
-                <div className="rounded-[10px] border border-line bg-[#f7f8fa] px-3 py-2.75">
-                  <div className="mb-1.5 text-[10px] font-semibold tracking-wider text-muted uppercase">
-                    Suggested fix
-                  </div>
-                  {it.fixGroups && it.fixGroups.length > 0 ? (
-                    it.fixGroups.map((fg, gi) => (
-                      <div key={gi} className={gi > 0 ? "mt-3 border-t border-line pt-3" : ""}>
-                        <div className="font-mono text-[12.5px] leading-relaxed whitespace-pre-line text-ink">
-                          {fg.text}
-                        </div>
-                        {fg.code && <CopyableCode code={fg.code} />}
-                        <div className="mt-2 flex flex-wrap items-center gap-2">
-                          {fg.count > 1 && (
-                            <span className="inline-flex items-center rounded-md bg-[#eef0f3] px-1.5 py-0.5 text-[10.5px] font-semibold text-muted">
-                              Resolves {fg.count} elements
-                            </span>
-                          )}
-                          <VerifyPill v={fg.verification} />
-                        </div>
+                {it.fixGroups && it.fixGroups.length > 0 ? (
+                  it.fixGroups.map((fg, gi) => (
+                    <div key={gi} className={gi > 0 ? "mt-3 border-t border-line pt-3" : ""}>
+                      <div className="font-mono text-[12.5px] leading-relaxed whitespace-pre-line text-ink">
+                        {fg.text}
                       </div>
-                    ))
-                  ) : (
-                    <div className="font-mono text-[12.5px] leading-relaxed whitespace-pre-line text-ink">
-                      {it.fix}
+                      {fg.code && <CopyableCode code={fg.code} />}
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        {fg.count > 1 && (
+                          <span className="inline-flex items-center rounded-md bg-chip px-1.5 py-0.5 text-[10.5px] font-semibold text-muted">
+                            Resolves {fg.count} elements
+                          </span>
+                        )}
+                        <VerifyPill v={fg.verification} />
+                      </div>
                     </div>
-                  )}
-                </div>
+                  ))
+                ) : (
+                  <div className="font-mono text-[12.5px] leading-relaxed whitespace-pre-line text-ink">
+                    {it.fix}
+                  </div>
+                )}
               </div>
-            </details>
+            </IssueCard>
           ))}
         </div>
       ))}
@@ -173,7 +156,7 @@ export function ViolationsList({
             {result.passed.map((p, i) => (
               <span
                 key={`${p}-${i}`}
-                className="inline-flex items-center gap-1.5 rounded-[7px] border border-[#dceee3] bg-[#eef7f1] px-2.5 py-1 text-[11.5px] text-[#3f7a5f]"
+                className="inline-flex items-center gap-1.5 rounded-[7px] border border-success-border bg-success-surface px-2.5 py-1 text-[11.5px] text-success-fg"
               >
                 <FontAwesomeIcon icon={faCheck} className="text-[10px] text-success" />
                 {p}
@@ -183,7 +166,6 @@ export function ViolationsList({
         </div>
       )}
 
-      {/* ---- Best practices ---- */}
       {result.bestPractice.length > 0 && (
         <div className="mt-5">
           <div className="mb-2.5 flex items-center gap-2">
@@ -194,52 +176,36 @@ export function ViolationsList({
             <span className="text-[10.5px] text-muted">Recommended — not WCAG violations</span>
           </div>
           {result.bestPractice.map((bp, i) => (
-            <details
+            <IssueCard
               key={`bp-${bp.id}-${i}`}
-              className="mb-2 rounded-xl border border-line bg-card transition-[border-color] hover:border-[#dcdee4]"
+              dot="bg-brand-400"
+              title={bp.title}
+              subtitle={bp.id}
+              nodes={bp.nodes}
             >
-              <summary className="flex cursor-pointer items-center gap-3 px-3.75 py-3.25">
-                <span className="size-1.75 shrink-0 rounded-full bg-brand-400" />
-                <div className="min-w-0 flex-1">
-                  <div className="text-[13.5px] font-medium">{bp.title}</div>
-                  <div className="mt-0.5 font-mono text-[11px] text-faint">{bp.id}</div>
+              <p className="mb-2.5 text-[12.5px] leading-relaxed text-ink-soft">{bp.desc}</p>
+              {bp.selectors.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {bp.selectors.map((sel, si) => (
+                    <span
+                      key={si}
+                      className="max-w-60 truncate rounded-md bg-chip px-2 py-0.75 font-mono text-[11px] text-faint"
+                    >
+                      {sel}
+                    </span>
+                  ))}
+                  {bp.nodes > MAX_SELECTORS && (
+                    <span className="rounded-md bg-chip px-2 py-0.75 font-mono text-[11px] text-faint">
+                      +{bp.nodes - MAX_SELECTORS} more
+                    </span>
+                  )}
                 </div>
-                {bp.nodes > 1 && (
-                  <span className="shrink-0 rounded-md bg-[#f0f1f4] px-1.5 py-0.5 font-mono text-[10.5px] font-medium text-muted">
-                    {bp.nodes} elem.
-                  </span>
-                )}
-                <FontAwesomeIcon
-                  icon={faChevronRight}
-                  className="v-chev shrink-0 text-[13px] text-[#b7bcc4] transition-transform duration-200"
-                />
-              </summary>
-              <div className="pr-3.75 pb-3.75 pl-8.75">
-                <p className="mb-2.5 text-[12.5px] leading-relaxed text-ink-soft">{bp.desc}</p>
-                {bp.selectors.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {bp.selectors.map((sel, si) => (
-                      <span
-                        key={si}
-                        className="max-w-60 truncate rounded-md bg-[#f0f1f4] px-2 py-0.75 font-mono text-[11px] text-faint"
-                      >
-                        {sel}
-                      </span>
-                    ))}
-                    {bp.nodes > MAX_SELECTORS && (
-                      <span className="rounded-md bg-[#f0f1f4] px-2 py-0.75 font-mono text-[11px] text-faint">
-                        +{bp.nodes - MAX_SELECTORS} more
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-            </details>
+              )}
+            </IssueCard>
           ))}
         </div>
       )}
 
-      {/* ---- Needs manual review ---- */}
       {result.incomplete.length > 0 && (
         <div className="mt-5">
           <div className="mb-2.5 flex items-center gap-2">
@@ -247,53 +213,41 @@ export function ViolationsList({
             <span className="text-[12.5px] font-semibold">Needs manual review</span>
             <span className="font-mono text-[11.5px] text-faint">{result.incomplete.length}</span>
             <span className="h-px flex-1 bg-line" />
-            <span className="text-[10.5px] text-muted">Automated testing couldn't determine these</span>
+            <span className="text-[10.5px] text-muted">
+              Automated testing couldn&apos;t determine these
+            </span>
           </div>
           {result.incomplete.map((inc, i) => (
-            <details
+            <IssueCard
               key={`inc-${inc.id}-${i}`}
-              className="mb-2 rounded-xl border border-line bg-card transition-[border-color] hover:border-[#dcdee4]"
+              dot="bg-moderate"
+              title={inc.title}
+              subtitle={inc.criterion}
+              nodes={inc.nodes}
             >
-              <summary className="flex cursor-pointer items-center gap-3 px-3.75 py-3.25">
-                <span className="size-1.75 shrink-0 rounded-full bg-moderate" />
-                <div className="min-w-0 flex-1">
-                  <div className="text-[13.5px] font-medium">{inc.title}</div>
-                  <div className="mt-0.5 font-mono text-[11px] text-faint">{inc.criterion}</div>
+              <p className="mb-2.5 text-[12.5px] leading-relaxed text-ink-soft">{inc.desc}</p>
+              {inc.selectors.length > 0 && (
+                <div className="mb-2.5 flex flex-wrap gap-1.5">
+                  {inc.selectors.map((sel, si) => (
+                    <span
+                      key={si}
+                      className="max-w-60 truncate rounded-md bg-chip px-2 py-0.75 font-mono text-[11px] text-faint"
+                    >
+                      {sel}
+                    </span>
+                  ))}
+                  {inc.nodes > MAX_SELECTORS && (
+                    <span className="rounded-md bg-chip px-2 py-0.75 font-mono text-[11px] text-faint">
+                      +{inc.nodes - MAX_SELECTORS} more
+                    </span>
+                  )}
                 </div>
-                {inc.nodes > 1 && (
-                  <span className="shrink-0 rounded-md bg-[#f0f1f4] px-1.5 py-0.5 font-mono text-[10.5px] font-medium text-muted">
-                    {inc.nodes} elem.
-                  </span>
-                )}
-                <FontAwesomeIcon
-                  icon={faChevronRight}
-                  className="v-chev shrink-0 text-[13px] text-[#b7bcc4] transition-transform duration-200"
-                />
-              </summary>
-              <div className="pr-3.75 pb-3.75 pl-8.75">
-                <p className="mb-2.5 text-[12.5px] leading-relaxed text-ink-soft">{inc.desc}</p>
-                {inc.selectors.length > 0 && (
-                  <div className="mb-2.5 flex flex-wrap gap-1.5">
-                    {inc.selectors.map((sel, si) => (
-                      <span
-                        key={si}
-                        className="max-w-60 truncate rounded-md bg-[#f0f1f4] px-2 py-0.75 font-mono text-[11px] text-faint"
-                      >
-                        {sel}
-                      </span>
-                    ))}
-                    {inc.nodes > MAX_SELECTORS && (
-                      <span className="rounded-md bg-[#f0f1f4] px-2 py-0.75 font-mono text-[11px] text-faint">
-                        +{inc.nodes - MAX_SELECTORS} more
-                      </span>
-                    )}
-                  </div>
-                )}
-                <div className="rounded-[9px] border border-[#e8dfc8] bg-[#fdf8ee] px-3 py-2.25 text-[11.5px] leading-relaxed text-[#7a5c20]">
-                  Axe couldn't determine this automatically. Inspect the affected element(s) and verify manually.
-                </div>
+              )}
+              <div className="rounded-[9px] border border-warning-border bg-warning-surface px-3 py-2.25 text-[11.5px] leading-relaxed text-warning-fg">
+                Axe couldn&apos;t determine this automatically. Inspect the affected element(s) and
+                verify manually.
               </div>
-            </details>
+            </IssueCard>
           ))}
         </div>
       )}

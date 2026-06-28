@@ -16,6 +16,7 @@ export function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
+// Hex values are intentional — used with inline alpha suffix (e.g. `${markerColor}1f`)
 export function markerColor(sev: Severity): string {
   return {
     critical: "#e5484d",

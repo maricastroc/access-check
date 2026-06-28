@@ -15,7 +15,15 @@ function result(over: Partial<ScanResult>): ScanResult {
     durationMs: 0,
     screenshot: null,
     score: 0,
-    counts: { critical: 0, serious: 0, moderate: 0, minor: 0, passed: 0, bestPractice: 0, manualReview: 0 },
+    counts: {
+      critical: 0,
+      serious: 0,
+      moderate: 0,
+      minor: 0,
+      passed: 0,
+      bestPractice: 0,
+      manualReview: 0,
+    },
     summary: "",
     violations: [],
     incomplete: [] as import("./types").ScanIncomplete[],
@@ -44,11 +52,27 @@ describe("diffScans", () => {
   it("calcula deltas de score e de contagem", () => {
     const prev = result({
       score: 70,
-      counts: { critical: 2, serious: 1, moderate: 0, minor: 0, passed: 10, bestPractice: 0, manualReview: 0 },
+      counts: {
+        critical: 2,
+        serious: 1,
+        moderate: 0,
+        minor: 0,
+        passed: 10,
+        bestPractice: 0,
+        manualReview: 0,
+      },
     });
     const curr = result({
       score: 85,
-      counts: { critical: 0, serious: 1, moderate: 0, minor: 0, passed: 14, bestPractice: 0, manualReview: 0 },
+      counts: {
+        critical: 0,
+        serious: 1,
+        moderate: 0,
+        minor: 0,
+        passed: 14,
+        bestPractice: 0,
+        manualReview: 0,
+      },
     });
 
     const d = diffScans(prev, curr);
