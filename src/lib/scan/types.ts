@@ -58,6 +58,27 @@ export type ScanMarker = {
   height: number;
 };
 
+/** Item que o axe não conseguiu determinar automaticamente — requer revisão humana. */
+export type ScanIncomplete = {
+  id: string;
+  title: string;
+  desc: string;
+  nodes: number;
+  criterion: string;
+  /** Primeiros seletores dos elementos afetados (máx. 5) */
+  selectors: string[];
+};
+
+/** Violação de best-practice (não WCAG) — melhoria recomendada, não bloqueante. */
+export type ScanBestPractice = {
+  id: string;
+  title: string;
+  desc: string;
+  nodes: number;
+  /** Primeiros seletores dos elementos afetados (máx. 5) */
+  selectors: string[];
+};
+
 export type ScanResult = {
   url: string;
   finalUrl: string;
@@ -73,9 +94,15 @@ export type ScanResult = {
     moderate: number;
     minor: number;
     passed: number;
+    bestPractice: number;
+    manualReview: number;
   };
   summary: string;
   violations: ScanViolation[];
+  /** Itens que o axe sinalizou como inconclusivos — precisam de revisão manual. */
+  incomplete: ScanIncomplete[];
+  /** Recomendações de best-practice — não são violações WCAG. */
+  bestPractice: ScanBestPractice[];
   passed: string[];
   markers: ScanMarker[];
   fixFirst: {

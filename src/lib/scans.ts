@@ -98,7 +98,19 @@ export async function getUserScans(userId: string): Promise<ScanListItem[]> {
 
 /** Reconstrói o ScanResult salvo, apontando o screenshot pra rota de imagem. */
 function hydrate(id: string, result: unknown): ScanResult {
-  return { ...(result as ScanResult), screenshot: `/api/scan/${id}/screenshot` };
+  const r = result as ScanResult;
+  return {
+    ...r,
+    screenshot: `/api/scan/${id}/screenshot`,
+    // Retrocompatibilidade: campos adicionados depois do save inicial
+    incomplete: r.incomplete ?? [],
+    bestPractice: r.bestPractice ?? [],
+    counts: {
+      ...r.counts,
+      bestPractice: r.counts.bestPractice ?? 0,
+      manualReview: r.counts.manualReview ?? 0,
+    },
+  };
 }
 
 export type SavedReport = {

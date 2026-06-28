@@ -16,7 +16,7 @@ export function computeScore(violations: ScanViolation[]): number {
     0,
   );
   // amortece: cada ponto de penalidade vale menos conforme cresce
-  const damped = 100 - 100 * (1 - Math.exp(-penalty / 60));
+  const damped = 100 - 100 * (1 - Math.exp(-penalty / 45));
   return Math.max(0, Math.round(damped));
 }
 

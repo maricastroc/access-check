@@ -27,6 +27,7 @@ Not just a list of problems — the exact code to paste, proven to work.
 | **✅ Verified Fixes** | Every fix is applied in the page and the audit is re-run to prove it actually clears the violation before it's suggested. |
 | **👁️ Vision Simulations** | Preview the page through deuteranopia, protanopia, tritanopia, low vision, and grayscale filters to check meaning survives without color. |
 | **📊 Score & Export** | A weighted 0–100 score, a prioritized "Fix First" list, and an exportable PDF / Markdown report you can hand to a client or paste into a ticket. |
+| **🔍 Beyond Violations** | Surfaces axe's "best practice" recommendations and flags items that need manual review — the two buckets most tools silently discard. |
 
 <br/>
 
@@ -80,7 +81,7 @@ Not just a list of problems — the exact code to paste, proven to work.
 
 AccessCheck is an accessibility auditor that goes one step further than the usual checker. Most tools tell you _what_ is broken; AccessCheck generates the exact code to fix each violation, **proves the fix works by re-running the audit after applying it**, and groups repeated issues so one change can resolve many elements at once.
 
-It renders the page in a real headless browser (Playwright), runs [axe-core](https://github.com/dequelabs/axe-core) against WCAG 2.1 A/AA rules, and turns the raw findings into an actionable report — a live preview with issue markers, color-blindness simulations, an accessibility score, a prioritized "Fix First" list, and an exportable PDF.
+It renders the page in a real headless browser (Playwright), runs [axe-core](https://github.com/dequelabs/axe-core) against WCAG 2.2 A/AA rules, and turns the raw findings into an actionable report — a live preview with issue markers, color-blindness simulations, an accessibility score, a prioritized "Fix First" list, and an exportable PDF.
 
 The scan runs server-side in a Node runtime (`/api/scan`) because Playwright needs a real browser. Locally it uses the full Playwright Chromium; on serverless it falls back to `playwright-core` + `@sparticuz/chromium`.
 
@@ -90,6 +91,7 @@ The scan runs server-side in a Node runtime (`/api/scan`) because Playwright nee
 - **Anonymous-first, sign-in optional:** The full tool works with no account. Signing in (GitHub or Google, OAuth only) only _adds_ a saved history of your audits — it never gates or degrades the core.
 - **Scan history with diffs:** Signed-in scans are saved at `/history` (newest first, with thumbnails, score, and a delta vs the previous scan of the same URL). Opening a saved report shows a **"Changes since last scan"** panel — exactly which rules were **fixed** or **regressed** over time, computed by a pure, unit-tested diff function.
 - **Distributed cache & rate limiting:** Anonymous results are cached per URL (5 min) and scans are gated at 5/min per IP via Upstash Redis — shared across serverless instances, and degrading gracefully to no-cache/no-limit when Redis isn't configured.
+- **Three-tier reporting:** Results are split into WCAG violations (confirmed failures), best practices (recommendations beyond the spec, clearly labelled as non-blocking), and needs-manual-review items (axe flagged something but can't decide automatically — surfaced with the affected selectors so you know exactly where to look). Most tools collapse these into one list or discard tiers 2 and 3 entirely.
 - **Export to PDF & Markdown:** A formatted report view at `/report`, plus a browser-generated Markdown report (score, severity table, Fix First list, every violation with its fix and verification status) perfect for pasting into an issue, PR, or ticket.
 - **Responsive layout:** Fully responsive across the landing, results, and exportable report views.
 

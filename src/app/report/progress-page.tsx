@@ -245,8 +245,8 @@ export function ProgressPage({ result }: { result: ScanResult }) {
       </div>
 
       <p className="mt-4 max-w-[6.8in] text-[9.5px] leading-normal text-muted">
-        This report reflects an automated scan against WCAG 2.1 Level&nbsp;AA. Automated testing
-        covers roughly 57% of success criteria; manual review with assistive technology is
+        This report reflects an automated scan against WCAG 2.2 Level&nbsp;AA. Automated testing
+        covers roughly 40–57% of success criteria; manual review with assistive technology is
         recommended for full conformance certification.
       </p>
     </PageShell>

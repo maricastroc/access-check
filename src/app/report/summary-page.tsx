@@ -20,7 +20,7 @@ export function SummaryPage({ result }: { result: ScanResult }) {
       label: "Scan Duration",
       value: `${(result.durationMs / 1000).toFixed(1)}s`,
     },
-    { label: "WCAG Version", value: "2.1 — Level AA" },
+    { label: "WCAG Version", value: "2.2 — Level AA" },
     { label: "Elements Scanned", value: String(result.scannedElements) },
   ];
 
@@ -49,6 +49,18 @@ export function SummaryPage({ result }: { result: ScanResult }) {
       value: result.counts.passed,
       color: "#1b865c",
     },
+    {
+      label: "Best practice",
+      sub: "Recommended",
+      value: result.counts.bestPractice,
+      color: "#6b8cff",
+    },
+    {
+      label: "Manual review",
+      sub: "Needs check",
+      value: result.counts.manualReview,
+      color: sevHex.moderate,
+    },
   ];
 
   const fixes = result.fixFirst.map((f) => {
@@ -70,7 +82,7 @@ export function SummaryPage({ result }: { result: ScanResult }) {
         </div>
         <div className="flex flex-col items-end gap-1 text-right">
           <span className="text-[9.5px] font-semibold tracking-[0.18em] text-muted uppercase">
-            WCAG 2.1 Audit
+            WCAG 2.2 Audit
           </span>
           <span className="font-mono text-[11px] text-ink-soft">
             Report&nbsp;#AC-{new Date().getFullYear()}-{shortId(result.finalUrl)}
@@ -148,7 +160,7 @@ export function SummaryPage({ result }: { result: ScanResult }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-4 gap-2.5">
+          <div className="grid grid-cols-6 gap-2">
             {counts.map((c) => (
               <div
                 key={c.label}

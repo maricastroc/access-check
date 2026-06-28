@@ -5,6 +5,13 @@ export function StatTiles({ result }: { result: ScanResult }) {
   const compliant = counts.critical === 0 && counts.serious === 0;
   const warnings = counts.serious + counts.moderate + counts.minor;
 
+  const criticalElements = result.violations
+    .filter((v) => v.severity === "critical")
+    .reduce((sum, v) => sum + v.nodes, 0);
+  const warningElements = result.violations
+    .filter((v) => v.severity !== "critical")
+    .reduce((sum, v) => sum + v.nodes, 0);
+
   const tiles = [
     {
       label: "Accessibility score",
@@ -16,13 +23,13 @@ export function StatTiles({ result }: { result: ScanResult }) {
       label: "Critical issues",
       value: counts.critical,
       color: "text-critical",
-      sub: "blocking AA",
+      sub: criticalElements > 0 ? `${criticalElements} element${criticalElements === 1 ? "" : "s"}` : "blocking AA",
     },
     {
       label: "Warnings",
       value: warnings,
       color: "text-serious",
-      sub: "serious + moderate",
+      sub: warningElements > 0 ? `${warningElements} element${warningElements === 1 ? "" : "s"}` : "serious + moderate",
     },
     {
       label: "Passed checks",

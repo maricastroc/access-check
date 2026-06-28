@@ -300,17 +300,22 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
       return await window.axe.run(document, {
         runOnly: {
           type: "tag",
-          values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"],
+          values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22a", "wcag22aa", "best-practice"],
         },
       });
     });
+
+    // Separa violações WCAG das de best-practice — só as WCAG entram no
+    // pipeline de fix/score; best-practice são informacionais.
+    const wcagViolations = axe.violations.filter((v) => !v.tags.includes("best-practice"));
+    const bpViolations = axe.violations.filter((v) => v.tags.includes("best-practice"));
 
     // Coleta atributos dos elementos cujo fix depende do DOM (ex.: inputs sem
     // rótulo), indexados pelo seletor. Pega TODOS os nós (não só o primeiro):
     // o agrupamento precisa do fix de cada elemento pra saber o que se repete.
     const elementSelectors = [
       ...new Set(
-        axe.violations
+        wcagViolations
           .filter((v) => ELEMENT_RULES.has(v.id))
           .flatMap((v) => v.nodes.map((n) => firstTarget(n.target)))
           .filter((s): s is string => Boolean(s)),
@@ -359,7 +364,7 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
 
     // ---- mapear violações + agrupar consertos por assinatura ----
     type Enriched = { v: ScanViolation; clusters: FixCluster[] };
-    const enriched: Enriched[] = axe.violations.map((v) => {
+    const enriched: Enriched[] = wcagViolations.map((v) => {
       const severity = (v.impact ?? "minor") as Severity;
       const firstNode = v.nodes[0];
       const where = firstNode ? (firstTarget(firstNode.target) ?? "—") : "—";
@@ -443,7 +448,7 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
 
     // ---- marcadores: bounding box dos nós acima da dobra ----
     const targets: { selector: string; severity: Severity; label: string }[] = [];
-    for (const v of axe.violations) {
+    for (const v of wcagViolations) {
       const severity = (v.impact ?? "minor") as Severity;
       const sel = firstTarget(v.nodes[0]?.target);
       if (sel) targets.push({ selector: sel, severity, label: v.help });
@@ -491,9 +496,36 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
       moderate: violations.filter((v) => v.severity === "moderate").length,
       minor: violations.filter((v) => v.severity === "minor").length,
       passed: axe.passes.length,
+      bestPractice: bpViolations.length,
+      manualReview: axe.incomplete.length,
     };
 
     const passed = axe.passes.map((p) => p.help);
+
+    const MAX_SELECTORS = 5;
+
+    const bestPractice = bpViolations.map((v) => ({
+      id: v.id,
+      title: v.help,
+      desc: v.description,
+      nodes: v.nodes.length,
+      selectors: v.nodes
+        .map((n) => firstTarget(n.target))
+        .filter((s): s is string => Boolean(s))
+        .slice(0, MAX_SELECTORS),
+    }));
+
+    const incomplete = axe.incomplete.map((v) => ({
+      id: v.id,
+      title: v.help,
+      desc: v.description,
+      nodes: v.nodes.length,
+      criterion: criterionFromTags(v.tags) ?? v.id,
+      selectors: v.nodes
+        .map((n) => firstTarget(n.target))
+        .filter((s): s is string => Boolean(s))
+        .slice(0, MAX_SELECTORS),
+    }));
 
     return {
       url,
@@ -506,6 +538,8 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
       counts,
       summary: buildSummary(counts),
       violations,
+      incomplete,
+      bestPractice,
       passed,
       markers,
       fixFirst: buildFixFirst(violations),

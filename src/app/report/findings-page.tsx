@@ -18,7 +18,7 @@ export function FindingsPage({ result }: { result: ScanResult }) {
         <SectionKicker>Section 02</SectionKicker>
         <h2 className="mt-1.5 text-[30px] font-bold tracking-tight text-ink">Detailed Findings</h2>
         <p className="mt-1.5 max-w-xl text-[12px] leading-[1.45] text-muted">
-          Every flagged issue grouped by severity and mapped to its WCAG&nbsp;2.1 success criterion,
+          Every flagged issue grouped by severity and mapped to its WCAG&nbsp;2.2 success criterion,
           with the impact and a concrete fix for each.
         </p>
       </div>
