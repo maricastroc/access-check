@@ -156,7 +156,7 @@ export function ViolationsList({
             {result.passed.map((p, i) => (
               <span
                 key={`${p}-${i}`}
-                className="inline-flex items-center gap-1.5 rounded-[7px] border border-success-border bg-success-surface px-2.5 py-1 text-[11.5px] text-success-fg"
+                className="inline-flex items-center gap-1.5 rounded-[7px] border border-[#dceee3] bg-[#eef7f1] px-2.5 py-1 text-[11.5px] text-success-fg"
               >
                 <FontAwesomeIcon icon={faCheck} className="text-[10px] text-success" />
                 {p}
