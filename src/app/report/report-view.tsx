@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { faSpinner, faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
 import type { ScanResult } from "@/lib/scan/types";
@@ -9,6 +9,42 @@ import { CenterState, PrintStyles, Toolbar } from "./chrome";
 import { SummaryPage } from "./summary-page";
 import { FindingsPage } from "./findings-page";
 import { ProgressPage } from "./progress-page";
+
+// The report pages render at a fixed Letter width (w-204 = 816px) so the PDF
+// stays print-accurate. On narrow screens we zoom the whole column to fit the
+// viewport — `zoom` reflows layout (unlike transform), so heights collapse and
+// centering still work. Reset to 1 around printing so the PDF prints full size.
+const PAGE_WIDTH = 816;
+
+function FitToWidth({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const fit = () => {
+      el.style.zoom = String(Math.min(1, (window.innerWidth - 32) / PAGE_WIDTH));
+    };
+    const reset = () => {
+      el.style.zoom = "1";
+    };
+    fit();
+    window.addEventListener("resize", fit);
+    window.addEventListener("beforeprint", reset);
+    window.addEventListener("afterprint", fit);
+    return () => {
+      window.removeEventListener("resize", fit);
+      window.removeEventListener("beforeprint", reset);
+      window.removeEventListener("afterprint", fit);
+    };
+  }, []);
+
+  return (
+    <div ref={ref} className="flex flex-col items-center gap-8 px-4 py-10">
+      {children}
+    </div>
+  );
+}
 
 export function ReportView({ initialUrl }: { initialUrl: string }) {
   const start = initialUrl || DEFAULT_URL;
@@ -77,11 +113,11 @@ export function ReportView({ initialUrl }: { initialUrl: string }) {
       )}
 
       {status === "done" && result && (
-        <div className="flex flex-col items-center gap-8 overflow-x-auto px-5 py-10">
+        <FitToWidth>
           <SummaryPage result={result} />
           <FindingsPage result={result} />
           <ProgressPage result={result} />
-        </div>
+        </FitToWidth>
       )}
     </div>
   );

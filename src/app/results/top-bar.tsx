@@ -23,19 +23,19 @@ export function TopBar({
   signOutAction: () => Promise<void>;
 }) {
   return (
-    <header className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-6">
+    <header className="mx-auto flex w-full max-w-7xl items-center justify-between gap-2 px-4 py-5 sm:px-6 sm:py-6">
       <Logo />
 
-      <div className="flex items-center gap-3.5">
+      <div className="flex items-center gap-1.5 sm:gap-3.5">
         <Link
           href="/"
           className="flex h-8.5 items-center gap-2 rounded-[9px] px-2.5 text-[13px] font-medium text-ink-soft transition-colors hover:bg-[#f6f7f9] hover:text-ink"
         >
           <FontAwesomeIcon icon={faArrowLeft} className="text-xs" />
-          New scan
+          <span className="hidden sm:inline">New scan</span>
         </Link>
-        <span className="h-5 w-px bg-line-strong" />
-        <div className="flex items-center gap-1.75 text-[12.5px] text-ink-soft">
+        <span className="hidden h-5 w-px bg-line-strong sm:block" />
+        <div className="hidden items-center gap-1.75 text-[12.5px] text-ink-soft sm:flex">
           <span
             className={`size-1.75 rounded-full ${
               status === "done"
@@ -54,13 +54,14 @@ export function TopBar({
         <button
           onClick={onRerun}
           disabled={busy}
-          className="flex h-8.5 cursor-pointer items-center gap-2 rounded-[9px] border border-line-strong bg-card px-3.5 text-[13px] font-medium transition-colors hover:bg-[#f6f7f9] disabled:opacity-50"
+          aria-label="Re-run analysis"
+          className="flex h-8.5 cursor-pointer items-center gap-2 rounded-[9px] border border-line-strong bg-card px-2.5 text-[13px] font-medium transition-colors hover:bg-[#f6f7f9] disabled:opacity-50 sm:px-3.5"
         >
           <FontAwesomeIcon
             icon={faArrowRotateRight}
             className={`text-xs ${busy ? "animate-spin" : ""}`}
           />
-          Re-run analysis
+          <span className="hidden sm:inline">Re-run analysis</span>
         </button>
 
         <span className="h-5 w-px bg-line-strong" />

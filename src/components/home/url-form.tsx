@@ -22,7 +22,7 @@ export function UrlForm() {
           e.preventDefault();
           analyze();
         }}
-        className="mt-9 flex max-w-xl items-center gap-2 rounded-field border border-line bg-card p-2 shadow-card"
+        className="mt-9 flex max-w-xl flex-col items-stretch gap-2 rounded-field border border-line bg-card p-2 shadow-card sm:flex-row sm:items-center"
       >
         <div className="flex flex-1 items-center gap-3 px-3">
           <FontAwesomeIcon icon={faGlobe} className="shrink-0 text-base text-muted" />
@@ -35,7 +35,7 @@ export function UrlForm() {
             className="w-full bg-transparent py-2.5 text-base text-ink placeholder:text-muted/70 focus:outline-none"
           />
         </div>
-        <Button type="submit" className="shrink-0">
+        <Button type="submit" className="w-full shrink-0 sm:w-auto">
           Analyze accessibility
         </Button>
       </form>

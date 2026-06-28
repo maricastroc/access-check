@@ -7,25 +7,26 @@ import type { Status } from "./shared";
 
 export function Toolbar({ url, status }: { url: string; status: Status }) {
   return (
-    <header className="ac-toolbar sticky top-0 z-30 flex h-14.5 items-center justify-between border-b border-line bg-card px-7">
-      <div className="flex items-center gap-3.5">
+    <header className="ac-toolbar sticky top-0 z-30 flex h-14.5 items-center justify-between gap-2 border-b border-line bg-card px-4 sm:px-7">
+      <div className="flex min-w-0 items-center gap-3.5">
         <Link
           href={`/results?url=${encodeURIComponent(url)}`}
           className="flex h-8.5 items-center gap-2 rounded-[9px] px-2.5 text-[13px] font-medium text-ink-soft transition-colors hover:bg-[#f6f7f9] hover:text-ink"
         >
           <FontAwesomeIcon icon={faArrowLeft} className="text-xs" />
-          Back to results
+          <span className="hidden sm:inline">Back to results</span>
         </Link>
-        <span className="h-5 w-px bg-line-strong" />
-        <span className="text-[13px] font-medium">Exportable report</span>
+        <span className="hidden h-5 w-px bg-line-strong sm:block" />
+        <span className="hidden text-[13px] font-medium sm:inline">Exportable report</span>
       </div>
       <button
         onClick={() => window.print()}
         disabled={status !== "done"}
-        className="flex h-8.5 cursor-pointer items-center gap-2 rounded-[9px] bg-brand-600 px-4 text-[13px] font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-50"
+        className="flex h-8.5 shrink-0 cursor-pointer items-center gap-2 rounded-[9px] bg-brand-600 px-4 text-[13px] font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-50"
       >
         <FontAwesomeIcon icon={faPrint} className="text-xs" />
-        Print / Save as PDF
+        <span className="hidden sm:inline">Print / Save as PDF</span>
+        <span className="sm:hidden">Save PDF</span>
       </button>
     </header>
   );
