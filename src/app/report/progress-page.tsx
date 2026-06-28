@@ -106,7 +106,7 @@ export function ProgressPage({ result }: { result: ScanResult }) {
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-[#cfe3dc] bg-[#f3f8f5]">
-          <div className="flex items-center gap-2.5 border-b border-[#dceee3] px-4 py-3">
+          <div className="flex items-center gap-2.5 border-b border-success-border px-4 py-3">
             <span className="size-2.5 rounded-[3px] bg-success" />
             <span className="text-[13px] font-semibold text-ink">Passed Checks</span>
             <span className="rounded-full bg-[#e3efe8] px-2 py-0.5 text-[10px] font-semibold text-success">

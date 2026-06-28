@@ -11,7 +11,6 @@ import { FindingsPage } from "../findings-page";
 import { ProgressPage } from "../progress-page";
 import { ComparisonCard } from "./comparison-card";
 
-// Prisma precisa do runtime Node.
 export const runtime = "nodejs";
 
 export default async function SavedReportPage({ params }: { params: Promise<{ id: string }> }) {
@@ -30,10 +29,10 @@ export default async function SavedReportPage({ params }: { params: Promise<{ id
     <div className="ac-canvas min-h-screen bg-canvas font-sans text-ink">
       <PrintStyles />
 
-      <header className="ac-toolbar sticky top-0 z-30 flex h-[58px] items-center justify-between border-b border-line bg-card px-7">
+      <header className="ac-toolbar sticky top-0 z-30 flex h-14.5 items-center justify-between border-b border-line bg-card px-7">
         <Link
           href="/history"
-          className="flex h-[34px] items-center gap-2 rounded-[9px] px-2.5 text-[13px] font-medium text-ink-soft transition-colors hover:bg-[#f6f7f9] hover:text-ink"
+          className="flex h-8.5 items-center gap-2 rounded-[9px] px-2.5 text-[13px] font-medium text-ink-soft transition-colors hover:bg-[#f6f7f9] hover:text-ink"
         >
           <FontAwesomeIcon icon={faArrowLeft} className="text-xs" />
           Back to history

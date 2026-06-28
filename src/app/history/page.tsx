@@ -5,7 +5,6 @@ import { getUserScans, type ScanListItem } from "@/lib/scans";
 import { SiteHeader } from "@/components/home/site-header";
 import { ClearHistoryButton, DeleteScanButton } from "./history-buttons";
 
-// Prisma precisa do runtime Node.
 export const runtime = "nodejs";
 
 function host(url: string): string {
@@ -61,7 +60,6 @@ export default async function HistoryPage() {
               <ScanCard
                 key={scan.id}
                 scan={scan}
-                // Score do scan anterior da MESMA url (lista está em ordem desc).
                 prevScore={scans.slice(i + 1).find((o) => o.url === scan.url)?.score ?? null}
               />
             ))}
