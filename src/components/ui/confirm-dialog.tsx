@@ -52,7 +52,7 @@ export function ConfirmDialog({
                 onClick={onConfirm}
                 className={`flex h-9 cursor-pointer items-center rounded-[10px] px-4 text-sm font-semibold text-white transition-colors ${
                   destructive
-                    ? "bg-[#e5484d] hover:bg-[#d13b40]"
+                    ? "bg-[#c62a2f] hover:bg-[#a82428]"
                     : "bg-brand-600 hover:bg-brand-700"
                 }`}
               >

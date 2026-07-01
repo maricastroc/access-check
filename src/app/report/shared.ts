@@ -5,10 +5,10 @@ export type Status = "loading" | "done" | "error";
 export const DEFAULT_URL = "example.com";
 
 export const sevHex: Record<Severity, string> = {
-  critical: "#e5484d",
-  serious: "#b46107",
-  moderate: "#d9a400",
-  minor: "#9ca1ab",
+  critical: "#c62a2f",
+  serious: "#a85a06",
+  moderate: "#8a6a00",
+  minor: "#6b7079",
 };
 export const sevTint: Record<Severity, string> = {
   critical: "#fdecec",

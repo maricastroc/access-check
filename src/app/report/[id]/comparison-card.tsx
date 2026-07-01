@@ -21,7 +21,7 @@ const dateFmt = new Intl.DateTimeFormat("en-US", {
 export function ComparisonCard({ diff, previousAt }: { diff: ScanDiff; previousAt: Date }) {
   const up = diff.scoreDelta > 0;
   const down = diff.scoreDelta < 0;
-  const deltaColor = up ? "#1b865c" : down ? "#e5484d" : "#9ca1ab";
+  const deltaColor = up ? "#16764f" : down ? "#c62a2f" : "#63676f";
 
   return (
     <section className="w-full max-w-204 rounded-2xl border border-line bg-card p-6 shadow-card print:hidden">
@@ -70,7 +70,7 @@ export function ComparisonCard({ diff, previousAt }: { diff: ScanDiff; previousA
                 {c.delta !== 0 && (
                   <span
                     className="ml-auto text-[11px] font-bold"
-                    style={{ color: c.delta < 0 ? "#1b865c" : "#e5484d" }}
+                    style={{ color: c.delta < 0 ? "#16764f" : "#c62a2f" }}
                   >
                     {c.delta > 0 ? `+${c.delta}` : c.delta}
                   </span>
@@ -86,14 +86,14 @@ export function ComparisonCard({ diff, previousAt }: { diff: ScanDiff; previousA
           title="Fixed"
           items={diff.fixed}
           icon={faCheck}
-          tone="#1b865c"
+          tone="#16764f"
           empty="No rules cleared since last scan."
         />
         <DiffList
           title="New / regressed"
           items={diff.regressed}
           icon={faTriangleExclamation}
-          tone="#e5484d"
+          tone="#c62a2f"
           empty="No new rules flagged — nothing regressed."
         />
       </div>

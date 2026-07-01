@@ -19,10 +19,10 @@ export function clamp(value: number, min: number, max: number): number {
 // Hex values are intentional — used with inline alpha suffix (e.g. `${markerColor}1f`)
 export function markerColor(sev: Severity): string {
   return {
-    critical: "#e5484d",
-    serious: "#b46107",
-    moderate: "#d9a400",
-    minor: "#9ca1ab",
+    critical: "#c62a2f",
+    serious: "#a85a06",
+    moderate: "#8a6a00",
+    minor: "#6b7079",
   }[sev];
 }
 

@@ -3,7 +3,7 @@ import { faCheck, faEye } from "@fortawesome/free-solid-svg-icons";
 import { BrowserFrame, ConformanceLadder, StatusPill } from "@/components/ui";
 import { conformanceLevels, reportRows } from "./content";
 
-const ISSUE = "#b46107";
+const ISSUE = "#a85a06";
 
 export function HeroReportCard() {
   return (

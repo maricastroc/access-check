@@ -24,9 +24,9 @@ const dateFmt = new Intl.DateTimeFormat("en-US", {
 });
 
 function scoreColor(score: number): string {
-  if (score >= 90) return "#1b865c";
-  if (score >= 70) return "#d9a400";
-  return "#e5484d";
+  if (score >= 90) return "#16764f";
+  if (score >= 70) return "#8a6a00";
+  return "#c62a2f";
 }
 
 export default async function HistoryPage() {
@@ -72,9 +72,9 @@ export default async function HistoryPage() {
 
 function ScanCard({ scan, prevScore }: { scan: ScanListItem; prevScore: number | null }) {
   const sev = [
-    { label: "Critical", value: scan.counts.critical, color: "#e5484d" },
-    { label: "Serious", value: scan.counts.serious, color: "#b46107" },
-    { label: "Moderate", value: scan.counts.moderate, color: "#d9a400" },
+    { label: "Critical", value: scan.counts.critical, color: "#c62a2f" },
+    { label: "Serious", value: scan.counts.serious, color: "#a85a06" },
+    { label: "Moderate", value: scan.counts.moderate, color: "#8a6a00" },
   ];
 
   const delta = prevScore === null ? null : scan.score - prevScore;
@@ -108,7 +108,7 @@ function ScanCard({ scan, prevScore }: { scan: ScanListItem; prevScore: number |
               {delta !== null && delta !== 0 && (
                 <span
                   className="shrink-0 text-[11px] font-bold"
-                  style={{ color: delta > 0 ? "#1b865c" : "#e5484d" }}
+                  style={{ color: delta > 0 ? "#16764f" : "#c62a2f" }}
                 >
                   {delta > 0 ? `▲ +${delta}` : `▼ ${delta}`}
                 </span>
