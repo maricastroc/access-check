@@ -5,9 +5,13 @@ import { faGlobe, faSpinner, faTriangleExclamation } from "@fortawesome/free-sol
 
 export function ScanningState({ url }: { url: string }) {
   return (
-    <div className="flex min-h-[70vh] flex-col items-center justify-center gap-5 px-6 text-center">
+    <div
+      role="status"
+      aria-live="polite"
+      className="flex min-h-[70vh] flex-col items-center justify-center gap-5 px-6 text-center"
+    >
       <span className="flex size-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-500">
-        <FontAwesomeIcon icon={faSpinner} className="animate-spin text-xl" />
+        <FontAwesomeIcon icon={faSpinner} aria-hidden className="animate-spin text-xl" />
       </span>
       <div>
         <p className="text-lg font-semibold">Auditing the page…</p>
@@ -36,9 +40,12 @@ export function ErrorState({
   onRetry: () => void;
 }) {
   return (
-    <div className="flex min-h-[70vh] flex-col items-center justify-center gap-5 px-6 text-center">
+    <div
+      role="alert"
+      className="flex min-h-[70vh] flex-col items-center justify-center gap-5 px-6 text-center"
+    >
       <span className="flex size-14 items-center justify-center rounded-2xl bg-[#fdecec] text-critical">
-        <FontAwesomeIcon icon={faTriangleExclamation} className="text-xl" />
+        <FontAwesomeIcon icon={faTriangleExclamation} aria-hidden className="text-xl" />
       </span>
       <div className="max-w-md">
         <p className="text-lg font-semibold">Couldn’t scan that page</p>
@@ -54,10 +61,11 @@ export function ErrorState({
         }}
         className="flex w-full max-w-md items-center gap-2 rounded-field border border-line bg-card p-2 shadow-soft"
       >
-        <FontAwesomeIcon icon={faGlobe} className="ml-2 text-sm text-muted" />
+        <FontAwesomeIcon icon={faGlobe} aria-hidden className="ml-2 text-sm text-muted" />
         <input
           value={url}
           onChange={(e) => onChange(e.target.value)}
+          aria-label="Website URL to retry"
           className="flex-1 bg-transparent text-sm text-ink focus:outline-none"
           placeholder="example.com"
         />

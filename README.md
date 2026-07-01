@@ -165,6 +165,14 @@ npm run test
 
 <br/>
 
+## 📄 License
+
+Released under the [MIT License](LICENSE). You're free to use, study, fork and build on this code — **as long as the original copyright and license notice are kept**. Reuse it and learn from it; don't strip the attribution and present it as your own.
+
+© 2025–2026 Mariana Castro
+
+<br/>
+
 <div align="center">
 
 ⭐ If you like this project, give it a star on GitHub!

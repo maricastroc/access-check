@@ -81,40 +81,42 @@ export function ReportView({ initialUrl }: { initialUrl: string }) {
       <PrintStyles />
       <Toolbar url={url} status={status} />
 
-      {status === "loading" && (
-        <CenterState
-          icon={faSpinner}
-          spin
-          progress
-          title="Building report…"
-          subtitle={`Rendering ${url} and running the WCAG audit.`}
-        />
-      )}
+      <main id="main">
+        {status === "loading" && (
+          <CenterState
+            icon={faSpinner}
+            spin
+            progress
+            title="Building report…"
+            subtitle={`Rendering ${url} and running the WCAG audit.`}
+          />
+        )}
 
-      {status === "error" && (
-        <CenterState
-          icon={faTriangleExclamation}
-          tone="critical"
-          title="Couldn’t build the report"
-          subtitle={error}
-          action={
-            <Link
-              href="/"
-              className="mt-2 rounded-[10px] bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
-            >
-              New scan
-            </Link>
-          }
-        />
-      )}
+        {status === "error" && (
+          <CenterState
+            icon={faTriangleExclamation}
+            tone="critical"
+            title="Couldn’t build the report"
+            subtitle={error}
+            action={
+              <Link
+                href="/"
+                className="mt-2 rounded-[10px] bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
+              >
+                New scan
+              </Link>
+            }
+          />
+        )}
 
-      {status === "done" && result && (
-        <FitToWidth>
-          <SummaryPage result={result} />
-          <FindingsPage result={result} />
-          <ProgressPage result={result} />
-        </FitToWidth>
-      )}
+        {status === "done" && result && (
+          <FitToWidth>
+            <SummaryPage result={result} />
+            <FindingsPage result={result} />
+            <ProgressPage result={result} />
+          </FitToWidth>
+        )}
+      </main>
     </div>
   );
 }

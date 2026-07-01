@@ -79,27 +79,29 @@ export function ResultsView({
         signOutAction={signOutAction}
       />
 
-      {status === "loading" && <ScanningState url={url} />}
+      <main id="main">
+        {status === "loading" && <ScanningState url={url} />}
 
-      {status === "error" && (
-        <ErrorState url={input} message={error} onChange={setInput} onRetry={() => scan(input)} />
-      )}
+        {status === "error" && (
+          <ErrorState url={input} message={error} onChange={setInput} onRetry={() => scan(input)} />
+        )}
 
-      {status === "done" && result && (
-        <div className="mx-auto grid w-full max-w-7xl grid-cols-1 items-start gap-6 px-6 pt-6 pb-12 lg:grid-cols-[minmax(0,1fr)_524px]">
-          <PreviewPanel
-            result={result}
-            input={input}
-            onInput={setInput}
-            onSubmit={() => scan(input)}
-            sim={sim}
-            setSim={setSim}
-            showMarkers={showMarkers}
-            setShowMarkers={setShowMarkers}
-          />
-          <ReportPanel result={result} filter={filter} setFilter={setFilter} />
-        </div>
-      )}
+        {status === "done" && result && (
+          <div className="mx-auto grid w-full max-w-7xl grid-cols-1 items-start gap-6 px-6 pt-6 pb-12 lg:grid-cols-[minmax(0,1fr)_524px]">
+            <PreviewPanel
+              result={result}
+              input={input}
+              onInput={setInput}
+              onSubmit={() => scan(input)}
+              sim={sim}
+              setSim={setSim}
+              showMarkers={showMarkers}
+              setShowMarkers={setShowMarkers}
+            />
+            <ReportPanel result={result} filter={filter} setFilter={setFilter} />
+          </div>
+        )}
+      </main>
     </div>
   );
 }

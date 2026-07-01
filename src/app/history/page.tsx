@@ -51,7 +51,7 @@ export default async function HistoryPage() {
         </div>
       </div>
 
-      <main className="mx-auto w-full max-w-7xl flex-1 px-6 pt-8 pb-10">
+      <main id="main" className="mx-auto w-full max-w-7xl flex-1 px-6 pt-8 pb-10">
         {scans.length === 0 ? (
           <EmptyState />
         ) : (

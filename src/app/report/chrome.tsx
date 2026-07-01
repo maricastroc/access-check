@@ -50,13 +50,21 @@ export function CenterState({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-[70vh] flex-col items-center justify-center gap-4 px-6 text-center">
+    <div
+      role={tone === "critical" ? "alert" : "status"}
+      aria-live={tone === "critical" ? undefined : "polite"}
+      className="flex min-h-[70vh] flex-col items-center justify-center gap-4 px-6 text-center"
+    >
       <span
         className={`flex size-14 items-center justify-center rounded-2xl ${
           tone === "critical" ? "bg-[#fdecec] text-critical" : "bg-brand-50 text-brand-500"
         }`}
       >
-        <FontAwesomeIcon icon={icon} className={`text-xl ${spin ? "animate-spin" : ""}`} />
+        <FontAwesomeIcon
+          icon={icon}
+          aria-hidden
+          className={`text-xl ${spin ? "animate-spin" : ""}`}
+        />
       </span>
       <div className="max-w-md">
         <p className="text-lg font-semibold">{title}</p>

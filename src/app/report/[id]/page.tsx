@@ -40,12 +40,12 @@ export default async function SavedReportPage({ params }: { params: Promise<{ id
         <span className="text-[13px] font-medium">Saved report · {result.title}</span>
       </header>
 
-      <div className="flex flex-col items-center gap-8 overflow-x-auto px-5 py-10">
+      <main id="main" className="flex flex-col items-center gap-8 overflow-x-auto px-5 py-10">
         {diff && previous && <ComparisonCard diff={diff} previousAt={previous.at} />}
         <SummaryPage result={result} />
         <FindingsPage result={result} />
         <ProgressPage result={result} />
-      </div>
+      </main>
     </div>
   );
 }

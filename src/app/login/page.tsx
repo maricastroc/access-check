@@ -14,7 +14,7 @@ export default async function LoginPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-canvas px-6 py-12">
-      <div className="w-full max-w-sm">
+      <main className="w-full max-w-sm">
         <div className="flex justify-center">
           <Logo />
         </div>
@@ -41,7 +41,7 @@ export default async function LoginPage() {
             ← Back to home
           </Link>
         </p>
-      </div>
+      </main>
     </div>
   );
 }
