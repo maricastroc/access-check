@@ -6,7 +6,7 @@
 
 **♿ Accessibility Auditor**
 
-Scan any public URL and get back concrete, verified accessibility fixes. <br/>
+Scan any public URL and get back concrete, verified accessibility fixes.<br/>
 Not just a list of problems — the exact code to paste, proven to work.
 
 <br/>
