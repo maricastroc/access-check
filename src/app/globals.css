@@ -141,3 +141,28 @@ body {
     animation-duration: 2.4s;
   }
 }
+
+.ac-skeleton {
+  background: linear-gradient(
+    100deg,
+    var(--color-line-strong) 30%,
+    var(--color-surface) 50%,
+    var(--color-line-strong) 70%
+  );
+  background-size: 200% 100%;
+  animation: ac-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes ac-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ac-skeleton {
+    animation: none;
+    background: var(--color-line-strong);
+  }
+}

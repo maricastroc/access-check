@@ -46,13 +46,13 @@ export function StatTiles({ result }: { result: ScanResult }) {
   ];
 
   return (
-    <div className="grid grid-cols-4 gap-2.5">
+    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
       {tiles.map((t) => (
         <div
           key={t.label}
           className="rounded-[13px] border border-line bg-card px-3.5 py-3.5 transition-colors hover:border-[#dfe1e6]"
         >
-          <div className="h-6.5 text-[10.5px] leading-tight font-medium text-muted">{t.label}</div>
+          <div className="text-[10.5px] leading-tight font-medium text-muted sm:h-6.5">{t.label}</div>
           <div className={`mt-1.5 text-[26px] font-bold tracking-tight ${t.color}`}>{t.value}</div>
           <div className="mt-0.5 text-[10.5px] text-faint">{t.sub}</div>
         </div>
