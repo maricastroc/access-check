@@ -83,7 +83,7 @@ AccessCheck is an accessibility auditor that goes one step further than the usua
 
 It renders the page in a real headless browser (Playwright), runs [axe-core](https://github.com/dequelabs/axe-core) against WCAG 2.2 A/AA rules, and turns the raw findings into an actionable report — a live preview with issue markers, color-blindness simulations, an accessibility score, a prioritized "Fix First" list, and an exportable PDF.
 
-The scan runs server-side in a Node runtime (`/api/scan`) because Playwright needs a real browser. Locally it uses the full Playwright Chromium; on serverless it falls back to `playwright-core` + `@sparticuz/chromium`.
+The scan runs server-side in a Node runtime (`/api/scan`) because Playwright needs a real browser. Locally it uses the full Playwright Chromium; on serverless it falls back to `playwright-core` + `@sparticuz/chromium`. axe-core is injected into the target page with `bypassCSP` enabled, so the audit still runs on sites that ship a strict Content-Security-Policy (which would otherwise block third-party script injection).
 
 **Additional features:**
 

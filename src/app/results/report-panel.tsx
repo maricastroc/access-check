@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { ScanResult } from "@/lib/scan/types";
 import { fixDomId, type FilterKey } from "./shared";
 import { ScoreCard } from "./score-card";
+import { VerifiedFixes } from "./verified-fixes";
 import { StatTiles } from "./stat-tiles";
 import { FixFirst } from "./fix-first";
 import { ViolationsList } from "./violations-list";
@@ -41,6 +42,7 @@ export function ReportPanel({
   return (
     <section className="flex flex-col gap-3.5">
       <ScoreCard result={result} />
+      <VerifiedFixes result={result} />
       <StatTiles result={result} />
       <FixFirst items={result.fixFirst} onViewFix={openFix} />
       <ViolationsList result={result} filter={filter} setFilter={setFilter} />

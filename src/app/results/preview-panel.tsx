@@ -57,6 +57,13 @@ export function PreviewPanel({
         </div>
       </div>
 
+      <div className="mb-2 flex items-center gap-2">
+        <span className="text-[10px] font-semibold tracking-wider text-muted uppercase">
+          Vision simulation
+        </span>
+        <span className="text-[11px] text-faint">See the page as ~8% of users do</span>
+      </div>
+
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="inline-flex flex-wrap gap-0.5 rounded-[11px] bg-ui-bg p-1">
           {modeList.map((m) => {
