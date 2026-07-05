@@ -1,6 +1,7 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/free-solid-svg-icons";
 import type { ScanResult, Severity } from "@/lib/scan/types";
+import { reviewGuidance } from "@/lib/scan/review";
 import { CopyableCode } from "@/components/ui/copyable-code";
 import { sevDot, severityLabel, severityOrder } from "./data";
 import { fixDomId, type FilterKey } from "./shared";
@@ -217,38 +218,46 @@ export function ViolationsList({
               Automated testing couldn&apos;t determine these
             </span>
           </div>
-          {result.incomplete.map((inc, i) => (
-            <IssueCard
-              key={`inc-${inc.id}-${i}`}
-              dot="bg-moderate"
-              title={inc.title}
-              subtitle={inc.criterion}
-              nodes={inc.nodes}
-            >
-              <p className="mb-2.5 text-[12.5px] leading-relaxed text-ink-soft">{inc.desc}</p>
-              {inc.selectors.length > 0 && (
-                <div className="mb-2.5 flex flex-wrap gap-1.5">
-                  {inc.selectors.map((sel, si) => (
-                    <span
-                      key={si}
-                      className="max-w-60 truncate rounded-md bg-chip px-2 py-0.75 font-mono text-[11px] text-faint"
-                    >
-                      {sel}
-                    </span>
-                  ))}
-                  {inc.nodes > MAX_SELECTORS && (
-                    <span className="rounded-md bg-chip px-2 py-0.75 font-mono text-[11px] text-faint">
-                      +{inc.nodes - MAX_SELECTORS} more
-                    </span>
-                  )}
+          {result.incomplete.map((inc, i) => {
+            const guide = reviewGuidance(inc.id);
+            return (
+              <IssueCard
+                key={`inc-${inc.id}-${i}`}
+                dot="bg-moderate"
+                title={inc.title}
+                subtitle={inc.criterion}
+                nodes={inc.nodes}
+              >
+                <p className="mb-2.5 text-[12.5px] leading-relaxed text-ink-soft">{inc.desc}</p>
+                {inc.selectors.length > 0 && (
+                  <div className="mb-2.5 flex flex-wrap gap-1.5">
+                    {inc.selectors.map((sel, si) => (
+                      <span
+                        key={si}
+                        className="max-w-60 truncate rounded-md bg-chip px-2 py-0.75 font-mono text-[11px] text-faint"
+                      >
+                        {sel}
+                      </span>
+                    ))}
+                    {inc.nodes > MAX_SELECTORS && (
+                      <span className="rounded-md bg-chip px-2 py-0.75 font-mono text-[11px] text-faint">
+                        +{inc.nodes - MAX_SELECTORS} more
+                      </span>
+                    )}
+                  </div>
+                )}
+                <div className="rounded-[9px] border border-warning-border bg-warning-surface px-3 py-2.5 text-[11.5px] leading-relaxed text-warning-fg">
+                  <p className="font-semibold">How to check</p>
+                  <p className="mt-0.5">{guide.how}</p>
+                  <ol className="mt-1.5 flex list-decimal flex-col gap-1 pl-4 marker:font-semibold marker:text-warning-fg/70">
+                    {guide.steps.map((step, si) => (
+                      <li key={si}>{step}</li>
+                    ))}
+                  </ol>
                 </div>
-              )}
-              <div className="rounded-[9px] border border-warning-border bg-warning-surface px-3 py-2.25 text-[11.5px] leading-relaxed text-warning-fg">
-                Axe couldn&apos;t determine this automatically. Inspect the affected element(s) and
-                verify manually.
-              </div>
-            </IssueCard>
-          ))}
+              </IssueCard>
+            );
+          })}
         </div>
       )}
     </div>

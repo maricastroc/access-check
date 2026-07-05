@@ -1,5 +1,6 @@
 import type { FixGroup, FixVerification, ScanResult } from "./types";
 import { severityOrder } from "./derive";
+import { reviewGuidance } from "./review";
 
 const severityLabel: Record<string, string> = {
   critical: "Critical",
@@ -169,6 +170,27 @@ export function buildMarkdown(result: ScanResult): string {
     }
     if (ctx.mobile.onlyOnMobile.length === 0 && ctx.dynamic.states.length === 0) {
       out.push("No new violations surfaced in these contexts. 🎉");
+      out.push("");
+    }
+  }
+
+  if (result.incomplete.length > 0) {
+    out.push("## Needs manual review");
+    out.push("");
+    out.push("Automated testing couldn't determine these — confirm them by hand.");
+    out.push("");
+    for (const inc of result.incomplete) {
+      out.push(`### ${inc.title}`);
+      out.push("");
+      out.push(`- **WCAG:** ${inc.criterion}`);
+      if (inc.selectors.length > 0) {
+        out.push(`- **Where:** ${inc.selectors.map((s) => `\`${s}\``).join(", ")}`);
+      }
+      out.push("");
+      const guide = reviewGuidance(inc.id);
+      out.push(`**How to check:** ${guide.how}`);
+      out.push("");
+      for (const step of guide.steps) out.push(`- ${step}`);
       out.push("");
     }
   }
