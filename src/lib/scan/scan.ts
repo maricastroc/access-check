@@ -16,6 +16,7 @@ import {
   type FixResult,
 } from "./remediate";
 import { clusterFixes, type FixCluster } from "./group";
+import { collectKeyboard } from "./keyboard";
 import { buildFixFirst, buildSummary, computeScore, severityOrder } from "./derive";
 import type {
   FixGroup,
@@ -508,6 +509,11 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
       manualReview: axe.incomplete.length,
     };
 
+    // ---- teclado & foco: tabula a página de verdade e observa o foco ----
+    // O que o axe não cobre. Isolado em try/catch: uma falha aqui (site
+    // hostil, timeout) nunca deve derrubar o resto do relatório.
+    const keyboard = await collectKeyboard(page, VIEWPORT).catch(() => undefined);
+
     const passed = axe.passes.map((p) => p.help);
 
     const MAX_SELECTORS = 5;
@@ -550,6 +556,7 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
       bestPractice,
       passed,
       markers,
+      keyboard,
       fixFirst: buildFixFirst(violations),
     };
   } finally {

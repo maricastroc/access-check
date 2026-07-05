@@ -30,6 +30,7 @@ export function ResultsView({
 
   const [sim, setSim] = useState<SimKey>("normal");
   const [showMarkers, setShowMarkers] = useState(true);
+  const [showFocusPath, setShowFocusPath] = useState(false);
   const [filter, setFilter] = useState<FilterKey>("all");
 
   const runFetch = useCallback(async (value: string) => {
@@ -97,6 +98,8 @@ export function ResultsView({
               setSim={setSim}
               showMarkers={showMarkers}
               setShowMarkers={setShowMarkers}
+              showFocusPath={showFocusPath}
+              setShowFocusPath={setShowFocusPath}
             />
             <ReportPanel result={result} filter={filter} setFilter={setFilter} />
           </div>

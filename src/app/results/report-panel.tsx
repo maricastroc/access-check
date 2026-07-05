@@ -8,6 +8,7 @@ import { VerifiedFixes } from "./verified-fixes";
 import { StatTiles } from "./stat-tiles";
 import { FixFirst } from "./fix-first";
 import { ViolationsList } from "./violations-list";
+import { KeyboardReport } from "./keyboard-report";
 
 export function ReportPanel({
   result,
@@ -46,6 +47,7 @@ export function ReportPanel({
       <StatTiles result={result} />
       <FixFirst items={result.fixFirst} onViewFix={openFix} />
       <ViolationsList result={result} filter={filter} setFilter={setFilter} />
+      <KeyboardReport result={result} />
     </section>
   );
 }

@@ -100,6 +100,41 @@ export function buildMarkdown(result: ScanResult): string {
     }
   }
 
+  const kb = result.keyboard;
+  if (kb) {
+    out.push("## Keyboard & focus");
+    out.push("");
+    out.push(
+      `Traced ${kb.totalStops} focus ${kb.totalStops === 1 ? "stop" : "stops"} · ` +
+        (kb.totalInteractive > 0
+          ? `${kb.reachableInteractive}/${kb.totalInteractive} interactive elements reachable by keyboard`
+          : "no interactive controls detected") +
+        ".",
+    );
+    out.push("");
+    if (kb.findings.length === 0) {
+      out.push("No keyboard or focus issues detected. 🎉");
+      out.push("");
+    } else {
+      for (const f of kb.findings) {
+        out.push(`### ${f.title}`);
+        out.push("");
+        out.push(`- **Severity:** ${severityLabel[f.severity]}`);
+        out.push(`- **WCAG:** ${f.criterion}`);
+        if (f.selectors.length > 0) {
+          const shown = f.selectors.map((s) => `\`${s}\``).join(", ");
+          const extra = f.count - f.selectors.length;
+          out.push(`- **Affected:** ${shown}${extra > 0 ? ` _(+${extra} more)_` : ""}`);
+        }
+        out.push("");
+        out.push(f.desc);
+        out.push("");
+        out.push(`**Fix:** ${f.fix}`);
+        out.push("");
+      }
+    }
+  }
+
   if (result.passed.length > 0) {
     out.push(`## Passed checks (${result.passed.length})`);
     out.push("");

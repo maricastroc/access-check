@@ -1,3 +1,5 @@
+import type { KeyboardReport } from "./keyboard";
+
 export type Severity = "critical" | "serious" | "moderate" | "minor";
 
 /**
@@ -105,6 +107,11 @@ export type ScanResult = {
   bestPractice: ScanBestPractice[];
   passed: string[];
   markers: ScanMarker[];
+  /**
+   * Análise de navegação por teclado e foco (WCAG 2.1.1/2.1.2/2.4.3/2.4.7).
+   * Opcional: scans antigos em cache/histórico não têm este campo.
+   */
+  keyboard?: KeyboardReport;
   fixFirst: {
     n: string;
     title: string;

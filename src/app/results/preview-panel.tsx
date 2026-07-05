@@ -13,6 +13,8 @@ export function PreviewPanel({
   setSim,
   showMarkers,
   setShowMarkers,
+  showFocusPath,
+  setShowFocusPath,
 }: {
   result: ScanResult;
   input: string;
@@ -22,12 +24,27 @@ export function PreviewPanel({
   setSim: (s: SimKey) => void;
   showMarkers: boolean;
   setShowMarkers: (v: boolean) => void;
+  showFocusPath: boolean;
+  setShowFocusPath: (v: boolean) => void;
 }) {
   const simLabel = modeList.find((m) => m.key === sim)!.label;
   const host = safeHost(result.finalUrl);
 
+  // Paradas de foco visíveis na área capturada — o que dá pra desenhar. Cada
+  // ponto vira o centro da caixa do elemento (em %), limitado pra não vazar.
+  const focusPoints = (result.keyboard?.focusPath ?? [])
+    .filter((s) => s.left !== null && s.top !== null)
+    .map((s) => ({
+      n: s.n,
+      cx: clamp(s.left! + (s.width ?? 0) / 2, 2, 98),
+      cy: clamp(s.top! + (s.height ?? 0) / 2, 2, 98),
+      visible: s.focusVisible,
+      label: s.label,
+    }));
+  const hasFocusPath = focusPoints.length > 0;
+
   return (
-    <section className="scroll-slim lg:sticky lg:top-20.5 lg:max-h-[calc(100vh-98px)] lg:overflow-y-auto lg:pr-1.5">
+    <section className="scroll-slim lg:sticky lg:top-20.5 lg:-mt-1.5 lg:-ml-1.5 lg:max-h-[calc(100vh-98px)] lg:overflow-y-auto lg:pt-1.5 lg:pr-1.5 lg:pl-1.5">
       <div className="mb-3.5 flex items-center justify-between gap-3">
         <form
           onSubmit={(e) => {
@@ -36,13 +53,13 @@ export function PreviewPanel({
           }}
           className="flex min-w-0 items-center gap-2.5"
         >
-          <div className="flex h-8.5 max-w-105 items-center gap-2 overflow-hidden rounded-[9px] border border-line bg-card pr-2 pl-3 text-[13px]">
+          <div className="flex h-8.5 max-w-105 items-center gap-2 overflow-hidden rounded-[9px] border border-line bg-card pr-2 pl-3 text-[13px] focus-within:border-brand-300 focus-within:[outline:2px_solid_var(--color-brand-500)] focus-within:[outline-offset:2px]">
             <span className="size-1.75 shrink-0 rounded-full bg-success" />
             <input
               value={input}
               onChange={(e) => onInput(e.target.value)}
               aria-label="URL to scan"
-              className="min-w-0 flex-1 bg-transparent py-1 font-medium focus:outline-none"
+              className="min-w-0 flex-1 bg-transparent py-1 font-medium focus:[outline:none]!"
             />
           </div>
           <span className="hidden text-xs whitespace-nowrap text-muted sm:block">
@@ -83,17 +100,36 @@ export function PreviewPanel({
             );
           })}
         </div>
-        <button
-          onClick={() => setShowMarkers(!showMarkers)}
-          className={`inline-flex h-8 shrink-0 cursor-pointer items-center gap-2 rounded-[9px] border px-3 text-xs font-medium transition-colors ${
-            showMarkers
-              ? "border-brand-200 bg-brand-50 text-brand-600"
-              : "border-line-strong bg-card text-muted"
-          }`}
-        >
-          <span className={`size-1.75 rounded-full ${showMarkers ? "bg-brand-500" : "bg-faint"}`} />
-          {showMarkers ? "Markers on" : "Markers off"}
-        </button>
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            onClick={() => setShowMarkers(!showMarkers)}
+            className={`inline-flex h-8 cursor-pointer items-center gap-2 rounded-[9px] border px-3 text-xs font-medium transition-colors ${
+              showMarkers
+                ? "border-brand-200 bg-brand-50 text-brand-600"
+                : "border-line-strong bg-card text-muted"
+            }`}
+          >
+            <span
+              className={`size-1.75 rounded-full ${showMarkers ? "bg-brand-500" : "bg-faint"}`}
+            />
+            {showMarkers ? "Markers on" : "Markers off"}
+          </button>
+          {hasFocusPath && (
+            <button
+              onClick={() => setShowFocusPath(!showFocusPath)}
+              className={`inline-flex h-8 cursor-pointer items-center gap-2 rounded-[9px] border px-3 text-xs font-medium transition-colors ${
+                showFocusPath
+                  ? "border-brand-200 bg-brand-50 text-brand-600"
+                  : "border-line-strong bg-card text-muted"
+              }`}
+            >
+              <span
+                className={`size-1.75 rounded-full ${showFocusPath ? "bg-brand-500" : "bg-faint"}`}
+              />
+              Focus path
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="mb-2.5 flex items-center gap-2 text-xs leading-relaxed text-muted">
@@ -155,6 +191,43 @@ export function PreviewPanel({
                     </span>
                   );
                 })}
+
+              {showFocusPath && hasFocusPath && (
+                <>
+                  {/* Linha ligando as paradas na ordem de tabulação. */}
+                  <svg
+                    className="pointer-events-none absolute inset-0 h-full w-full"
+                    viewBox="0 0 100 100"
+                    preserveAspectRatio="none"
+                    aria-hidden="true"
+                  >
+                    <polyline
+                      points={focusPoints.map((p) => `${p.cx},${p.cy}`).join(" ")}
+                      fill="none"
+                      stroke="var(--color-brand-500)"
+                      strokeWidth={1.5}
+                      strokeDasharray="4 3"
+                      strokeLinejoin="round"
+                      vectorEffect="non-scaling-stroke"
+                      opacity={0.7}
+                    />
+                  </svg>
+                  {focusPoints.map((p) => (
+                    <span
+                      key={p.n}
+                      className="absolute z-10 flex size-5 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white text-[10px] font-bold text-white shadow-[0_2px_5px_rgba(0,0,0,.3)]"
+                      style={{
+                        left: `${p.cx}%`,
+                        top: `${p.cy}%`,
+                        background: p.visible ? "var(--color-brand-500)" : "var(--color-critical)",
+                      }}
+                      title={`${p.n}. ${p.label}${p.visible ? "" : " — no visible focus indicator"}`}
+                    >
+                      {p.n}
+                    </span>
+                  ))}
+                </>
+              )}
             </div>
           ) : (
             <div className="flex h-64 items-center justify-center text-sm text-muted">
@@ -185,6 +258,19 @@ export function PreviewPanel({
               <span className="truncate">{m.label}</span>
             </span>
           ))}
+        </div>
+      )}
+
+      {showFocusPath && hasFocusPath && (
+        <div className="mt-3.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11.5px] text-muted">
+          <span className="inline-flex items-center gap-1.75">
+            <span className="size-2.75 rounded-full bg-brand-500" />
+            Tab order 1 → {focusPoints.length}
+          </span>
+          <span className="inline-flex items-center gap-1.75">
+            <span className="size-2.75 rounded-full bg-critical" />
+            No visible focus indicator
+          </span>
         </div>
       )}
     </section>
