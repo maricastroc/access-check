@@ -2,25 +2,15 @@ import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { ScanResult } from "@/lib/scan/types";
 
-/** Decodifica um data URL base64 em bytes + mimeType. */
 function parseDataUrl(dataUrl: string): { mimeType: string; data: Uint8Array<ArrayBuffer> } | null {
-  // base64 não tem quebras de linha, então `.` (sem flag `s`) basta.
   const m = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
   if (!m) return null;
-  // Aloca um Uint8Array novo (backing ArrayBuffer) — é o que o tipo Bytes do
-  // Prisma espera, diferente do Buffer (ArrayBufferLike).
   const bytes = Buffer.from(m[2], "base64");
   const data = new Uint8Array(bytes.length);
   data.set(bytes);
   return { mimeType: m[1], data };
 }
 
-/**
- * Persiste um scan no histórico do usuário. O screenshot (data URL) é
- * decodificado e guardado como bytes numa tabela à parte; o JSON do resultado
- * é salvo SEM o screenshot — ele vira a rota /api/scan/<id>/screenshot, e assim
- * queries de lista/histórico nunca arrastam o blob.
- */
 export async function saveScan(userId: string, result: ScanResult): Promise<string> {
   const img = result.screenshot ? parseDataUrl(result.screenshot) : null;
   const storedResult = { ...result, screenshot: null };
@@ -32,7 +22,6 @@ export async function saveScan(userId: string, result: ScanResult): Promise<stri
       finalUrl: result.finalUrl,
       title: result.title,
       score: result.score,
-      // Contagens desnormalizadas pra lista/ordenação/tendência sem parsear JSON.
       critical: result.counts.critical,
       serious: result.counts.serious,
       moderate: result.counts.moderate,
@@ -96,13 +85,11 @@ export async function getUserScans(userId: string): Promise<ScanListItem[]> {
   }));
 }
 
-/** Reconstrói o ScanResult salvo, apontando o screenshot pra rota de imagem. */
 function hydrate(id: string, result: unknown): ScanResult {
   const r = result as ScanResult;
   return {
     ...r,
     screenshot: `/api/scan/${id}/screenshot`,
-    // Retrocompatibilidade: campos adicionados depois do save inicial
     incomplete: r.incomplete ?? [],
     bestPractice: r.bestPractice ?? [],
     counts: {

@@ -25,7 +25,6 @@ const violation = (opts: {
   fixGroups: opts.groups?.map(group),
 });
 
-// verifyStats só lê `violations`; o resto do ScanResult é irrelevante aqui.
 const result = (violations: ScanViolation[]) => ({ violations }) as unknown as ScanResult;
 
 describe("verifyStats", () => {
@@ -53,7 +52,6 @@ describe("verifyStats", () => {
   });
 
   it("quando há fixGroups, usa os grupos e ignora o verification do topo", () => {
-    // topo diz "verified", mas os dois grupos falharam → não conta como verified
     const stats = verifyStats(
       result([violation({ verification: "verified", groups: ["failed", "failed"] })]),
     );

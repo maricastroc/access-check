@@ -1,6 +1,3 @@
-// Comparação entre dois scans da mesma URL — o que mudou ao longo do tempo.
-// Pura e determinística (testada), no mesmo espírito do core de remediação.
-
 import type { ScanResult, ScanViolation, Severity } from "./types";
 
 export type ViolationRef = { id: string; title: string; severity: Severity };
@@ -12,9 +9,7 @@ export type ScanDiff = {
   scoreTo: number;
   scoreDelta: number;
   counts: Record<CountKey, { from: number; to: number; delta: number }>;
-  /** regras presentes antes e ausentes agora → consertadas */
   fixed: ViolationRef[];
-  /** regras presentes agora e ausentes antes → novas/regredidas */
   regressed: ViolationRef[];
 };
 
@@ -29,7 +24,6 @@ function bySeverity(a: ViolationRef, b: ViolationRef): number {
 }
 
 export function diffScans(prev: ScanResult, curr: ScanResult): ScanDiff {
-  // axe agrupa por regra, então cada `id` aparece uma vez por scan.
   const prevIds = new Set(prev.violations.map((v) => v.id));
   const currIds = new Set(curr.violations.map((v) => v.id));
 

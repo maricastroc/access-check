@@ -9,18 +9,16 @@ const severityWeight: Record<Severity, number> = {
 
 export const severityOrder: Severity[] = ["critical", "serious", "moderate", "minor"];
 
-/** Pontuação 0–100: penalidade ponderada por severidade × nº de ocorrências. */
 export function computeScore(violations: ScanViolation[]): number {
   const penalty = violations.reduce(
     (sum, v) => sum + severityWeight[v.severity] * Math.min(v.nodes, 5),
     0,
   );
-  // amortece: cada ponto de penalidade vale menos conforme cresce
+
   const damped = 100 - 100 * (1 - Math.exp(-penalty / 45));
   return Math.max(0, Math.round(damped));
 }
 
-/** Estimativa grosseira de esforço a partir do tipo de regra. */
 function estimateEffort(id: string): string {
   if (/contrast/.test(id)) return "2 min";
   if (/label|alt|name|aria|autocomplete/.test(id)) return "3 min";

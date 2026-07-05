@@ -1,15 +1,3 @@
-// Scans em contextos além do estado inicial no desktop — o que uma auditoria de
-// "carregou a página e rodou o axe" não vê:
-//   1. Mobile (375px): redimensiona e re-roda o axe, e reporta o que falha SÓ no
-//      mobile (target-size, reflow, etc.).
-//   2. Estados dinâmicos: abre disclosures baseadas em padrão (<details>, botões
-//      com aria-expanded+aria-controls), re-roda o axe ESCOPADO na região
-//      revelada, e reverte. Conservador de propósito: nada de links/submits, teto
-//      de gatilhos, e se um clique navegar a gente para.
-//
-// A decisão (o que é "novo" em cada contexto vs. a baseline do desktop) é pura e
-// testada; só a coleta toca o browser — no mesmo espírito de keyboard/derive.
-
 import type { Page } from "playwright-core";
 import type { Severity } from "./types";
 import { criterionFromTags } from "./wcag";
@@ -78,17 +66,10 @@ export function newIssues(baselineIds: Set<string>, rules: RawRule[]): ContextIs
   return rules.filter((r) => !baselineIds.has(r.id)).map(toContextIssue);
 }
 
-// ---------------------------------------------------------------------------
-// Coleta no browser (impura). Envolva em try/catch no chamador.
-// ---------------------------------------------------------------------------
-
 const MOBILE = { width: 375, height: 812 };
 const MAX_TRIGGERS = 3;
-// Só WCAG (sem best-practice) — a baseline também é só WCAG, então isso evita
-// que "novas" regras sejam só ruído de best-practice.
 const CONTEXT_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22a", "wcag22aa"];
 
-// Tipo mínimo do axe no contexto da página.
 type PageAxe = {
   run: (
     ctx: Element | Document,
@@ -101,7 +82,6 @@ type PageAxe = {
 export async function collectContexts(page: Page, baselineIdsArr: string[]): Promise<ContextReport> {
   const baseline = new Set(baselineIdsArr);
 
-  // ---- estados dinâmicos (ainda no viewport desktop) ----
   const dynamicStates: DynamicState[] = [];
   let opened = 0;
   let dynamicRan = false;
@@ -150,7 +130,7 @@ export async function collectContexts(page: Page, baselineIdsArr: string[]): Pro
 
       for (const s of Array.from(document.querySelectorAll("details > summary"))) add(s, "details", null);
       for (const b of Array.from(document.querySelectorAll('[aria-expanded="false"][aria-controls]'))) {
-        if (b.tagName === "A") continue; // sem links (podem navegar)
+        if (b.tagName === "A") continue;
         if (b.tagName !== "BUTTON" && b.getAttribute("role") !== "button") continue;
         if ((b as HTMLButtonElement).disabled) continue;
         if (b.getAttribute("aria-hidden") === "true") continue;
@@ -191,19 +171,16 @@ export async function collectContexts(page: Page, baselineIdsArr: string[]): Pro
             opened = el.getAttribute("aria-expanded") === "true";
             scope = t.controls ? document.getElementById(t.controls) : null;
             restore = () => {
-              // fecha só se ainda está aberto (o próprio toggle re-executa o handler)
               if (opened && el.getAttribute("aria-expanded") === "true") el.click();
             };
           }
 
-          // Se o clique navegou, não dá pra confiar no resto — aborta este estado.
           if (location.href !== hrefBefore) return { navigated: true as const };
           if (!opened || !scope) {
             restore();
             return { opened: false, rules: [] as RawRule[] };
           }
 
-          // deixa o conteúdo revelado assentar
           await new Promise((r) => setTimeout(r, 150));
 
           let mapped: RawRule[] = [];
@@ -222,7 +199,7 @@ export async function collectContexts(page: Page, baselineIdsArr: string[]): Pro
                 .slice(0, 5),
             }));
           } catch {
-            // axe pode falhar num escopo estranho — segue com lista vazia
+            //
           }
           restore();
           return { opened: true, rules: mapped };
@@ -231,7 +208,7 @@ export async function collectContexts(page: Page, baselineIdsArr: string[]): Pro
       );
 
       if (!state) continue;
-      if ("navigated" in state && state.navigated) break; // navegou → para tudo
+      if ("navigated" in state && state.navigated) break;
       if ("opened" in state && state.opened) {
         opened++;
         const issues = newIssues(baseline, state.rules);
@@ -241,15 +218,14 @@ export async function collectContexts(page: Page, baselineIdsArr: string[]): Pro
       }
     }
   } catch {
-    // dynamicRan reflete se chegamos a listar gatilhos
+    // 
   }
 
-  // ---- viewport mobile ----
   let mobileRan = false;
   let onlyOnMobile: ContextIssue[] = [];
   try {
     await page.setViewportSize(MOBILE);
-    await page.waitForTimeout(400); // deixa o layout refluir
+    await page.waitForTimeout(400);
     const rules = await page.evaluate(async (tags) => {
       const firstTarget = (x: unknown): string | null =>
         Array.isArray(x) && typeof x[0] === "string" ? x[0] : typeof x === "string" ? x : null;
@@ -270,7 +246,7 @@ export async function collectContexts(page: Page, baselineIdsArr: string[]): Pro
     mobileRan = true;
     onlyOnMobile = newIssues(baseline, rules);
   } catch {
-    // mobileRan fica false
+    //
   }
 
   return {

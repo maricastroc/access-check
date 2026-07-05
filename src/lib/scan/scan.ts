@@ -410,9 +410,6 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
       };
     });
 
-    // ---- validar consertos: aplica cada fix no DOM e re-roda o axe ----
-    // Um op por cluster (não por nó): o representante já prova o conserto pro
-    // grupo todo, e isso é o que mantém a validação barata.
     const verifyOps: VerifyOp[] = [];
     const opClusters: FixCluster[] = [];
     for (const e of enriched) {
@@ -433,8 +430,6 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
       opClusters[i].verification = res;
     });
 
-    // Materializa fixGroups (sem `apply`, que é interno) e a verificação
-    // principal de cada violação (o cluster que cobre o primeiro nó).
     for (const e of enriched) {
       if (e.clusters.length > 0) {
         e.v.fixGroups = e.clusters.map(
@@ -456,7 +451,6 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
       .map((e) => e.v)
       .sort((a, b) => severityOrder.indexOf(a.severity) - severityOrder.indexOf(b.severity));
 
-    // ---- marcadores: bounding box dos nós acima da dobra ----
     const targets: { selector: string; severity: Severity; label: string }[] = [];
     for (const v of wcagViolations) {
       const severity = (v.impact ?? "minor") as Severity;
@@ -481,11 +475,7 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
     targets.forEach((t, i) => {
       const r = rects[i];
       if (!r || r.w === 0 || r.h === 0) return;
-      // só conta o que está visível na área capturada
       if (r.y < 0 || r.y > VIEWPORT.height || r.x > VIEWPORT.width) return;
-      // pula violações a nível de documento (ex. <title> ausente, mapeadas
-      // ao <html>): a caixa cobre a viewport toda e viraria um overlay
-      // gigante tingindo o preview inteiro. A violação segue no relatório.
       if (r.w >= VIEWPORT.width * 0.9 && r.h >= VIEWPORT.height * 0.9) return;
       if (markers.length >= MAX_MARKERS) return;
       markers.push({
@@ -499,7 +489,6 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
       });
     });
 
-    // ---- contagens / score / derivados ----
     const counts = {
       critical: violations.filter((v) => v.severity === "critical").length,
       serious: violations.filter((v) => v.severity === "serious").length,
@@ -510,15 +499,8 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
       manualReview: axe.incomplete.length,
     };
 
-    // ---- teclado & foco: tabula a página de verdade e observa o foco ----
-    // O que o axe não cobre. Isolado em try/catch: uma falha aqui (site
-    // hostil, timeout) nunca deve derrubar o resto do relatório.
     const keyboard = await collectKeyboard(page, VIEWPORT).catch(() => undefined);
 
-    // ---- contextos extras: estados dinâmicos + viewport mobile ----
-    // Por último de propósito: abre disclosures e redimensiona pra 375px, então
-    // roda depois do screenshot/markers/keyboard (que dependem do estado e do
-    // viewport desktop). Isolado em catch: nunca deve derrubar o relatório.
     const contexts = await collectContexts(
       page,
       violations.map((v) => v.id),

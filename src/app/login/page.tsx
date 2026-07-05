@@ -5,11 +5,9 @@ import { faGithub, faGoogle } from "@fortawesome/free-brands-svg-icons";
 import { auth, signIn } from "@/auth";
 import { Logo } from "@/components/ui";
 
-// Prisma (adapter) precisa do runtime Node.
 export const runtime = "nodejs";
 
 export default async function LoginPage() {
-  // Já logado? Não faz sentido ver a tela de login.
   if (await auth()) redirect("/");
 
   return (
@@ -46,8 +44,6 @@ export default async function LoginPage() {
   );
 }
 
-// GitHub usa o botão escuro (a cor de marca do GitHub, e âncora de contraste);
-// Google fica claro com borda, como pede a diretriz de marca do Google.
 const providerButtonClasses: Record<"github" | "google", string> = {
   github: "border border-transparent bg-ink text-white hover:bg-ink-soft",
   google:

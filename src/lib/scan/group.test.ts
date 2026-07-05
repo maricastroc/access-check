@@ -31,7 +31,7 @@ describe("clusterFixes", () => {
       node(".c", contrast("#222")),
     ]);
     expect(groups).toHaveLength(2);
-    expect(groups[0].count).toBe(2); // #222 primeiro (cobre mais)
+    expect(groups[0].count).toBe(2); // #222
     expect(groups[0].code).toBe("color: #222;");
     expect(groups[1].count).toBe(1);
   });

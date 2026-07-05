@@ -6,7 +6,6 @@ import {
   type RawKeyboard,
 } from "./keyboard";
 
-// Helper: cria uma parada posicionada em (left%, top%). focusVisible default true.
 const stop = (
   n: number,
   left: number | null,
@@ -42,19 +41,19 @@ describe("readingOrderInversions", () => {
   });
 
   it("acusa salto pra uma linha acima", () => {
-    const stops = [stop(1, 10, 50), stop(2, 10, 10)]; // volta pro topo
+    const stops = [stop(1, 10, 50), stop(2, 10, 10)];
     const inv = readingOrderInversions(stops);
     expect(inv.count).toBe(1);
     expect(inv.selectors).toContain("#el-2");
   });
 
   it("acusa volta pra esquerda na mesma linha", () => {
-    const stops = [stop(1, 60, 20), stop(2, 10, 20)]; // mesma linha, anda pra trás
+    const stops = [stop(1, 60, 20), stop(2, 10, 20)];
     expect(readingOrderInversions(stops).count).toBe(1);
   });
 
   it("micro-desalinhamento dentro da banda não conta", () => {
-    const stops = [stop(1, 30, 20), stop(2, 28, 19)]; // < banda de tolerância
+    const stops = [stop(1, 30, 20), stop(2, 28, 19)];
     expect(readingOrderInversions(stops).count).toBe(0);
   });
 
@@ -129,7 +128,6 @@ describe("buildKeyboardReport", () => {
       focusPath: [stop(1, 10, 50, { focusVisible: false }), stop(2, 10, 10, { focusVisible: false })],
     });
     expect(r.findings[0].severity).toBe("critical");
-    // severidades não-crescentes ao longo da lista
     const rank = { critical: 0, serious: 1, moderate: 2, minor: 3 } as const;
     for (let i = 1; i < r.findings.length; i++) {
       expect(rank[r.findings[i].severity]).toBeGreaterThanOrEqual(rank[r.findings[i - 1].severity]);

@@ -84,7 +84,7 @@ describe("fixContrast", () => {
             expectedContrastRatio: target,
           });
           const m = fix?.code?.match(/color: (#[0-9a-f]{6});/);
-          if (!m) continue; // null = impossível nesse fundo, comportamento ok
+          if (!m) continue;
           expect(contrastRatio(hex(m[1]), hex(bg))).toBeGreaterThanOrEqual(target);
         }
       }
@@ -101,11 +101,9 @@ describe("fixContrast", () => {
     const m = fix!.code!.match(/color: (#[0-9a-f]{6});/)!;
     const c = hex(m[1]);
     expect(contrastRatio(c, hex("#ffffff"))).toBeGreaterThanOrEqual(4.5);
-    // ainda azulado: canal azul domina e a cor não colapsou pra cinza
     expect(c.b).toBeGreaterThan(c.r);
     expect(c.b).toBeGreaterThan(c.g);
     expect(c.r === c.g && c.g === c.b).toBe(false);
-    // e a explicação deve deixar claro que só a luminosidade mudou
     expect(fix!.text.toLowerCase()).toContain("hue");
   });
 

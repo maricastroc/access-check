@@ -17,7 +17,7 @@ describe("toContextIssue", () => {
     expect(issue.severity).toBe("serious");
     expect(issue.criterion).toBe("WCAG 2.5.8 · Target Size (Minimum)");
     expect(issue.nodes).toBe(3);
-    expect(issue.selectors).toHaveLength(5); // teto
+    expect(issue.selectors).toHaveLength(5);
   });
 
   it("cai pra 'minor' quando o impact é nulo e pro id quando não há critério", () => {
@@ -31,9 +31,9 @@ describe("newIssues", () => {
   it("mantém só as regras que não estão na baseline do desktop", () => {
     const baseline = new Set(["color-contrast", "image-alt"]);
     const rules = [
-      rule({ id: "color-contrast" }), // já existia no desktop → ignora
-      rule({ id: "target-size" }), // novo → mantém
-      rule({ id: "meta-viewport" }), // novo → mantém
+      rule({ id: "color-contrast" }),
+      rule({ id: "target-size" }),
+      rule({ id: "meta-viewport" }),
     ];
     const out = newIssues(baseline, rules);
     expect(out.map((i) => i.id)).toEqual(["target-size", "meta-viewport"]);

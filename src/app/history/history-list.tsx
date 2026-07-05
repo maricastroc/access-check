@@ -64,8 +64,6 @@ export function HistoryList({ scans }: { scans: ScanListItem[] }) {
     return b === "pass" || b === "warn" || b === "fail" ? b : "all";
   });
 
-  // Delta = diferença para o scan anterior do MESMO url. Calculado sobre a
-  // lista cronológica original (scans vem date-desc), independente de filtro/ordem.
   const deltaById = useMemo(() => {
     const map = new Map<string, number>();
     scans.forEach((scan, i) => {
@@ -85,10 +83,9 @@ export function HistoryList({ scans }: { scans: ScanListItem[] }) {
     });
     if (sort === "score-desc") return [...filtered].sort((a, b) => b.score - a.score);
     if (sort === "score-asc") return [...filtered].sort((a, b) => a.score - b.score);
-    return filtered; // "recent" — já vem date-desc do servidor
+    return filtered;
   }, [scans, query, sort, scoreBand]);
 
-  // Espelha o estado na URL sem refazer o fetch do servidor (shareable + refresh-safe).
   function syncUrl(next: { q?: string; sort?: SortKey; band?: BandKey }) {
     const sp = new URLSearchParams();
     const q = next.q ?? query;

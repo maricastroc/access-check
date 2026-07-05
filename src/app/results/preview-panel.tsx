@@ -30,8 +30,6 @@ export function PreviewPanel({
   const simLabel = modeList.find((m) => m.key === sim)!.label;
   const host = safeHost(result.finalUrl);
 
-  // Paradas de foco visíveis na área capturada — o que dá pra desenhar. Cada
-  // ponto vira o centro da caixa do elemento (em %), limitado pra não vazar.
   const focusPoints = (result.keyboard?.focusPath ?? [])
     .filter((s) => s.left !== null && s.top !== null)
     .map((s) => ({

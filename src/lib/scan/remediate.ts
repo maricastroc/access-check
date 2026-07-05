@@ -1,9 +1,3 @@
-// Geração de remediação determinística (sem IA). Cobre contraste, alt, rótulos,
-// nomes acessíveis, lang, title, viewport e atributos ARIA. Cada gerador
-// devolve `text` (prosa), `code` (trecho copiável) e, quando o conserto é
-// auto-aplicável, `apply` — a mutação DOM que o passo de validação re-testa.
-
-/** Dados de contraste que o axe-core já calcula por nó. */
 export type ContrastData = {
   fgColor: string;
   bgColor: string;
@@ -11,15 +5,6 @@ export type ContrastData = {
   expectedContrastRatio: number;
 };
 
-/**
- * Mutação DOM equivalente ao fix, para o passo de validação aplicar no próprio
- * navegador e re-rodar o axe. É deliberadamente estruturada (não a string de
- * UI) pra validação ser determinística em vez de re-parsear `code`.
- *
- * `attr`/`style` agem sobre o elemento da violação; `doc`/`viewport` agem a
- * nível de documento. Geradores cujo conserto não dá pra aplicar com segurança
- * (ex.: remover atributos ARIA) omitem `apply` e simplesmente não são validados.
- */
 export type FixApply =
   | { kind: "attr"; name: string; value: string }
   | { kind: "style"; prop: string; value: string }

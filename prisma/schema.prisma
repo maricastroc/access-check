@@ -1,7 +1,3 @@
-// Prisma schema — AccessCheck
-// Auth.js (NextAuth v5) standard models + domain models (Scan/Screenshot).
-// docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -10,13 +6,6 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
-
-/**
- * ===================== Auth.js (NextAuth) =====================
- */
-// Conjunto padrão que o @auth/prisma-adapter espera. Usamos o campo
-// convencional `image` (não `avatarUrl`), pra o adapter oficial funcionar
-// sem código custom.
 
 model User {
   id            String    @id @default(cuid())
@@ -84,12 +73,11 @@ model Scan {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  url      String // URL normalizada (input)
+  url      String
   finalUrl String
   title    String
   score    Int
 
-  // Contagens desnormalizadas → lista/ordenação/tendência sem parsear o JSON.
   critical Int
   serious  Int
   moderate Int
@@ -98,21 +86,17 @@ model Scan {
 
   durationMs Int
 
-  // ScanResult completo SEM o screenshot — é o que a /report já consome.
-  // O screenshot vira a rota /api/scan/<id>/screenshot.
   result Json
 
   createdAt DateTime @default(now())
 
   screenshot Screenshot?
 
-  @@index([userId, createdAt]) // tela de histórico
-  @@index([userId, url, createdAt]) // tendência de score por URL
+  @@index([userId, createdAt])
+  @@index([userId, url, createdAt])
   @@map("scans")
 }
 
-// Tabela separada DE PROPÓSITO: mantém os bytes da imagem fora da linha
-// principal, pra queries de lista/histórico nunca arrastarem o blob.
 model Screenshot {
   scanId   String @id
   scan     Scan   @relation(fields: [scanId], references: [id], onDelete: Cascade)

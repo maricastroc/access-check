@@ -1,15 +1,3 @@
-// Análise de navegação por teclado e foco — a parte que o axe-core não cobre.
-// O axe inspeciona o DOM estático; aqui a gente *dirige* o browser: tabula a
-// página de verdade (page.keyboard.press("Tab"), que garante o estado
-// :focus-visible) e observa o que acontece com o foco a cada parada.
-//
-// Cobre: foco invisível (WCAG 2.4.7), ordem de foco quebrada (2.4.3),
-// armadilha de teclado (2.1.2), tabindex positivo (2.4.3) e controle
-// interativo inalcançável por teclado (2.1.1).
-//
-// A lógica de decisão (contar inversões, montar findings, severidade) é pura e
-// testada — no mesmo espírito de derive/diff/group. Só a coleta toca o browser.
-
 import type { Page } from "playwright-core";
 import type { Severity } from "./types";
 import { severityOrder } from "./derive";
@@ -21,18 +9,12 @@ export type KeyboardIssueId =
   | "positive-tabindex"
   | "unreachable-control";
 
-/** Uma parada da travessia por Tab: onde o foco pousou e como ele aparece. */
 export type FocusStop = {
-  /** ordem de tabulação, 1-based */
   n: number;
   selector: string;
-  /** nome acessível aproximado (ou a tag, quando não há) */
   label: string;
   tag: string;
-  /** o foco produziu algum indicador visível (outline/box-shadow/borda/fundo)? */
   focusVisible: boolean;
-  // Posição em % relativa ao screenshot (0–100). null = fora da área capturada
-  // (abaixo da dobra ou sem caixa), então não é desenhado no overlay.
   left: number | null;
   top: number | null;
   width: number | null;
@@ -53,25 +35,17 @@ export type KeyboardFinding = {
 };
 
 export type KeyboardReport = {
-  /** número de paradas de foco percorridas */
   totalStops: number;
-  /** controles interativos detectados na página */
   totalInteractive: number;
-  /** quantos desses o Tab realmente alcançou */
   reachableInteractive: number;
-  /** a travessia bateu no teto de Tabs (contagem de alcance é parcial) */
   truncated: boolean;
-  /** o foco voltou ao início / esgotou naturalmente (ciclo completo) */
   cycleComplete: boolean;
   focusPath: FocusStop[];
   findings: KeyboardFinding[];
 };
 
-// Dados crus coletados do browser, antes de virarem findings. Separar isto do
-// KeyboardReport é o que deixa a montagem de findings pura e testável.
 export type RawKeyboard = {
   focusPath: FocusStop[];
-  /** seletor onde o foco ficou preso, se houve armadilha */
   trapSelector: string | null;
   positiveTabindex: string[];
   unreachable: string[];
@@ -95,20 +69,11 @@ function plural(n: number, one: string, many: string): string {
   return n === 1 ? one : many;
 }
 
-/**
- * Conta inversões entre a ordem de tabulação e a ordem de leitura visual
- * (cima→baixo, esquerda→direita). Uma parada que salta pra uma linha *acima* da
- * anterior, ou que na mesma linha volta pra *esquerda*, é uma inversão — o
- * clássico sintoma de tabindex bagunçado ou ordem de DOM divergente do layout.
- *
- * Só considera paradas posicionadas (visíveis na área capturada) e usa uma
- * banda de tolerância pra não acusar micro-desalinhamentos.
- */
 export function readingOrderInversions(stops: FocusStop[]): {
   count: number;
   selectors: string[];
 } {
-  const BAND = 3; // % do viewport — ~24px vertical / ~36px horizontal
+  const BAND = 3;
   const positioned = stops.filter(
     (s): s is FocusStop & { top: number; left: number } => s.top !== null && s.left !== null,
   );
@@ -118,23 +83,18 @@ export function readingOrderInversions(stops: FocusStop[]): {
     const cur = positioned[i];
     const dy = cur.top - prev.top;
     if (dy < -BAND) {
-      selectors.push(cur.selector); // pulou pra uma linha acima
+      selectors.push(cur.selector);
     } else if (Math.abs(dy) <= BAND && cur.left < prev.left - BAND) {
-      selectors.push(cur.selector); // mesma linha, andou pra trás
+      selectors.push(cur.selector); 
     }
   }
   const unique = [...new Set(selectors)];
   return { count: unique.length, selectors: unique };
 }
 
-/**
- * Monta o relatório de teclado a partir dos dados crus. Puro e determinístico:
- * é aqui que cada sintoma vira um finding com severidade e critério WCAG.
- */
 export function buildKeyboardReport(raw: RawKeyboard): KeyboardReport {
   const findings: KeyboardFinding[] = [];
 
-  // Armadilha de teclado — o pior caso: quem navega por teclado fica preso.
   if (raw.trapSelector) {
     findings.push({
       id: "keyboard-trap",
@@ -152,9 +112,6 @@ export function buildKeyboardReport(raw: RawKeyboard): KeyboardReport {
     });
   }
 
-  // Controles alcançáveis só pelo mouse. Só reportamos quando a travessia
-  // completou o ciclo sem truncar — senão a lista de "não visitados" é parcial
-  // e geraria falso positivo.
   if (raw.cycleComplete && !raw.truncated && raw.unreachable.length > 0) {
     const n = raw.unreachable.length;
     findings.push({
@@ -174,7 +131,6 @@ export function buildKeyboardReport(raw: RawKeyboard): KeyboardReport {
     });
   }
 
-  // Foco sem indicador visível.
   const invisible = raw.focusPath.filter((s) => !s.focusVisible);
   if (invisible.length > 0) {
     const n = invisible.length;
@@ -195,7 +151,6 @@ export function buildKeyboardReport(raw: RawKeyboard): KeyboardReport {
     });
   }
 
-  // Ordem de foco visualmente fora de sequência.
   const inv = readingOrderInversions(raw.focusPath);
   if (inv.count > 0) {
     findings.push({
@@ -215,7 +170,6 @@ export function buildKeyboardReport(raw: RawKeyboard): KeyboardReport {
     });
   }
 
-  // tabindex positivo — anti-padrão que força uma ordem manual frágil.
   if (raw.positiveTabindex.length > 0) {
     const n = raw.positiveTabindex.length;
     findings.push({
@@ -249,17 +203,10 @@ export function buildKeyboardReport(raw: RawKeyboard): KeyboardReport {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Coleta no browser (impura — dirige o Playwright). Mantida enxuta: só junta os
-// dados crus e delega toda a decisão pra buildKeyboardReport acima.
-// ---------------------------------------------------------------------------
-
 const MAX_TAB_STOPS = 50;
 
 type Viewport = { width: number; height: number };
 
-// Estilos que revelam um indicador de foco. Lidos com foco e sem foco pra
-// comparar — a diferença é o que prova que existe um indicador.
 type FocusStyle = {
   outlineStyle: string;
   outlineWidth: string;
@@ -270,10 +217,7 @@ type FocusStyle = {
   backgroundColor: string;
 };
 
-/** Há indicador de foco se algo mudou visualmente entre foco e não-foco. */
 function hasFocusIndicator(focused: FocusStyle, base: FocusStyle): boolean {
-  // Outline presente enquanto focado já basta (é o indicador padrão do browser
-  // e o mais comum nos customizados).
   if (focused.outlineStyle !== "none" && parseFloat(focused.outlineWidth) > 0) return true;
   if (focused.boxShadow !== base.boxShadow && focused.boxShadow !== "none") return true;
   if (focused.borderTopWidth !== base.borderTopWidth) return true;
@@ -283,7 +227,6 @@ function hasFocusIndicator(focused: FocusStyle, base: FocusStyle): boolean {
   return false;
 }
 
-// Raw de cada parada, direto do page.evaluate (posição ainda em px).
 type RawStop = {
   selector: string;
   tag: string;
@@ -294,18 +237,10 @@ type RawStop = {
   rect: { x: number; y: number; w: number; h: number } | null;
 };
 
-/**
- * Dirige a travessia por Tab na página e devolve os dados crus. Não decide
- * nada — só observa. Envolva em try/catch no chamador: uma falha aqui nunca
- * deve derrubar o scan inteiro.
- */
 export async function collectKeyboard(page: Page, viewport: Viewport): Promise<KeyboardReport> {
-  // Instala helpers uma vez no contexto da página e zera o registro de visitados
-  // (guardado por referência, pra medir alcance sem tocar no DOM).
   await page.evaluate(() => {
     const w = window as unknown as Record<string, unknown>;
     w.__acVisited = [];
-    // Gera um seletor CSS estável e curto pro elemento.
     w.__acCssPath = (el: Element | null): string => {
       if (!el || el.nodeType !== 1) return "";
       const parts: string[] = [];
@@ -326,8 +261,7 @@ export async function collectKeyboard(page: Page, viewport: Viewport): Promise<K
       }
       return parts.join(" > ");
     };
-    // Nome acessível aproximado (não é o algoritmo completo do ARIA, mas cobre
-    // os casos comuns o suficiente pra rotular a parada).
+
     w.__acLabel = (el: Element): string => {
       const aria = el.getAttribute("aria-label");
       if (aria && aria.trim()) return aria.trim().slice(0, 60);
@@ -345,7 +279,7 @@ export async function collectKeyboard(page: Page, viewport: Viewport): Promise<K
       if (title && title.trim()) return title.trim().slice(0, 60);
       return el.tagName.toLowerCase();
     };
-    // Começa do topo do documento pra primeira Tab cair no primeiro focável.
+
     (document.activeElement as HTMLElement | null)?.blur?.();
   });
 
@@ -392,22 +326,16 @@ export async function collectKeyboard(page: Page, viewport: Viewport): Promise<K
       };
     })) as { isBody: true } | (RawStop & { isBody: false });
 
-    // Foco voltou pro body/documento → esgotou os focáveis (headless não tem
-    // barra de endereço pra receber o foco), então o ciclo se fechou.
     if (info.isBody) {
       cycleComplete = true;
       break;
     }
 
-    // Mesmo elemento duas vezes seguidas: preso. Iframes repetem de propósito
-    // (o foco entra no documento aninhado, que não enxergamos), então não
-    // contam como armadilha — apenas paramos.
     if (prevSelector !== null && info.selector === prevSelector) {
       if (!info.isIframe) trapSelector = info.selector;
       break;
     }
 
-    // Voltou pro primeiro elemento → ciclo completo.
     if (rawStops.length > 0 && info.selector === rawStops[0].selector) {
       cycleComplete = true;
       break;
@@ -419,8 +347,6 @@ export async function collectKeyboard(page: Page, viewport: Viewport): Promise<K
     if (i === MAX_TAB_STOPS - 1) truncated = true;
   }
 
-  // Passe de baseline: com o foco removido, lê o estilo "em repouso" de cada
-  // elemento visitado, pra comparar com o estilo que capturamos sob foco.
   const uniqueSelectors = [...new Set(rawStops.map((s) => s.selector))];
   const baseStyles =
     uniqueSelectors.length === 0
@@ -443,14 +369,12 @@ export async function collectKeyboard(page: Page, viewport: Viewport): Promise<K
                 backgroundColor: cs.backgroundColor,
               };
             } catch {
-              // seletor inválido — ignora
+              //
             }
           }
           return out;
         }, uniqueSelectors)) as Record<string, FocusStyle>);
 
-  // Alcance: compara o conjunto de interativos com os que foram de fato
-  // visitados (por referência), e coleta tabindex positivos. Limpa os helpers.
   const reach = (await page.evaluate(() => {
     const w = window as unknown as {
       __acCssPath: (e: Element | null) => string;
@@ -473,7 +397,7 @@ export async function collectKeyboard(page: Page, viewport: Viewport): Promise<K
 
     const candidates = Array.from(document.querySelectorAll(INTERACTIVE)).filter((el) => {
       const tabindex = el.getAttribute("tabindex");
-      if (tabindex !== null && parseInt(tabindex, 10) < 0) return false; // fora do tab
+      if (tabindex !== null && parseInt(tabindex, 10) < 0) return false;
       if ((el as HTMLButtonElement).disabled) return false;
       if (el.getAttribute("aria-hidden") === "true") return false;
       return isVisible(el);
@@ -485,7 +409,6 @@ export async function collectKeyboard(page: Page, viewport: Viewport): Promise<K
       .filter((el) => parseInt(el.getAttribute("tabindex") || "0", 10) > 0)
       .map((el) => w.__acCssPath(el));
 
-    // Limpa os globais que instalamos.
     const g = window as unknown as Record<string, unknown>;
     delete g.__acVisited;
     delete g.__acCssPath;
@@ -504,8 +427,6 @@ export async function collectKeyboard(page: Page, viewport: Viewport): Promise<K
     positiveTabindex: string[];
   };
 
-  // Converte px → % relativo ao screenshot (mesma base dos markers) e monta as
-  // paradas finais, já com o veredito de foco visível.
   const focusPath: FocusStop[] = rawStops.map((s, i) => {
     const base = baseStyles[s.selector];
     const focusVisible = base ? hasFocusIndicator(s.style, base) : true;
