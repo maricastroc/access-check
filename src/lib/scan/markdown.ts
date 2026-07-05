@@ -135,6 +135,44 @@ export function buildMarkdown(result: ScanResult): string {
     }
   }
 
+  const ctx = result.contexts;
+  if (ctx && (ctx.mobile.ran || ctx.dynamic.ran)) {
+    out.push("## Responsive & dynamic");
+    out.push("");
+    const checked: string[] = [];
+    if (ctx.mobile.ran) checked.push(`${ctx.mobile.width}px viewport`);
+    if (ctx.dynamic.ran)
+      checked.push(`${ctx.dynamic.opened} opened state${ctx.dynamic.opened === 1 ? "" : "s"}`);
+    out.push(`Re-scanned beyond the initial desktop load — checked ${checked.join(", ")}.`);
+    out.push("");
+
+    const issueLines = (issue: (typeof ctx.mobile.onlyOnMobile)[number]) => {
+      out.push(`- **${issue.title}** — ${severityLabel[issue.severity]} · ${issue.criterion}`);
+      if (issue.selectors.length > 0) {
+        const shown = issue.selectors.map((s) => `\`${s}\``).join(", ");
+        const extra = issue.nodes - issue.selectors.length;
+        out.push(`  - Affected: ${shown}${extra > 0 ? ` (+${extra} more)` : ""}`);
+      }
+    };
+
+    if (ctx.mobile.onlyOnMobile.length > 0) {
+      out.push(`### Only at ${ctx.mobile.width}px`);
+      out.push("");
+      for (const issue of ctx.mobile.onlyOnMobile) issueLines(issue);
+      out.push("");
+    }
+    for (const state of ctx.dynamic.states) {
+      out.push(`### ${state.label}`);
+      out.push("");
+      for (const issue of state.newIssues) issueLines(issue);
+      out.push("");
+    }
+    if (ctx.mobile.onlyOnMobile.length === 0 && ctx.dynamic.states.length === 0) {
+      out.push("No new violations surfaced in these contexts. 🎉");
+      out.push("");
+    }
+  }
+
   if (result.passed.length > 0) {
     out.push(`## Passed checks (${result.passed.length})`);
     out.push("");

@@ -91,6 +91,49 @@ describe("fixContrast", () => {
     }
   });
 
+  it("preserva o matiz: azul continua azul, não vira cinza/preto", () => {
+    const fix = fixContrast({
+      fgColor: "#6699ff",
+      bgColor: "#ffffff",
+      contrastRatio: 2.0,
+      expectedContrastRatio: 4.5,
+    });
+    const m = fix!.code!.match(/color: (#[0-9a-f]{6});/)!;
+    const c = hex(m[1]);
+    expect(contrastRatio(c, hex("#ffffff"))).toBeGreaterThanOrEqual(4.5);
+    // ainda azulado: canal azul domina e a cor não colapsou pra cinza
+    expect(c.b).toBeGreaterThan(c.r);
+    expect(c.b).toBeGreaterThan(c.g);
+    expect(c.r === c.g && c.g === c.b).toBe(false);
+    // e a explicação deve deixar claro que só a luminosidade mudou
+    expect(fix!.text.toLowerCase()).toContain("hue");
+  });
+
+  it("oferece o fundo como alternativa quando o texto já resolve", () => {
+    const fix = fixContrast({
+      fgColor: "#999999",
+      bgColor: "#ffffff",
+      contrastRatio: 2.85,
+      expectedContrastRatio: 4.5,
+    });
+    expect(fix!.text).toMatch(/set the background to #[0-9a-f]{6}/i);
+  });
+
+  it("quando o texto não resolve sozinho, sugere e valida o fundo", () => {
+    // alvo AAA (7:1) num fundo cinza-médio: nem preto nem branco no texto passam,
+    // mas escurecer o fundo (mantendo o matiz) resolve.
+    const fix = fixContrast({
+      fgColor: "#e0e0e0",
+      bgColor: "#8a8a8a",
+      contrastRatio: 1.6,
+      expectedContrastRatio: 7,
+    });
+    expect(fix!.code).toMatch(/^background: #[0-9a-f]{6};$/);
+    expect(fix!.apply).toMatchObject({ kind: "style", prop: "background-color" });
+    const m = fix!.code!.match(/background: (#[0-9a-f]{6});/)!;
+    expect(contrastRatio(hex("#e0e0e0"), hex(m[1]))).toBeGreaterThanOrEqual(7);
+  });
+
   it("devolve null quando as cores não são parseáveis", () => {
     expect(
       fixContrast({

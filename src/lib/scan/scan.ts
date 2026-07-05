@@ -17,6 +17,7 @@ import {
 } from "./remediate";
 import { clusterFixes, type FixCluster } from "./group";
 import { collectKeyboard } from "./keyboard";
+import { collectContexts } from "./contexts";
 import { buildFixFirst, buildSummary, computeScore, severityOrder } from "./derive";
 import type {
   FixGroup,
@@ -514,6 +515,15 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
     // hostil, timeout) nunca deve derrubar o resto do relatório.
     const keyboard = await collectKeyboard(page, VIEWPORT).catch(() => undefined);
 
+    // ---- contextos extras: estados dinâmicos + viewport mobile ----
+    // Por último de propósito: abre disclosures e redimensiona pra 375px, então
+    // roda depois do screenshot/markers/keyboard (que dependem do estado e do
+    // viewport desktop). Isolado em catch: nunca deve derrubar o relatório.
+    const contexts = await collectContexts(
+      page,
+      violations.map((v) => v.id),
+    ).catch(() => undefined);
+
     const passed = axe.passes.map((p) => p.help);
 
     const MAX_SELECTORS = 5;
@@ -557,6 +567,7 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
       passed,
       markers,
       keyboard,
+      contexts,
       fixFirst: buildFixFirst(violations),
     };
   } finally {

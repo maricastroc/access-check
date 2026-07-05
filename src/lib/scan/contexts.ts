@@ -1,0 +1,280 @@
+// Scans em contextos além do estado inicial no desktop — o que uma auditoria de
+// "carregou a página e rodou o axe" não vê:
+//   1. Mobile (375px): redimensiona e re-roda o axe, e reporta o que falha SÓ no
+//      mobile (target-size, reflow, etc.).
+//   2. Estados dinâmicos: abre disclosures baseadas em padrão (<details>, botões
+//      com aria-expanded+aria-controls), re-roda o axe ESCOPADO na região
+//      revelada, e reverte. Conservador de propósito: nada de links/submits, teto
+//      de gatilhos, e se um clique navegar a gente para.
+//
+// A decisão (o que é "novo" em cada contexto vs. a baseline do desktop) é pura e
+// testada; só a coleta toca o browser — no mesmo espírito de keyboard/derive.
+
+import type { Page } from "playwright-core";
+import type { Severity } from "./types";
+import { criterionFromTags } from "./wcag";
+
+export type ContextIssue = {
+  id: string;
+  title: string;
+  criterion: string;
+  severity: Severity;
+  nodes: number;
+  selectors: string[];
+};
+
+/** Um estado dinâmico aberto e as violações novas que ele revelou. */
+export type DynamicState = {
+  /** rótulo do que foi aberto, ex.: 'Opened “Main menu”' */
+  label: string;
+  selector: string;
+  newIssues: ContextIssue[];
+};
+
+export type ContextReport = {
+  mobile: {
+    ran: boolean;
+    width: number;
+    /** violações presentes no mobile mas ausentes no desktop */
+    onlyOnMobile: ContextIssue[];
+  };
+  dynamic: {
+    ran: boolean;
+    /** quantos gatilhos foram efetivamente abertos */
+    opened: number;
+    /** só os estados que revelaram alguma violação nova */
+    states: DynamicState[];
+  };
+};
+
+/** Forma mínima de uma regra do axe que trafega entre o browser e o Node. */
+export type RawRule = {
+  id: string;
+  impact: string | null;
+  help: string;
+  tags: string[];
+  nodeCount: number;
+  selectors: string[];
+};
+
+const MAX_ISSUE_SELECTORS = 5;
+
+export function toContextIssue(r: RawRule): ContextIssue {
+  return {
+    id: r.id,
+    title: r.help,
+    criterion: criterionFromTags(r.tags) ?? r.id,
+    severity: (r.impact ?? "minor") as Severity,
+    nodes: r.nodeCount,
+    selectors: r.selectors.slice(0, MAX_ISSUE_SELECTORS),
+  };
+}
+
+/**
+ * Filtra as regras cujo id NÃO está na baseline (violações do desktop) — ou
+ * seja, o que é novidade daquele contexto. Puro e determinístico.
+ */
+export function newIssues(baselineIds: Set<string>, rules: RawRule[]): ContextIssue[] {
+  return rules.filter((r) => !baselineIds.has(r.id)).map(toContextIssue);
+}
+
+// ---------------------------------------------------------------------------
+// Coleta no browser (impura). Envolva em try/catch no chamador.
+// ---------------------------------------------------------------------------
+
+const MOBILE = { width: 375, height: 812 };
+const MAX_TRIGGERS = 3;
+// Só WCAG (sem best-practice) — a baseline também é só WCAG, então isso evita
+// que "novas" regras sejam só ruído de best-practice.
+const CONTEXT_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22a", "wcag22aa"];
+
+// Tipo mínimo do axe no contexto da página.
+type PageAxe = {
+  run: (
+    ctx: Element | Document,
+    opts: unknown,
+  ) => Promise<{
+    violations: { id: string; impact?: string | null; help: string; tags: string[]; nodes: { target: unknown }[] }[];
+  }>;
+};
+
+export async function collectContexts(page: Page, baselineIdsArr: string[]): Promise<ContextReport> {
+  const baseline = new Set(baselineIdsArr);
+
+  // ---- estados dinâmicos (ainda no viewport desktop) ----
+  const dynamicStates: DynamicState[] = [];
+  let opened = 0;
+  let dynamicRan = false;
+
+  try {
+    const triggers = await page.evaluate((max) => {
+      const cssPath = (el: Element | null): string => {
+        if (!el || el.nodeType !== 1) return "";
+        const parts: string[] = [];
+        let node: Element | null = el;
+        while (node && node.nodeType === 1 && parts.length < 5) {
+          if (node.id) {
+            parts.unshift(`#${CSS.escape(node.id)}`);
+            break;
+          }
+          let s = node.tagName.toLowerCase();
+          const p: Element | null = node.parentElement;
+          if (p) {
+            const same = Array.from(p.children).filter((c) => c.tagName === node!.tagName);
+            if (same.length > 1) s += `:nth-of-type(${same.indexOf(node) + 1})`;
+          }
+          parts.unshift(s);
+          node = p;
+        }
+        return parts.join(" > ");
+      };
+      const nameOf = (el: Element): string => {
+        const a = el.getAttribute("aria-label");
+        if (a && a.trim()) return a.trim().slice(0, 40);
+        const t = el.textContent?.replace(/\s+/g, " ").trim();
+        if (t) return t.slice(0, 40);
+        const title = el.getAttribute("title");
+        if (title && title.trim()) return title.trim().slice(0, 40);
+        return "";
+      };
+
+      const out: { selector: string; label: string; kind: "details" | "aria"; controls: string | null }[] = [];
+      const seen = new Set<string>();
+      const add = (el: Element, kind: "details" | "aria", controls: string | null) => {
+        if (out.length >= max) return;
+        const sel = cssPath(el);
+        if (!sel || seen.has(sel)) return;
+        seen.add(sel);
+        out.push({ selector: sel, label: nameOf(el) || (kind === "details" ? "Disclosure" : "Menu"), kind, controls });
+      };
+
+      for (const s of Array.from(document.querySelectorAll("details > summary"))) add(s, "details", null);
+      for (const b of Array.from(document.querySelectorAll('[aria-expanded="false"][aria-controls]'))) {
+        if (b.tagName === "A") continue; // sem links (podem navegar)
+        if (b.tagName !== "BUTTON" && b.getAttribute("role") !== "button") continue;
+        if ((b as HTMLButtonElement).disabled) continue;
+        if (b.getAttribute("aria-hidden") === "true") continue;
+        add(b, "aria", b.getAttribute("aria-controls"));
+      }
+      return out;
+    }, MAX_TRIGGERS);
+
+    dynamicRan = true;
+
+    for (const t of triggers) {
+      const state = await page.evaluate(
+        async ({ t, tags }) => {
+          const firstTarget = (x: unknown): string | null =>
+            Array.isArray(x) && typeof x[0] === "string" ? x[0] : typeof x === "string" ? x : null;
+
+          const el = document.querySelector(t.selector) as HTMLElement | null;
+          if (!el) return null;
+          const hrefBefore = location.href;
+
+          let opened = false;
+          let scope: Element | null = null;
+          let restore = () => {};
+
+          if (t.kind === "details") {
+            const d = el.closest("details") as HTMLDetailsElement | null;
+            if (!d) return null;
+            if (!d.open) {
+              d.open = true;
+              opened = true;
+            }
+            scope = d;
+            restore = () => {
+              if (opened) d.open = false;
+            };
+          } else {
+            el.click();
+            opened = el.getAttribute("aria-expanded") === "true";
+            scope = t.controls ? document.getElementById(t.controls) : null;
+            restore = () => {
+              // fecha só se ainda está aberto (o próprio toggle re-executa o handler)
+              if (opened && el.getAttribute("aria-expanded") === "true") el.click();
+            };
+          }
+
+          // Se o clique navegou, não dá pra confiar no resto — aborta este estado.
+          if (location.href !== hrefBefore) return { navigated: true as const };
+          if (!opened || !scope) {
+            restore();
+            return { opened: false, rules: [] as RawRule[] };
+          }
+
+          // deixa o conteúdo revelado assentar
+          await new Promise((r) => setTimeout(r, 150));
+
+          let mapped: RawRule[] = [];
+          try {
+            const axe = (window as unknown as { axe: PageAxe }).axe;
+            const res = await axe.run(scope, { runOnly: { type: "tag", values: tags } });
+            mapped = res.violations.map((v) => ({
+              id: v.id,
+              impact: v.impact ?? null,
+              help: v.help,
+              tags: v.tags,
+              nodeCount: v.nodes.length,
+              selectors: v.nodes
+                .map((n) => firstTarget(n.target))
+                .filter((s): s is string => Boolean(s))
+                .slice(0, 5),
+            }));
+          } catch {
+            // axe pode falhar num escopo estranho — segue com lista vazia
+          }
+          restore();
+          return { opened: true, rules: mapped };
+        },
+        { t, tags: CONTEXT_TAGS },
+      );
+
+      if (!state) continue;
+      if ("navigated" in state && state.navigated) break; // navegou → para tudo
+      if ("opened" in state && state.opened) {
+        opened++;
+        const issues = newIssues(baseline, state.rules);
+        if (issues.length > 0) {
+          dynamicStates.push({ label: `Opened “${t.label}”`, selector: t.selector, newIssues: issues });
+        }
+      }
+    }
+  } catch {
+    // dynamicRan reflete se chegamos a listar gatilhos
+  }
+
+  // ---- viewport mobile ----
+  let mobileRan = false;
+  let onlyOnMobile: ContextIssue[] = [];
+  try {
+    await page.setViewportSize(MOBILE);
+    await page.waitForTimeout(400); // deixa o layout refluir
+    const rules = await page.evaluate(async (tags) => {
+      const firstTarget = (x: unknown): string | null =>
+        Array.isArray(x) && typeof x[0] === "string" ? x[0] : typeof x === "string" ? x : null;
+      const axe = (window as unknown as { axe: PageAxe }).axe;
+      const res = await axe.run(document, { runOnly: { type: "tag", values: tags } });
+      return res.violations.map((v) => ({
+        id: v.id,
+        impact: v.impact ?? null,
+        help: v.help,
+        tags: v.tags,
+        nodeCount: v.nodes.length,
+        selectors: v.nodes
+          .map((n) => firstTarget(n.target))
+          .filter((s): s is string => Boolean(s))
+          .slice(0, 5),
+      }));
+    }, CONTEXT_TAGS);
+    mobileRan = true;
+    onlyOnMobile = newIssues(baseline, rules);
+  } catch {
+    // mobileRan fica false
+  }
+
+  return {
+    mobile: { ran: mobileRan, width: MOBILE.width, onlyOnMobile },
+    dynamic: { ran: dynamicRan, opened, states: dynamicStates },
+  };
+}

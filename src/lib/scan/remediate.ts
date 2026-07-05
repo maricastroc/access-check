@@ -285,47 +285,126 @@ export function contrastRatio(a: Rgb, b: Rgb): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 
+// --- OKLCH: espaço perceptual pra ajustar SÓ a luminosidade sem torcer o matiz.
+// Andar em direção ao preto/branco em RGB dessatura a cor (um azul de marca
+// vira cinza-azulado). Em OKLCH a gente mexe só no L (lightness) e mantém C
+// (croma) e H (matiz), então a sugestão continua "a mesma cor", só mais
+// clara/escura. Constantes do OKLab (Björn Ottosson). O contraste em si segue
+// sendo medido pela luminância WCAG (contrastRatio), que é o padrão do critério.
+
+type Oklch = { L: number; C: number; H: number };
+
+function srgbToLinear(v: number): number {
+  const x = v / 255;
+  return x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4;
+}
+
+function linearToChannel(v: number): number {
+  const clamped = Math.max(0, Math.min(1, v)); // gamut clamp em sRGB linear
+  const x = clamped <= 0.0031308 ? 12.92 * clamped : 1.055 * clamped ** (1 / 2.4) - 0.055;
+  return Math.round(x * 255);
+}
+
+function srgbToOklch({ r, g, b }: Rgb): Oklch {
+  const lr = srgbToLinear(r);
+  const lg = srgbToLinear(g);
+  const lb = srgbToLinear(b);
+  const l = 0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb;
+  const m = 0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb;
+  const s = 0.0883024619 * lr + 0.2817188376 * lg + 0.6299787005 * lb;
+  const l_ = Math.cbrt(l);
+  const m_ = Math.cbrt(m);
+  const s_ = Math.cbrt(s);
+  const L = 0.2104542553 * l_ + 0.793617785 * m_ - 0.0040720468 * s_;
+  const a = 1.9779984951 * l_ - 2.428592205 * m_ + 0.4505937099 * s_;
+  const bb = 0.0259040371 * l_ + 0.7827717662 * m_ - 0.808675766 * s_;
+  return { L, C: Math.hypot(a, bb), H: Math.atan2(bb, a) };
+}
+
+function oklchToSrgb({ L, C, H }: Oklch): Rgb {
+  const a = C * Math.cos(H);
+  const bb = C * Math.sin(H);
+  const l_ = L + 0.3963377774 * a + 0.2158037573 * bb;
+  const m_ = L - 0.1055613458 * a - 0.0638541728 * bb;
+  const s_ = L - 0.0894841775 * a - 1.291485548 * bb;
+  const l = l_ ** 3;
+  const m = m_ ** 3;
+  const s = s_ ** 3;
+  return {
+    r: linearToChannel(4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s),
+    g: linearToChannel(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s),
+    b: linearToChannel(-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s),
+  };
+}
+
+const BLACK: Rgb = { r: 0, g: 0, b: 0 };
+const WHITE: Rgb = { r: 255, g: 255, b: 255 };
+
 /**
- * Acha a cor de texto mais próxima da original que atinge `target` de contraste
- * contra `bg`, andando em direção ao preto ou ao branco (o que estiver mais
- * perto de já passar). Devolve null se nem preto nem branco resolverem.
+ * Acha a cor mais próxima da original que atinge `target` de contraste contra
+ * `other`, mexendo SÓ na luminosidade (L do OKLCH) e mantendo matiz e croma.
+ * `dir` = 1 clareia, -1 escurece. null se nem no extremo (L=1/0, com o mesmo
+ * croma) o contraste é alcançado.
  */
-function nearestPassingFg(fg: Rgb, bg: Rgb, target: number): Rgb | null {
-  // Decide o sentido: escurecer ou clarear, conforme o fundo.
-  const towardBlack = luminance(bg) > 0.5;
-  const goal: Rgb = towardBlack ? { r: 0, g: 0, b: 0 } : { r: 255, g: 255, b: 255 };
+function nearestPassingLightness(color: Rgb, other: Rgb, target: number, dir: 1 | -1): Rgb | null {
+  const { L: startL, C, H } = srgbToOklch(color);
+  const extremeL = dir === 1 ? 1 : 0;
+  const at = (L: number) => oklchToSrgb({ L, C, H });
+  if (contrastRatio(at(extremeL), other) < target) return null; // nem no extremo passa
 
-  if (contrastRatio(goal, bg) < target) return null; // impossível nesse fundo
-
-  // Busca binária no fator de mistura fg→goal (0 = original, 1 = goal).
-  // Mistura em canais inteiros (0–255): é o que a cor vira depois de virar
-  // hex, então a busca enxerga o mesmo valor que o usuário vai colar — sem
-  // isso o resultado arredondado pode cair logo abaixo do alvo.
-  let lo = 0;
-  let hi = 1;
-  const mix = (t: number): Rgb => ({
-    r: Math.round(fg.r + (goal.r - fg.r) * t),
-    g: Math.round(fg.g + (goal.g - fg.g) * t),
-    b: Math.round(fg.b + (goal.b - fg.b) * t),
-  });
-
-  for (let i = 0; i < 24; i++) {
-    const mid = (lo + hi) / 2;
-    if (contrastRatio(mix(mid), bg) >= target) hi = mid;
-    else lo = mid;
+  // Busca binária pelo L mais perto do original que ainda passa — o contraste é
+  // monotônico do original em direção ao extremo.
+  let near = startL; // falha
+  let far = extremeL; // passa
+  for (let i = 0; i < 30; i++) {
+    const mid = (near + far) / 2;
+    if (contrastRatio(at(mid), other) >= target) far = mid;
+    else near = mid;
   }
-  // O arredondamento pode fazer mix(hi) recuar; caminha em direção ao goal até
-  // a cor inteira passar de fato (goal já foi garantido lá em cima).
-  for (let t = hi; t <= 1; t += 1 / 255) {
-    const c = mix(t);
-    if (contrastRatio(c, bg) >= target) return c;
+  // Arredondar pra 8-bit pode cair logo abaixo do alvo; anda mais um tico em
+  // direção ao extremo até a cor inteira passar de fato (o extremo já é garantido).
+  const step = dir === 1 ? 1 / 512 : -1 / 512;
+  for (let L = far; dir === 1 ? L <= 1 : L >= 0; L += step) {
+    const c = at(L);
+    if (contrastRatio(c, other) >= target) return c;
   }
-  return goal;
+  return at(extremeL);
 }
 
 /**
- * Gera um fix concreto pra uma violação de contraste. Retorna um texto pronto
- * pra exibir no card "Suggested fix", ou null se não der pra calcular.
+ * Sugestão de cor de TEXTO. Prefere mexer só na luminosidade (matiz preservado);
+ * só cai pro preto/branco puro (dessaturando) se o matiz original não alcançar
+ * o contraste nem no extremo. `huePreserved` diz qual dos dois aconteceu.
+ */
+function nearestPassingFg(
+  fg: Rgb,
+  bg: Rgb,
+  target: number,
+): { rgb: Rgb; huePreserved: boolean } | null {
+  // Escolhe o extremo que mais aumenta o contraste contra o fundo.
+  const dir: 1 | -1 = contrastRatio(BLACK, bg) >= contrastRatio(WHITE, bg) ? -1 : 1;
+  const hp = nearestPassingLightness(fg, bg, target, dir);
+  if (hp) return { rgb: hp, huePreserved: true };
+  const extreme = dir === -1 ? BLACK : WHITE;
+  if (contrastRatio(extreme, bg) >= target) return { rgb: extreme, huePreserved: false };
+  return null;
+}
+
+/** Sugestão de FUNDO (a "opção de ajustar o fundo"), mantendo o matiz do fundo. */
+function nearestPassingBg(fg: Rgb, bg: Rgb, target: number): Rgb | null {
+  const dir: 1 | -1 = contrastRatio(fg, BLACK) >= contrastRatio(fg, WHITE) ? -1 : 1;
+  const hp = nearestPassingLightness(bg, fg, target, dir);
+  if (hp) return hp;
+  const extreme = dir === -1 ? BLACK : WHITE;
+  if (contrastRatio(fg, extreme) >= target) return extreme;
+  return null;
+}
+
+/**
+ * Gera um fix concreto pra uma violação de contraste. O conserto primário é
+ * mexer no texto (preservando o matiz); quando dá, o fundo é oferecido como
+ * alternativa. Se o texto não resolve sozinho, o fix vira uma mudança de fundo
+ * (também verificável). Retorna texto pronto pro card, ou null se não parseável.
  */
 export function fixContrast(data: ContrastData): FixResult | null {
   const fg = parseColor(data.fgColor);
@@ -333,25 +412,48 @@ export function fixContrast(data: ContrastData): FixResult | null {
   if (!fg || !bg) return null;
 
   const target = data.expectedContrastRatio || 4.5;
-  const suggestion = nearestPassingFg(fg, bg, target);
-  if (!suggestion) {
+  const was = `(was ${data.contrastRatio.toFixed(2)}:1, needs ${target.toFixed(1)}:1)`;
+
+  const fgFix = nearestPassingFg(fg, bg, target);
+  const bgFix = nearestPassingBg(fg, bg, target);
+
+  if (fgFix) {
+    const newHex = toHex(fgFix.rgb);
+    const ratio = contrastRatio(fgFix.rgb, bg);
+    const hueNote = fgFix.huePreserved
+      ? " Same hue — only the lightness changes."
+      : " (hue shifted toward neutral to reach contrast on this background)";
+    let text =
+      `Replace text color ${toHex(fg)} with ${newHex} → ${ratio.toFixed(2)}:1 ` +
+      `against ${toHex(bg)} ${was}.${hueNote}`;
+    if (bgFix) text += ` Or keep the text and set the background to ${toHex(bgFix)}.`;
     return {
-      text:
-        `Text color ${toHex(fg)} on ${toHex(bg)} reaches only ` +
-        `${data.contrastRatio.toFixed(2)}:1 (needs ${target.toFixed(1)}:1). ` +
-        `No text-color change clears it on this background — darken or ` +
-        `lighten the background instead.`,
+      text,
+      code: `color: ${newHex};`,
+      apply: { kind: "style", prop: "color", value: newHex },
     };
   }
 
-  const newHex = toHex(suggestion);
-  const ratio = contrastRatio(suggestion, bg);
+  if (bgFix) {
+    const bgHex = toHex(bgFix);
+    const ratio = contrastRatio(fg, bgFix);
+    return {
+      text:
+        `Text color ${toHex(fg)} can't reach ${target.toFixed(1)}:1 on ${toHex(bg)} ` +
+        `by changing the text alone. Set the background to ${bgHex} instead → ` +
+        `${ratio.toFixed(2)}:1 ${was}. Same background hue — only its lightness changes.`,
+      // "background: #hex" de propósito (não "background-color") pra não colidir
+      // com quem procura "color: #hex" no snippet.
+      code: `background: ${bgHex};`,
+      apply: { kind: "style", prop: "background-color", value: bgHex },
+    };
+  }
+
   return {
     text:
-      `Replace text color ${toHex(fg)} with ${newHex} → ${ratio.toFixed(2)}:1 ` +
-      `against ${toHex(bg)} (was ${data.contrastRatio.toFixed(2)}:1, needs ` +
-      `${target.toFixed(1)}:1).`,
-    code: `color: ${newHex};`,
-    apply: { kind: "style", prop: "color", value: newHex },
+      `Text color ${toHex(fg)} on ${toHex(bg)} reaches only ` +
+      `${data.contrastRatio.toFixed(2)}:1 (needs ${target.toFixed(1)}:1). ` +
+      `Neither the text nor the background clears it by lightness alone on these ` +
+      `hues — pick a darker or lighter pairing.`,
   };
 }

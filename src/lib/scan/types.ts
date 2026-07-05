@@ -1,4 +1,5 @@
 import type { KeyboardReport } from "./keyboard";
+import type { ContextReport } from "./contexts";
 
 export type Severity = "critical" | "serious" | "moderate" | "minor";
 
@@ -112,6 +113,11 @@ export type ScanResult = {
    * Opcional: scans antigos em cache/histórico não têm este campo.
    */
   keyboard?: KeyboardReport;
+  /**
+   * Scans em contextos além do estado inicial: viewport mobile (375px) e
+   * estados dinâmicos abertos. Opcional (scans antigos não têm).
+   */
+  contexts?: ContextReport;
   fixFirst: {
     n: string;
     title: string;
