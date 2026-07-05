@@ -126,7 +126,7 @@ URL → headless Chromium (Playwright) → inject axe-core → WCAG audit
 
 <br/>
 
-## 📌 What did I learn?
+## 🛠️ Engineering challenges 
 
 The most challenging part of this project was making the remediation **trustworthy** rather than just plausible. Generating a fix is easy; proving it actually clears the violation meant building a structured apply-and-revert layer over a live DOM and re-running the audit scoped to a single rule. Getting the contrast math right — guaranteeing the suggested color passes its WCAG target _after_ rounding — pushed me toward property-based testing. The deterministic core (color math, fix generators, scoring, grouping, and the history diff) is fully unit-tested with Vitest, ensuring reliability and maintainability of the codebase.
 
