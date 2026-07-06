@@ -22,6 +22,7 @@ export type CrawlSnapshot = {
   scannedPages: number;
   failedPages: number;
   score: number | null;
+  error: string | null;
   createdAt: string;
   pages: CrawlPage[];
 };

@@ -16,10 +16,18 @@ export const qstashReceiver =
     ? new Receiver({ currentSigningKey, nextSigningKey })
     : null;
 
-/** URL pública desta app — o QStash precisa dela pra chamar o worker de volta. */
+/**
+ * URL pública desta app — o QStash precisa dela pra chamar o worker de volta.
+ * Prefere o domínio de produção (público) à URL do deployment: esta última pode
+ * estar atrás do Deployment Protection da Vercel, o que devolveria 401 pro QStash
+ * e deixaria as páginas presas em "pending".
+ */
 export function appBaseUrl(): string | null {
   const explicit = process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL;
   if (explicit) return explicit.replace(/\/$/, "");
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  }
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
   return null;
 }

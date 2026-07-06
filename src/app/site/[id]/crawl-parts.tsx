@@ -72,6 +72,20 @@ export function ProgressHeader({ snap }: { snap: CrawlSnapshot }) {
           style={{ width: `${pct}%` }}
         />
       </div>
+
+      {snap.status === "failed" && snap.error && (
+        <div
+          role="alert"
+          className="mt-4 flex items-start gap-3 rounded-xl border border-line bg-card px-4 py-3 text-sm shadow-soft"
+        >
+          <FontAwesomeIcon
+            icon={faTriangleExclamation}
+            aria-hidden
+            className="mt-0.5 shrink-0 text-critical"
+          />
+          <p className="text-ink-soft">{snap.error}</p>
+        </div>
+      )}
     </section>
   );
 }

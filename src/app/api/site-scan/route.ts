@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { siteRatelimit } from "@/lib/redis";
 import { discoverUrls, normalizeRoot } from "@/lib/scan/discover";
-import { createSiteScan } from "@/lib/site-scans";
+import { createSiteScan, failSiteScan } from "@/lib/site-scans";
 import { canFanOut, enqueuePageScans } from "@/lib/qstash";
 
 export const runtime = "nodejs";
@@ -44,18 +44,37 @@ export async function POST(req: Request) {
 
   const jobs = urls.map((url) => ({ siteScanId: id, url }));
 
+  // O fallback inline (fire-and-forget) só sobrevive num processo de longa
+  // duração (dev local). Em serverless a função congela após a resposta, então
+  // ali preferimos falhar visível a deixar o crawl preso em "pending".
+  const onServerless = Boolean(process.env.VERCEL);
+
+  async function runInline() {
+    const { processPagesInline } = await import("@/lib/site-scan-runner");
+    void processPagesInline(id, urls);
+  }
+
   if (canFanOut()) {
     try {
       await enqueuePageScans(jobs);
     } catch (e) {
-      console.error("QStash fan-out failed, falling back to inline:", e);
-      const { processPagesInline } = await import("@/lib/site-scan-runner");
-      void processPagesInline(id, urls);
+      console.error("QStash fan-out failed:", e);
+      if (onServerless) {
+        await failSiteScan(
+          id,
+          "Couldn't enqueue the crawl. Check the QStash configuration (token, region URL, signing keys).",
+        );
+      } else {
+        await runInline();
+      }
     }
+  } else if (onServerless) {
+    await failSiteScan(
+      id,
+      "Background jobs aren't configured. Set the QStash env vars in the deployment, then redeploy.",
+    );
   } else {
-    // Dev/local sem QStash: processa inline (fire-and-forget; o front faz polling).
-    const { processPagesInline } = await import("@/lib/site-scan-runner");
-    void processPagesInline(id, urls);
+    await runInline();
   }
 
   return NextResponse.json({ id, totalPages: urls.length });

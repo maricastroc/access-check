@@ -33,6 +33,14 @@ export async function createSiteScan(
   return site.id;
 }
 
+/** Marca o crawl inteiro como falho (ex.: não deu pra enfileirar as páginas). */
+export async function failSiteScan(id: string, error: string): Promise<void> {
+  await prisma.siteScan.update({
+    where: { id },
+    data: { status: "failed", error },
+  });
+}
+
 /** Marca a página como "running" (só se ainda estiver pendente). */
 export async function markPageRunning(siteScanId: string, url: string): Promise<void> {
   await prisma.siteScanPage.updateMany({
@@ -114,6 +122,7 @@ export type SiteScanSnapshot = {
   scannedPages: number;
   failedPages: number;
   score: number | null;
+  error: string | null;
   createdAt: Date;
   pages: SiteScanPageView[];
 };
@@ -130,6 +139,7 @@ export async function getSiteScan(id: string): Promise<SiteScanSnapshot | null> 
       scannedPages: true,
       failedPages: true,
       score: true,
+      error: true,
       createdAt: true,
       pages: {
         orderBy: { createdAt: "asc" },
@@ -158,6 +168,7 @@ export async function getSiteScan(id: string): Promise<SiteScanSnapshot | null> 
     scannedPages: s.scannedPages,
     failedPages: s.failedPages,
     score: s.score,
+    error: s.error,
     createdAt: s.createdAt,
     pages: s.pages.map((p) => ({
       id: p.id,
