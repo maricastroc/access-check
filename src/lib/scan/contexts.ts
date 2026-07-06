@@ -11,9 +11,7 @@ export type ContextIssue = {
   selectors: string[];
 };
 
-/** Um estado dinâmico aberto e as violações novas que ele revelou. */
 export type DynamicState = {
-  /** rótulo do que foi aberto, ex.: 'Opened “Main menu”' */
   label: string;
   selector: string;
   newIssues: ContextIssue[];
@@ -23,19 +21,16 @@ export type ContextReport = {
   mobile: {
     ran: boolean;
     width: number;
-    /** violações presentes no mobile mas ausentes no desktop */
     onlyOnMobile: ContextIssue[];
   };
   dynamic: {
     ran: boolean;
-    /** quantos gatilhos foram efetivamente abertos */
     opened: number;
-    /** só os estados que revelaram alguma violação nova */
     states: DynamicState[];
   };
 };
 
-/** Forma mínima de uma regra do axe que trafega entre o browser e o Node. */
+// Forma mínima de uma regra do axe que trafega entre o browser e o Node.
 export type RawRule = {
   id: string;
   impact: string | null;
@@ -58,10 +53,7 @@ export function toContextIssue(r: RawRule): ContextIssue {
   };
 }
 
-/**
- * Filtra as regras cujo id NÃO está na baseline (violações do desktop) — ou
- * seja, o que é novidade daquele contexto. Puro e determinístico.
- */
+// Regras cujo id não está na baseline do desktop = novidade daquele contexto.
 export function newIssues(baselineIds: Set<string>, rules: RawRule[]): ContextIssue[] {
   return rules.filter((r) => !baselineIds.has(r.id)).map(toContextIssue);
 }
@@ -75,11 +67,20 @@ type PageAxe = {
     ctx: Element | Document,
     opts: unknown,
   ) => Promise<{
-    violations: { id: string; impact?: string | null; help: string; tags: string[]; nodes: { target: unknown }[] }[];
+    violations: {
+      id: string;
+      impact?: string | null;
+      help: string;
+      tags: string[];
+      nodes: { target: unknown }[];
+    }[];
   }>;
 };
 
-export async function collectContexts(page: Page, baselineIdsArr: string[]): Promise<ContextReport> {
+export async function collectContexts(
+  page: Page,
+  baselineIdsArr: string[],
+): Promise<ContextReport> {
   const baseline = new Set(baselineIdsArr);
 
   const dynamicStates: DynamicState[] = [];
@@ -118,18 +119,31 @@ export async function collectContexts(page: Page, baselineIdsArr: string[]): Pro
         return "";
       };
 
-      const out: { selector: string; label: string; kind: "details" | "aria"; controls: string | null }[] = [];
+      const out: {
+        selector: string;
+        label: string;
+        kind: "details" | "aria";
+        controls: string | null;
+      }[] = [];
       const seen = new Set<string>();
       const add = (el: Element, kind: "details" | "aria", controls: string | null) => {
         if (out.length >= max) return;
         const sel = cssPath(el);
         if (!sel || seen.has(sel)) return;
         seen.add(sel);
-        out.push({ selector: sel, label: nameOf(el) || (kind === "details" ? "Disclosure" : "Menu"), kind, controls });
+        out.push({
+          selector: sel,
+          label: nameOf(el) || (kind === "details" ? "Disclosure" : "Menu"),
+          kind,
+          controls,
+        });
       };
 
-      for (const s of Array.from(document.querySelectorAll("details > summary"))) add(s, "details", null);
-      for (const b of Array.from(document.querySelectorAll('[aria-expanded="false"][aria-controls]'))) {
+      for (const s of Array.from(document.querySelectorAll("details > summary")))
+        add(s, "details", null);
+      for (const b of Array.from(
+        document.querySelectorAll('[aria-expanded="false"][aria-controls]'),
+      )) {
         if (b.tagName === "A") continue;
         if (b.tagName !== "BUTTON" && b.getAttribute("role") !== "button") continue;
         if ((b as HTMLButtonElement).disabled) continue;
@@ -213,12 +227,16 @@ export async function collectContexts(page: Page, baselineIdsArr: string[]): Pro
         opened++;
         const issues = newIssues(baseline, state.rules);
         if (issues.length > 0) {
-          dynamicStates.push({ label: `Opened “${t.label}”`, selector: t.selector, newIssues: issues });
+          dynamicStates.push({
+            label: `Opened “${t.label}”`,
+            selector: t.selector,
+            newIssues: issues,
+          });
         }
       }
     }
   } catch {
-    // 
+    //
   }
 
   let mobileRan = false;

@@ -33,11 +33,6 @@ function IssueRow({ issue }: { issue: ContextIssue }) {
   );
 }
 
-/**
- * Surfaces issues that only show up in contexts a single desktop-load audit
- * misses: at a 375px mobile viewport, and inside dynamic states we open
- * (menus / disclosures) and re-scan.
- */
 export function ContextsReport({ result }: { result: ScanResult }) {
   const ctx = result.contexts;
   if (!ctx || (!ctx.mobile.ran && !ctx.dynamic.ran)) return null;
@@ -73,12 +68,14 @@ export function ContextsReport({ result }: { result: ScanResult }) {
         )}
       </div>
 
-      <p className="mt-3 text-[11.5px] leading-relaxed text-faint">Checked {checked.join(" · ")}.</p>
+      <p className="mt-3 text-[11.5px] leading-relaxed text-faint">
+        Checked {checked.join(" · ")}.
+      </p>
 
       {clean ? (
         <p className="mt-2 text-[12px] leading-relaxed text-ink-soft">
-          No violations surfaced at mobile width or in the states we opened that weren&apos;t already
-          in the desktop report.
+          No violations surfaced at mobile width or in the states we opened that weren&apos;t
+          already in the desktop report.
         </p>
       ) : (
         <div className="mt-3 flex flex-col gap-4">

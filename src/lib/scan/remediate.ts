@@ -11,14 +11,8 @@ export type FixApply =
   | { kind: "doc"; target: "lang" | "title"; value: string }
   | { kind: "viewport"; value: string };
 
-/**
- * Resultado de um gerador: `text` é a explicação em prosa; `code` é o trecho
- * copiável (CSS/HTML) exibido como chip, quando existe; `apply` é a mutação
- * estruturada usada pela validação (quando o fix é auto-aplicável).
- */
 export type FixResult = { text: string; code?: string; apply?: FixApply };
 
-/** Atributos do elemento que os geradores de elemento usam pro snippet. */
 export type ElementInfo = {
   tag: string;
   type?: string;
@@ -28,20 +22,16 @@ export type ElementInfo = {
   ariaLabel?: string;
   src?: string;
   role?: string;
-  /** textContent visível, aparado e truncado — usado pra adivinhar nomes */
   text?: string;
-  /** atributo title do próprio elemento */
   title?: string;
-  /** texto de contexto (figcaption, link/figura que envolve a imagem) */
   nearbyText?: string;
 };
 
-/** "/assets/euro-flag@2x.png" → "Euro flag". Vazio se não der pra inferir. */
 function altFromSrc(src: string): string {
   try {
     const file = src.split(/[?#]/)[0].split("/").pop() ?? "";
-    const base = file.replace(/\.[a-z0-9]+$/i, ""); // tira extensão
-    return humanize(base.replace(/@\d+x$/i, "")); // tira @2x/@3x
+    const base = file.replace(/\.[a-z0-9]+$/i, "");
+    return humanize(base.replace(/@\d+x$/i, ""));
   } catch {
     return "";
   }
@@ -49,11 +39,10 @@ function altFromSrc(src: string): string {
 
 type Rgb = { r: number; g: number; b: number };
 
-/** "amount_to_send" / "amountToSend" → "Amount to send". */
 function humanize(raw: string): string {
   const words = raw
-    .replace(/([a-z])([A-Z])/g, "$1 $2") // camelCase
-    .replace(/[_-]+/g, " ") // snake / kebab
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
     .replace(/\s+/g, " ")
     .trim()
     .toLowerCase();
@@ -61,13 +50,8 @@ function humanize(raw: string): string {
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
-/**
- * Gera um fix concreto pra input sem rótulo acessível (WCAG 4.1.2 / regra
- * `label`). Usa id/name/placeholder pra adivinhar um texto e escolhe entre
- * `<label for>` (quando há id) e `aria-label`.
- */
 export function fixLabel(el: ElementInfo): FixResult | null {
-  if (el.ariaLabel && el.ariaLabel.trim()) return null; // já tem nome acessível
+  if (el.ariaLabel && el.ariaLabel.trim()) return null;
 
   const guess =
     (el.placeholder && el.placeholder.trim()) ||
@@ -75,9 +59,8 @@ export function fixLabel(el: ElementInfo): FixResult | null {
     (el.id && humanize(el.id)) ||
     "Describe this field";
 
-  // A validação aplica sempre um aria-label (nome acessível equivalente),
-  // mesmo quando recomendamos um <label for> na UI: inserir um <label> no DOM
-  // é mais frágil e o resultado pro leitor de tela é o mesmo.
+  // Validamos sempre com aria-label mesmo quando recomendamos <label for> na UI:
+  // inserir um <label> no DOM é mais frágil e o resultado pro leitor de tela é o mesmo.
   const apply = { kind: "attr", name: "aria-label", value: guess } as const;
 
   if (el.id) {
@@ -99,7 +82,6 @@ export function fixLabel(el: ElementInfo): FixResult | null {
   };
 }
 
-/** WCAG 3.1.1 — <html> sem lang. Fix mecânico, não depende do DOM. */
 export function fixHtmlLang(): FixResult {
   return {
     text:
@@ -110,7 +92,6 @@ export function fixHtmlLang(): FixResult {
   };
 }
 
-/** WCAG 2.4.2 — documento sem <title>. */
 export function fixDocumentTitle(): FixResult {
   return {
     text:
@@ -121,7 +102,6 @@ export function fixDocumentTitle(): FixResult {
   };
 }
 
-/** WCAG 1.4.4 — viewport que bloqueia zoom (user-scalable=no / maximum-scale). */
 export function fixMetaViewport(): FixResult {
   return {
     text:
@@ -135,10 +115,6 @@ export function fixMetaViewport(): FixResult {
   };
 }
 
-/**
- * WCAG 4.1.2 — controle interativo (button, link, etc.) sem nome acessível.
- * Sugere texto visível quando faz sentido, ou um aria-label adivinhado.
- */
 export function fixAriaName(el: ElementInfo): FixResult {
   const guess =
     (el.text && el.text.trim().slice(0, 60)) ||
@@ -157,7 +133,6 @@ export function fixAriaName(el: ElementInfo): FixResult {
   };
 }
 
-/** WCAG 4.1.2 — role exige atributos ARIA que estão ausentes (axe lista quais). */
 export function fixAriaRequiredAttr(missing: string[]): FixResult | null {
   const attrs = missing.filter(Boolean);
   if (attrs.length === 0) return null;
@@ -169,7 +144,6 @@ export function fixAriaRequiredAttr(missing: string[]): FixResult | null {
   };
 }
 
-/** WCAG 4.1.2 — atributos ARIA não permitidos pra esse role/elemento. */
 export function fixAriaAllowedAttr(invalid: string[]): FixResult | null {
   // axe entrega itens como 'aria-foo="bar"'; queremos só o nome do atributo.
   const names = invalid.map((s) => s.split("=")[0].trim()).filter(Boolean);
@@ -183,16 +157,9 @@ export function fixAriaAllowedAttr(invalid: string[]): FixResult | null {
   };
 }
 
-/**
- * WCAG 1.1.1 — imagem sem alt. Heurística em cascata: title do elemento →
- * texto de contexto (figcaption/link) → nome do arquivo. Cai pro alt="" quando
- * nada é inferível.
- */
 export function fixImageAlt(el: ElementInfo): FixResult {
   const clean = (s?: string) => (s ? s.replace(/\s+/g, " ").trim() : "");
 
-  // title costuma ser a descrição mais direta; depois o texto ao redor; por
-  // fim o nome do arquivo. Limita o tamanho pra um alt enxuto.
   const guess = (
     clean(el.title) ||
     clean(el.nearbyText).slice(0, 80) ||
@@ -217,7 +184,6 @@ export function fixImageAlt(el: ElementInfo): FixResult {
   };
 }
 
-/** Aceita "#rrggbb", "#rgb" ou "rgb(a)(…)". Devolve null se não reconhecer. */
 function parseColor(input: string): Rgb | null {
   const s = input.trim().toLowerCase();
 
@@ -253,7 +219,6 @@ function toHex({ r, g, b }: Rgb): string {
   return `#${h(r)}${h(g)}${h(b)}`;
 }
 
-/** Luminância relativa WCAG (0–1). */
 function luminance({ r, g, b }: Rgb): number {
   const chan = (v: number) => {
     const c = v / 255;
@@ -262,7 +227,6 @@ function luminance({ r, g, b }: Rgb): number {
   return 0.2126 * chan(r) + 0.7152 * chan(g) + 0.0722 * chan(b);
 }
 
-/** Razão de contraste WCAG entre duas cores (1–21). */
 export function contrastRatio(a: Rgb, b: Rgb): number {
   const la = luminance(a);
   const lb = luminance(b);
@@ -270,13 +234,10 @@ export function contrastRatio(a: Rgb, b: Rgb): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 
-// --- OKLCH: espaço perceptual pra ajustar SÓ a luminosidade sem torcer o matiz.
-// Andar em direção ao preto/branco em RGB dessatura a cor (um azul de marca
-// vira cinza-azulado). Em OKLCH a gente mexe só no L (lightness) e mantém C
-// (croma) e H (matiz), então a sugestão continua "a mesma cor", só mais
-// clara/escura. Constantes do OKLab (Björn Ottosson). O contraste em si segue
-// sendo medido pela luminância WCAG (contrastRatio), que é o padrão do critério.
-
+// OKLCH: espaço perceptual pra ajustar SÓ a luminosidade sem torcer o matiz.
+// Andar pro preto/branco em RGB dessatura a cor; em OKLCH mexemos só no L,
+// mantendo croma e matiz. Constantes do OKLab (Björn Ottosson). O contraste
+// segue medido pela luminância WCAG (contrastRatio), que é o padrão do critério.
 type Oklch = { L: number; C: number; H: number };
 
 function srgbToLinear(v: number): number {
@@ -325,29 +286,25 @@ function oklchToSrgb({ L, C, H }: Oklch): Rgb {
 const BLACK: Rgb = { r: 0, g: 0, b: 0 };
 const WHITE: Rgb = { r: 255, g: 255, b: 255 };
 
-/**
- * Acha a cor mais próxima da original que atinge `target` de contraste contra
- * `other`, mexendo SÓ na luminosidade (L do OKLCH) e mantendo matiz e croma.
- * `dir` = 1 clareia, -1 escurece. null se nem no extremo (L=1/0, com o mesmo
- * croma) o contraste é alcançado.
- */
+// dir = 1 clareia, -1 escurece. Mexe só na luminosidade (L do OKLCH), mantendo
+// matiz e croma. null se nem no extremo (L=1/0, mesmo croma) o alvo é atingido.
 function nearestPassingLightness(color: Rgb, other: Rgb, target: number, dir: 1 | -1): Rgb | null {
   const { L: startL, C, H } = srgbToOklch(color);
   const extremeL = dir === 1 ? 1 : 0;
   const at = (L: number) => oklchToSrgb({ L, C, H });
-  if (contrastRatio(at(extremeL), other) < target) return null; // nem no extremo passa
+  if (contrastRatio(at(extremeL), other) < target) return null;
 
-  // Busca binária pelo L mais perto do original que ainda passa — o contraste é
-  // monotônico do original em direção ao extremo.
-  let near = startL; // falha
-  let far = extremeL; // passa
+  // Contraste é monotônico do original em direção ao extremo; busca binária pelo
+  // L mais perto do original que ainda passa. near = falha, far = passa.
+  let near = startL;
+  let far = extremeL;
   for (let i = 0; i < 30; i++) {
     const mid = (near + far) / 2;
     if (contrastRatio(at(mid), other) >= target) far = mid;
     else near = mid;
   }
-  // Arredondar pra 8-bit pode cair logo abaixo do alvo; anda mais um tico em
-  // direção ao extremo até a cor inteira passar de fato (o extremo já é garantido).
+  // Arredondar pra 8-bit pode cair logo abaixo do alvo; anda um tico em direção
+  // ao extremo até a cor inteira passar de fato (o extremo já é garantido).
   const step = dir === 1 ? 1 / 512 : -1 / 512;
   for (let L = far; dir === 1 ? L <= 1 : L >= 0; L += step) {
     const c = at(L);
@@ -356,17 +313,11 @@ function nearestPassingLightness(color: Rgb, other: Rgb, target: number, dir: 1 
   return at(extremeL);
 }
 
-/**
- * Sugestão de cor de TEXTO. Prefere mexer só na luminosidade (matiz preservado);
- * só cai pro preto/branco puro (dessaturando) se o matiz original não alcançar
- * o contraste nem no extremo. `huePreserved` diz qual dos dois aconteceu.
- */
 function nearestPassingFg(
   fg: Rgb,
   bg: Rgb,
   target: number,
 ): { rgb: Rgb; huePreserved: boolean } | null {
-  // Escolhe o extremo que mais aumenta o contraste contra o fundo.
   const dir: 1 | -1 = contrastRatio(BLACK, bg) >= contrastRatio(WHITE, bg) ? -1 : 1;
   const hp = nearestPassingLightness(fg, bg, target, dir);
   if (hp) return { rgb: hp, huePreserved: true };
@@ -375,7 +326,6 @@ function nearestPassingFg(
   return null;
 }
 
-/** Sugestão de FUNDO (a "opção de ajustar o fundo"), mantendo o matiz do fundo. */
 function nearestPassingBg(fg: Rgb, bg: Rgb, target: number): Rgb | null {
   const dir: 1 | -1 = contrastRatio(fg, BLACK) >= contrastRatio(fg, WHITE) ? -1 : 1;
   const hp = nearestPassingLightness(bg, fg, target, dir);
@@ -385,12 +335,6 @@ function nearestPassingBg(fg: Rgb, bg: Rgb, target: number): Rgb | null {
   return null;
 }
 
-/**
- * Gera um fix concreto pra uma violação de contraste. O conserto primário é
- * mexer no texto (preservando o matiz); quando dá, o fundo é oferecido como
- * alternativa. Se o texto não resolve sozinho, o fix vira uma mudança de fundo
- * (também verificável). Retorna texto pronto pro card, ou null se não parseável.
- */
 export function fixContrast(data: ContrastData): FixResult | null {
   const fg = parseColor(data.fgColor);
   const bg = parseColor(data.bgColor);

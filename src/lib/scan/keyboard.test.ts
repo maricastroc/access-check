@@ -63,7 +63,12 @@ describe("readingOrderInversions", () => {
   });
 
   it("não conta o mesmo seletor duas vezes", () => {
-    const stops = [stop(1, 60, 40), stop(2, 10, 10, { selector: "#dup" }), stop(3, 60, 40), stop(4, 10, 10, { selector: "#dup" })];
+    const stops = [
+      stop(1, 60, 40),
+      stop(2, 10, 10, { selector: "#dup" }),
+      stop(3, 60, 40),
+      stop(4, 10, 10, { selector: "#dup" }),
+    ];
     const inv = readingOrderInversions(stops);
     expect(inv.selectors).toEqual([...new Set(inv.selectors)]);
   });
@@ -77,7 +82,11 @@ describe("buildKeyboardReport", () => {
   });
 
   it("armadilha de teclado vira finding crítico", () => {
-    const r = buildKeyboardReport({ ...rawBase, trapSelector: "#modal", focusPath: [stop(1, 10, 10)] });
+    const r = buildKeyboardReport({
+      ...rawBase,
+      trapSelector: "#modal",
+      focusPath: [stop(1, 10, 10)],
+    });
     const trap = r.findings.find((f) => f.id === "keyboard-trap");
     expect(trap?.severity).toBe("critical");
     expect(trap?.selectors).toContain("#modal");
@@ -125,7 +134,10 @@ describe("buildKeyboardReport", () => {
       ...rawBase,
       trapSelector: "#trap",
       positiveTabindex: ["#a"],
-      focusPath: [stop(1, 10, 50, { focusVisible: false }), stop(2, 10, 10, { focusVisible: false })],
+      focusPath: [
+        stop(1, 10, 50, { focusVisible: false }),
+        stop(2, 10, 10, { focusVisible: false }),
+      ],
     });
     expect(r.findings[0].severity).toBe("critical");
     const rank = { critical: 0, serious: 1, moderate: 2, minor: 3 } as const;

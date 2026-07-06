@@ -1,13 +1,5 @@
-// Orientação de "como revisar" pros itens que o axe marca como `incomplete` —
-// coisas que ele não consegue decidir sozinho e joga pra um humano. Em vez de um
-// "inspecione manualmente" genérico, cada regra conhecida ganha o *porquê* ficou
-// inconclusiva e um passo-a-passo concreto. Puro e determinístico (só id → texto),
-// então serve tanto a UI quanto o export markdown.
-
 export type ReviewGuidance = {
-  /** por que o axe não conseguiu decidir sozinho */
   how: string;
-  /** passos concretos pra confirmar à mão */
   steps: string[];
 };
 
@@ -97,7 +89,6 @@ const GUIDANCE: Record<string, ReviewGuidance> = {
   },
 };
 
-/** Orientação de revisão pra uma regra do axe. Cai num genérico útil se não mapeada. */
 export function reviewGuidance(id: string): ReviewGuidance {
   return GUIDANCE[id] ?? GENERIC;
 }

@@ -41,11 +41,6 @@ function FindingRow({ f }: { f: KeyboardFinding }) {
   );
 }
 
-/**
- * Surfaces the keyboard & focus analysis — the interaction layer axe-core
- * can't see. We actually tab through the page, so this reports real focus
- * behaviour: reachability, visible focus, order, and traps.
- */
 export function KeyboardReport({ result }: { result: ScanResult }) {
   const kb = result.keyboard;
   if (!kb) return null;
@@ -82,8 +77,8 @@ export function KeyboardReport({ result }: { result: ScanResult }) {
 
       {clean ? (
         <p className="mt-2 text-[12px] leading-relaxed text-ink-soft">
-          Every focus stop had a visible indicator, the order followed the layout, and no traps
-          were found.
+          Every focus stop had a visible indicator, the order followed the layout, and no traps were
+          found.
         </p>
       ) : (
         <ul className="mt-3 flex flex-col gap-2">

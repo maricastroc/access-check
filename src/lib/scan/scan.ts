@@ -30,13 +30,10 @@ import type {
 
 const VIEWPORT = { width: 1200, height: 800 };
 const MAX_MARKERS = 6;
-// Teto de validações por scan, pra não estourar o tempo total.
 const MAX_VERIFY_OPS = 40;
 
-// Caminho do axe-core no runtime (process.cwd() = raiz do projeto).
 const AXE_PATH = path.join(process.cwd(), "node_modules/axe-core/axe.min.js");
 
-// Tipos mínimos do retorno do axe.run (só o que usamos).
 type AxeCheck = { id: string; data?: unknown };
 type AxeNode = {
   target: unknown;
@@ -46,7 +43,6 @@ type AxeNode = {
   none?: AxeCheck[];
 };
 
-/** Acha o `data` de um check por id, procurando em any/all/none do nó. */
 function checkData(node: AxeNode, id: string): unknown {
   for (const list of [node.any, node.all, node.none]) {
     const found = list?.find((c) => c.id === id);
@@ -80,11 +76,6 @@ export function normalizeUrl(input: string): string {
   return trimmed;
 }
 
-/**
- * Tenta gerar um fix concreto e determinístico pra um nó, despachando por regra
- * do axe. Cai pra null quando não há gerador, e o chamador usa o texto do axe.
- */
-// Regras de "nome acessível ausente" — todas resolvidas com aria-label/texto.
 const ARIA_NAME_RULES = new Set([
   "button-name",
   "link-name",
@@ -94,7 +85,6 @@ const ARIA_NAME_RULES = new Set([
   "aria-toggle-field-name",
 ]);
 
-// Regras cujo fix depende dos atributos do elemento (coletados na página).
 const ELEMENT_RULES = new Set(["label", "image-alt", ...ARIA_NAME_RULES]);
 
 function concreteFix(
@@ -103,15 +93,12 @@ function concreteFix(
   elInfo?: ElementInfo,
 ): FixResult | null {
   if (!node) return null;
-  // Regras com fix mecânico fixo (não dependem do DOM).
   if (ruleId === "html-has-lang" || ruleId === "html-lang-valid") return fixHtmlLang();
   if (ruleId === "document-title") return fixDocumentTitle();
   if (ruleId === "meta-viewport" || ruleId === "meta-viewport-large") return fixMetaViewport();
-  // Regras que leem atributos do elemento.
   if (ruleId === "label" && elInfo) return fixLabel(elInfo);
   if (ruleId === "image-alt" && elInfo) return fixImageAlt(elInfo);
   if (ARIA_NAME_RULES.has(ruleId) && elInfo) return fixAriaName(elInfo);
-  // Regras ARIA onde o axe lista os atributos exatos no check.
   if (ruleId === "aria-required-attr")
     return fixAriaRequiredAttr(asStringArray(checkData(node, "aria-required-attr")));
   if (ruleId === "aria-allowed-attr")
@@ -149,7 +136,6 @@ function concreteFix(
   return null;
 }
 
-/** Pega o primeiro seletor CSS do nó (axe devolve target como array). */
 function firstTarget(target: unknown): string | null {
   if (Array.isArray(target) && typeof target[0] === "string") return target[0];
   if (typeof target === "string") return target;
@@ -160,11 +146,8 @@ function firstTarget(target: unknown): string | null {
 // regra. `selector` null = mutação a nível de documento (lang, title, viewport).
 type VerifyOp = { ruleId: string; selector: string | null; apply: FixApply };
 
-/**
- * Roda no contexto da página: pra cada op, aplica a mutação, re-executa o axe
- * só naquela regra, reverte, e devolve se a violação sumiu. É o que prova que
- * o conserto sugerido realmente resolve, em vez de só afirmar.
- */
+// Aplica cada fix no DOM, re-roda o axe só naquela regra, reverte, e diz se a
+// violação sumiu — é o que prova o conserto em vez de só afirmá-lo.
 const VERIFY_IN_PAGE = async (ops: VerifyOp[]): Promise<FixVerification[]> => {
   // @ts-expect-error axe foi injetado no contexto da página
   const axe = window.axe;
@@ -173,7 +156,6 @@ const VERIFY_IN_PAGE = async (ops: VerifyOp[]): Promise<FixVerification[]> => {
     const res = await axe.run(context, {
       runOnly: { type: "rule", values: [ruleId] },
     });
-    // verified = a regra não acusa mais nenhum nó no contexto avaliado
     return res.violations.length === 0;
   };
 
@@ -315,14 +297,9 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
       });
     });
 
-    // Separa violações WCAG das de best-practice — só as WCAG entram no
-    // pipeline de fix/score; best-practice são informacionais.
     const wcagViolations = axe.violations.filter((v) => !v.tags.includes("best-practice"));
     const bpViolations = axe.violations.filter((v) => v.tags.includes("best-practice"));
 
-    // Coleta atributos dos elementos cujo fix depende do DOM (ex.: inputs sem
-    // rótulo), indexados pelo seletor. Pega TODOS os nós (não só o primeiro):
-    // o agrupamento precisa do fix de cada elemento pra saber o que se repete.
     const elementSelectors = [
       ...new Set(
         wcagViolations
@@ -352,8 +329,6 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
                   role: el.getAttribute("role") ?? undefined,
                   text: (el.textContent ?? "").replace(/\s+/g, " ").trim() || undefined,
                   title: el.getAttribute("title") ?? undefined,
-                  // Contexto pra alt: legenda da figura ou texto do link/figura
-                  // que envolve a imagem (sem o próprio textContent da img).
                   nearbyText:
                     (() => {
                       const fig = el.closest("figure");
@@ -372,15 +347,12 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
             return out;
           }, elementSelectors);
 
-    // ---- mapear violações + agrupar consertos por assinatura ----
     type Enriched = { v: ScanViolation; clusters: FixCluster[] };
     const enriched: Enriched[] = wcagViolations.map((v) => {
       const severity = (v.impact ?? "minor") as Severity;
       const firstNode = v.nodes[0];
       const where = firstNode ? (firstTarget(firstNode.target) ?? "—") : "—";
 
-      // Gera o fix de CADA nó e agrupa os idênticos — é daqui que sai o
-      // "este conserto resolve N elementos".
       const perNode = v.nodes.map((n) => {
         const sel = firstTarget(n.target);
         const elInfo = sel && sel in elementInfos ? elementInfos[sel] : undefined;
@@ -388,7 +360,6 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
       });
       const clusters = clusterFixes(perNode);
 
-      // Campos legados (fix/fixCode) seguem vindo do primeiro nó.
       const firstElInfo = where in elementInfos ? elementInfos[where] : undefined;
       const result = concreteFix(v.id, firstNode, firstElInfo);
       const fix =

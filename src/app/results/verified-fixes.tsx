@@ -3,11 +3,6 @@ import { faShieldHalved } from "@fortawesome/free-solid-svg-icons";
 import type { ScanResult } from "@/lib/scan/types";
 import { verifyStats } from "./shared";
 
-/**
- * Surfaces the flagship behaviour — every suggested fix is applied to the live
- * page and the audit re-run — as a single headline metric, instead of leaving
- * it buried in the per-fix pills inside each expanded card.
- */
 export function VerifiedFixes({ result }: { result: ScanResult }) {
   const { verified, checked } = verifyStats(result);
   if (checked === 0) return null;

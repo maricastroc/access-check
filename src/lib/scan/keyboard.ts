@@ -85,7 +85,7 @@ export function readingOrderInversions(stops: FocusStop[]): {
     if (dy < -BAND) {
       selectors.push(cur.selector);
     } else if (Math.abs(dy) <= BAND && cur.left < prev.left - BAND) {
-      selectors.push(cur.selector); 
+      selectors.push(cur.selector);
     }
   }
   const unique = [...new Set(selectors)];
@@ -124,7 +124,7 @@ export function buildKeyboardReport(raw: RawKeyboard): KeyboardReport {
         "(click handlers or ARIA roles) but Tab never reaches " +
         `${plural(n, "it", "them")} — so ${plural(n, "it's", "they're")} usable by mouse only.`,
       fix:
-        'Give each control a native focusable element (<button>, <a href>) or ' +
+        "Give each control a native focusable element (<button>, <a href>) or " +
         'add tabindex="0" and keyboard handlers so it can be reached and operated.',
       count: n,
       selectors: raw.unreachable.slice(0, MAX_FINDING_SELECTORS),
@@ -188,9 +188,7 @@ export function buildKeyboardReport(raw: RawKeyboard): KeyboardReport {
     });
   }
 
-  findings.sort(
-    (a, b) => severityOrder.indexOf(a.severity) - severityOrder.indexOf(b.severity),
-  );
+  findings.sort((a, b) => severityOrder.indexOf(a.severity) - severityOrder.indexOf(b.severity));
 
   return {
     totalStops: raw.focusPath.length,
@@ -319,10 +317,7 @@ export async function collectKeyboard(page: Page, viewport: Viewport): Promise<K
           borderTopColor: cs.borderTopColor,
           backgroundColor: cs.backgroundColor,
         },
-        rect:
-          r.width > 0 || r.height > 0
-            ? { x: r.left, y: r.top, w: r.width, h: r.height }
-            : null,
+        rect: r.width > 0 || r.height > 0 ? { x: r.left, y: r.top, w: r.width, h: r.height } : null,
       };
     })) as { isBody: true } | (RawStop & { isBody: false });
 

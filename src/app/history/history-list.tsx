@@ -3,54 +3,11 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faMagnifyingGlass, faXmark } from "@fortawesome/free-solid-svg-icons";
 import type { ScanListItem } from "@/lib/scans";
-import { ClearHistoryButton, DeleteScanButton } from "./history-buttons";
-
-type SortKey = "recent" | "score-desc" | "score-asc";
-type BandKey = "all" | "pass" | "warn" | "fail";
-
-const SORTS: { key: SortKey; label: string }[] = [
-  { key: "recent", label: "Most recent" },
-  { key: "score-desc", label: "Highest score" },
-  { key: "score-asc", label: "Lowest score" },
-];
-
-const BANDS: { key: BandKey; label: string }[] = [
-  { key: "all", label: "All" },
-  { key: "pass", label: "Pass" },
-  { key: "warn", label: "Warn" },
-  { key: "fail", label: "Fail" },
-];
-
-function host(url: string): string {
-  try {
-    return new URL(url).host;
-  } catch {
-    return url;
-  }
-}
-
-const dateFmt = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-});
-
-function scoreColor(score: number): string {
-  if (score >= 90) return "#16764f";
-  if (score >= 70) return "#8a6a00";
-  return "#c62a2f";
-}
-
-function band(score: number): BandKey {
-  if (score >= 90) return "pass";
-  if (score >= 70) return "warn";
-  return "fail";
-}
+import { ClearHistoryButton } from "./history-buttons";
+import { band, host, type BandKey, type SortKey } from "./history-utils";
+import { HistoryToolbar } from "./history-toolbar";
+import { ScanCard } from "./scan-card";
 
 export function HistoryList({ scans }: { scans: ScanListItem[] }) {
   const params = useSearchParams();
@@ -131,92 +88,23 @@ export function HistoryList({ scans }: { scans: ScanListItem[] }) {
           </div>
 
           {hasScans && (
-            <div className="mt-5 flex flex-col gap-3 lg:flex-row lg:items-center">
-              <div className="flex flex-1 items-center gap-2">
-                <label htmlFor="history-search" className="sr-only">
-                  Search scans by domain
-                </label>
-                <div className="flex h-9 w-full items-center gap-2.5 rounded-[10px] border border-line-strong bg-card px-3 focus-within:border-brand-400">
-                  <FontAwesomeIcon
-                    icon={faMagnifyingGlass}
-                    aria-hidden
-                    className="text-xs text-muted"
-                  />
-                  <input
-                    id="history-search"
-                    type="search"
-                    value={query}
-                    onChange={(e) => {
-                      setQuery(e.target.value);
-                      syncUrl({ q: e.target.value });
-                    }}
-                    placeholder="Search by domain…"
-                    className="h-full w-full bg-transparent text-sm text-ink placeholder:text-muted focus:outline-none [&::-webkit-search-cancel-button]:appearance-none"
-                  />
-                  {query && (
-                    <button
-                      type="button"
-                      aria-label="Clear search"
-                      onClick={() => {
-                        setQuery("");
-                        syncUrl({ q: "" });
-                      }}
-                      className="flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted transition-colors hover:bg-canvas hover:text-ink"
-                    >
-                      <FontAwesomeIcon icon={faXmark} aria-hidden className="text-xs" />
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2.5">
-                <div
-                  role="group"
-                  aria-label="Filter by score"
-                  className="flex h-9 items-center gap-0.5 rounded-[10px] border border-line-strong bg-card p-0.5"
-                >
-                  {BANDS.map((b) => {
-                    const active = b.key === scoreBand;
-                    return (
-                      <button
-                        key={b.key}
-                        type="button"
-                        aria-pressed={active}
-                        onClick={() => {
-                          setScoreBand(b.key);
-                          syncUrl({ band: b.key });
-                        }}
-                        className={`h-full cursor-pointer rounded-[8px] px-3 text-[12.5px] font-medium transition-colors ${
-                          active ? "bg-ink text-white" : "text-ink-soft hover:text-ink"
-                        }`}
-                      >
-                        {b.label}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <label htmlFor="history-sort" className="sr-only">
-                  Sort scans
-                </label>
-                <select
-                  id="history-sort"
-                  value={sort}
-                  onChange={(e) => {
-                    const s = e.target.value as SortKey;
-                    setSort(s);
-                    syncUrl({ sort: s });
-                  }}
-                  className="h-9 cursor-pointer rounded-[10px] border border-line-strong bg-card px-2.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-line-hover focus:border-brand-400 focus:outline-none"
-                >
-                  {SORTS.map((s) => (
-                    <option key={s.key} value={s.key}>
-                      {s.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+            <HistoryToolbar
+              query={query}
+              sort={sort}
+              scoreBand={scoreBand}
+              onQuery={(v) => {
+                setQuery(v);
+                syncUrl({ q: v });
+              }}
+              onSort={(v) => {
+                setSort(v);
+                syncUrl({ sort: v });
+              }}
+              onBand={(v) => {
+                setScoreBand(v);
+                syncUrl({ band: v });
+              }}
+            />
           )}
         </div>
       </div>
@@ -256,74 +144,6 @@ function NoScans() {
         className="mt-5 rounded-[10px] bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
       >
         Run a scan
-      </Link>
-    </div>
-  );
-}
-
-function ScanCard({ scan, delta }: { scan: ScanListItem; delta: number | null }) {
-  const [loaded, setLoaded] = useState(false);
-
-  const sev = [
-    { label: "Critical", value: scan.counts.critical, color: "#c62a2f" },
-    { label: "Serious", value: scan.counts.serious, color: "#a85a06" },
-    { label: "Moderate", value: scan.counts.moderate, color: "#8a6a00" },
-  ];
-
-  return (
-    <div className="group relative">
-      <DeleteScanButton id={scan.id} />
-      <Link
-        href={`/report/${scan.id}`}
-        className="flex flex-col overflow-hidden rounded-2xl border border-line bg-card shadow-soft transition-shadow hover:shadow-card"
-      >
-        <div className="relative aspect-video overflow-hidden border-b border-line bg-canvas">
-          {!loaded && <div aria-hidden className="ac-skeleton absolute inset-0" />}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={`/api/scan/${scan.id}/screenshot`}
-            alt={`Screenshot of ${host(scan.finalUrl)}`}
-            loading="lazy"
-            onLoad={() => setLoaded(true)}
-            onError={() => setLoaded(true)}
-            className={`h-full w-full object-cover object-top transition duration-300 group-hover:scale-[1.02] ${
-              loaded ? "opacity-100" : "opacity-0"
-            }`}
-          />
-          <span
-            className="absolute top-3 right-3 flex size-11 items-center justify-center rounded-full text-sm font-bold text-white shadow-card"
-            style={{ background: scoreColor(scan.score) }}
-          >
-            {scan.score}
-          </span>
-        </div>
-
-        <div className="flex flex-1 flex-col gap-3 p-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="truncate text-sm font-semibold text-ink">{host(scan.finalUrl)}</span>
-              {delta !== null && delta !== 0 && (
-                <span
-                  className="shrink-0 text-[11px] font-bold"
-                  style={{ color: delta > 0 ? "#16764f" : "#c62a2f" }}
-                >
-                  {delta > 0 ? `▲ +${delta}` : `▼ ${delta}`}
-                </span>
-              )}
-            </div>
-            <div className="mt-0.5 text-xs text-muted">{dateFmt.format(scan.createdAt)}</div>
-          </div>
-
-          <div className="mt-auto flex items-center gap-3 text-xs text-muted">
-            {sev.map((s) => (
-              <span key={s.label} className="flex items-center gap-1.5">
-                <span className="size-2 rounded-full" style={{ background: s.color }} />
-                {s.value}
-              </span>
-            ))}
-            <span className="ml-auto font-medium text-success">{scan.counts.passed} passed</span>
-          </div>
-        </div>
       </Link>
     </div>
   );
