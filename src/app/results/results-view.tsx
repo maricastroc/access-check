@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faClock } from "@fortawesome/free-solid-svg-icons";
 import type { ScanResult } from "@/lib/scan/types";
 import { type SimKey } from "./data";
 import { DEFAULT_URL, type FilterKey, type Status } from "./shared";
@@ -88,21 +90,40 @@ export function ResultsView({
         )}
 
         {status === "done" && result && (
-          <div className="mx-auto grid w-full max-w-7xl grid-cols-1 items-start gap-6 px-6 pt-6 pb-12 lg:grid-cols-[minmax(0,1fr)_524px]">
-            <PreviewPanel
-              result={result}
-              input={input}
-              onInput={setInput}
-              onSubmit={() => scan(input)}
-              sim={sim}
-              setSim={setSim}
-              showMarkers={showMarkers}
-              setShowMarkers={setShowMarkers}
-              showFocusPath={showFocusPath}
-              setShowFocusPath={setShowFocusPath}
-            />
-            <ReportPanel result={result} filter={filter} setFilter={setFilter} />
-          </div>
+          <>
+            {result.partial && (
+              <div role="status" className="mx-auto w-full max-w-7xl px-6 pt-6">
+                <div className="flex items-start gap-3 rounded-xl border border-line bg-card px-4 py-3 text-sm shadow-soft">
+                  <FontAwesomeIcon
+                    icon={faClock}
+                    aria-hidden
+                    className="mt-0.5 shrink-0 text-warning"
+                  />
+                  <p className="text-ink-soft">
+                    <span className="font-semibold text-ink">Partial scan.</span> This page was large
+                    enough that the deep passes (fix verification, keyboard, and responsive checks)
+                    were skipped to return the core WCAG results in time — the violations and score
+                    below are complete.
+                  </p>
+                </div>
+              </div>
+            )}
+            <div className="mx-auto grid w-full max-w-7xl grid-cols-1 items-start gap-6 px-6 pt-6 pb-12 lg:grid-cols-[minmax(0,1fr)_524px]">
+              <PreviewPanel
+                result={result}
+                input={input}
+                onInput={setInput}
+                onSubmit={() => scan(input)}
+                sim={sim}
+                setSim={setSim}
+                showMarkers={showMarkers}
+                setShowMarkers={setShowMarkers}
+                showFocusPath={showFocusPath}
+                setShowFocusPath={setShowFocusPath}
+              />
+              <ReportPanel result={result} filter={filter} setFilter={setFilter} />
+            </div>
+          </>
         )}
       </main>
     </div>

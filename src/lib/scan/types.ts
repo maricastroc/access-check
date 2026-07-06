@@ -88,6 +88,9 @@ export type ScanResult = {
     effort: string;
     impact: "High" | "Medium" | "Low";
   }[];
+  // true quando a página era grande demais e os passes extras (verificação,
+  // teclado, contextos) foram pulados pra devolver o core do axe dentro do tempo.
+  partial?: boolean;
 };
 
 export type ScanError = { error: string };

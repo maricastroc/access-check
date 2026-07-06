@@ -16,9 +16,10 @@ import {
   type FixResult,
 } from "./remediate";
 import { clusterFixes, type FixCluster } from "./group";
-import { collectKeyboard } from "./keyboard";
-import { collectContexts } from "./contexts";
+import { collectKeyboard, type KeyboardReport } from "./keyboard";
+import { collectContexts, type ContextReport } from "./contexts";
 import { buildFixFirst, buildSummary, computeScore, severityOrder } from "./derive";
+import { withBudget } from "./budget";
 import type {
   FixGroup,
   FixVerification,
@@ -31,6 +32,11 @@ import type {
 const VIEWPORT = { width: 1200, height: 800 };
 const MAX_MARKERS = 6;
 const MAX_VERIFY_OPS = 40;
+
+// A função da Vercel morre em 60s. Os passes opcionais (verificação, teclado,
+// contextos) só rodam enquanto houver tempo até este deadline; passado isso, o
+// scan devolve o relatório do axe marcado como parcial em vez de dar 504.
+const SCAN_DEADLINE_MS = 50_000;
 
 const AXE_PATH = path.join(process.cwd(), "node_modules/axe-core/axe.min.js");
 
@@ -250,6 +256,9 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
   } = opts;
   const url = normalizeUrl(rawUrl);
   const startedAt = Date.now();
+  // true se algum passe opcional foi pulado por falta de tempo (página pesada).
+  let partial = false;
+  const remainingMs = () => SCAN_DEADLINE_MS - (Date.now() - startedAt);
 
   const browser = await getBrowserExecutor().launch();
   try {
@@ -415,11 +424,18 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
         }
       }
 
-      const verifications =
-        verifyOps.length > 0 ? await page.evaluate(VERIFY_IN_PAGE, verifyOps) : [];
-      verifications.forEach((res, i) => {
-        opClusters[i].verification = res;
-      });
+      if (verifyOps.length > 0) {
+        const { value: verifications, timedOut } = await withBudget(
+          () => page.evaluate(VERIFY_IN_PAGE, verifyOps),
+          remainingMs(),
+          [] as FixVerification[],
+        );
+        if (timedOut) partial = true;
+        else
+          verifications.forEach((res, i) => {
+            opClusters[i].verification = res;
+          });
+      }
     }
 
     for (const e of enriched) {
@@ -491,16 +507,27 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
       manualReview: axe.incomplete.length,
     };
 
-    const keyboard = doKeyboard
-      ? await collectKeyboard(page, VIEWPORT).catch(() => undefined)
-      : undefined;
+    let keyboard: KeyboardReport | undefined;
+    if (doKeyboard) {
+      const { value, timedOut } = await withBudget<KeyboardReport | undefined>(
+        () => collectKeyboard(page, VIEWPORT),
+        remainingMs(),
+        undefined,
+      );
+      keyboard = value;
+      if (timedOut) partial = true;
+    }
 
-    const contexts = doContexts
-      ? await collectContexts(
-          page,
-          violations.map((v) => v.id),
-        ).catch(() => undefined)
-      : undefined;
+    let contexts: ContextReport | undefined;
+    if (doContexts) {
+      const { value, timedOut } = await withBudget<ContextReport | undefined>(
+        () => collectContexts(page, violations.map((v) => v.id)),
+        remainingMs(),
+        undefined,
+      );
+      contexts = value;
+      if (timedOut) partial = true;
+    }
 
     const passed = axe.passes.map((p) => p.help);
 
@@ -547,6 +574,7 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
       keyboard,
       contexts,
       fixFirst: buildFixFirst(violations),
+      partial,
     };
   } finally {
     await browser.close();
