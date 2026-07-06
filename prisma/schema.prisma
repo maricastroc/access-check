@@ -154,6 +154,10 @@ model SiteScanPage {
   moderate Int @default(0)
   minor    Int @default(0)
 
+  // ScanResult completo do perfil leve do crawl. Deixa a página abrir na hora
+  // (sem re-scan) e serve de base pro upgrade sob demanda pra análise completa.
+  result Json?
+
   error String?
 
   createdAt DateTime @default(now())

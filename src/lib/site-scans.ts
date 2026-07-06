@@ -1,3 +1,4 @@
+import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { ScanResult } from "@/lib/scan/types";
 import type { ScanOptions } from "@/lib/scan/scan";
@@ -68,6 +69,7 @@ export async function completePage(
           serious: outcome.result.counts.serious,
           moderate: outcome.result.counts.moderate,
           minor: outcome.result.counts.minor,
+          result: outcome.result as unknown as Prisma.InputJsonValue,
           error: null,
         }
       : { status: "failed", error: outcome.error },
@@ -185,4 +187,21 @@ export async function getSiteScan(id: string): Promise<SiteScanSnapshot | null> 
       error: p.error,
     })),
   };
+}
+
+/**
+ * ScanResult (perfil leve) já coletado pra uma página do crawl. Deixa a tela de
+ * resultados abrir na hora, sem re-escanear. Retorna null se a página não faz
+ * parte desse crawl, ainda não concluiu, ou é de um crawl antigo sem `result`.
+ */
+export async function getSiteScanPageResult(
+  siteScanId: string,
+  url: string,
+): Promise<ScanResult | null> {
+  const page = await prisma.siteScanPage.findFirst({
+    where: { siteScanId, url, status: "done" },
+    select: { result: true },
+  });
+  if (!page?.result) return null;
+  return page.result as unknown as ScanResult;
 }

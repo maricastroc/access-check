@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faClock } from "@fortawesome/free-solid-svg-icons";
+import { faClock, faSitemap, faArrowRotateRight } from "@fortawesome/free-solid-svg-icons";
 import type { ScanResult } from "@/lib/scan/types";
+import { Button } from "@/components/ui";
 import { type SimKey } from "./data";
 import { DEFAULT_URL, type FilterKey, type Status } from "./shared";
 import { ColorBlindFilters } from "./color-blind-filters";
@@ -17,20 +18,25 @@ type HeaderUser = { name?: string | null; email?: string | null; image?: string 
 export function ResultsView({
   initialUrl,
   siteId,
+  initialResult,
   user,
   signOutAction,
 }: {
   initialUrl: string;
   siteId: string | null;
+  initialResult: ScanResult | null;
   user: HeaderUser | null;
   signOutAction: () => Promise<void>;
 }) {
   const start = initialUrl || DEFAULT_URL;
   const [input, setInput] = useState(start);
   const [url, setUrl] = useState(start);
-  const [status, setStatus] = useState<Status>("loading");
-  const [result, setResult] = useState<ScanResult | null>(null);
+  const [status, setStatus] = useState<Status>(initialResult ? "done" : "loading");
+  const [result, setResult] = useState<ScanResult | null>(initialResult);
   const [error, setError] = useState("");
+  // Resultado veio do crawl (perfil leve): mostra banner + CTA pra análise
+  // completa. Some assim que uma análise completa roda aqui.
+  const [fromCrawl, setFromCrawl] = useState(Boolean(initialResult));
 
   const [sim, setSim] = useState<SimKey>("normal");
   const [showMarkers, setShowMarkers] = useState(true);
@@ -48,6 +54,7 @@ export function ResultsView({
       if (!res.ok) throw new Error(json.error || "Scan failed.");
       setResult(json as ScanResult);
       setUrl((json as ScanResult).finalUrl || value);
+      setFromCrawl(false);
       setStatus("done");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Scan failed.");
@@ -69,18 +76,20 @@ export function ResultsView({
   );
 
   useEffect(() => {
+    // Já temos o resultado do crawl: abre na hora, sem re-escanear.
+    if (initialResult) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void runFetch(initialUrl || DEFAULT_URL);
-  }, [initialUrl, runFetch]);
+  }, [initialUrl, initialResult, runFetch]);
 
   return (
     <div className="min-h-screen bg-canvas font-sans text-ink">
       <ColorBlindFilters />
       <TopBar
-        status={status}
         onRerun={() => scan(url)}
         busy={status === "loading"}
         siteId={siteId}
+        rerunLabel={fromCrawl ? "Run full analysis" : "Re-run analysis"}
         user={user}
         signOutAction={signOutAction}
       />
@@ -94,6 +103,32 @@ export function ResultsView({
 
         {status === "done" && result && (
           <>
+            {fromCrawl && (
+              <div role="status" className="mx-auto w-full max-w-7xl px-6 pt-6">
+                <div className="flex flex-col items-start gap-3 rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm shadow-soft sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-start gap-3">
+                    <FontAwesomeIcon
+                      icon={faSitemap}
+                      aria-hidden
+                      className="mt-0.5 shrink-0 text-brand-600"
+                    />
+                    <p className="text-ink-soft">
+                      <span className="font-semibold text-ink">Quick scan from the site audit.</span>{" "}
+                      Run the full analysis to add the screenshot preview, keyboard and
+                      fix-verification passes — the score may adjust.
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    icon={faArrowRotateRight}
+                    onClick={() => scan(url)}
+                    className="shrink-0"
+                  >
+                    Run full analysis
+                  </Button>
+                </div>
+              </div>
+            )}
             {result.partial && (
               <div role="status" className="mx-auto w-full max-w-7xl px-6 pt-6">
                 <div className="flex items-start gap-3 rounded-xl border border-line bg-card px-4 py-3 text-sm shadow-soft">

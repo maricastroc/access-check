@@ -61,6 +61,16 @@ html {
   outline-offset: 2px;
 }
 
+/* Campo de URL composto: um único anel arredondado no wrapper em vez de um
+   outline retangular no <input> interno (que não tem border-radius). */
+.url-field:focus-within {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+}
+.url-field input:focus-visible {
+  outline: none;
+}
+
 .ac-focusring {
   position: relative;
 }

@@ -40,12 +40,12 @@ export function ProgressHeader({ snap }: { snap: CrawlSnapshot }) {
           <p className="mt-1 text-sm text-muted">Full-site accessibility audit</p>
         </div>
         <span
-          className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-[13px] font-semibold ${
+          className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[13px] font-semibold ${
             running
-              ? "bg-brand-50 text-brand-700"
+              ? "border-brand-500/25 bg-brand-50 text-brand-700"
               : snap.status === "failed"
-                ? "bg-[#fdecec] text-critical"
-                : "bg-[#e7f5ef] text-success"
+                ? "border-critical/25 bg-[#fdecec] text-critical"
+                : "border-success/20 bg-[#e7f5ef] text-success"
           }`}
         >
           {running && <FontAwesomeIcon icon={faSpinner} aria-hidden className="animate-spin" />}

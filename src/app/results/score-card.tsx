@@ -47,11 +47,11 @@ export function ScoreCard({ result }: { result: ScanResult }) {
           <div className="flex items-center gap-2.5">
             <span className="text-[13px] font-semibold">Accessibility score</span>
             {compliant ? (
-              <span className="rounded-[7px] bg-[#e6f5ee] px-2.5 py-0.75 text-[11px] font-semibold tracking-wide text-success">
+              <span className="rounded-[7px] border border-success/20 bg-[#e6f5ee] px-2.5 py-0.75 text-[11px] font-semibold tracking-wide text-success">
                 WCAG AA
               </span>
             ) : (
-              <span className="rounded-[7px] bg-[#fdecec] px-2.5 py-0.75 text-[11px] font-semibold tracking-wide text-critical">
+              <span className="rounded-[7px] border border-critical/25 bg-[#fdecec] px-2.5 py-0.75 text-[11px] font-semibold tracking-wide text-critical">
                 {counts.critical + counts.serious} blocker
                 {counts.critical + counts.serious > 1 ? "s" : ""}
               </span>

@@ -1,3 +1,5 @@
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import type { ScanMarker, ScanResult } from "@/lib/scan/types";
 import { modeDesc, modeList, previewFilters, type SimKey } from "./data";
 import { clamp, markerColor } from "./shared";
@@ -56,30 +58,41 @@ export function PreviewToolbar({
   const simLabel = modeList.find((m) => m.key === sim)!.label;
   return (
     <>
-      <div className="mb-3.5 flex items-center justify-between gap-3">
+      <div className="mb-3.5 flex flex-col items-start gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
         <form
           onSubmit={(e) => {
             e.preventDefault();
             onSubmit();
           }}
-          className="flex min-w-0 items-center gap-2.5"
+          className="flex w-full min-w-0 flex-col gap-1.5 sm:flex-1"
         >
-          <div className="flex h-8.5 max-w-105 items-center gap-2 overflow-hidden rounded-[9px] border border-line bg-card pr-2 pl-3 text-[13px] focus-within:border-brand-300 focus-within:[outline:2px_solid_var(--color-brand-500)] focus-within:[outline-offset:2px]">
+          <div className="flex h-8.5 w-full items-center gap-2 overflow-hidden rounded-[9px] border border-line bg-card pr-2 pl-3 text-[13px] focus-within:border-brand-300 focus-within:[outline:2px_solid_var(--color-brand-500)] focus-within:[outline-offset:2px]">
             <span className="size-1.75 shrink-0 rounded-full bg-success" />
             <input
               value={input}
               onChange={(e) => onInput(e.target.value)}
               aria-label="URL to scan"
-              className="min-w-0 flex-1 bg-transparent py-1 font-medium focus:[outline:none]!"
+              placeholder="https://yourwebsite.com"
+              className="min-w-0 flex-1 bg-transparent py-1 font-medium placeholder:font-normal placeholder:text-muted/70 focus:[outline:none]!"
             />
+            {input && (
+              <button
+                type="button"
+                onClick={() => onInput("")}
+                aria-label="Clear URL"
+                className="flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted transition-colors hover:bg-canvas hover:text-ink"
+              >
+                <FontAwesomeIcon icon={faXmark} className="text-xs" />
+              </button>
+            )}
           </div>
-          <span className="hidden text-xs whitespace-nowrap text-muted sm:block">
+          <span className="hidden pl-0.5 text-xs whitespace-nowrap text-muted sm:block">
             Scanned {result.scannedElements} elements · {(result.durationMs / 1000).toFixed(1)}s
           </span>
         </form>
-        <div className="flex items-center gap-2 text-xs text-ink-soft">
+        <div className="flex shrink-0 items-center gap-2 text-xs text-ink-soft sm:h-8.5">
           <span className="text-muted">Viewing as</span>
-          <span className="rounded-[7px] bg-brand-50 px-2.5 py-0.75 font-semibold text-brand-600">
+          <span className="rounded-[7px] border border-brand-300 bg-brand-50 px-2.5 py-0.75 font-semibold text-brand-600">
             {simLabel}
           </span>
         </div>
@@ -108,7 +121,7 @@ export function PreviewToolbar({
             </button>
           ))}
         </div>
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 flex-col items-end gap-2 sm:flex-row sm:items-center">
           <ToggleButton active={showMarkers} onClick={() => setShowMarkers(!showMarkers)}>
             {showMarkers ? "Markers on" : "Markers off"}
           </ToggleButton>

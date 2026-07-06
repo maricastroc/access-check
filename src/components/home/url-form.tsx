@@ -61,7 +61,7 @@ export function UrlForm() {
           e.preventDefault();
           go(url, mode);
         }}
-        className="mt-4 flex max-w-xl flex-col items-stretch gap-2 rounded-field border border-line bg-card p-2 shadow-card sm:flex-row sm:items-center"
+        className="url-field mt-4 flex max-w-xl flex-col items-stretch gap-2 rounded-field border border-line bg-card p-2 shadow-card sm:flex-row sm:items-center"
       >
         <div className="flex flex-1 items-center gap-3 px-3">
           <FontAwesomeIcon
@@ -96,7 +96,7 @@ export function UrlForm() {
           <button
             type="button"
             onClick={() => go("vercel.com", mode)}
-            className="rounded-md bg-brand-50 px-2 py-1 font-mono text-brand-700 transition-colors hover:bg-brand-100"
+            className="rounded-md border border-brand-200 bg-brand-50 px-2 py-1 font-mono text-brand-700 transition-colors hover:bg-brand-100"
           >
             vercel.com
           </button>
