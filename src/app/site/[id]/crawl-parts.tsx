@@ -178,7 +178,7 @@ function PageStatusBadge({ page }: { page: CrawlPage }) {
   );
 }
 
-export function PageRow({ page }: { page: CrawlPage }) {
+export function PageRow({ page, siteId }: { page: CrawlPage; siteId: string }) {
   const done = page.status === "done";
   const total = page.counts.critical + page.counts.serious + page.counts.moderate + page.counts.minor;
 
@@ -237,7 +237,10 @@ export function PageRow({ page }: { page: CrawlPage }) {
 
   return (
     <li className="group">
-      <Link href={`/results?url=${encodeURIComponent(page.url)}`} aria-label={`Open report for ${page.url}`}>
+      <Link
+        href={`/results?url=${encodeURIComponent(page.url)}&site=${siteId}`}
+        aria-label={`Open report for ${page.url}`}
+      >
         {inner}
       </Link>
     </li>

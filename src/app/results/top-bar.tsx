@@ -13,12 +13,14 @@ export function TopBar({
   status,
   onRerun,
   busy,
+  siteId,
   user,
   signOutAction,
 }: {
   status: Status;
   onRerun: () => void;
   busy: boolean;
+  siteId: string | null;
   user: HeaderUser | null;
   signOutAction: () => Promise<void>;
 }) {
@@ -27,11 +29,20 @@ export function TopBar({
       <Logo />
 
       <div className="flex items-center gap-1.5 sm:gap-3.5">
+        {siteId && (
+          <Link
+            href={`/site/${siteId}`}
+            className="flex h-8.5 items-center gap-2 rounded-[9px] px-2.5 text-[13px] font-medium text-ink-soft transition-colors hover:bg-[#f6f7f9] hover:text-ink"
+          >
+            <FontAwesomeIcon icon={faArrowLeft} className="text-xs" />
+            <span className="hidden sm:inline">Site audit</span>
+          </Link>
+        )}
         <Link
           href="/"
           className="flex h-8.5 items-center gap-2 rounded-[9px] px-2.5 text-[13px] font-medium text-ink-soft transition-colors hover:bg-[#f6f7f9] hover:text-ink"
         >
-          <FontAwesomeIcon icon={faArrowLeft} className="text-xs" />
+          {!siteId && <FontAwesomeIcon icon={faArrowLeft} className="text-xs" />}
           <span className="hidden sm:inline">New scan</span>
         </Link>
         <span className="hidden h-5 w-px bg-line-strong sm:block" />

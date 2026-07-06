@@ -16,10 +16,12 @@ type HeaderUser = { name?: string | null; email?: string | null; image?: string 
 
 export function ResultsView({
   initialUrl,
+  siteId,
   user,
   signOutAction,
 }: {
   initialUrl: string;
+  siteId: string | null;
   user: HeaderUser | null;
   signOutAction: () => Promise<void>;
 }) {
@@ -78,6 +80,7 @@ export function ResultsView({
         status={status}
         onRerun={() => scan(url)}
         busy={status === "loading"}
+        siteId={siteId}
         user={user}
         signOutAction={signOutAction}
       />

@@ -45,7 +45,7 @@ export function SiteCrawlView({ initial }: { initial: CrawlSnapshot }) {
 
       <ul className="mt-6 flex flex-col gap-2">
         {snap.pages.map((page) => (
-          <PageRow key={page.id} page={page} />
+          <PageRow key={page.id} page={page} siteId={snap.id} />
         ))}
       </ul>
 
