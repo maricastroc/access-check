@@ -15,9 +15,10 @@ model User {
   image         String?
   createdAt     DateTime  @default(now())
 
-  accounts Account[]
-  sessions Session[]
-  scans    Scan[]
+  accounts  Account[]
+  sessions  Session[]
+  scans     Scan[]
+  siteScans SiteScan[]
 
   @@map("users")
 }
@@ -104,4 +105,60 @@ model Screenshot {
   mimeType String @default("image/jpeg")
 
   @@map("screenshots")
+}
+
+/**
+ * ===================== Domínio: crawl multi-página =====================
+ * Job durável que audita várias páginas de um site. Cada página vira uma
+ * invocação curta (via QStash) que grava seu resultado aqui; o front faz
+ * polling do progresso. userId é nullable — o crawl funciona anônimo.
+ */
+
+model SiteScan {
+  id     String  @id @default(cuid())
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  rootUrl String
+  status  String @default("running") // running | completed | failed
+
+  totalPages   Int @default(0)
+  scannedPages Int @default(0)
+  failedPages  Int @default(0)
+
+  score Int? // média dos scores das páginas concluídas
+  error String?
+
+  pages SiteScanPage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, createdAt])
+  @@map("site_scans")
+}
+
+model SiteScanPage {
+  id         String   @id @default(cuid())
+  siteScanId String
+  siteScan   SiteScan @relation(fields: [siteScanId], references: [id], onDelete: Cascade)
+
+  url    String
+  status String @default("pending") // pending | running | done | failed
+
+  title String?
+  score Int?
+
+  critical Int @default(0)
+  serious  Int @default(0)
+  moderate Int @default(0)
+  minor    Int @default(0)
+
+  error String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([siteScanId])
+  @@map("site_scan_pages")
 }

@@ -27,6 +27,7 @@
     "@radix-ui/react-alert-dialog": "^1.1.17",
     "@radix-ui/react-dropdown-menu": "^2.1.18",
     "@sparticuz/chromium": "^149.0.0",
+    "@upstash/qstash": "^2.11.1",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.0",
     "axe-core": "^4.12.1",

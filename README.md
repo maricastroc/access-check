@@ -23,11 +23,14 @@ Not just a list of problems — the exact code to paste, proven to work.
 
 |                           |                                                                                                                                                  |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **🌐 Whole-Site Crawl**   | Point it at a domain and it discovers pages from the sitemap (or by crawling links) and audits them in parallel — a background job fans out one short serverless run per page, with live progress and an aggregate site score. |
 | **🔧 Copy-Paste Fixes**   | Each violation gets a generated code snippet — the exact contrast color, alt text, or label to paste — not just a restated rule.                 |
 | **✅ Verified Fixes**     | Every fix is applied in the page and the audit is re-run to prove it actually clears the violation before it's suggested.                        |
 | **👁️ Vision Simulations** | Preview the page through deuteranopia, protanopia, tritanopia, low vision, and grayscale filters to check meaning survives without color.        |
 | **📊 Score & Export**     | A weighted 0–100 score, a prioritized "Fix First" list, and an exportable PDF / Markdown report you can hand to a client or paste into a ticket. |
 | **🔍 Beyond Violations**  | Surfaces axe's "best practice" recommendations and flags items that need manual review — the two buckets most tools silently discard.            |
+| **⌨️ Keyboard Path**      | Tabs through the page in a real browser and maps the focus order — flagging invisible focus, keyboard traps, positive `tabindex`, and controls that can't be reached by keyboard. |
+| **📱 Context-Aware Scan** | Re-audits at a mobile viewport and after opening menus / disclosures, catching violations that only surface on small screens or once the UI is expanded. |
 
 <br/>
 
@@ -72,6 +75,7 @@ Not just a list of problems — the exact code to paste, proven to work.
 | **Database**           | PostgreSQL (Neon, serverless driver) + Prisma 7                  |
 | **Authentication**     | Auth.js / NextAuth v5 (GitHub, Google — OAuth only)              |
 | **Cache & Rate Limit** | Upstash Redis (HTTP-based, shared across instances)              |
+| **Background Jobs**    | Upstash QStash (fan-out of the multi-page crawl, one run/page)   |
 | **Testing**            | Vitest                                                           |
 | **Tooling**            | ESLint, Prettier                                                 |
 
@@ -81,17 +85,19 @@ Not just a list of problems — the exact code to paste, proven to work.
 
 AccessCheck is an accessibility auditor that goes one step further than the usual checker. Most tools tell you _what_ is broken; AccessCheck generates the exact code to fix each violation, **proves the fix works by re-running the audit after applying it**, and groups repeated issues so one change can resolve many elements at once.
 
-It renders the page in a real headless browser (Playwright), runs [axe-core](https://github.com/dequelabs/axe-core) against WCAG 2.2 A/AA rules, and turns the raw findings into an actionable report — a live preview with issue markers, color-blindness simulations, an accessibility score, a prioritized "Fix First" list, and an exportable PDF.
+It renders the page in a real headless browser (Playwright), runs [axe-core](https://github.com/dequelabs/axe-core) against WCAG 2.2 A/AA rules, and turns the raw findings into an actionable report — a live preview with issue markers, color-blindness simulations, a keyboard focus-path map, context re-scans (mobile + expanded UI), an accessibility score, a prioritized "Fix First" list, and an exportable PDF.
 
 The scan runs server-side in a Node runtime (`/api/scan`) because Playwright needs a real browser. Locally it uses the full Playwright Chromium; on serverless it falls back to `playwright-core` + `@sparticuz/chromium`. axe-core is injected into the target page with `bypassCSP` enabled, so the audit still runs on sites that ship a strict Content-Security-Policy (which would otherwise block third-party script injection).
 
 **Additional features:**
 
 - **Verified, copy-paste remediation:** The flagship feature. See the [dedicated section](#-the-verified-fix-engine) below — each fix is deterministically generated, applied to the live DOM, and re-audited to label it **Verified** or **Needs review** before it's ever suggested.
-- **Anonymous-first, sign-in optional:** The full tool works with no account. Signing in (GitHub or Google, OAuth only) only _adds_ a saved history of your audits — it never gates or degrades the core.
+- **Whole-site crawl (background job):** Point it at a domain and AccessCheck discovers pages from the sitemap (falling back to a same-origin link crawl), then audits them in parallel. Because a single scan already spends 10–25s in a headless browser and Vercel caps a function at 60s, the crawl is decomposed into a durable background job: [Upstash QStash](https://upstash.com/docs/qstash) fans out **one short serverless invocation per page**, each writes its result to Postgres, and the client polls a live progress view that ends in an aggregate site score. It degrades gracefully — with no QStash configured (local dev) the pages are processed inline instead. Works signed-in or anonymous.
 - **Scan history with diffs:** Signed-in scans are saved at `/history` (newest first, with thumbnails, score, and a delta vs the previous scan of the same URL). Opening a saved report shows a **"Changes since last scan"** panel — exactly which rules were **fixed** or **regressed** over time, computed by a pure, unit-tested diff function.
 - **Distributed cache & rate limiting:** Anonymous results are cached per URL (5 min) and scans are gated at 5/min per IP via Upstash Redis — shared across serverless instances, and degrading gracefully to no-cache/no-limit when Redis isn't configured.
-- **Three-tier reporting:** Results are split into WCAG violations (confirmed failures), best practices (recommendations beyond the spec, clearly labelled as non-blocking), and needs-manual-review items (axe flagged something but can't decide automatically — surfaced with the affected selectors so you know exactly where to look). Most tools collapse these into one list or discard tiers 2 and 3 entirely.
+- **Keyboard focus-path analysis:** Every scan tabs through the page in the real browser, maps the focus order, and flags invisible focus indicators, keyboard traps, positive `tabindex`, and interactive controls that can't be reached by keyboard — operability checks axe-core doesn't perform.
+- **Context-aware re-scans:** Beyond the default desktop pass, AccessCheck re-audits the page at a mobile viewport and after opening menus / disclosures, surfacing violations that only appear on small screens or once dynamic UI is expanded.
+- **Three-tier reporting:** Results are split into WCAG violations (confirmed failures), best practices (recommendations beyond the spec, clearly labelled as non-blocking), and needs-manual-review items (axe flagged something but can't decide automatically — surfaced with the affected selectors _plus a per-rule, step-by-step walkthrough of how to confirm it by hand_) so you know exactly where to look. Most tools collapse these into one list or discard tiers 2 and 3 entirely.
 - **Export to PDF & Markdown:** A formatted report view at `/report`, plus a browser-generated Markdown report (score, severity table, Fix First list, every violation with its fix and verification status) perfect for pasting into an issue, PR, or ticket.
 - **Responsive layout:** Fully responsive across the landing, results, and exportable report views.
 
@@ -106,6 +112,7 @@ URL → headless Chromium (Playwright) → inject axe-core → WCAG audit
     → deterministic fix generation (per node)
     → cluster identical fixes into groups
     → re-run axe per fix to verify it clears the violation
+    → keyboard focus-path pass + mobile / dynamic-state re-scans
     → score + markers + report → UI / PDF
 ```
 

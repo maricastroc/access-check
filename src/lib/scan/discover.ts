@@ -1,0 +1,184 @@
+// Descoberta de URLs pro crawl multi-página. Tudo via `fetch` puro (sem
+// browser) — roda barato na invocação de kickoff. Prioriza o sitemap.xml e cai
+// pra extração de links same-origin da home quando não há sitemap útil.
+
+export const MAX_PAGES = 10;
+
+const FETCH_TIMEOUT_MS = 8000;
+const UA =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " +
+  "(KHTML, like Gecko) Chrome/124.0 Safari/537.36 AccessCheckBot/2.1";
+
+// Extensões que claramente não são páginas HTML — não vale a pena auditar.
+const NON_HTML =
+  /\.(pdf|jpe?g|png|gif|svg|webp|avif|ico|css|js|mjs|json|xml|zip|gz|rar|mp4|webm|mov|mp3|wav|woff2?|ttf|otf|eot|txt|csv|rss|atom)$/i;
+
+export function normalizeRoot(input: string): string {
+  const t = input.trim();
+  return /^https?:\/\//i.test(t) ? t : `https://${t}`;
+}
+
+function decodeEntities(s: string): string {
+  return s
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#0*39;|&apos;/g, "'");
+}
+
+/** Extrai os valores de <loc> de um sitemap (ou sitemap index). */
+export function parseLocs(xml: string): string[] {
+  const out: string[] = [];
+  const re = /<loc>\s*([^<\s]+)\s*<\/loc>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(xml)) !== null) {
+    const v = decodeEntities(m[1].trim());
+    if (v) out.push(v);
+  }
+  return out;
+}
+
+/** Extrai os href de <a> de um HTML, resolvendo relativos contra baseUrl. */
+export function extractLinks(html: string, baseUrl: string): string[] {
+  const out: string[] = [];
+  const re = /<a\b[^>]*?\bhref\s*=\s*("([^"]*)"|'([^']*)'|([^\s"'>]+))/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html)) !== null) {
+    const raw = (m[2] ?? m[3] ?? m[4] ?? "").trim();
+    if (!raw || /^(mailto:|tel:|javascript:|data:|#)/i.test(raw)) continue;
+    try {
+      out.push(new URL(decodeEntities(raw), baseUrl).toString());
+    } catch {
+      // href inválido — ignora
+    }
+  }
+  return out;
+}
+
+/** Forma canônica pra dedupe: sem hash, sem query, sem barra final. */
+export function canonicalize(u: string): string | null {
+  try {
+    const url = new URL(u);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+    url.hash = "";
+    url.search = "";
+    if (url.pathname.length > 1 && url.pathname.endsWith("/")) {
+      url.pathname = url.pathname.slice(0, -1);
+    }
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+/** Filtra pra páginas HTML do mesmo origin, canonizadas e sem duplicatas. */
+export function sameOriginPages(urls: string[], origin: string): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const u of urls) {
+    const c = canonicalize(u);
+    if (!c) continue;
+    let parsed: URL;
+    try {
+      parsed = new URL(c);
+    } catch {
+      continue;
+    }
+    if (parsed.origin !== origin) continue;
+    if (NON_HTML.test(parsed.pathname)) continue;
+    if (seen.has(c)) continue;
+    seen.add(c);
+    out.push(c);
+  }
+  return out;
+}
+
+/** A raiz sempre entra primeiro; depois as descobertas, sem repetir, até `cap`. */
+export function selectCrawlUrls(root: string, discovered: string[], cap = MAX_PAGES): string[] {
+  const rootC = canonicalize(root) ?? root;
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const u of [rootC, ...discovered]) {
+    if (seen.has(u)) continue;
+    seen.add(u);
+    out.push(u);
+    if (out.length >= cap) break;
+  }
+  return out;
+}
+
+async function fetchText(url: string, timeoutMs = FETCH_TIMEOUT_MS): Promise<string | null> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      signal: ctrl.signal,
+      redirect: "follow",
+      headers: {
+        "user-agent": UA,
+        accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      },
+    });
+    if (!res.ok) return null;
+    return await res.text();
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function fromSitemap(origin: string, cap: number): Promise<string[]> {
+  for (const sm of [`${origin}/sitemap.xml`, `${origin}/sitemap_index.xml`]) {
+    const xml = await fetchText(sm, 6000);
+    if (!xml) continue;
+
+    const locs = parseLocs(xml);
+    const isNested = (l: string) => {
+      try {
+        return /\.xml(\.gz)?$/i.test(new URL(l, origin).pathname);
+      } catch {
+        return false;
+      }
+    };
+    const nested = locs.filter(isNested);
+    const pages = locs.filter((l) => !isNested(l));
+
+    // Um nível de sitemaps aninhados (sitemap index), limitado.
+    for (const child of nested.slice(0, 3)) {
+      if (pages.length >= cap * 4) break;
+      const cxml = await fetchText(child, 6000);
+      if (cxml) pages.push(...parseLocs(cxml));
+    }
+
+    if (pages.length > 0) return pages;
+  }
+  return [];
+}
+
+/**
+ * Descobre até `cap` páginas HTML do mesmo site, a partir da raiz. Sempre
+ * retorna ao menos [raiz] — mesmo se a rede/descoberta falhar.
+ */
+export async function discoverUrls(rootInput: string, cap = MAX_PAGES): Promise<string[]> {
+  const root = normalizeRoot(rootInput);
+  let origin: string;
+  try {
+    origin = new URL(root).origin;
+  } catch {
+    return [root];
+  }
+
+  let discovered = sameOriginPages(await fromSitemap(origin, cap), origin);
+
+  // Fallback: sem sitemap útil, varre os links da home.
+  if (discovered.length < 2) {
+    const html = await fetchText(root);
+    if (html) {
+      discovered = sameOriginPages([...discovered, ...extractLinks(html, root)], origin);
+    }
+  }
+
+  return selectCrawlUrls(root, discovered, cap);
+}

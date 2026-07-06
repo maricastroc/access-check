@@ -20,3 +20,13 @@ export const ratelimit = redis
       analytics: false,
     })
   : null;
+
+// Crawls disparam vários scans de uma vez, então são limitados mais de perto.
+export const siteRatelimit = redis
+  ? new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(2, "300 s"),
+      prefix: "site-scan",
+      analytics: false,
+    })
+  : null;

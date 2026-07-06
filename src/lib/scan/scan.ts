@@ -231,7 +231,23 @@ const VERIFY_IN_PAGE = async (ops: VerifyOp[]): Promise<FixVerification[]> => {
   return results;
 };
 
-export async function runScan(rawUrl: string): Promise<ScanResult> {
+// Perfil do scan. Todos default `true` (single-scan completo); o crawl
+// multi-página passa um perfil leve pra cada página caber rápido/barato na sua
+// própria invocação — pulando screenshot, teclado, contextos e verificação.
+export type ScanOptions = {
+  screenshot?: boolean;
+  keyboard?: boolean;
+  contexts?: boolean;
+  verifyFixes?: boolean;
+};
+
+export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<ScanResult> {
+  const {
+    screenshot: doScreenshot = true,
+    keyboard: doKeyboard = true,
+    contexts: doContexts = true,
+    verifyFixes: doVerify = true,
+  } = opts;
   const url = normalizeUrl(rawUrl);
   const startedAt = Date.now();
 
@@ -271,12 +287,15 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
     // JPEG (q80) em vez de PNG: ~5–10× menor. Mantém o histórico leve, já que o
     // screenshot é persistido como bytes quando o usuário está logado. Como
     // preview, a perda é imperceptível.
-    const screenshotBuf = await page.screenshot({
-      type: "jpeg",
-      quality: 80,
-      clip: { x: 0, y: 0, ...VIEWPORT },
-    });
-    const screenshot = `data:image/jpeg;base64,${screenshotBuf.toString("base64")}`;
+    let screenshot: string | null = null;
+    if (doScreenshot) {
+      const screenshotBuf = await page.screenshot({
+        type: "jpeg",
+        quality: 80,
+        clip: { x: 0, y: 0, ...VIEWPORT },
+      });
+      screenshot = `data:image/jpeg;base64,${screenshotBuf.toString("base64")}`;
+    }
 
     await page.addScriptTag({ path: AXE_PATH });
     const axe: AxeResults = await page.evaluate(async () => {
@@ -381,25 +400,27 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
       };
     });
 
-    const verifyOps: VerifyOp[] = [];
-    const opClusters: FixCluster[] = [];
-    for (const e of enriched) {
-      for (const cluster of e.clusters) {
-        if (verifyOps.length >= MAX_VERIFY_OPS) break;
-        if (!cluster.apply) continue; // sem mutação auto-aplicável
-        const docLevel = cluster.apply.kind === "doc" || cluster.apply.kind === "viewport";
-        const selector = docLevel ? null : (cluster.selectors[0] ?? null);
-        if (!docLevel && !selector) continue; // sem alvo pra aplicar
-        verifyOps.push({ ruleId: e.v.id, selector, apply: cluster.apply });
-        opClusters.push(cluster);
+    if (doVerify) {
+      const verifyOps: VerifyOp[] = [];
+      const opClusters: FixCluster[] = [];
+      for (const e of enriched) {
+        for (const cluster of e.clusters) {
+          if (verifyOps.length >= MAX_VERIFY_OPS) break;
+          if (!cluster.apply) continue; // sem mutação auto-aplicável
+          const docLevel = cluster.apply.kind === "doc" || cluster.apply.kind === "viewport";
+          const selector = docLevel ? null : (cluster.selectors[0] ?? null);
+          if (!docLevel && !selector) continue; // sem alvo pra aplicar
+          verifyOps.push({ ruleId: e.v.id, selector, apply: cluster.apply });
+          opClusters.push(cluster);
+        }
       }
-    }
 
-    const verifications =
-      verifyOps.length > 0 ? await page.evaluate(VERIFY_IN_PAGE, verifyOps) : [];
-    verifications.forEach((res, i) => {
-      opClusters[i].verification = res;
-    });
+      const verifications =
+        verifyOps.length > 0 ? await page.evaluate(VERIFY_IN_PAGE, verifyOps) : [];
+      verifications.forEach((res, i) => {
+        opClusters[i].verification = res;
+      });
+    }
 
     for (const e of enriched) {
       if (e.clusters.length > 0) {
@@ -470,12 +491,16 @@ export async function runScan(rawUrl: string): Promise<ScanResult> {
       manualReview: axe.incomplete.length,
     };
 
-    const keyboard = await collectKeyboard(page, VIEWPORT).catch(() => undefined);
+    const keyboard = doKeyboard
+      ? await collectKeyboard(page, VIEWPORT).catch(() => undefined)
+      : undefined;
 
-    const contexts = await collectContexts(
-      page,
-      violations.map((v) => v.id),
-    ).catch(() => undefined);
+    const contexts = doContexts
+      ? await collectContexts(
+          page,
+          violations.map((v) => v.id),
+        ).catch(() => undefined)
+      : undefined;
 
     const passed = axe.passes.map((p) => p.help);
 

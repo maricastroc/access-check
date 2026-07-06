@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faGlobe } from "@fortawesome/free-solid-svg-icons";
+import { faGlobe, faSitemap } from "@fortawesome/free-solid-svg-icons";
 import { Button } from "@/components/ui";
 
 export function UrlForm() {
@@ -13,6 +13,11 @@ export function UrlForm() {
   function analyze(target?: string) {
     const value = (target ?? url).trim();
     router.push(value ? `/results?url=${encodeURIComponent(value)}` : "/results");
+  }
+
+  function scanSite() {
+    const value = url.trim();
+    router.push(value ? `/site?url=${encodeURIComponent(value)}` : "/site");
   }
 
   return (
@@ -40,15 +45,29 @@ export function UrlForm() {
         </Button>
       </form>
 
-      <div className="mt-5 flex items-center gap-3 text-sm">
-        <span className="text-muted">Try an example:</span>
+      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-3 text-sm">
         <button
           type="button"
-          onClick={() => analyze("vercel.com")}
-          className="rounded-md bg-brand-50 px-2 py-1 font-mono text-brand-700 transition-colors hover:bg-brand-100"
+          onClick={scanSite}
+          className="inline-flex cursor-pointer items-center gap-2 font-semibold text-brand-700 transition-colors hover:text-brand-800"
         >
-          vercel.com
+          <FontAwesomeIcon icon={faSitemap} className="text-[0.9em]" />
+          Scan the entire site
+          <span aria-hidden>→</span>
         </button>
+
+        <span className="hidden h-4 w-px bg-line sm:block" />
+
+        <span className="flex items-center gap-3">
+          <span className="text-muted">Try an example:</span>
+          <button
+            type="button"
+            onClick={() => analyze("vercel.com")}
+            className="rounded-md bg-brand-50 px-2 py-1 font-mono text-brand-700 transition-colors hover:bg-brand-100"
+          >
+            vercel.com
+          </button>
+        </span>
       </div>
     </>
   );
