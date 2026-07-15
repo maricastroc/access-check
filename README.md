@@ -1,21 +1,42 @@
-<div align="center">
+<h1 align="center">
+  <br>
+  <img src="public/app-icon-512.png" alt="AccessCheck" width="40">
+  <br>
+  AccessCheck
+  <br>
+</h1>
 
-<img src="public/app-icon-512.png" width="76" alt="AccessCheck logo" />
+<h4 align="center">Scan any public URL and get back concrete, verified accessibility fixes.</h4>
 
-# AccessCheck
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js" />
+  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
+  <img src="https://img.shields.io/badge/Playwright-2EAD33?style=for-the-badge&logo=playwright&logoColor=white" alt="Playwright" />
+  <img src="https://img.shields.io/badge/Prisma-2D3748?style=for-the-badge&logo=prisma&logoColor=white" alt="Prisma" />
+  <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+</p>
 
-**♿ Accessibility Auditor**
+<p align="center">
+  <a href="#-features">Features</a> •
+  <a href="#-the-verified-fix-engine">Verified-Fix Engine</a> •
+  <a href="#-tech-stack">Tech Stack</a> •
+  <a href="#ℹ%EF%B8%8F-how-to-run-the-application">How To Run</a> •
+  <a href="#-license">License</a>
+</p>
 
-Scan any public URL and get back concrete, verified accessibility fixes.<br/>
-Not just a list of problems — the exact code to paste, proven to work.
+<p align="center">
+  Not just a list of problems — the exact code to paste, proven to work. Each fix is applied in the page and the audit is re-run to confirm it clears the violation before it's suggested.
+</p>
 
-<br/>
+<p align="center">
+  🔗 <strong>Live demo:</strong> <a href="https://access-check.marianacastro.dev">access-check.marianacastro.dev</a>
+</p>
 
-[![Live Demo](https://img.shields.io/badge/●_Live_Demo-1a1a1a?style=for-the-badge&logoColor=white)](https://access-check.marianacastro.dev)
-[![Features](https://img.shields.io/badge/★_Features-1a1a1a?style=for-the-badge)](#-features)
-[![Docs](https://img.shields.io/badge/▣_Docs-1a1a1a?style=for-the-badge)](#ℹ%EF%B8%8F-how-to-run-the-application)
-
-</div>
+<p align="center">
+  <img src="docs/home-desktop.png" alt="AccessCheck" width="800" />
+</p>
 
 <br/>
 
