@@ -3,6 +3,9 @@ import type { ContextReport } from "./contexts";
 
 export type Severity = "critical" | "serious" | "moderate" | "minor";
 
+// Esforço qualitativo pro bloco "Fix First" — sem falsa precisão de minutos.
+export type Effort = "Quick" | "Moderate" | "Involved";
+
 // "verified" = a regra parou de falhar após aplicar o fix; "failed" = o axe
 // ainda acusa; "unchecked" = fix sem mutação auto-aplicável.
 export type FixVerification = "verified" | "failed" | "unchecked";
@@ -85,7 +88,7 @@ export type ScanResult = {
   fixFirst: {
     n: string;
     title: string;
-    effort: string;
+    effort: Effort;
     impact: "High" | "Medium" | "Low";
   }[];
   // true quando a página era grande demais e os passes extras (verificação,

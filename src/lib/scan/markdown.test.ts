@@ -37,7 +37,7 @@ const result = (over: Partial<ScanResult> = {}): ScanResult => ({
   bestPractice: [] as import("./types").ScanBestPractice[],
   passed: ["Document has a title"],
   markers: [],
-  fixFirst: [{ n: "01", title: "Fix contrast", effort: "2 min", impact: "High" }],
+  fixFirst: [{ n: "01", title: "Fix contrast", effort: "Quick", impact: "High" }],
   ...over,
 });
 

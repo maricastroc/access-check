@@ -54,6 +54,18 @@ describe("buildFixFirst", () => {
     expect(first.title).toBe("serious issue");
     expect(first.effort).toBeDefined();
   });
+
+  it("effort é qualitativo, nunca tempo cravado (sem falsa precisão)", () => {
+    const items = buildFixFirst([
+      v("critical", 1, "color-contrast"),
+      v("serious", 1, "label"),
+      v("moderate", 1, "heading-order"),
+    ]);
+    for (const item of items) {
+      expect(["Quick", "Moderate", "Involved"]).toContain(item.effort);
+      expect(item.effort).not.toMatch(/min/);
+    }
+  });
 });
 
 describe("buildSummary", () => {

@@ -1,4 +1,4 @@
-import type { Severity, ScanViolation } from "./types";
+import type { Effort, Severity, ScanViolation } from "./types";
 
 const severityWeight: Record<Severity, number> = {
   critical: 10,
@@ -19,11 +19,14 @@ export function computeScore(violations: ScanViolation[]): number {
   return Math.max(0, Math.round(damped));
 }
 
-function estimateEffort(id: string): string {
-  if (/contrast/.test(id)) return "2 min";
-  if (/label|alt|name|aria|autocomplete/.test(id)) return "3 min";
-  if (/heading|landmark|region|list|lang/.test(id)) return "4 min";
-  return "5 min";
+// Effort é qualitativo de propósito. Não medimos tempo real por conserto, então
+// cravar "2 min" seria falsa precisão; os baldes refletem só o tipo de mudança —
+// ajustar uma cor (Quick) vs. reescrever texto/atributos (Moderate) vs.
+// reestruturar headings/landmarks (Involved).
+function estimateEffort(id: string): Effort {
+  if (/contrast/.test(id)) return "Quick";
+  if (/label|alt|name|aria|autocomplete/.test(id)) return "Moderate";
+  return "Involved";
 }
 
 function impactFromSeverity(s: Severity): "High" | "Medium" | "Low" {

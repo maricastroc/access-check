@@ -18,7 +18,7 @@ export function FixFirst({
           <FontAwesomeIcon icon={faFire} className="text-base text-serious" />
           <span className="text-base font-semibold tracking-tight">Fix First</span>
         </div>
-        <span className="text-xs text-muted">Ordered by impact ÷ effort</span>
+        <span className="text-xs text-muted">Ordered by impact</span>
       </div>
       <p className="mb-1.5 text-[12.5px] leading-normal text-muted">
         Resolve these first for the biggest jump in your score.
