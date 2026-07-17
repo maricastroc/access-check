@@ -21,7 +21,6 @@ export const ratelimit = redis
     })
   : null;
 
-// Crawls disparam vários scans de uma vez, então são limitados mais de perto.
 export const siteRatelimit = redis
   ? new Ratelimit({
       redis,

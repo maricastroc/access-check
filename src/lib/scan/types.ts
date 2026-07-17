@@ -3,11 +3,8 @@ import type { ContextReport } from "./contexts";
 
 export type Severity = "critical" | "serious" | "moderate" | "minor";
 
-// Esforço qualitativo pro bloco "Fix First" — sem falsa precisão de minutos.
 export type Effort = "Quick" | "Moderate" | "Involved";
 
-// "verified" = a regra parou de falhar após aplicar o fix; "failed" = o axe
-// ainda acusa; "unchecked" = fix sem mutação auto-aplicável.
 export type FixVerification = "verified" | "failed" | "unchecked";
 
 export type FixGroup = {
@@ -82,7 +79,6 @@ export type ScanResult = {
   bestPractice: ScanBestPractice[];
   passed: string[];
   markers: ScanMarker[];
-  // Opcionais: scans antigos em cache/histórico não têm estes campos.
   keyboard?: KeyboardReport;
   contexts?: ContextReport;
   fixFirst: {
@@ -91,8 +87,6 @@ export type ScanResult = {
     effort: Effort;
     impact: "High" | "Medium" | "Low";
   }[];
-  // true quando a página era grande demais e os passes extras (verificação,
-  // teclado, contextos) foram pulados pra devolver o core do axe dentro do tempo.
   partial?: boolean;
 };
 

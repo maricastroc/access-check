@@ -59,8 +59,6 @@ export function fixLabel(el: ElementInfo): FixResult | null {
     (el.id && humanize(el.id)) ||
     "Describe this field";
 
-  // Validamos sempre com aria-label mesmo quando recomendamos <label for> na UI:
-  // inserir um <label> no DOM é mais frágil e o resultado pro leitor de tela é o mesmo.
   const apply = { kind: "attr", name: "aria-label", value: guess } as const;
 
   if (el.id) {
@@ -145,7 +143,6 @@ export function fixAriaRequiredAttr(missing: string[]): FixResult | null {
 }
 
 export function fixAriaAllowedAttr(invalid: string[]): FixResult | null {
-  // axe entrega itens como 'aria-foo="bar"'; queremos só o nome do atributo.
   const names = invalid.map((s) => s.split("=")[0].trim()).filter(Boolean);
   if (names.length === 0) return null;
   return {
@@ -234,10 +231,6 @@ export function contrastRatio(a: Rgb, b: Rgb): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 
-// OKLCH: espaço perceptual pra ajustar SÓ a luminosidade sem torcer o matiz.
-// Andar pro preto/branco em RGB dessatura a cor; em OKLCH mexemos só no L,
-// mantendo croma e matiz. Constantes do OKLab (Björn Ottosson). O contraste
-// segue medido pela luminância WCAG (contrastRatio), que é o padrão do critério.
 type Oklch = { L: number; C: number; H: number };
 
 function srgbToLinear(v: number): number {
@@ -246,7 +239,7 @@ function srgbToLinear(v: number): number {
 }
 
 function linearToChannel(v: number): number {
-  const clamped = Math.max(0, Math.min(1, v)); // gamut clamp em sRGB linear
+  const clamped = Math.max(0, Math.min(1, v));
   const x = clamped <= 0.0031308 ? 12.92 * clamped : 1.055 * clamped ** (1 / 2.4) - 0.055;
   return Math.round(x * 255);
 }
@@ -286,16 +279,12 @@ function oklchToSrgb({ L, C, H }: Oklch): Rgb {
 const BLACK: Rgb = { r: 0, g: 0, b: 0 };
 const WHITE: Rgb = { r: 255, g: 255, b: 255 };
 
-// dir = 1 clareia, -1 escurece. Mexe só na luminosidade (L do OKLCH), mantendo
-// matiz e croma. null se nem no extremo (L=1/0, mesmo croma) o alvo é atingido.
 function nearestPassingLightness(color: Rgb, other: Rgb, target: number, dir: 1 | -1): Rgb | null {
   const { L: startL, C, H } = srgbToOklch(color);
   const extremeL = dir === 1 ? 1 : 0;
   const at = (L: number) => oklchToSrgb({ L, C, H });
   if (contrastRatio(at(extremeL), other) < target) return null;
 
-  // Contraste é monotônico do original em direção ao extremo; busca binária pelo
-  // L mais perto do original que ainda passa. near = falha, far = passa.
   let near = startL;
   let far = extremeL;
   for (let i = 0; i < 30; i++) {
@@ -303,8 +292,7 @@ function nearestPassingLightness(color: Rgb, other: Rgb, target: number, dir: 1 
     if (contrastRatio(at(mid), other) >= target) far = mid;
     else near = mid;
   }
-  // Arredondar pra 8-bit pode cair logo abaixo do alvo; anda um tico em direção
-  // ao extremo até a cor inteira passar de fato (o extremo já é garantido).
+
   const step = dir === 1 ? 1 / 512 : -1 / 512;
   for (let L = far; dir === 1 ? L <= 1 : L >= 0; L += step) {
     const c = at(L);
@@ -371,8 +359,6 @@ export function fixContrast(data: ContrastData): FixResult | null {
         `Text color ${toHex(fg)} can't reach ${target.toFixed(1)}:1 on ${toHex(bg)} ` +
         `by changing the text alone. Set the background to ${bgHex} instead → ` +
         `${ratio.toFixed(2)}:1 ${was}. Same background hue — only its lightness changes.`,
-      // "background: #hex" de propósito (não "background-color") pra não colidir
-      // com quem procura "color: #hex" no snippet.
       code: `background: ${bgHex};`,
       apply: { kind: "style", prop: "background-color", value: bgHex },
     };

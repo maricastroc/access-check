@@ -13,7 +13,6 @@ import {
   type ElementInfo,
 } from "./remediate";
 
-// "#rrggbb" -> Rgb, só pra recomputar contraste nos asserts.
 function hex(h: string) {
   const s = h.replace("#", "");
   return {
@@ -56,7 +55,6 @@ describe("fixContrast", () => {
     expect(fix).not.toBeNull();
     const m = fix!.code!.match(/color: (#[0-9a-f]{6});/);
     expect(m).not.toBeNull();
-    // a cor sugerida, recomputada, precisa passar no alvo
     expect(contrastRatio(hex(m![1]), hex("#ffffff"))).toBeGreaterThanOrEqual(4.5);
     expect(fix!.apply).toEqual({ kind: "style", prop: "color", value: m![1] });
   });
@@ -118,8 +116,6 @@ describe("fixContrast", () => {
   });
 
   it("quando o texto não resolve sozinho, sugere e valida o fundo", () => {
-    // alvo AAA (7:1) num fundo cinza-médio: nem preto nem branco no texto passam,
-    // mas escurecer o fundo (mantendo o matiz) resolve.
     const fix = fixContrast({
       fgColor: "#e0e0e0",
       bgColor: "#8a8a8a",
@@ -234,7 +230,7 @@ describe("fixes de atributo ARIA", () => {
     const fix = fixAriaRequiredAttr(["aria-valuenow", "aria-valuemin"]);
     expect(fix?.code).toContain('aria-valuenow="…"');
     expect(fix?.code).toContain('aria-valuemin="…"');
-    expect(fix?.apply).toBeUndefined(); // não auto-aplicável
+    expect(fix?.apply).toBeUndefined();
   });
 
   it("retorna null sem atributos", () => {

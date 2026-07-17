@@ -1,16 +1,5 @@
-// Orçamento de tempo pros passes opcionais do scan. Numa página pesada, os
-// passes extras (verificação de fixes, teclado, contextos) podem estourar o
-// teto de 60s da Vercel e derrubar a função inteira (504). Em vez disso,
-// corremos cada passe contra o tempo restante: se estourar, devolvemos o
-// relatório do axe (o core) marcado como parcial, sem nunca dar 504.
-
 export type Budgeted<T> = { value: T; timedOut: boolean };
 
-/**
- * Corre uma tarefa contra um limite de tempo. Estourou (ou budgetMs<=0) →
- * `fallback` com `timedOut: true`. A tarefa rejeitou → `fallback` com
- * `timedOut: false` (falha ≠ timeout). Nunca lança.
- */
 export async function withBudget<T>(
   run: () => Promise<T>,
   budgetMs: number,

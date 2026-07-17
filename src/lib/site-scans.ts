@@ -7,8 +7,6 @@ import type { PageStatus, SiteStatus } from "@/lib/scan/site-aggregate";
 export type { PageStatus, SiteStatus } from "@/lib/scan/site-aggregate";
 export { aggregateScore, type PageScore } from "@/lib/scan/site-aggregate";
 
-// Perfil leve pro crawl: sem screenshot/teclado/contextos/verificação, pra cada
-// página caber rápido na sua própria invocação. O single-scan segue completo.
 export const CRAWL_SCAN_OPTS: ScanOptions = {
   screenshot: false,
   keyboard: false,

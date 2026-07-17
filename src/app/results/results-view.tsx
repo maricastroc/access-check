@@ -34,8 +34,6 @@ export function ResultsView({
   const [status, setStatus] = useState<Status>(initialResult ? "done" : "loading");
   const [result, setResult] = useState<ScanResult | null>(initialResult);
   const [error, setError] = useState("");
-  // Resultado veio do crawl (perfil leve): mostra banner + CTA pra análise
-  // completa. Some assim que uma análise completa roda aqui.
   const [fromCrawl, setFromCrawl] = useState(Boolean(initialResult));
 
   const [sim, setSim] = useState<SimKey>("normal");
@@ -76,7 +74,6 @@ export function ResultsView({
   );
 
   useEffect(() => {
-    // Já temos o resultado do crawl: abre na hora, sem re-escanear.
     if (initialResult) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void runFetch(initialUrl || DEFAULT_URL);

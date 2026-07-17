@@ -3,15 +3,7 @@ import type { AddressInfo } from "net";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { runScan } from "./scan";
 
-// Teste de integração da camada mais arriscada: sobe Chromium de verdade (o
-// executor local do Playwright, sem mock) contra fixtures servidos por HTTP,
-// exercitando o pipeline inteiro — navegação, checagem de status, injeção do
-// axe, screenshot e o round-trip de verificação de fixes. Os outros arquivos
-// testam funções puras; este prova que o browser realmente roda.
-
 const PAGES: Record<string, { status?: number; html: string }> = {
-  // <html> sem lang, sem <title>, <img> sem alt e texto de baixo contraste —
-  // quatro violações de axe estáveis e deterministas.
   "/broken": {
     html: `<!doctype html>
 <html>
@@ -27,7 +19,6 @@ const PAGES: Record<string, { status?: number; html: string }> = {
   </body>
 </html>`,
   },
-  // Página bem-formada: lang, title, viewport, alt e contraste alto.
   "/clean": {
     html: `<!doctype html>
 <html lang="en">
@@ -92,16 +83,12 @@ describe("runScan (integração — browser real)", () => {
       expect(ids).toContain("image-alt");
       expect(ids).toContain("html-has-lang");
 
-      // Score real, dentro do intervalo, abaixo de 100 porque há violações.
       expect(result.score).toBeGreaterThanOrEqual(0);
       expect(result.score).toBeLessThan(100);
-      expect(result.counts.critical).toBeGreaterThanOrEqual(1); // image-alt
+      expect(result.counts.critical).toBeGreaterThanOrEqual(1);
 
-      // Screenshot capturado como data URL JPEG.
       expect(result.screenshot).toMatch(/^data:image\/jpeg;base64,/);
 
-      // O núcleo do produto: aplicar o fix no DOM, re-rodar o axe escopado e
-      // confirmar que a regra parou de falhar. Ao menos um precisa comprovar.
       const verified = result.violations.filter((v) => v.verification === "verified");
       expect(verified.length).toBeGreaterThan(0);
     },

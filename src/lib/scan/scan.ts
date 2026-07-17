@@ -33,9 +33,6 @@ const VIEWPORT = { width: 1200, height: 800 };
 const MAX_MARKERS = 6;
 const MAX_VERIFY_OPS = 40;
 
-// A função da Vercel morre em 60s. Os passes opcionais (verificação, teclado,
-// contextos) só rodam enquanto houver tempo até este deadline; passado isso, o
-// scan devolve o relatório do axe marcado como parcial em vez de dar 504.
 const SCAN_DEADLINE_MS = 50_000;
 
 const AXE_PATH = path.join(process.cwd(), "node_modules/axe-core/axe.min.js");
@@ -111,8 +108,7 @@ function concreteFix(
     return fixAriaAllowedAttr(asStringArray(checkData(node, "aria-allowed-attr")));
   if (ruleId === "color-contrast") {
     const check = node.any?.find((c) => c.id === "color-contrast");
-    // axe entrega expectedContrastRatio como string ("4.5:1"); contrastRatio
-    // como número.
+
     const d = check?.data as
       | {
           fgColor?: string;
@@ -148,14 +144,10 @@ function firstTarget(target: unknown): string | null {
   return null;
 }
 
-// Operação de validação: aplica `apply` no DOM e re-roda o axe escopado na
-// regra. `selector` null = mutação a nível de documento (lang, title, viewport).
 type VerifyOp = { ruleId: string; selector: string | null; apply: FixApply };
 
-// Aplica cada fix no DOM, re-roda o axe só naquela regra, reverte, e diz se a
-// violação sumiu — é o que prova o conserto em vez de só afirmá-lo.
 const VERIFY_IN_PAGE = async (ops: VerifyOp[]): Promise<FixVerification[]> => {
-  // @ts-expect-error axe foi injetado no contexto da página
+  // @ts-expect-error axe
   const axe = window.axe;
 
   const runRule = async (context: Element | Document, ruleId: string): Promise<boolean> => {
@@ -166,8 +158,6 @@ const VERIFY_IN_PAGE = async (ops: VerifyOp[]): Promise<FixVerification[]> => {
   };
 
   const results: FixVerification[] = [];
-  // Sequencial de propósito: cada op reverte sua mutação antes da próxima, então
-  // não há interferência cruzada entre consertos.
   {
     for (const op of ops) {
       try {
@@ -217,7 +207,6 @@ const VERIFY_IN_PAGE = async (ops: VerifyOp[]): Promise<FixVerification[]> => {
             const style = (el as HTMLElement).style;
             const prev = style.getPropertyValue(a.prop);
             const prevPrio = style.getPropertyPriority(a.prop);
-            // !important pra vencer a folha de estilo da página durante o teste
             style.setProperty(a.prop, a.value, "important");
             const ok = await runRule(el, op.ruleId);
             if (prev) style.setProperty(a.prop, prev, prevPrio);
@@ -237,9 +226,6 @@ const VERIFY_IN_PAGE = async (ops: VerifyOp[]): Promise<FixVerification[]> => {
   return results;
 };
 
-// Perfil do scan. Todos default `true` (single-scan completo); o crawl
-// multi-página passa um perfil leve pra cada página caber rápido/barato na sua
-// própria invocação — pulando screenshot, teclado, contextos e verificação.
 export type ScanOptions = {
   screenshot?: boolean;
   keyboard?: boolean;
@@ -256,7 +242,6 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
   } = opts;
   const url = normalizeUrl(rawUrl);
   const startedAt = Date.now();
-  // true se algum passe opcional foi pulado por falta de tempo (página pesada).
   let partial = false;
   const remainingMs = () => SCAN_DEADLINE_MS - (Date.now() - startedAt);
 
@@ -265,7 +250,7 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
     const context = await browser.newContext({
       viewport: VIEWPORT,
       deviceScaleFactor: 1,
-      bypassCSP: true, // permite injetar o axe em páginas com CSP estrito
+      bypassCSP: true,
       userAgent:
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " +
         "(KHTML, like Gecko) Chrome/124.0 Safari/537.36 AccessCheckBot/2.1",
@@ -277,25 +262,19 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
       timeout: 30_000,
     });
 
-    // Um 404/500 ainda "carrega" uma página de erro, então sem checar o
-    // status o scan analisaria essa página e geraria um relatório enganoso.
     const httpStatus = response?.status() ?? 0;
     if (httpStatus >= 400) {
       throw new Error(
         `The page responded with HTTP ${httpStatus}. Check the URL — it may be wrong, removed, or behind authentication.`,
       );
     }
-    // Espera a rede assentar pra SPAs montarem o conteúdo. Sites "ao vivo"
-    // (placares, ads) podem nunca ficar idle, então ignoramos o timeout.
+
     await page.waitForLoadState("networkidle", { timeout: 6_000 }).catch(() => {});
     await page.waitForTimeout(1500);
 
     const title = (await page.title()) || url;
     const finalUrl = page.url();
 
-    // JPEG (q80) em vez de PNG: ~5–10× menor. Mantém o histórico leve, já que o
-    // screenshot é persistido como bytes quando o usuário está logado. Como
-    // preview, a perda é imperceptível.
     let screenshot: string | null = null;
     if (doScreenshot) {
       const screenshotBuf = await page.screenshot({
@@ -308,7 +287,7 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
 
     await page.addScriptTag({ path: AXE_PATH });
     const axe: AxeResults = await page.evaluate(async () => {
-      // @ts-expect-error axe é injetado no contexto da página
+      // @ts-expect-error axe
       return await window.axe.run(document, {
         runOnly: {
           type: "tag",
@@ -369,7 +348,7 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
                     })() ?? undefined,
                 };
               } catch {
-                // seletor inválido — ignora
+                //
               }
             }
             return out;
@@ -415,10 +394,10 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
       for (const e of enriched) {
         for (const cluster of e.clusters) {
           if (verifyOps.length >= MAX_VERIFY_OPS) break;
-          if (!cluster.apply) continue; // sem mutação auto-aplicável
+          if (!cluster.apply) continue;
           const docLevel = cluster.apply.kind === "doc" || cluster.apply.kind === "viewport";
           const selector = docLevel ? null : (cluster.selectors[0] ?? null);
-          if (!docLevel && !selector) continue; // sem alvo pra aplicar
+          if (!docLevel && !selector) continue;
           verifyOps.push({ ruleId: e.v.id, selector, apply: cluster.apply });
           opClusters.push(cluster);
         }

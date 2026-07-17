@@ -53,7 +53,6 @@ export function toContextIssue(r: RawRule): ContextIssue {
   };
 }
 
-// Regras cujo id não está na baseline do desktop = novidade daquele contexto.
 export function newIssues(baselineIds: Set<string>, rules: RawRule[]): ContextIssue[] {
   return rules.filter((r) => !baselineIds.has(r.id)).map(toContextIssue);
 }

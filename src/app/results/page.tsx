@@ -10,8 +10,6 @@ export default async function ResultsPage({
   const { url, site } = await searchParams;
   const user = (await auth())?.user ?? null;
 
-  // Vindo de um site audit: reaproveita o resultado (perfil leve) já coletado no
-  // crawl, pra página abrir na hora em vez de re-escanear do zero.
   const initialResult = site && url ? await getSiteScanPageResult(site, url) : null;
 
   return (

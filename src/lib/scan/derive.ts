@@ -19,10 +19,6 @@ export function computeScore(violations: ScanViolation[]): number {
   return Math.max(0, Math.round(damped));
 }
 
-// Effort é qualitativo de propósito. Não medimos tempo real por conserto, então
-// cravar "2 min" seria falsa precisão; os baldes refletem só o tipo de mudança —
-// ajustar uma cor (Quick) vs. reescrever texto/atributos (Moderate) vs.
-// reestruturar headings/landmarks (Involved).
 function estimateEffort(id: string): Effort {
   if (/contrast/.test(id)) return "Quick";
   if (/label|alt|name|aria|autocomplete/.test(id)) return "Moderate";

@@ -16,7 +16,7 @@ export function SiteCrawlView({ initial }: { initial: CrawlSnapshot }) {
       const res = await fetch(`/api/site-scan/${initial.id}`, { cache: "no-store" });
       if (res.ok) setSnap((await res.json()) as CrawlSnapshot);
     } catch {
-      // erro transitório de rede — tenta de novo no próximo tick
+      //
     }
   }, [initial.id]);
 

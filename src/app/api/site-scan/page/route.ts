@@ -5,8 +5,6 @@ import { scanOnePage } from "@/lib/site-scan-runner";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-// Worker chamado pelo QStash, uma vez por página. Grava sucesso/erro no DB e
-// sempre responde 200 (o resultado já foi persistido — não faz sentido retry).
 export async function POST(req: Request) {
   const raw = await req.text();
 

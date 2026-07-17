@@ -1,7 +1,3 @@
-// Descoberta de URLs pro crawl multi-página. Tudo via `fetch` puro (sem
-// browser) — roda barato na invocação de kickoff. Prioriza o sitemap.xml e cai
-// pra extração de links same-origin da home quando não há sitemap útil.
-
 export const MAX_PAGES = 10;
 
 const FETCH_TIMEOUT_MS = 8000;
@@ -9,7 +5,6 @@ const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " +
   "(KHTML, like Gecko) Chrome/124.0 Safari/537.36 AccessCheckBot/2.1";
 
-// Extensões que claramente não são páginas HTML — não vale a pena auditar.
 const NON_HTML =
   /\.(pdf|jpe?g|png|gif|svg|webp|avif|ico|css|js|mjs|json|xml|zip|gz|rar|mp4|webm|mov|mp3|wav|woff2?|ttf|otf|eot|txt|csv|rss|atom)$/i;
 
@@ -50,13 +45,12 @@ export function extractLinks(html: string, baseUrl: string): string[] {
     try {
       out.push(new URL(decodeEntities(raw), baseUrl).toString());
     } catch {
-      // href inválido — ignora
+      //
     }
   }
   return out;
 }
 
-/** Forma canônica pra dedupe: sem hash, sem query, sem barra final. */
 export function canonicalize(u: string): string | null {
   try {
     const url = new URL(u);
@@ -145,7 +139,6 @@ async function fromSitemap(origin: string, cap: number): Promise<string[]> {
     const nested = locs.filter(isNested);
     const pages = locs.filter((l) => !isNested(l));
 
-    // Um nível de sitemaps aninhados (sitemap index), limitado.
     for (const child of nested.slice(0, 3)) {
       if (pages.length >= cap * 4) break;
       const cxml = await fetchText(child, 6000);
@@ -172,7 +165,6 @@ export async function discoverUrls(rootInput: string, cap = MAX_PAGES): Promise<
 
   let discovered = sameOriginPages(await fromSitemap(origin, cap), origin);
 
-  // Fallback: sem sitemap útil, varre os links da home.
   if (discovered.length < 2) {
     const html = await fetchText(root);
     if (html) {

@@ -71,9 +71,9 @@ describe("sameOriginPages", () => {
     const urls = [
       "https://a.com/",
       "https://a.com/about",
-      "https://a.com/about/", // dup canônica de /about
-      "https://a.com/logo.png", // não-HTML
-      "https://other.com/x", // outro origin
+      "https://a.com/about/",
+      "https://a.com/logo.png",
+      "https://other.com/x",
     ];
     expect(sameOriginPages(urls, "https://a.com")).toEqual([
       "https://a.com/",

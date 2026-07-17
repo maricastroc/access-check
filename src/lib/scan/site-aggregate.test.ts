@@ -12,7 +12,6 @@ describe("aggregateScore", () => {
 
   it("faz a média só das páginas concluídas, arredondando", () => {
     expect(aggregateScore([p("done", 90), p("done", 80)])).toBe(85);
-    // 90, 81 -> 85.5 -> 86
     expect(aggregateScore([p("done", 90), p("done", 81)])).toBe(86);
   });
 

@@ -2,8 +2,6 @@ import type { PageStatus, SiteStatus } from "@/lib/scan/site-aggregate";
 
 export type { PageStatus, SiteStatus };
 
-// Forma serializada de um crawl trafegada pro client (createdAt como ISO string).
-// Bate com o JSON de GET /api/site-scan/[id] e com o prop inicial do server.
 export type CrawlPage = {
   id: string;
   url: string;

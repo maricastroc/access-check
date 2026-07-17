@@ -1,4 +1,3 @@
-// Nomes amigáveis dos critérios de sucesso WCAG mais comuns (axe só devolve a tag).
 const scNames: Record<string, string> = {
   "1.1.1": "Non-text Content",
   "1.3.1": "Info and Relationships",
@@ -19,16 +18,11 @@ const scNames: Record<string, string> = {
   "4.1.2": "Name, Role, Value",
 };
 
-/**
- * Converte as tags do axe (ex. "wcag143") no rótulo "WCAG 1.4.3 · Contrast (Minimum)".
- * Retorna null se nenhuma tag de critério for encontrada.
- */
 export function criterionFromTags(tags: string[]): string | null {
   const tag = tags.find((t) => /^wcag\d{3,4}$/.test(t));
   if (!tag) return null;
 
   const digits = tag.replace("wcag", "");
-  // 143 -> 1.4.3 ; 1410 -> 1.4.10
   const major = digits[0];
   const minor = digits[1];
   const sub = digits.slice(2);

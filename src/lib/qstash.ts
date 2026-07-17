@@ -1,10 +1,5 @@
 import { Client, Receiver } from "@upstash/qstash";
 
-// Fan-out do crawl: uma mensagem QStash por página → cada uma vira uma
-// invocação curta de /api/site-scan/page (respeita o teto de 60s da Vercel).
-// Sem QStash configurado, `canFanOut()` é false e o crawl processa inline
-// (fallback de dev) — mesma filosofia de degradação graciosa do Redis.
-
 const token = process.env.QSTASH_TOKEN;
 const currentSigningKey = process.env.QSTASH_CURRENT_SIGNING_KEY;
 const nextSigningKey = process.env.QSTASH_NEXT_SIGNING_KEY;
@@ -16,12 +11,6 @@ export const qstashReceiver =
     ? new Receiver({ currentSigningKey, nextSigningKey })
     : null;
 
-/**
- * URL pública desta app — o QStash precisa dela pra chamar o worker de volta.
- * Prefere o domínio de produção (público) à URL do deployment: esta última pode
- * estar atrás do Deployment Protection da Vercel, o que devolveria 401 pro QStash
- * e deixaria as páginas presas em "pending".
- */
 export function appBaseUrl(): string | null {
   const explicit = process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL;
   if (explicit) return explicit.replace(/\/$/, "");
@@ -51,17 +40,11 @@ export async function enqueuePageScans(jobs: PageJob[]): Promise<void> {
       url: `${base}/api/site-scan/page`,
       body,
       retries: 1,
-      // Limita quantos workers Chromium rodam em paralelo — protege a memória/
-      // custo das funções serverless quando um site tem muitas páginas.
       flowControl: { key: "crawl", parallelism: 3 },
     })),
   );
 }
 
-/**
- * Valida a assinatura do QStash num request do worker. Retorna true quando o
- * receiver não está configurado (modo dev/inline) pra não travar o fluxo local.
- */
 export async function verifyQstashSignature(req: Request, body: string): Promise<boolean> {
   if (!qstashReceiver) return true;
   const signature = req.headers.get("upstash-signature");

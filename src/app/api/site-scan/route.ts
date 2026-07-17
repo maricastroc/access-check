@@ -44,9 +44,6 @@ export async function POST(req: Request) {
 
   const jobs = urls.map((url) => ({ siteScanId: id, url }));
 
-  // O fallback inline (fire-and-forget) só sobrevive num processo de longa
-  // duração (dev local). Em serverless a função congela após a resposta, então
-  // ali preferimos falhar visível a deixar o crawl preso em "pending".
   const onServerless = Boolean(process.env.VERCEL);
 
   async function runInline() {
