@@ -4,7 +4,7 @@ import { CRAWL_SCAN_OPTS, completePage, markPageRunning } from "@/lib/site-scans
 export async function scanOnePage(siteScanId: string, url: string): Promise<void> {
   await markPageRunning(siteScanId, url);
   try {
-    const result = await runScan(url, CRAWL_SCAN_OPTS);
+    const result = await runScan(url, { ...CRAWL_SCAN_OPTS, blockPrivateHosts: true });
     await completePage(siteScanId, url, { ok: true, result });
   } catch (e) {
     const error = e instanceof Error ? e.message : "Scan failed.";

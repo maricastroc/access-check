@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { siteRatelimit } from "@/lib/redis";
 import { discoverUrls, normalizeRoot } from "@/lib/scan/discover";
+import { assertPublicUrl, BlockedUrlError } from "@/lib/scan/ssrf";
 import { createSiteScan, failSiteScan } from "@/lib/site-scans";
 import { canFanOut, enqueuePageScans } from "@/lib/qstash";
 
@@ -33,9 +34,10 @@ export async function POST(req: Request) {
 
   const root = normalizeRoot(body.url);
   try {
-    new URL(root);
-  } catch {
-    return NextResponse.json({ error: "Invalid URL." }, { status: 400 });
+    await assertPublicUrl(root);
+  } catch (err) {
+    const message = err instanceof BlockedUrlError ? err.message : "Invalid URL.";
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 
   const urls = await discoverUrls(root);

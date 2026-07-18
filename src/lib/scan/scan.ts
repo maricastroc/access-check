@@ -20,6 +20,7 @@ import { collectKeyboard, type KeyboardReport } from "./keyboard";
 import { collectContexts, type ContextReport } from "./contexts";
 import { buildFixFirst, buildSummary, computeScore, severityOrder } from "./derive";
 import { withBudget } from "./budget";
+import { installNetworkGuard } from "./ssrf";
 import type {
   FixGroup,
   FixVerification,
@@ -231,6 +232,12 @@ export type ScanOptions = {
   keyboard?: boolean;
   contexts?: boolean;
   verifyFixes?: boolean;
+  /**
+   * Aborta requisições do browser pra endereços privados/reservados, inclusive
+   * as que chegam via redirect. Ligado no caminho público (rotas de API); fica
+   * desligado por padrão pra que testes/uso interno possam mirar 127.0.0.1.
+   */
+  blockPrivateHosts?: boolean;
 };
 
 export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<ScanResult> {
@@ -239,6 +246,7 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
     keyboard: doKeyboard = true,
     contexts: doContexts = true,
     verifyFixes: doVerify = true,
+    blockPrivateHosts = false,
   } = opts;
   const url = normalizeUrl(rawUrl);
   const startedAt = Date.now();
@@ -255,6 +263,7 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " +
         "(KHTML, like Gecko) Chrome/124.0 Safari/537.36 AccessCheckBot/2.1",
     });
+    if (blockPrivateHosts) await installNetworkGuard(context);
     const page = await context.newPage();
 
     const response = await page.goto(url, {

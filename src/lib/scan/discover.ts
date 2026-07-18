@@ -1,6 +1,9 @@
+import { assertPublicUrl } from "./ssrf";
+
 export const MAX_PAGES = 10;
 
 const FETCH_TIMEOUT_MS = 8000;
+const MAX_REDIRECTS = 5;
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " +
   "(KHTML, like Gecko) Chrome/124.0 Safari/537.36 AccessCheckBot/2.1";
@@ -106,16 +109,33 @@ async function fetchText(url: string, timeoutMs = FETCH_TIMEOUT_MS): Promise<str
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
-    const res = await fetch(url, {
-      signal: ctrl.signal,
-      redirect: "follow",
-      headers: {
-        "user-agent": UA,
-        accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-      },
-    });
-    if (!res.ok) return null;
-    return await res.text();
+    // Segue redirects manualmente pra revalidar cada salto: sem isso um alvo
+    // público poderia redirecionar o fetch pra infra interna (SSRF).
+    let current = url;
+    for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+      try {
+        await assertPublicUrl(current);
+      } catch {
+        return null;
+      }
+      const res = await fetch(current, {
+        signal: ctrl.signal,
+        redirect: "manual",
+        headers: {
+          "user-agent": UA,
+          accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        },
+      });
+      if (res.status >= 300 && res.status < 400) {
+        const location = res.headers.get("location");
+        if (!location) return null;
+        current = new URL(location, current).toString();
+        continue;
+      }
+      if (!res.ok) return null;
+      return await res.text();
+    }
+    return null;
   } catch {
     return null;
   } finally {

@@ -4,6 +4,7 @@ import type { ScanResult } from "@/lib/scan/types";
 import { auth } from "@/auth";
 import { saveScan } from "@/lib/scans";
 import { redis, ratelimit } from "@/lib/redis";
+import { assertPublicUrl, BlockedUrlError } from "@/lib/scan/ssrf";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -38,9 +39,10 @@ export async function POST(req: Request) {
   const url = normalizeUrl(body.url);
 
   try {
-    new URL(url);
-  } catch {
-    return NextResponse.json({ error: "Invalid URL." }, { status: 400 });
+    await assertPublicUrl(url);
+  } catch (err) {
+    const message = err instanceof BlockedUrlError ? err.message : "Invalid URL.";
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 
   const userId = (await auth())?.user?.id;
@@ -53,7 +55,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const result = await runScan(url);
+    const result = await runScan(url, { blockPrivateHosts: true });
     if (userId) {
       try {
         await saveScan(userId, result);
