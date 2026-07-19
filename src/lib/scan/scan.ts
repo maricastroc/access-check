@@ -1,4 +1,5 @@
 import path from "path";
+import type { Page } from "playwright-core";
 import { getBrowserExecutor } from "./browser";
 import { criterionFromTags } from "./wcag";
 import {
@@ -82,6 +83,35 @@ export function normalizeUrl(input: string): string {
   const trimmed = input.trim();
   if (!/^https?:\/\//i.test(trimmed)) return `https://${trimmed}`;
   return trimmed;
+}
+
+/**
+ * Scrolls the page top-to-bottom in steps, then back to the top, so lazy
+ * content (native loading="lazy" images, IntersectionObserver-driven widgets)
+ * actually loads before we screenshot and audit it. Bounded so a very tall page
+ * can't stall the scan; short pages exit after a step or two.
+ */
+async function primeLazyContent(page: Page): Promise<void> {
+  await page
+    .evaluate(async () => {
+      await new Promise<void>((resolve) => {
+        const step = Math.max(window.innerHeight * 0.9, 400);
+        const maxSteps = 12;
+        let scrolled = 0;
+        let steps = 0;
+        const timer = setInterval(() => {
+          window.scrollBy(0, step);
+          scrolled += step;
+          steps += 1;
+          if (steps >= maxSteps || scrolled >= document.body.scrollHeight) {
+            clearInterval(timer);
+            window.scrollTo(0, 0);
+            resolve();
+          }
+        }, 120);
+      });
+    })
+    .catch(() => {});
 }
 
 const ARIA_NAME_RULES = new Set([
@@ -285,8 +315,12 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
       );
     }
 
-    await page.waitForLoadState("networkidle", { timeout: 6_000 }).catch(() => {});
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState("networkidle", { timeout: 4_000 }).catch(() => {});
+    // Scroll through the page to trigger lazy-loaded images/widgets before we
+    // screenshot and audit — this doubles as the settle wait, so we only need a
+    // short final pause afterwards.
+    await primeLazyContent(page);
+    await page.waitForTimeout(500);
 
     const title = (await page.title()) || url;
     const finalUrl = page.url();

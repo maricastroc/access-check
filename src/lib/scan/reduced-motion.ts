@@ -81,7 +81,7 @@ export function analyzeReducedMotion(raw: RawReducedMotion): ReducedMotionReport
 export async function collectReducedMotion(page: Page): Promise<ReducedMotionReport> {
   await page.emulateMedia({ reducedMotion: "reduce" });
   try {
-    await page.waitForTimeout(400);
+    await page.waitForTimeout(200);
 
     const raw = (await page.evaluate(() => {
       const cssPath = (el: Element | null): string => {
