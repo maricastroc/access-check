@@ -9,19 +9,19 @@ import {
 } from "./discover";
 
 describe("normalizeRoot", () => {
-  it("prepende https quando falta o esquema", () => {
+  it("prepends https when the scheme is missing", () => {
     expect(normalizeRoot("example.com")).toBe("https://example.com");
     expect(normalizeRoot("  example.com  ")).toBe("https://example.com");
   });
 
-  it("preserva um esquema existente", () => {
+  it("preserves an existing scheme", () => {
     expect(normalizeRoot("http://example.com")).toBe("http://example.com");
     expect(normalizeRoot("https://example.com/x")).toBe("https://example.com/x");
   });
 });
 
 describe("parseLocs", () => {
-  it("extrai as <loc> de um sitemap", () => {
+  it("extracts the <loc> entries from a sitemap", () => {
     const xml = `<?xml version="1.0"?><urlset>
       <url><loc>https://a.com/</loc></url>
       <url><loc>https://a.com/about</loc></url>
@@ -29,14 +29,14 @@ describe("parseLocs", () => {
     expect(parseLocs(xml)).toEqual(["https://a.com/", "https://a.com/about"]);
   });
 
-  it("decodifica entidades e ignora vazios", () => {
+  it("decodes entities and ignores empty ones", () => {
     const xml = `<url><loc>https://a.com/?x=1&amp;y=2</loc></url><url><loc></loc></url>`;
     expect(parseLocs(xml)).toEqual(["https://a.com/?x=1&y=2"]);
   });
 });
 
 describe("extractLinks", () => {
-  it("resolve relativos contra a base e ignora âncoras/mailto", () => {
+  it("resolves relative URLs against the base and ignores anchors/mailto", () => {
     const html = `
       <a href="/about">a</a>
       <a href='contact'>c</a>
@@ -52,22 +52,22 @@ describe("extractLinks", () => {
 });
 
 describe("canonicalize", () => {
-  it("remove hash, query e barra final", () => {
+  it("removes hash, query and trailing slash", () => {
     expect(canonicalize("https://a.com/x/?q=1#top")).toBe("https://a.com/x");
   });
 
-  it("mantém a barra da raiz", () => {
+  it("keeps the root slash", () => {
     expect(canonicalize("https://a.com/")).toBe("https://a.com/");
   });
 
-  it("rejeita esquemas não-http", () => {
+  it("rejects non-http schemes", () => {
     expect(canonicalize("ftp://a.com/x")).toBeNull();
     expect(canonicalize("not a url")).toBeNull();
   });
 });
 
 describe("sameOriginPages", () => {
-  it("filtra por origin, remove não-HTML e deduplica", () => {
+  it("filters by origin, removes non-HTML and deduplicates", () => {
     const urls = [
       "https://a.com/",
       "https://a.com/about",
@@ -83,7 +83,7 @@ describe("sameOriginPages", () => {
 });
 
 describe("selectCrawlUrls", () => {
-  it("coloca a raiz primeiro, sem duplicar, e respeita o cap", () => {
+  it("puts the root first, without duplicating, and respects the cap", () => {
     const out = selectCrawlUrls(
       "https://a.com/",
       ["https://a.com/b", "https://a.com/", "https://a.com/c", "https://a.com/d"],

@@ -37,7 +37,7 @@ export async function saveScan(userId: string, result: ScanResult): Promise<stri
   return scan.id;
 }
 
-/** Item leve pra listagem do histórico — sem o JSON do resultado nem o blob. */
+/** Lightweight item for the history listing — without the result JSON or the blob. */
 export type ScanListItem = {
   id: string;
   url: string;
@@ -48,7 +48,7 @@ export type ScanListItem = {
   createdAt: Date;
 };
 
-/** Scans do usuário, mais recentes primeiro. Só metadados (lista nunca puxa blob). */
+/** User's scans, most recent first. Metadata only (the list never pulls the blob). */
 export async function getUserScans(userId: string): Promise<ScanListItem[]> {
   const scans = await prisma.scan.findMany({
     where: { userId },
@@ -102,13 +102,13 @@ function hydrate(id: string, result: unknown): ScanResult {
 
 export type SavedReport = {
   result: ScanResult;
-  /** Scan imediatamente anterior da MESMA URL, pra comparação. */
+  /** The immediately preceding scan of the SAME URL, for comparison. */
   previous: { result: ScanResult; at: Date } | null;
 };
 
 /**
- * Relatório salvo (só do dono) + o scan anterior da mesma URL, quando existe —
- * a base da comparação/regressão. Usa o índice (userId, url, createdAt).
+ * Saved report (owner only) + the previous scan of the same URL, when it exists —
+ * the basis for comparison/regression. Uses the (userId, url, createdAt) index.
  */
 export async function getSavedReport(id: string, userId: string): Promise<SavedReport | null> {
   const scan = await prisma.scan.findFirst({

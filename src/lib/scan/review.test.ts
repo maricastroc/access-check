@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { reviewGuidance } from "./review";
 
 describe("reviewGuidance", () => {
-  it("dá orientação específica pra regras conhecidas", () => {
+  it("gives specific guidance for known rules", () => {
     const cc = reviewGuidance("color-contrast");
     expect(cc.how.toLowerCase()).toContain("background");
     expect(cc.steps.length).toBeGreaterThan(0);
@@ -11,13 +11,13 @@ describe("reviewGuidance", () => {
     expect(link.how.toLowerCase()).toContain("colour");
   });
 
-  it("cai num genérico útil pra regras não mapeadas", () => {
+  it("falls back to a useful generic for unmapped rules", () => {
     const g = reviewGuidance("some-unknown-rule");
     expect(g.how).toMatch(/couldn't decide/i);
     expect(g.steps.length).toBeGreaterThan(0);
   });
 
-  it("toda orientação tem 'how' não-vazio e ao menos um passo", () => {
+  it("every guidance has a non-empty 'how' and at least one step", () => {
     const ids = [
       "color-contrast",
       "link-in-text-block",

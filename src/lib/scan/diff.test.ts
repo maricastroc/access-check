@@ -36,7 +36,7 @@ function result(over: Partial<ScanResult>): ScanResult {
 }
 
 describe("diffScans", () => {
-  it("detecta regras consertadas e regredidas por id", () => {
+  it("detects fixed and regressed rules by id", () => {
     const prev = result({
       violations: [violation("color-contrast", "serious"), violation("button-name", "critical")],
     });
@@ -49,7 +49,7 @@ describe("diffScans", () => {
     expect(d.regressed.map((r) => r.id)).toEqual(["image-alt"]);
   });
 
-  it("calcula deltas de score e de contagem", () => {
+  it("computes score and count deltas", () => {
     const prev = result({
       score: 70,
       counts: {
@@ -81,7 +81,7 @@ describe("diffScans", () => {
     expect(d.counts.passed.delta).toBe(4);
   });
 
-  it("ordena consertadas/regredidas por severidade", () => {
+  it("sorts fixed/regressed by severity", () => {
     const prev = result({
       violations: [violation("a", "minor"), violation("b", "critical")],
     });
@@ -91,7 +91,7 @@ describe("diffScans", () => {
     expect(d.fixed.map((f) => f.severity)).toEqual(["critical", "minor"]);
   });
 
-  it("sem mudanças nas regras → fixed e regressed vazios", () => {
+  it("no changes in the rules → fixed and regressed empty", () => {
     const prev = result({ violations: [violation("color-contrast", "serious")] });
     const curr = result({ violations: [violation("color-contrast", "serious")] });
 

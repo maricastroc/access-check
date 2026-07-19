@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { siteRatelimit } from "@/lib/redis";
+import { siteRatelimit, rateLimitMissingInProd } from "@/lib/redis";
 import { discoverUrls, normalizeRoot } from "@/lib/scan/discover";
 import { assertPublicUrl, BlockedUrlError } from "@/lib/scan/ssrf";
 import { createSiteScan, failSiteScan } from "@/lib/site-scans";
@@ -19,6 +19,13 @@ export async function POST(req: Request) {
 
   if (!body.url || typeof body.url !== "string") {
     return NextResponse.json({ error: "Missing 'url'." }, { status: 400 });
+  }
+
+  if (rateLimitMissingInProd()) {
+    return NextResponse.json(
+      { error: "Rate limiting is unavailable right now. Please try again later." },
+      { status: 503 },
+    );
   }
 
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";

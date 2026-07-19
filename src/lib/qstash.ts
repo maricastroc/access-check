@@ -1,4 +1,5 @@
 import { Client, Receiver } from "@upstash/qstash";
+import { isProd } from "./env";
 
 const token = process.env.QSTASH_TOKEN;
 const currentSigningKey = process.env.QSTASH_CURRENT_SIGNING_KEY;
@@ -21,18 +22,18 @@ export function appBaseUrl(): string | null {
   return null;
 }
 
-/** Só dá pra fazer fan-out real com client + URL de callback pública. */
+/** Real fan-out is only possible with a client + a public callback URL. */
 export function canFanOut(): boolean {
   return qstash !== null && appBaseUrl() !== null;
 }
 
 export type PageJob = { siteScanId: string; url: string };
 
-/** Enfileira o scan de cada página numa única chamada em lote ao QStash. */
+/** Enqueues each page scan in a single batched call to QStash. */
 export async function enqueuePageScans(jobs: PageJob[]): Promise<void> {
-  if (!qstash) throw new Error("QStash não configurado.");
+  if (!qstash) throw new Error("QStash is not configured.");
   const base = appBaseUrl();
-  if (!base) throw new Error("APP_URL não configurada.");
+  if (!base) throw new Error("APP_URL is not configured.");
   if (jobs.length === 0) return;
 
   await qstash.batchJSON(
@@ -46,7 +47,9 @@ export async function enqueuePageScans(jobs: PageJob[]): Promise<void> {
 }
 
 export async function verifyQstashSignature(req: Request, body: string): Promise<boolean> {
-  if (!qstashReceiver) return true;
+  if (!qstashReceiver) {
+    return !isProd();
+  }
   const signature = req.headers.get("upstash-signature");
   if (!signature) return false;
   try {

@@ -13,7 +13,7 @@ const contrast = (color: string): FixResult => ({
 });
 
 describe("clusterFixes", () => {
-  it("junta nós com o mesmo conserto num grupo só", () => {
+  it("groups nodes with the same fix into a single group", () => {
     const groups = clusterFixes([
       node(".a", contrast("#111")),
       node(".b", contrast("#111")),
@@ -24,7 +24,7 @@ describe("clusterFixes", () => {
     expect(groups[0].selectors).toEqual([".a", ".b", ".c"]);
   });
 
-  it("separa consertos diferentes e ordena pelo maior grupo", () => {
+  it("separates different fixes and sorts by the largest group", () => {
     const groups = clusterFixes([
       node(".a", contrast("#111")),
       node(".b", contrast("#222")),
@@ -36,13 +36,13 @@ describe("clusterFixes", () => {
     expect(groups[1].count).toBe(1);
   });
 
-  it("ignora nós sem conserto concreto", () => {
+  it("ignores nodes without a concrete fix", () => {
     const groups = clusterFixes([node(".a", null), node(".b", contrast("#111"))]);
     expect(groups).toHaveLength(1);
     expect(groups[0].count).toBe(1);
   });
 
-  it("conta tudo mas limita os seletores guardados", () => {
+  it("counts everything but limits the stored selectors", () => {
     const many = Array.from({ length: MAX_GROUP_SELECTORS + 5 }, (_, i) =>
       node(`.s${i}`, contrast("#111")),
     );
@@ -51,7 +51,7 @@ describe("clusterFixes", () => {
     expect(g.selectors).toHaveLength(MAX_GROUP_SELECTORS);
   });
 
-  it("usa o texto como assinatura quando não há code", () => {
+  it("uses the text as the signature when there is no code", () => {
     const textOnly: FixResult = { text: "Darken the background instead." };
     const groups = clusterFixes([node("a", textOnly), node("b", textOnly)]);
     expect(groups).toHaveLength(1);

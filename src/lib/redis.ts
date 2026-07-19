@@ -1,5 +1,6 @@
 import { Redis } from "@upstash/redis";
 import { Ratelimit } from "@upstash/ratelimit";
+import { isProd } from "./env";
 
 const url =
   process.env.KV_REST_API_URL ??
@@ -29,3 +30,12 @@ export const siteRatelimit = redis
       analytics: false,
     })
   : null;
+
+/**
+ * True when rate limiting is unconfigured in an environment that requires it.
+ * Public routes should reject with 503 rather than serve unlimited requests —
+ * fail closed in production, stay permissive in local development.
+ */
+export function rateLimitMissingInProd(): boolean {
+  return redis === null && isProd();
+}

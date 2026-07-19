@@ -32,7 +32,7 @@ export async function createSiteScan(
   return site.id;
 }
 
-/** Marca o crawl inteiro como falho (ex.: não deu pra enfileirar as páginas). */
+/** Marks the entire crawl as failed (e.g. the pages couldn't be enqueued). */
 export async function failSiteScan(id: string, error: string): Promise<void> {
   await prisma.siteScan.update({
     where: { id },
@@ -40,7 +40,7 @@ export async function failSiteScan(id: string, error: string): Promise<void> {
   });
 }
 
-/** Marca a página como "running" (só se ainda estiver pendente). */
+/** Marks the page as "running" (only if it's still pending). */
 export async function markPageRunning(siteScanId: string, url: string): Promise<void> {
   await prisma.siteScanPage.updateMany({
     where: { siteScanId, url, status: "pending" },
@@ -50,7 +50,7 @@ export async function markPageRunning(siteScanId: string, url: string): Promise<
 
 type PageOutcome = { ok: true; result: ScanResult } | { ok: false; error: string };
 
-/** Grava o resultado (ou erro) de uma página e recomputa o progresso do site. */
+/** Records a page's result (or error) and recomputes the site's progress. */
 export async function completePage(
   siteScanId: string,
   url: string,
@@ -77,10 +77,10 @@ export async function completePage(
 }
 
 /**
- * Recomputa contagens + conclusão do site num único UPDATE atômico. A subquery
- * lê o estado corrente das páginas no momento da execução, então workers que
- * terminam em paralelo convergem pro estado final correto sem corrida: qualquer
- * recompute que rode após a última página ver tudo concluído marca "completed".
+ * Recomputes the site's counts + completion in a single atomic UPDATE. The subquery
+ * reads the pages' current state at execution time, so workers that finish in
+ * parallel converge on the correct final state without a race: any recompute that
+ * runs after the last page sees everything settled marks it "completed".
  */
 async function recomputeSiteProgress(siteScanId: string): Promise<void> {
   await prisma.$executeRaw`
@@ -127,7 +127,7 @@ export type SiteScanSnapshot = {
   pages: SiteScanPageView[];
 };
 
-/** Snapshot completo de um crawl (progresso + páginas), por id. */
+/** Complete snapshot of a crawl (progress + pages), by id. */
 export async function getSiteScan(id: string): Promise<SiteScanSnapshot | null> {
   const s = await prisma.siteScan.findUnique({
     where: { id },
@@ -188,9 +188,9 @@ export async function getSiteScan(id: string): Promise<SiteScanSnapshot | null> 
 }
 
 /**
- * ScanResult (perfil leve) já coletado pra uma página do crawl. Deixa a tela de
- * resultados abrir na hora, sem re-escanear. Retorna null se a página não faz
- * parte desse crawl, ainda não concluiu, ou é de um crawl antigo sem `result`.
+ * ScanResult (lightweight profile) already collected for a crawl page. Lets the
+ * results screen open instantly, without re-scanning. Returns null if the page
+ * isn't part of this crawl, hasn't finished yet, or is from an old crawl without `result`.
  */
 export async function getSiteScanPageResult(
   siteScanId: string,

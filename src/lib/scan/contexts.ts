@@ -30,7 +30,6 @@ export type ContextReport = {
   };
 };
 
-// Forma mínima de uma regra do axe que trafega entre o browser e o Node.
 export type RawRule = {
   id: string;
   impact: string | null;

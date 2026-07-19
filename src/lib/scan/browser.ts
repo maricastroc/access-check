@@ -1,16 +1,16 @@
 import type { Browser } from "playwright-core";
 
 /**
- * Interface do executor de browser. A implementação muda conforme o ambiente:
- * local usa o Playwright completo; serverless usa playwright-core +
- * @sparticuz/chromium. Pra trocar por um worker em container (Render etc.)
- * basta criar outro executor e apontar o getBrowserExecutor pra ele.
+ * Browser executor interface. The implementation changes depending on the
+ * environment: local uses the full Playwright; serverless uses playwright-core +
+ * @sparticuz/chromium. To swap in a container-based worker (Render etc.) just
+ * create another executor and point getBrowserExecutor at it.
  */
 export interface BrowserExecutor {
   launch(): Promise<Browser>;
 }
 
-/** Local: Playwright completo (Chromium que vem com o pacote, em devDeps). */
+/** Local: full Playwright (the Chromium that ships with the package, in devDeps). */
 class LocalPlaywrightExecutor implements BrowserExecutor {
   async launch(): Promise<Browser> {
     const { chromium } = await import("playwright");
@@ -18,7 +18,7 @@ class LocalPlaywrightExecutor implements BrowserExecutor {
   }
 }
 
-/** Serverless (Vercel/Lambda): Chromium comprimido + playwright-core. */
+/** Serverless (Vercel/Lambda): compressed Chromium + playwright-core. */
 class ServerlessChromiumExecutor implements BrowserExecutor {
   async launch(): Promise<Browser> {
     const chromium = (await import("@sparticuz/chromium")).default;

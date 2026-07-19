@@ -1,5 +1,6 @@
 import type { KeyboardReport } from "./keyboard";
 import type { ContextReport } from "./contexts";
+import type { AuditsReport } from "./audits";
 
 export type Severity = "critical" | "serious" | "moderate" | "minor";
 
@@ -81,6 +82,8 @@ export type ScanResult = {
   markers: ScanMarker[];
   keyboard?: KeyboardReport;
   contexts?: ContextReport;
+  /** Findings from our own detection engine — beyond what axe-core reports. */
+  audits?: AuditsReport;
   fixFirst: {
     n: string;
     title: string;

@@ -18,6 +18,10 @@ import {
 import { clusterFixes, type FixCluster } from "./group";
 import { collectKeyboard, type KeyboardReport } from "./keyboard";
 import { collectContexts, type ContextReport } from "./contexts";
+import { collectTargetSize, type TargetSizeReport } from "./target-size";
+import { collectReducedMotion, type ReducedMotionReport } from "./reduced-motion";
+import { collectLiveRegions, type LiveRegionsReport } from "./live-regions";
+import type { AuditsReport } from "./audits";
 import { buildFixFirst, buildSummary, computeScore, severityOrder } from "./derive";
 import { withBudget } from "./budget";
 import { installNetworkGuard } from "./ssrf";
@@ -231,11 +235,13 @@ export type ScanOptions = {
   screenshot?: boolean;
   keyboard?: boolean;
   contexts?: boolean;
+  /** Our own detection engine: target size, reduced motion, live regions. */
+  audits?: boolean;
   verifyFixes?: boolean;
   /**
-   * Aborta requisições do browser pra endereços privados/reservados, inclusive
-   * as que chegam via redirect. Ligado no caminho público (rotas de API); fica
-   * desligado por padrão pra que testes/uso interno possam mirar 127.0.0.1.
+   * Aborts browser requests to private/reserved addresses, including those that
+   * arrive via redirect. Enabled on the public path (API routes); left off by
+   * default so that tests/internal use can target 127.0.0.1.
    */
   blockPrivateHosts?: boolean;
 };
@@ -245,6 +251,7 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
     screenshot: doScreenshot = true,
     keyboard: doKeyboard = true,
     contexts: doContexts = true,
+    audits: doAudits = true,
     verifyFixes: doVerify = true,
     blockPrivateHosts = false,
   } = opts;
@@ -495,6 +502,35 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
       manualReview: axe.incomplete.length,
     };
 
+    let audits: AuditsReport | undefined;
+    if (doAudits) {
+      audits = {};
+
+      const targetSize = await withBudget<TargetSizeReport | undefined>(
+        () => collectTargetSize(page),
+        remainingMs(),
+        undefined,
+      );
+      if (targetSize.timedOut) partial = true;
+      else audits.targetSize = targetSize.value;
+
+      const reducedMotion = await withBudget<ReducedMotionReport | undefined>(
+        () => collectReducedMotion(page),
+        remainingMs(),
+        undefined,
+      );
+      if (reducedMotion.timedOut) partial = true;
+      else audits.reducedMotion = reducedMotion.value;
+
+      const liveRegions = await withBudget<LiveRegionsReport | undefined>(
+        () => collectLiveRegions(page),
+        remainingMs(),
+        undefined,
+      );
+      if (liveRegions.timedOut) partial = true;
+      else audits.liveRegions = liveRegions.value;
+    }
+
     let keyboard: KeyboardReport | undefined;
     if (doKeyboard) {
       const { value, timedOut } = await withBudget<KeyboardReport | undefined>(
@@ -561,6 +597,7 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
       markers,
       keyboard,
       contexts,
+      audits,
       fixFirst: buildFixFirst(violations),
       partial,
     };

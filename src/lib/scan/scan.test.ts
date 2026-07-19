@@ -40,6 +40,32 @@ const PAGES: Record<string, { status?: number; html: string }> = {
     status: 404,
     html: `<!doctype html><html lang="en"><head><title>Gone</title></head><body>not found</body></html>`,
   },
+  "/audits": {
+    html: `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Audits fixture</title>
+    <style>
+      @keyframes spin { to { transform: rotate(360deg); } }
+      #spinner { width: 40px; height: 40px; animation: spin 1s linear infinite; }
+      .tiny { width: 16px; height: 16px; padding: 0; border: 0; margin: 0; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Audits fixture</h1>
+      <div id="spinner" aria-label="Loading"></div>
+      <div>
+        <button class="tiny" aria-label="one">1</button
+        ><button class="tiny" aria-label="two">2</button>
+      </div>
+      <div role="status" aria-live="polite" style="display:none">hidden status</div>
+    </main>
+  </body>
+</html>`,
+  },
 };
 
 let server: Server;
@@ -68,9 +94,9 @@ afterAll(async () => {
   );
 });
 
-describe("runScan (integração — browser real)", () => {
+describe("runScan (integration — real browser)", () => {
   it(
-    "detecta violações conhecidas e comprova fixes re-rodando o axe no DOM",
+    "detects known violations and proves fixes by re-running axe on the DOM",
     async () => {
       const result = await runScan(`${base}/broken`, {
         screenshot: true,
@@ -96,7 +122,7 @@ describe("runScan (integração — browser real)", () => {
   );
 
   it(
-    "aborta com mensagem de HTTP quando a página responde 4xx",
+    "aborts with an HTTP message when the page responds 4xx",
     async () => {
       await expect(runScan(`${base}/gone`)).rejects.toThrow(/HTTP 404/);
     },
@@ -104,16 +130,45 @@ describe("runScan (integração — browser real)", () => {
   );
 
   it(
-    "página acessível não gera violação de WCAG e pontua alto",
+    "an accessible page produces no WCAG violation and scores high",
     async () => {
       const result = await runScan(`${base}/clean`, {
         screenshot: false,
         keyboard: false,
         contexts: false,
+        audits: false,
         verifyFixes: false,
       });
       expect(result.counts.critical).toBe(0);
       expect(result.score).toBeGreaterThan(90);
+    },
+    60_000,
+  );
+
+  it(
+    "own detection engine flags what axe misses (target size, motion, live region)",
+    async () => {
+      const result = await runScan(`${base}/audits`, {
+        screenshot: false,
+        keyboard: false,
+        contexts: false,
+        audits: true,
+        verifyFixes: false,
+      });
+
+      const a = result.audits;
+      expect(a).toBeDefined();
+
+      const target = a?.targetSize?.findings.find((f) => f.id === "target-size");
+      expect(target?.count).toBe(2);
+
+      const motion = a?.reducedMotion?.findings.find((f) => f.id === "reduced-motion");
+      expect(motion?.selectors).toContain("#spinner");
+
+      const live = a?.liveRegions?.findings.find((f) => f.id === "live-region-hidden");
+      expect(live?.count).toBe(1);
+
+      expect(typeof result.score).toBe("number");
     },
     60_000,
   );

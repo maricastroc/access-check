@@ -31,7 +31,7 @@ function impactFromSeverity(s: Severity): "High" | "Medium" | "Low" {
   return "Low";
 }
 
-/** Top issues ordenadas por severidade (e nº de ocorrências) pro bloco "Fix First". */
+/** Top issues ordered by severity (and number of occurrences) for the "Fix First" block. */
 export function buildFixFirst(violations: ScanViolation[]) {
   const ranked = [...violations].sort((a, b) => {
     const sa = severityOrder.indexOf(a.severity);

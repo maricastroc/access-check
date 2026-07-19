@@ -25,7 +25,7 @@ function decodeEntities(s: string): string {
     .replace(/&#0*39;|&apos;/g, "'");
 }
 
-/** Extrai os valores de <loc> de um sitemap (ou sitemap index). */
+/** Extracts the <loc> values from a sitemap (or sitemap index). */
 export function parseLocs(xml: string): string[] {
   const out: string[] = [];
   const re = /<loc>\s*([^<\s]+)\s*<\/loc>/gi;
@@ -37,7 +37,7 @@ export function parseLocs(xml: string): string[] {
   return out;
 }
 
-/** Extrai os href de <a> de um HTML, resolvendo relativos contra baseUrl. */
+/** Extracts the href of <a> tags from HTML, resolving relative ones against baseUrl. */
 export function extractLinks(html: string, baseUrl: string): string[] {
   const out: string[] = [];
   const re = /<a\b[^>]*?\bhref\s*=\s*("([^"]*)"|'([^']*)'|([^\s"'>]+))/gi;
@@ -69,7 +69,7 @@ export function canonicalize(u: string): string | null {
   }
 }
 
-/** Filtra pra páginas HTML do mesmo origin, canonizadas e sem duplicatas. */
+/** Filters to same-origin HTML pages, canonicalized and deduplicated. */
 export function sameOriginPages(urls: string[], origin: string): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
@@ -91,7 +91,7 @@ export function sameOriginPages(urls: string[], origin: string): string[] {
   return out;
 }
 
-/** A raiz sempre entra primeiro; depois as descobertas, sem repetir, até `cap`. */
+/** The root always comes first; then the discovered ones, without repeats, up to `cap`. */
 export function selectCrawlUrls(root: string, discovered: string[], cap = MAX_PAGES): string[] {
   const rootC = canonicalize(root) ?? root;
   const seen = new Set<string>();
@@ -109,8 +109,6 @@ async function fetchText(url: string, timeoutMs = FETCH_TIMEOUT_MS): Promise<str
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
-    // Segue redirects manualmente pra revalidar cada salto: sem isso um alvo
-    // público poderia redirecionar o fetch pra infra interna (SSRF).
     let current = url;
     for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
       try {
@@ -171,8 +169,8 @@ async function fromSitemap(origin: string, cap: number): Promise<string[]> {
 }
 
 /**
- * Descobre até `cap` páginas HTML do mesmo site, a partir da raiz. Sempre
- * retorna ao menos [raiz] — mesmo se a rede/descoberta falhar.
+ * Discovers up to `cap` HTML pages from the same site, starting from the root.
+ * Always returns at least [root] — even if the network/discovery fails.
  */
 export async function discoverUrls(rootInput: string, cap = MAX_PAGES): Promise<string[]> {
   const root = normalizeRoot(rootInput);

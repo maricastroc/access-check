@@ -28,44 +28,44 @@ const violation = (opts: {
 const result = (violations: ScanViolation[]) => ({ violations }) as unknown as ScanResult;
 
 describe("verifyStats", () => {
-  it("página sem violações não tem nada a verificar", () => {
+  it("a page with no violations has nothing to verify", () => {
     expect(verifyStats(result([]))).toEqual({ verified: 0, checked: 0 });
   });
 
-  it("um fix verified (sem grupos) conta em verified e em checked", () => {
+  it("a verified fix (without groups) counts in verified and in checked", () => {
     expect(verifyStats(result([violation({ verification: "verified" })]))).toEqual({
       verified: 1,
       checked: 1,
     });
   });
 
-  it("um fix failed conta em checked mas não em verified", () => {
+  it("a failed fix counts in checked but not in verified", () => {
     expect(verifyStats(result([violation({ verification: "failed" })]))).toEqual({
       verified: 0,
       checked: 1,
     });
   });
 
-  it("fixes unchecked e sem verification são ignorados", () => {
+  it("unchecked fixes and those without verification are ignored", () => {
     const stats = verifyStats(result([violation({ verification: "unchecked" }), violation({})]));
     expect(stats).toEqual({ verified: 0, checked: 0 });
   });
 
-  it("quando há fixGroups, usa os grupos e ignora o verification do topo", () => {
+  it("when there are fixGroups, uses the groups and ignores the top-level verification", () => {
     const stats = verifyStats(
       result([violation({ verification: "verified", groups: ["failed", "failed"] })]),
     );
     expect(stats).toEqual({ verified: 0, checked: 2 });
   });
 
-  it("conta cada grupo do fixGroups pelo seu próprio resultado", () => {
+  it("counts each fixGroups group by its own result", () => {
     const stats = verifyStats(
       result([violation({ groups: ["verified", "verified", "failed", "unchecked"] })]),
     );
     expect(stats).toEqual({ verified: 2, checked: 3 });
   });
 
-  it("agrega os resultados entre várias violações", () => {
+  it("aggregates the results across several violations", () => {
     const stats = verifyStats(
       result([
         violation({ verification: "verified" }),

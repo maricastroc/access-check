@@ -3,7 +3,7 @@ import { runScan, normalizeUrl } from "@/lib/scan/scan";
 import type { ScanResult } from "@/lib/scan/types";
 import { auth } from "@/auth";
 import { saveScan } from "@/lib/scans";
-import { redis, ratelimit } from "@/lib/redis";
+import { redis, ratelimit, rateLimitMissingInProd } from "@/lib/redis";
 import { assertPublicUrl, BlockedUrlError } from "@/lib/scan/ssrf";
 
 export const runtime = "nodejs";
@@ -23,6 +23,13 @@ export async function POST(req: Request) {
 
   if (!body.url || typeof body.url !== "string") {
     return NextResponse.json({ error: "Missing 'url'." }, { status: 400 });
+  }
+
+  if (rateLimitMissingInProd()) {
+    return NextResponse.json(
+      { error: "Rate limiting is unavailable right now. Please try again later." },
+      { status: 503 },
+    );
   }
 
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";

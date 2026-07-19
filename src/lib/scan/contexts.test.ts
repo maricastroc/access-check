@@ -12,7 +12,7 @@ const rule = (over: Partial<RawRule> = {}): RawRule => ({
 });
 
 describe("toContextIssue", () => {
-  it("mapeia impact→severity, tags→critério e trunca seletores", () => {
+  it("maps impact→severity, tags→criterion and truncates selectors", () => {
     const issue = toContextIssue(rule());
     expect(issue.severity).toBe("serious");
     expect(issue.criterion).toBe("WCAG 2.5.8 · Target Size (Minimum)");
@@ -20,7 +20,7 @@ describe("toContextIssue", () => {
     expect(issue.selectors).toHaveLength(5);
   });
 
-  it("cai pra 'minor' quando o impact é nulo e pro id quando não há critério", () => {
+  it("falls back to 'minor' when impact is null and to the id when there is no criterion", () => {
     const issue = toContextIssue(rule({ impact: null, tags: ["cat.foo"], id: "custom" }));
     expect(issue.severity).toBe("minor");
     expect(issue.criterion).toBe("custom");
@@ -28,7 +28,7 @@ describe("toContextIssue", () => {
 });
 
 describe("newIssues", () => {
-  it("mantém só as regras que não estão na baseline do desktop", () => {
+  it("keeps only the rules that are not in the desktop baseline", () => {
     const baseline = new Set(["color-contrast", "image-alt"]);
     const rules = [
       rule({ id: "color-contrast" }),
@@ -39,7 +39,7 @@ describe("newIssues", () => {
     expect(out.map((i) => i.id)).toEqual(["target-size", "meta-viewport"]);
   });
 
-  it("baseline vazia mantém tudo; nenhuma regra mantém nada", () => {
+  it("empty baseline keeps everything; no rules keeps nothing", () => {
     expect(newIssues(new Set(), [rule({ id: "a" }), rule({ id: "b" })])).toHaveLength(2);
     expect(newIssues(new Set(["a"]), [])).toHaveLength(0);
   });

@@ -3,11 +3,11 @@ import { isIP } from "node:net";
 import type { BrowserContext } from "playwright-core";
 
 /**
- * Guarda anti-SSRF. Qualquer URL que o usuário manda pra ser escaneada passa
- * por aqui antes de virar uma requisição de rede: o alvo é uma ferramenta
- * pública "escaneie qualquer URL", então sem isso um único POST aponta o
- * Chromium (ou o fetch de descoberta) pra `localhost`, faixas privadas ou o
- * endpoint de metadata da cloud (169.254.169.254).
+ * Anti-SSRF guard. Every URL the user submits to be scanned passes through
+ * here before it becomes a network request: the target is a public
+ * "scan any URL" tool, so without this a single POST could point the
+ * Chromium (or the discovery fetch) at `localhost`, private ranges, or the
+ * cloud metadata endpoint (169.254.169.254).
  */
 export class BlockedUrlError extends Error {
   constructor(
@@ -40,35 +40,32 @@ function inV4Range(long: number, cidr: string): boolean {
   return (long & mask) === (baseLong & mask);
 }
 
-// Faixas IPv4 que nunca devem ser alcançadas por uma requisição externa.
 const V4_BLOCKED = [
-  "0.0.0.0/8", // "this host"
-  "10.0.0.0/8", // privada
-  "100.64.0.0/10", // CGNAT
-  "127.0.0.0/8", // loopback
-  "169.254.0.0/16", // link-local (inclui a metadata da cloud)
-  "172.16.0.0/12", // privada
-  "192.0.0.0/24", // IETF protocol assignments
-  "192.0.2.0/24", // TEST-NET-1
-  "192.168.0.0/16", // privada
-  "198.18.0.0/15", // benchmarking
-  "198.51.100.0/24", // TEST-NET-2
-  "203.0.113.0/24", // TEST-NET-3
-  "224.0.0.0/4", // multicast
-  "240.0.0.0/4", // reservada (inclui 255.255.255.255)
+  "0.0.0.0/8",
+  "10.0.0.0/8",
+  "100.64.0.0/10",
+  "127.0.0.0/8",
+  "169.254.0.0/16",
+  "172.16.0.0/12",
+  "192.0.0.0/24",
+  "192.0.2.0/24",
+  "192.168.0.0/16",
+  "198.18.0.0/15",
+  "198.51.100.0/24",
+  "203.0.113.0/24",
+  "224.0.0.0/4",
+  "240.0.0.0/4",
 ];
 
 function isBlockedIpv4(ip: string): boolean {
   const long = ipv4ToLong(ip);
-  if (long === null) return true; // não parseou → bloqueia por segurança
+  if (long === null) return true;
   return V4_BLOCKED.some((c) => inV4Range(long, c));
 }
 
-/** Expande um endereço IPv6 (com `::` e cauda IPv4 embutida) em 16 bytes. */
 function ipv6ToBytes(input: string): number[] | null {
-  let ip = input.split("%")[0]; // descarta zone id (fe80::1%eth0)
+  let ip = input.split("%")[0];
 
-  // Cauda IPv4 embutida (::ffff:1.2.3.4) → converte pra dois grupos hex.
   const lastColon = ip.lastIndexOf(":");
   const tail = ip.slice(lastColon + 1);
   if (tail.includes(".")) {
@@ -106,10 +103,9 @@ function isBlockedIpv6(ip: string): boolean {
   const b = ipv6ToBytes(ip);
   if (!b) return true;
 
-  if (b.every((x) => x === 0)) return true; // :: (unspecified)
-  if (b.slice(0, 15).every((x) => x === 0) && b[15] === 1) return true; // ::1 (loopback)
+  if (b.every((x) => x === 0)) return true;
+  if (b.slice(0, 15).every((x) => x === 0) && b[15] === 1) return true;
 
-  // IPv4-mapped (::ffff:0:0/96) e NAT64 (64:ff9b::/96): checa o IPv4 embutido.
   const isMapped = b.slice(0, 10).every((x) => x === 0) && b[10] === 0xff && b[11] === 0xff;
   const isNat64 =
     b[0] === 0x00 &&
@@ -119,20 +115,19 @@ function isBlockedIpv6(ip: string): boolean {
     b.slice(4, 12).every((x) => x === 0);
   if (isMapped || isNat64) return isBlockedIpv4(`${b[12]}.${b[13]}.${b[14]}.${b[15]}`);
 
-  if ((b[0] & 0xfe) === 0xfc) return true; // fc00::/7 (unique local)
-  if (b[0] === 0xfe && (b[1] & 0xc0) === 0x80) return true; // fe80::/10 (link-local)
-  if (b[0] === 0xff) return true; // ff00::/8 (multicast)
-  if (b[0] === 0x20 && b[1] === 0x01 && b[2] === 0x0d && b[3] === 0xb8) return true; // 2001:db8::/32
+  if ((b[0] & 0xfe) === 0xfc) return true;
+  if (b[0] === 0xfe && (b[1] & 0xc0) === 0x80) return true;
+  if (b[0] === 0xff) return true;
+  if (b[0] === 0x20 && b[1] === 0x01 && b[2] === 0x0d && b[3] === 0xb8) return true;
 
   return false;
 }
 
-/** Verdadeiro se `ip` é loopback, privado, link-local ou reservado. */
 export function isBlockedIp(ip: string): boolean {
   const kind = isIP(ip);
   if (kind === 4) return isBlockedIpv4(ip);
   if (kind === 6) return isBlockedIpv6(ip);
-  return true; // não é um IP válido → não confia
+  return true;
 }
 
 function stripBrackets(host: string): string {
@@ -140,9 +135,9 @@ function stripBrackets(host: string): string {
 }
 
 /**
- * Lança `BlockedUrlError` se a URL não for http(s) pública. Resolve o hostname
- * e bloqueia se *qualquer* endereço retornado cair numa faixa reservada — isso
- * cobre o caso de um domínio com vários registros A onde só um é interno.
+ * Throws `BlockedUrlError` if the URL isn't a public http(s) one. Resolves the
+ * hostname and blocks if *any* returned address falls in a reserved range —
+ * this covers a domain with several A records where only one is internal.
  */
 export async function assertPublicUrl(raw: string): Promise<void> {
   let url: URL;
@@ -178,11 +173,11 @@ export async function assertPublicUrl(raw: string): Promise<void> {
 }
 
 /**
- * Defesa em profundidade pro caminho do browser: intercepta as requisições do
- * Chromium e aborta as que apontam pra endereço reservado. Pega o vetor que a
- * checagem só da URL inicial não pega — um host público que faz 302 pra
- * `http://169.254.169.254/`. Navegações passam pela resolução DNS completa;
- * subrecursos levam só a checagem barata de IP literal.
+ * Defense in depth for the browser path: intercepts Chromium's requests and
+ * aborts the ones pointing at a reserved address. Catches the vector the
+ * initial URL-only check misses — a public host that 302s to
+ * `http://169.254.169.254/`. Navigations go through full DNS resolution;
+ * subresources get only the cheap literal-IP check.
  */
 export async function installNetworkGuard(context: BrowserContext): Promise<void> {
   await context.route("**/*", async (route) => {

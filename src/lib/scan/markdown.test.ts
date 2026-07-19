@@ -42,20 +42,20 @@ const result = (over: Partial<ScanResult> = {}): ScanResult => ({
 });
 
 describe("buildMarkdown", () => {
-  it("inclui cabeçalho, score e resumo", () => {
+  it("includes header, score and summary", () => {
     const md = buildMarkdown(result());
     expect(md).toContain("# Accessibility report — Example");
     expect(md).toContain("**Score:** 78 / 100");
     expect(md).toContain("A couple of serious issues remain.");
   });
 
-  it("monta a tabela de contagens", () => {
+  it("builds the counts table", () => {
     const md = buildMarkdown(result());
     expect(md).toContain("| Critical | Serious | Moderate | Minor | Passed |");
     expect(md).toContain("| 0 | 1 | 0 | 0 | 12 |");
   });
 
-  it("emite grupos de fix com code, contagem e verificação", () => {
+  it("emits fix groups with code, count and verification", () => {
     const md = buildMarkdown(
       result({
         violations: [
@@ -78,22 +78,22 @@ describe("buildMarkdown", () => {
     expect(md).toContain("Verified");
   });
 
-  it("cai pro fix simples quando não há grupos", () => {
+  it("falls back to the simple fix when there are no groups", () => {
     expect(buildMarkdown(result())).toContain("Use #1a1a1a");
   });
 
-  it("celebra quando não há violações", () => {
+  it("celebrates when there are no violations", () => {
     const md = buildMarkdown(result({ violations: [] }));
     expect(md).toContain("No automated violations detected");
   });
 
-  it("nunca deixa 3+ quebras de linha seguidas", () => {
+  it("never leaves 3+ consecutive line breaks", () => {
     expect(buildMarkdown(result())).not.toMatch(/\n{3,}/);
   });
 });
 
 describe("markdownFilename", () => {
-  it("deriva um slug seguro do host", () => {
+  it("derives a safe slug from the host", () => {
     expect(markdownFilename(result({ finalUrl: "https://www.Example.com/path" }))).toBe(
       "accesscheck-www-example-com.md",
     );

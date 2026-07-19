@@ -34,7 +34,7 @@ function fixGroupLines(g: FixGroup): string[] {
   return lines;
 }
 
-/** Gera um relatório do scan em Markdown, pronto pra baixar/colar. */
+/** Generates a Markdown report of the scan, ready to download/paste. */
 export function buildMarkdown(result: ScanResult): string {
   const { counts } = result;
   const out: string[] = [];
@@ -210,7 +210,7 @@ export function buildMarkdown(result: ScanResult): string {
   );
 }
 
-/** Nome de arquivo seguro derivado do host: "example.com" → "accesscheck-example-com.md". */
+/** Safe filename derived from the host: "example.com" → "accesscheck-example-com.md". */
 export function markdownFilename(result: ScanResult): string {
   const slug = host(result.finalUrl)
     .toLowerCase()

@@ -14,25 +14,25 @@ const v = (severity: Severity, nodes = 1, id = "rule"): ScanViolation => ({
 });
 
 describe("computeScore", () => {
-  it("página sem violações pontua 100", () => {
+  it("a page with no violations scores 100", () => {
     expect(computeScore([])).toBe(100);
   });
 
-  it("violação crítica derruba o score", () => {
+  it("a critical violation drops the score", () => {
     expect(computeScore([v("critical", 3)])).toBeLessThan(100);
   });
 
-  it("mais ocorrências nunca aumentam o score", () => {
+  it("more occurrences never increase the score", () => {
     const um = computeScore([v("serious", 1)]);
     const muitos = computeScore([v("serious", 5)]);
     expect(muitos).toBeLessThanOrEqual(um);
   });
 
-  it("severidade maior penaliza mais que menor", () => {
+  it("higher severity penalizes more than lower", () => {
     expect(computeScore([v("critical")])).toBeLessThan(computeScore([v("minor")]));
   });
 
-  it("nunca sai do intervalo 0–100", () => {
+  it("never leaves the 0–100 range", () => {
     const muitas = Array.from({ length: 50 }, () => v("critical", 5));
     const s = computeScore(muitas);
     expect(s).toBeGreaterThanOrEqual(0);
@@ -41,7 +41,7 @@ describe("computeScore", () => {
 });
 
 describe("buildFixFirst", () => {
-  it("ordena por severidade e devolve no máximo 4, numerados", () => {
+  it("sorts by severity and returns at most 4, numbered", () => {
     const top = buildFixFirst([v("minor"), v("critical"), v("moderate"), v("serious"), v("minor")]);
     expect(top).toHaveLength(4);
     expect(top[0].impact).toBe("High");
@@ -49,13 +49,13 @@ describe("buildFixFirst", () => {
     expect(top[3].n).toBe("04");
   });
 
-  it("desempata por número de ocorrências", () => {
+  it("breaks ties by number of occurrences", () => {
     const [first] = buildFixFirst([v("serious", 2, "a"), v("serious", 9, "b")]);
     expect(first.title).toBe("serious issue");
     expect(first.effort).toBeDefined();
   });
 
-  it("effort é qualitativo, nunca tempo cravado (sem falsa precisão)", () => {
+  it("effort is qualitative, never a fixed time (no false precision)", () => {
     const items = buildFixFirst([
       v("critical", 1, "color-contrast"),
       v("serious", 1, "label"),
@@ -69,14 +69,14 @@ describe("buildFixFirst", () => {
 });
 
 describe("buildSummary", () => {
-  it("destaca críticas quando há", () => {
+  it("highlights criticals when there are any", () => {
     expect(buildSummary({ critical: 2, serious: 0, moderate: 0 })).toMatch(/critical/);
   });
-  it("cai pra serious, depois moderate", () => {
+  it("falls back to serious, then moderate", () => {
     expect(buildSummary({ critical: 0, serious: 1, moderate: 0 })).toMatch(/serious/);
     expect(buildSummary({ critical: 0, serious: 0, moderate: 3 })).toMatch(/moderate/i);
   });
-  it("celebra quando está tudo limpo", () => {
+  it("celebrates when everything is clean", () => {
     expect(buildSummary({ critical: 0, serious: 0, moderate: 0 })).toMatch(/Excellent/i);
   });
 });

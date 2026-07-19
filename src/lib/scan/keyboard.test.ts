@@ -35,34 +35,34 @@ const rawBase: RawKeyboard = {
 };
 
 describe("readingOrderInversions", () => {
-  it("ordem top-to-bottom limpa não gera inversões", () => {
+  it("a clean top-to-bottom order produces no inversions", () => {
     const stops = [stop(1, 10, 10), stop(2, 10, 30), stop(3, 10, 50)];
     expect(readingOrderInversions(stops).count).toBe(0);
   });
 
-  it("acusa salto pra uma linha acima", () => {
+  it("flags a jump to a line above", () => {
     const stops = [stop(1, 10, 50), stop(2, 10, 10)];
     const inv = readingOrderInversions(stops);
     expect(inv.count).toBe(1);
     expect(inv.selectors).toContain("#el-2");
   });
 
-  it("acusa volta pra esquerda na mesma linha", () => {
+  it("flags a move back to the left on the same line", () => {
     const stops = [stop(1, 60, 20), stop(2, 10, 20)];
     expect(readingOrderInversions(stops).count).toBe(1);
   });
 
-  it("micro-desalinhamento dentro da banda não conta", () => {
+  it("micro-misalignment within the band does not count", () => {
     const stops = [stop(1, 30, 20), stop(2, 28, 19)];
     expect(readingOrderInversions(stops).count).toBe(0);
   });
 
-  it("ignora paradas fora da tela (posição null)", () => {
+  it("ignores off-screen stops (null position)", () => {
     const stops = [stop(1, 10, 10), stop(2, null, null), stop(3, 10, 40)];
     expect(readingOrderInversions(stops).count).toBe(0);
   });
 
-  it("não conta o mesmo seletor duas vezes", () => {
+  it("does not count the same selector twice", () => {
     const stops = [
       stop(1, 60, 40),
       stop(2, 10, 10, { selector: "#dup" }),
@@ -75,13 +75,13 @@ describe("readingOrderInversions", () => {
 });
 
 describe("buildKeyboardReport", () => {
-  it("sem sintomas → nenhum finding", () => {
+  it("no symptoms → no findings", () => {
     const r = buildKeyboardReport({ ...rawBase, focusPath: [stop(1, 10, 10), stop(2, 10, 30)] });
     expect(r.findings).toHaveLength(0);
     expect(r.totalStops).toBe(2);
   });
 
-  it("armadilha de teclado vira finding crítico", () => {
+  it("a keyboard trap becomes a critical finding", () => {
     const r = buildKeyboardReport({
       ...rawBase,
       trapSelector: "#modal",
@@ -92,7 +92,7 @@ describe("buildKeyboardReport", () => {
     expect(trap?.selectors).toContain("#modal");
   });
 
-  it("foco invisível conta só as paradas sem indicador", () => {
+  it("invisible focus counts only the stops without an indicator", () => {
     const focusPath = [
       stop(1, 10, 10, { focusVisible: true }),
       stop(2, 10, 30, { focusVisible: false, selector: "#hidden" }),
@@ -104,7 +104,7 @@ describe("buildKeyboardReport", () => {
     expect(f?.selectors).toEqual(["#hidden", "#hidden2"]);
   });
 
-  it("controle inalcançável só reporta com ciclo completo e sem truncar", () => {
+  it("an unreachable control is only reported with a complete cycle and no truncation", () => {
     const withTruncation = buildKeyboardReport({
       ...rawBase,
       unreachable: ["#ghost"],
@@ -122,14 +122,14 @@ describe("buildKeyboardReport", () => {
     expect(complete.findings.find((f) => f.id === "unreachable-control")?.severity).toBe("serious");
   });
 
-  it("tabindex positivo vira finding moderado", () => {
+  it("positive tabindex becomes a moderate finding", () => {
     const r = buildKeyboardReport({ ...rawBase, positiveTabindex: ["#a", "#b"] });
     const f = r.findings.find((x) => x.id === "positive-tabindex");
     expect(f?.count).toBe(2);
     expect(f?.severity).toBe("moderate");
   });
 
-  it("ordena findings por severidade (crítico primeiro)", () => {
+  it("sorts findings by severity (critical first)", () => {
     const r = buildKeyboardReport({
       ...rawBase,
       trapSelector: "#trap",
@@ -146,7 +146,7 @@ describe("buildKeyboardReport", () => {
     }
   });
 
-  it("propaga contagens de alcance", () => {
+  it("propagates reachability counts", () => {
     const r = buildKeyboardReport({
       ...rawBase,
       totalInteractive: 12,

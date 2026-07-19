@@ -10,6 +10,7 @@ import { FixFirst } from "./fix-first";
 import { ViolationsList } from "./violations-list";
 import { KeyboardReport } from "./keyboard-report";
 import { ContextsReport } from "./contexts-report";
+import { TargetSizeReport, ReducedMotionReport, LiveRegionsReport } from "./audit-report";
 
 export function ReportPanel({
   result,
@@ -50,6 +51,9 @@ export function ReportPanel({
       <ViolationsList result={result} filter={filter} setFilter={setFilter} />
       <KeyboardReport result={result} />
       <ContextsReport result={result} />
+      <TargetSizeReport result={result} />
+      <ReducedMotionReport result={result} />
+      <LiveRegionsReport result={result} />
     </section>
   );
 }
