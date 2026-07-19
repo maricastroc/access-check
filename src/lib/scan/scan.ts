@@ -316,9 +316,7 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
     }
 
     await page.waitForLoadState("networkidle", { timeout: 4_000 }).catch(() => {});
-    // Scroll through the page to trigger lazy-loaded images/widgets before we
-    // screenshot and audit — this doubles as the settle wait, so we only need a
-    // short final pause afterwards.
+
     await primeLazyContent(page);
     await page.waitForTimeout(500);
 
