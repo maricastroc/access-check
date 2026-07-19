@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClock, faSitemap, faArrowRotateRight } from "@fortawesome/free-solid-svg-icons";
-import type { ScanResult } from "@/lib/scan/types";
+import type { ScanPhase, ScanResult } from "@/lib/scan/types";
 import { Button } from "@/components/ui";
 import { type SimKey } from "./data";
 import { DEFAULT_URL, type FilterKey, type Status } from "./shared";
@@ -33,6 +33,7 @@ export function ResultsView({
   const [url, setUrl] = useState(start);
   const [status, setStatus] = useState<Status>(initialResult ? "done" : "loading");
   const [result, setResult] = useState<ScanResult | null>(initialResult);
+  const [phase, setPhase] = useState<ScanPhase>("preparing");
   const [error, setError] = useState("");
   const [fromCrawl, setFromCrawl] = useState(Boolean(initialResult));
 
@@ -42,16 +43,52 @@ export function ResultsView({
   const [filter, setFilter] = useState<FilterKey>("all");
 
   const runFetch = useCallback(async (value: string) => {
+    setPhase("preparing");
     try {
       const res = await fetch("/api/scan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: value }),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Scan failed.");
-      setResult(json as ScanResult);
-      setUrl((json as ScanResult).finalUrl || value);
+
+      // Pre-scan failures (rate limit, SSRF, bad input) come back as plain JSON.
+      if (!res.ok || !res.body) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json.error || "Scan failed.");
+      }
+
+      // Otherwise it's a newline-delimited stream of progress + the result.
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let finalResult: ScanResult | null = null;
+
+      readLoop: for (;;) {
+        const { done, value: chunk } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(chunk, { stream: true });
+
+        let nl: number;
+        while ((nl = buffer.indexOf("\n")) >= 0) {
+          const line = buffer.slice(0, nl).trim();
+          buffer = buffer.slice(nl + 1);
+          if (!line) continue;
+          const evt = JSON.parse(line) as
+            | { type: "phase"; phase: ScanPhase }
+            | { type: "result"; result: ScanResult }
+            | { type: "error"; error: string };
+          if (evt.type === "phase") setPhase(evt.phase);
+          else if (evt.type === "error") throw new Error(evt.error);
+          else if (evt.type === "result") {
+            finalResult = evt.result;
+            break readLoop;
+          }
+        }
+      }
+
+      if (!finalResult) throw new Error("Scan failed.");
+      setResult(finalResult);
+      setUrl(finalResult.finalUrl || value);
       setFromCrawl(false);
       setStatus("done");
     } catch (e) {
@@ -92,7 +129,7 @@ export function ResultsView({
       />
 
       <main id="main">
-        {status === "loading" && <ScanningState url={url} />}
+        {status === "loading" && <ScanningState url={url} phase={phase} />}
 
         {status === "error" && (
           <ErrorState url={input} message={error} onChange={setInput} onRetry={() => scan(input)} />

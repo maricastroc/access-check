@@ -2,6 +2,7 @@ import { createServer, type Server } from "http";
 import type { AddressInfo } from "net";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { runScan } from "./scan";
+import { closeSharedBrowser } from "./browser";
 
 const PAGES: Record<string, { status?: number; html: string }> = {
   "/broken": {
@@ -89,6 +90,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  await closeSharedBrowser();
   await new Promise<void>((resolve, reject) =>
     server.close((err) => (err ? reject(err) : resolve())),
   );
@@ -117,6 +119,23 @@ describe("runScan (integration — real browser)", () => {
 
       const verified = result.violations.filter((v) => v.verification === "verified");
       expect(verified.length).toBeGreaterThan(0);
+    },
+    60_000,
+  );
+
+  it(
+    "emits progress phases in order for streaming",
+    async () => {
+      const phases: string[] = [];
+      await runScan(`${base}/clean`, {
+        screenshot: false,
+        keyboard: false,
+        contexts: false,
+        audits: false,
+        verifyFixes: false,
+        onPhase: (p) => phases.push(p),
+      });
+      expect(phases).toEqual(["preparing", "loading", "auditing", "processing", "finalizing"]);
     },
     60_000,
   );

@@ -1,6 +1,6 @@
 import path from "path";
 import type { Page } from "playwright-core";
-import { getBrowserExecutor } from "./browser";
+import { acquireBrowser } from "./browser";
 import { criterionFromTags } from "./wcag";
 import {
   fixAriaAllowedAttr,
@@ -30,6 +30,7 @@ import type {
   FixGroup,
   FixVerification,
   ScanMarker,
+  ScanPhase,
   ScanResult,
   ScanViolation,
   Severity,
@@ -40,6 +41,9 @@ const MAX_MARKERS = 6;
 const MAX_VERIFY_OPS = 40;
 
 const SCAN_DEADLINE_MS = 50_000;
+
+/** Bounded settle after priming lazy content — replaces the old networkidle wait. */
+const SETTLE_MS = 700;
 
 const AXE_PATH = path.join(process.cwd(), "node_modules/axe-core/axe.min.js");
 
@@ -274,6 +278,8 @@ export type ScanOptions = {
    * default so that tests/internal use can target 127.0.0.1.
    */
   blockPrivateHosts?: boolean;
+  /** Called at each real milestone so the caller can stream progress. */
+  onPhase?: (phase: ScanPhase) => void;
 };
 
 export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<ScanResult> {
@@ -284,25 +290,41 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
     audits: doAudits = true,
     verifyFixes: doVerify = true,
     blockPrivateHosts = false,
+    onPhase,
   } = opts;
   const url = normalizeUrl(rawUrl);
   const startedAt = Date.now();
   let partial = false;
   const remainingMs = () => SCAN_DEADLINE_MS - (Date.now() - startedAt);
+  const phase = (p: ScanPhase) => {
+    try {
+      onPhase?.(p);
+    } catch {
+      // A misbehaving progress listener must never break a scan.
+    }
+  };
 
-  const browser = await getBrowserExecutor().launch();
+  phase("preparing");
+  const browser = await acquireBrowser();
+  const context = await browser.newContext({
+    viewport: VIEWPORT,
+    deviceScaleFactor: 1,
+    bypassCSP: true,
+    userAgent:
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " +
+      "(KHTML, like Gecko) Chrome/124.0 Safari/537.36 AccessCheckBot/2.1",
+  });
   try {
-    const context = await browser.newContext({
-      viewport: VIEWPORT,
-      deviceScaleFactor: 1,
-      bypassCSP: true,
-      userAgent:
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " +
-        "(KHTML, like Gecko) Chrome/124.0 Safari/537.36 AccessCheckBot/2.1",
-    });
     if (blockPrivateHosts) await installNetworkGuard(context);
     const page = await context.newPage();
 
+    phase("loading");
+    // `networkidle` is deliberately NOT used: ad-heavy pages and SPAs keep
+    // connections alive (analytics beacons, WebSockets), so it almost always
+    // burns its full timeout. "load" fires once the document's own resources are
+    // in (it doesn't wait for those persistent connections) and, unlike
+    // domcontentloaded, lets client-side redirects settle before we inject axe.
+    // We then scroll to force lazy content, then a short bounded settle.
     const response = await page.goto(url, {
       waitUntil: "load",
       timeout: 30_000,
@@ -315,42 +337,61 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
       );
     }
 
-    await page.waitForLoadState("networkidle", { timeout: 4_000 }).catch(() => {});
-
     await primeLazyContent(page);
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(SETTLE_MS);
 
     const title = (await page.title()) || url;
     const finalUrl = page.url();
 
-    let screenshot: string | null = null;
-    if (doScreenshot) {
-      const screenshotBuf = await page.screenshot({
-        type: "jpeg",
-        quality: 80,
-        clip: { x: 0, y: 0, ...VIEWPORT },
-      });
-      screenshot = `data:image/jpeg;base64,${screenshotBuf.toString("base64")}`;
+    phase("auditing");
+    // Screenshot and axe touch the page independently, so capture them together
+    // instead of serializing a ~50ms screenshot in front of the audit. A late
+    // client-side redirect can destroy the execution context mid-capture; if
+    // that happens we wait for the new document and retry once.
+    const capture = async (): Promise<[string | null, AxeResults]> => {
+      const shot: Promise<string | null> = doScreenshot
+        ? page
+            .screenshot({ type: "jpeg", quality: 80, clip: { x: 0, y: 0, ...VIEWPORT } })
+            .then((buf) => `data:image/jpeg;base64,${buf.toString("base64")}`)
+        : Promise.resolve(null);
+
+      const run: Promise<AxeResults> = page.addScriptTag({ path: AXE_PATH }).then(() =>
+        page.evaluate(async () => {
+          // @ts-expect-error axe
+          return await window.axe.run(document, {
+            runOnly: {
+              type: "tag",
+              values: [
+                "wcag2a",
+                "wcag2aa",
+                "wcag21a",
+                "wcag21aa",
+                "wcag22a",
+                "wcag22aa",
+                "best-practice",
+              ],
+            },
+          });
+        }),
+      );
+
+      return Promise.all([shot, run]);
+    };
+
+    let screenshot: string | null;
+    let axe: AxeResults;
+    try {
+      [screenshot, axe] = await capture();
+    } catch (err) {
+      if (/Execution context was destroyed|because of a navigation/i.test(String(err))) {
+        await page.waitForLoadState("load", { timeout: 10_000 }).catch(() => {});
+        [screenshot, axe] = await capture();
+      } else {
+        throw err;
+      }
     }
 
-    await page.addScriptTag({ path: AXE_PATH });
-    const axe: AxeResults = await page.evaluate(async () => {
-      // @ts-expect-error axe
-      return await window.axe.run(document, {
-        runOnly: {
-          type: "tag",
-          values: [
-            "wcag2a",
-            "wcag2aa",
-            "wcag21a",
-            "wcag21aa",
-            "wcag22a",
-            "wcag22aa",
-            "best-practice",
-          ],
-        },
-      });
-    });
+    phase("processing");
 
     const wcagViolations = axe.violations.filter((v) => !v.tags.includes("best-practice"));
     const bpViolations = axe.violations.filter((v) => v.tags.includes("best-practice"));
@@ -585,6 +626,8 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
       if (timedOut) partial = true;
     }
 
+    phase("finalizing");
+
     const passed = axe.passes.map((p) => p.help);
 
     const MAX_SELECTORS = 5;
@@ -634,6 +677,7 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
       partial,
     };
   } finally {
-    await browser.close();
+    // Close only the context — the browser is shared and reused across scans.
+    await context.close().catch(() => {});
   }
 }

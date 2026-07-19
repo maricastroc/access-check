@@ -4,6 +4,12 @@ import type { AuditsReport } from "./audits";
 
 export type Severity = "critical" | "serious" | "moderate" | "minor";
 
+/**
+ * Real backend milestones emitted during a scan, in order. Streamed to the
+ * client so the loading UI reflects actual progress instead of a fake animation.
+ */
+export type ScanPhase = "preparing" | "loading" | "auditing" | "processing" | "finalizing";
+
 export type Effort = "Quick" | "Moderate" | "Involved";
 
 export type FixVerification = "verified" | "failed" | "unchecked";

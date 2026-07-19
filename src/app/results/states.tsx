@@ -1,18 +1,31 @@
 "use client";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faGlobe, faSpinner, faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
+import {
+  faCheck,
+  faGlobe,
+  faSpinner,
+  faTriangleExclamation,
+} from "@fortawesome/free-solid-svg-icons";
+import type { ScanPhase } from "@/lib/scan/types";
 
-export function ScanningState({ url }: { url: string }) {
+const STEPS: { phase: ScanPhase; label: string }[] = [
+  { phase: "preparing", label: "Preparing browser" },
+  { phase: "loading", label: "Loading page" },
+  { phase: "auditing", label: "Running audit" },
+  { phase: "processing", label: "Processing results" },
+  { phase: "finalizing", label: "Finalizing report" },
+];
+
+export function ScanningState({ url, phase }: { url: string; phase: ScanPhase }) {
+  const current = STEPS.findIndex((s) => s.phase === phase);
+
   return (
     <div
       role="status"
       aria-live="polite"
-      className="flex min-h-[70vh] flex-col items-center justify-center gap-5 px-6 text-center"
+      className="flex min-h-[70vh] flex-col items-center justify-center gap-6 px-6 text-center"
     >
-      <span className="flex size-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-500">
-        <FontAwesomeIcon icon={faSpinner} aria-hidden className="animate-spin text-xl" />
-      </span>
       <div>
         <p className="text-lg font-semibold">Auditing the page…</p>
         <p className="mt-1.5 text-sm text-muted">
@@ -20,10 +33,46 @@ export function ScanningState({ url }: { url: string }) {
           checking 50+ WCAG rules.
         </p>
       </div>
-      <div className="mt-1 flex items-center gap-2 font-mono text-xs text-faint">
-        <span className="size-1.5 animate-pulse rounded-full bg-brand-400" />
-        usually 3–15 seconds
-      </div>
+
+      <ol className="flex w-full max-w-xs flex-col gap-2.5 text-left">
+        {STEPS.map((step, i) => {
+          const state = i < current ? "done" : i === current ? "active" : "pending";
+          return (
+            <li key={step.phase} className="flex items-center gap-3">
+              <span
+                className={
+                  "flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] " +
+                  (state === "done"
+                    ? "bg-success-surface text-success-fg"
+                    : state === "active"
+                      ? "bg-brand-50 text-brand-600"
+                      : "bg-surface text-faint")
+                }
+              >
+                {state === "done" ? (
+                  <FontAwesomeIcon icon={faCheck} aria-hidden />
+                ) : state === "active" ? (
+                  <FontAwesomeIcon icon={faSpinner} aria-hidden className="animate-spin" />
+                ) : (
+                  <span className="size-1.5 rounded-full bg-faint" />
+                )}
+              </span>
+              <span
+                className={
+                  "text-sm " +
+                  (state === "pending"
+                    ? "text-faint"
+                    : state === "active"
+                      ? "font-semibold text-ink"
+                      : "text-ink-soft")
+                }
+              >
+                {step.label}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
     </div>
   );
 }

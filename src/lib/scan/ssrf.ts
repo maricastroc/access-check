@@ -1,6 +1,7 @@
 import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
 import type { BrowserContext } from "playwright-core";
+import { shouldBlockResource } from "./resource-policy";
 
 /**
  * Anti-SSRF guard. Every URL the user submits to be scanned passes through
@@ -190,6 +191,13 @@ export async function installNetworkGuard(context: BrowserContext): Promise<void
         } else {
           const host = stripBrackets(url.hostname);
           if (isIP(host) && isBlockedIp(host)) throw new BlockedUrlError();
+          // SSRF-safe: drop resources that never affect the audit (fonts,
+          // media, trackers) so the page settles faster. Navigations are never
+          // dropped here — resource policy only blocks subresource types.
+          if (shouldBlockResource(req.resourceType(), url.toString())) {
+            await route.abort("blockedbyclient");
+            return;
+          }
         }
       }
       await route.continue();
