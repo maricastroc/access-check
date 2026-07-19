@@ -18,15 +18,10 @@ class LocalPlaywrightExecutor implements BrowserExecutor {
   }
 }
 
-/** Serverless (Vercel/Lambda): compressed Chromium + playwright-core. */
 class ServerlessChromiumExecutor implements BrowserExecutor {
   async launch(): Promise<Browser> {
     const chromium = (await import("@sparticuz/chromium")).default;
     const { chromium: playwright } = await import("playwright-core");
-    // The Lambda's /dev/shm is tiny (~64MB), so Chromium's default use of it for
-    // shared memory makes heavy pages fail navigation with
-    // ERR_INSUFFICIENT_RESOURCES. Routing shared memory to /tmp and dropping the
-    // GPU rasterizer keeps memory-hungry pages from exhausting the sandbox.
     const extraArgs = ["--disable-dev-shm-usage", "--disable-gpu"];
     const args = [
       ...chromium.args,
@@ -54,11 +49,6 @@ export function getBrowserExecutor(): BrowserExecutor {
   return executor;
 }
 
-// Launching Chromium is expensive — cheap locally (~150ms) but seconds on a
-// cold serverless invocation. We keep one browser alive and hand out an
-// isolated BrowserContext per scan, so only the first scan on a warm instance
-// pays the launch. Each scan still gets a fresh context (separate cookies,
-// storage, cache), so reuse never leaks state between scans.
 let shared: Browser | null = null;
 let launching: Promise<Browser> | null = null;
 

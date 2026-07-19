@@ -141,6 +141,31 @@ describe("runScan (integration — real browser)", () => {
   );
 
   it(
+    "emits a core result before the deep passes, full result after",
+    async () => {
+      let core: Awaited<ReturnType<typeof runScan>> | undefined;
+      const full = await runScan(`${base}/clean`, {
+        screenshot: false,
+        keyboard: true,
+        contexts: false,
+        audits: true,
+        verifyFixes: false,
+        onCore: (c) => {
+          core = c;
+        },
+      });
+
+      expect(core).toBeDefined();
+      expect(core?.violations).toBeDefined();
+      expect(core?.keyboard).toBeUndefined();
+      expect(core?.audits).toBeUndefined();
+      expect(full.keyboard).toBeDefined();
+      expect(full.audits).toBeDefined();
+    },
+    60_000,
+  );
+
+  it(
     "aborts with an HTTP message when the page responds 4xx",
     async () => {
       await expect(runScan(`${base}/gone`)).rejects.toThrow(/HTTP 404/);

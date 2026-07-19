@@ -51,17 +51,23 @@ export function ResultsView({
         body: JSON.stringify({ url: value }),
       });
 
-      // Pre-scan failures (rate limit, SSRF, bad input) come back as plain JSON.
       if (!res.ok || !res.body) {
         const json = await res.json().catch(() => ({}));
         throw new Error(json.error || "Scan failed.");
       }
 
-      // Otherwise it's a newline-delimited stream of progress + the result.
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
       let finalResult: ScanResult | null = null;
+
+      const apply = (r: ScanResult) => {
+        finalResult = r;
+        setResult(r);
+        setUrl(r.finalUrl || value);
+        setFromCrawl(false);
+        setStatus("done");
+      };
 
       readLoop: for (;;) {
         const { done, value: chunk } = await reader.read();
@@ -75,22 +81,21 @@ export function ResultsView({
           if (!line) continue;
           const evt = JSON.parse(line) as
             | { type: "phase"; phase: ScanPhase }
+            | { type: "core"; result: ScanResult }
             | { type: "result"; result: ScanResult }
             | { type: "error"; error: string };
           if (evt.type === "phase") setPhase(evt.phase);
-          else if (evt.type === "error") throw new Error(evt.error);
+          else if (evt.type === "core") apply(evt.result);
           else if (evt.type === "result") {
-            finalResult = evt.result;
+            apply(evt.result);
             break readLoop;
+          } else if (evt.type === "error") {
+            if (!finalResult) throw new Error(evt.error);
           }
         }
       }
 
       if (!finalResult) throw new Error("Scan failed.");
-      setResult(finalResult);
-      setUrl(finalResult.finalUrl || value);
-      setFromCrawl(false);
-      setStatus("done");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Scan failed.");
       setStatus("error");

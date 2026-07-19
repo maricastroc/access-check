@@ -280,6 +280,12 @@ export type ScanOptions = {
   blockPrivateHosts?: boolean;
   /** Called at each real milestone so the caller can stream progress. */
   onPhase?: (phase: ScanPhase) => void;
+  /**
+   * Called with the core result (WCAG violations, score, screenshot, markers)
+   * before the deep passes run, so a streaming caller can show the report
+   * immediately and merge keyboard/responsive/own-engine checks when they land.
+   */
+  onCore?: (core: ScanResult) => void;
 };
 
 export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<ScanResult> {
@@ -291,6 +297,7 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
     verifyFixes: doVerify = true,
     blockPrivateHosts = false,
     onPhase,
+    onCore,
   } = opts;
   const url = normalizeUrl(rawUrl);
   const startedAt = Date.now();
@@ -300,7 +307,7 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
     try {
       onPhase?.(p);
     } catch {
-      // A misbehaving progress listener must never break a scan.
+      //
     }
   };
 
@@ -319,12 +326,7 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
     const page = await context.newPage();
 
     phase("loading");
-    // `networkidle` is deliberately NOT used: ad-heavy pages and SPAs keep
-    // connections alive (analytics beacons, WebSockets), so it almost always
-    // burns its full timeout. "load" fires once the document's own resources are
-    // in (it doesn't wait for those persistent connections) and, unlike
-    // domcontentloaded, lets client-side redirects settle before we inject axe.
-    // We then scroll to force lazy content, then a short bounded settle.
+
     const response = await page.goto(url, {
       waitUntil: "load",
       timeout: 30_000,
@@ -344,10 +346,7 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
     const finalUrl = page.url();
 
     phase("auditing");
-    // Screenshot and axe touch the page independently, so capture them together
-    // instead of serializing a ~50ms screenshot in front of the audit. A late
-    // client-side redirect can destroy the execution context mid-capture; if
-    // that happens we wait for the new document and retry once.
+
     const capture = async (): Promise<[string | null, AxeResults]> => {
       const shot: Promise<string | null> = doScreenshot
         ? page
@@ -575,6 +574,58 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
       manualReview: axe.incomplete.length,
     };
 
+    const passed = axe.passes.map((p) => p.help);
+
+    const MAX_SELECTORS = 5;
+
+    const bestPractice = bpViolations.map((v) => ({
+      id: v.id,
+      title: v.help,
+      desc: v.description,
+      nodes: v.nodes.length,
+      selectors: v.nodes
+        .map((n) => firstTarget(n.target))
+        .filter((s): s is string => Boolean(s))
+        .slice(0, MAX_SELECTORS),
+    }));
+
+    const incomplete = axe.incomplete.map((v) => ({
+      id: v.id,
+      title: v.help,
+      desc: v.description,
+      nodes: v.nodes.length,
+      criterion: criterionFromTags(v.tags) ?? v.id,
+      selectors: v.nodes
+        .map((n) => firstTarget(n.target))
+        .filter((s): s is string => Boolean(s))
+        .slice(0, MAX_SELECTORS),
+    }));
+
+    phase("finalizing");
+    const core: ScanResult = {
+      url,
+      finalUrl,
+      title,
+      scannedElements: axe.passes.length + axe.violations.length + axe.incomplete.length,
+      durationMs: Date.now() - startedAt,
+      screenshot,
+      score: computeScore(violations),
+      counts,
+      summary: buildSummary(counts),
+      violations,
+      incomplete,
+      bestPractice,
+      passed,
+      markers,
+      fixFirst: buildFixFirst(violations),
+      partial,
+    };
+    try {
+      onCore?.(core);
+    } catch {
+      //
+    }
+
     let audits: AuditsReport | undefined;
     if (doAudits) {
       audits = {};
@@ -626,58 +677,15 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
       if (timedOut) partial = true;
     }
 
-    phase("finalizing");
-
-    const passed = axe.passes.map((p) => p.help);
-
-    const MAX_SELECTORS = 5;
-
-    const bestPractice = bpViolations.map((v) => ({
-      id: v.id,
-      title: v.help,
-      desc: v.description,
-      nodes: v.nodes.length,
-      selectors: v.nodes
-        .map((n) => firstTarget(n.target))
-        .filter((s): s is string => Boolean(s))
-        .slice(0, MAX_SELECTORS),
-    }));
-
-    const incomplete = axe.incomplete.map((v) => ({
-      id: v.id,
-      title: v.help,
-      desc: v.description,
-      nodes: v.nodes.length,
-      criterion: criterionFromTags(v.tags) ?? v.id,
-      selectors: v.nodes
-        .map((n) => firstTarget(n.target))
-        .filter((s): s is string => Boolean(s))
-        .slice(0, MAX_SELECTORS),
-    }));
-
     return {
-      url,
-      finalUrl,
-      title,
-      scannedElements: axe.passes.length + axe.violations.length + axe.incomplete.length,
+      ...core,
       durationMs: Date.now() - startedAt,
-      screenshot,
-      score: computeScore(violations),
-      counts,
-      summary: buildSummary(counts),
-      violations,
-      incomplete,
-      bestPractice,
-      passed,
-      markers,
       keyboard,
       contexts,
       audits,
-      fixFirst: buildFixFirst(violations),
       partial,
     };
   } finally {
-    // Close only the context — the browser is shared and reused across scans.
     await context.close().catch(() => {});
   }
 }

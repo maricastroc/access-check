@@ -16,6 +16,7 @@ type CachedScan = Omit<ScanResult, "screenshot">;
 /** One newline-delimited JSON message the client reads from the scan stream. */
 export type ScanStreamEvent =
   | { type: "phase"; phase: ScanPhase }
+  | { type: "core"; result: ScanResult }
   | { type: "result"; result: ScanResult | CachedScan }
   | { type: "error"; error: string };
 
@@ -95,21 +96,18 @@ export async function POST(req: Request) {
   if (!userId && redis) {
     const cached = await redis.get<CachedScan>(`scan:${url}`);
     if (cached) {
-      // Serve cache hits as a single-line stream so the client has one code path.
       return streamResponse((send) => {
         send({ type: "result", result: cached });
       });
     }
   }
 
-  // Stream real progress: phase events as the scan runs, then the result. The
-  // heavy work (persistence/cache) happens after the result is sent, off the
-  // critical path the user is waiting on.
   return streamResponse(async (send) => {
     try {
       const result = await runScan(url, {
         blockPrivateHosts: true,
         onPhase: (p) => send({ type: "phase", phase: p }),
+        onCore: (core) => send({ type: "core", result: core }),
       });
       send({ type: "result", result });
 

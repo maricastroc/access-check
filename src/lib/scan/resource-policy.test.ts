@@ -25,7 +25,6 @@ describe("shouldBlockResource", () => {
 
   it("matches trackers on subdomains but not on lookalike first-party hosts", () => {
     expect(shouldBlockResource("script", "https://region1.google-analytics.com/g")).toBe(true);
-    // A first-party asset that merely mentions a brand name in the path is kept.
     expect(shouldBlockResource("script", "https://example.com/segment/app.js")).toBe(false);
   });
 

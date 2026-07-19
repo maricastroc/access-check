@@ -175,3 +175,36 @@ body {
     background: var(--color-line-strong);
   }
 }
+
+/* Soft expanding ring behind the active scan-step node — conveys ongoing work
+   without a flashy spinner. Disabled under reduced-motion. */
+.ac-node-ring {
+  animation: ac-node-ring 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+@keyframes ac-node-ring {
+  0% {
+    transform: scale(0.82);
+    opacity: 0.5;
+  }
+  70%,
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ac-node-ring {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+/* The scan screen is our own product surface — it must honour reduced motion,
+   or our own reduced-motion audit would (rightly) flag it. Freeze every looping
+   animation inside the card; the step changes and elapsed timer still convey
+   progress. */
+@media (prefers-reduced-motion: reduce) {
+  .ac-scan [class*="animate-"] {
+    animation: none !important;
+  }
+}
