@@ -22,14 +22,12 @@ export function appBaseUrl(): string | null {
   return null;
 }
 
-/** Real fan-out is only possible with a client + a public callback URL. */
 export function canFanOut(): boolean {
   return qstash !== null && appBaseUrl() !== null;
 }
 
 export type PageJob = { siteScanId: string; url: string };
 
-/** Enqueues each page scan in a single batched call to QStash. */
 export async function enqueuePageScans(jobs: PageJob[]): Promise<void> {
   if (!qstash) throw new Error("QStash is not configured.");
   const base = appBaseUrl();

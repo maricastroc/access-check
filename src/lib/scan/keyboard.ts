@@ -28,9 +28,7 @@ export type KeyboardFinding = {
   title: string;
   desc: string;
   fix: string;
-  /** how many elements/stops the finding covers */
   count: number;
-  /** sample of affected selectors (limited so the payload doesn't blow up) */
   selectors: string[];
 };
 

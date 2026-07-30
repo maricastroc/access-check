@@ -10,7 +10,6 @@ import type { ScanResult } from "@/lib/scan/types";
 import type { AuditFinding } from "@/lib/scan/audits";
 import { sevDot, sevText, severityLabel } from "./data";
 
-/** One finding row — shared shape across every custom audit (and keyboard). */
 function AuditFindingRow({ f }: { f: AuditFinding }) {
   const extra = f.count - f.selectors.length;
   return (
@@ -48,11 +47,6 @@ function AuditFindingRow({ f }: { f: AuditFinding }) {
   );
 }
 
-/**
- * Shared card chrome for every custom audit — same visual language as
- * KeyboardReport, so target size, reduced motion and live regions all read as
- * one family instead of three bespoke components.
- */
 export function AuditCard({
   icon,
   title,

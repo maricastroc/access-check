@@ -39,7 +39,6 @@ export function TopBar({
 
   return (
     <header className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 sm:py-6">
-      {/* Mobile: duas linhas (logo+conta / ações). Desktop: tudo numa linha. */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
         <div className="flex items-center justify-between gap-2 sm:justify-start">
           <Logo />

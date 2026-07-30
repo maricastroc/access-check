@@ -2,26 +2,12 @@ import type { Page } from "playwright-core";
 import type { AuditFinding } from "./audits";
 import { MAX_AUDIT_SELECTORS } from "./audits";
 
-/**
- * WCAG 2.3.3 · Animation from Interactions (AAA) and 2.2.2 · Pause, Stop, Hide.
- *
- * axe-core checks markup, never behaviour, so nobody verifies that a site
- * actually honours the user's "reduce motion" preference. We emulate
- * `prefers-reduced-motion: reduce`, then read `document.getAnimations()` to find
- * animations that keep running anyway — infinite loops or long, non-trivial
- * movement that should have been cut.
- */
-
-/** Below this we treat the animation as a harmless micro-transition. */
 const TRIVIAL_MS = 250;
 
 export type RunningAnimation = {
   selector: string;
-  /** Effective duration in ms (single iteration). */
   durationMs: number;
-  /** Infinite when the animation loops forever. */
   infinite: boolean;
-  /** CSS properties the animation touches (best-effort; empty for JS/WAAPI). */
   properties: string[];
 };
 
@@ -36,10 +22,6 @@ export type ReducedMotionReport = {
   findings: AuditFinding[];
 };
 
-/**
- * A fade of a single opacity/visibility property is exempt — those are gentle
- * and explicitly allowed. Anything moving or looping forever is not.
- */
 const GENTLE_PROPS = new Set(["opacity", "visibility"]);
 
 function isDisruptive(a: RunningAnimation): boolean {

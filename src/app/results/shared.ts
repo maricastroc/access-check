@@ -6,17 +6,10 @@ export type FilterKey = "all" | Severity | "passed";
 export const DEFAULT_URL = "example.com";
 
 export type VerifyStats = {
-  /** fixes whose re-scan passed — proven to clear the violation */
   verified: number;
-  /** fixes that could be auto-applied and re-audited (verified + failed) */
   checked: number;
 };
 
-/**
- * Aggregate the per-fix verification outcomes across every violation, so the UI
- * can surface the flagship "we prove the fix" behaviour as a single headline
- * number instead of hiding it inside each expanded card.
- */
 export function verifyStats(result: ScanResult): VerifyStats {
   let verified = 0;
   let checked = 0;

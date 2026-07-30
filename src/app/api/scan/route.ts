@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { runScan, normalizeUrl } from "@/lib/scan/scan";
-import type { ScanPhase, ScanResult } from "@/lib/scan/types";
+import type { ScanResult } from "@/lib/scan/types";
+import type { ScanStreamEvent } from "@/lib/scan/stream";
 import { auth } from "@/auth";
 import { saveScan } from "@/lib/scans";
 import { redis, ratelimit, rateLimitMissingInProd } from "@/lib/redis";
@@ -13,17 +14,6 @@ const CACHE_TTL_SECONDS = 5 * 60;
 
 type CachedScan = Omit<ScanResult, "screenshot">;
 
-/** One newline-delimited JSON message the client reads from the scan stream. */
-export type ScanStreamEvent =
-  | { type: "phase"; phase: ScanPhase }
-  | { type: "core"; result: ScanResult }
-  | { type: "result"; result: ScanResult | CachedScan }
-  | { type: "error"; error: string };
-
-/**
- * Wraps a producer in an NDJSON streaming Response. `send` serializes one event
- * per line; the stream closes when the producer resolves.
- */
 function streamResponse(
   produce: (send: (event: ScanStreamEvent) => void) => void | Promise<void>,
 ): Response {

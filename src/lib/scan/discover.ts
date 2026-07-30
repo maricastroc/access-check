@@ -25,7 +25,6 @@ function decodeEntities(s: string): string {
     .replace(/&#0*39;|&apos;/g, "'");
 }
 
-/** Extracts the <loc> values from a sitemap (or sitemap index). */
 export function parseLocs(xml: string): string[] {
   const out: string[] = [];
   const re = /<loc>\s*([^<\s]+)\s*<\/loc>/gi;
@@ -37,7 +36,6 @@ export function parseLocs(xml: string): string[] {
   return out;
 }
 
-/** Extracts the href of <a> tags from HTML, resolving relative ones against baseUrl. */
 export function extractLinks(html: string, baseUrl: string): string[] {
   const out: string[] = [];
   const re = /<a\b[^>]*?\bhref\s*=\s*("([^"]*)"|'([^']*)'|([^\s"'>]+))/gi;
@@ -69,7 +67,6 @@ export function canonicalize(u: string): string | null {
   }
 }
 
-/** Filters to same-origin HTML pages, canonicalized and deduplicated. */
 export function sameOriginPages(urls: string[], origin: string): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
@@ -91,7 +88,6 @@ export function sameOriginPages(urls: string[], origin: string): string[] {
   return out;
 }
 
-/** The root always comes first; then the discovered ones, without repeats, up to `cap`. */
 export function selectCrawlUrls(root: string, discovered: string[], cap = MAX_PAGES): string[] {
   const rootC = canonicalize(root) ?? root;
   const seen = new Set<string>();
@@ -168,10 +164,6 @@ async function fromSitemap(origin: string, cap: number): Promise<string[]> {
   return [];
 }
 
-/**
- * Discovers up to `cap` HTML pages from the same site, starting from the root.
- * Always returns at least [root] — even if the network/discovery fails.
- */
 export async function discoverUrls(rootInput: string, cap = MAX_PAGES): Promise<string[]> {
   const root = normalizeRoot(rootInput);
   let origin: string;

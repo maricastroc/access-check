@@ -2,31 +2,14 @@ import type { Page } from "playwright-core";
 import type { AuditFinding } from "./audits";
 import { MAX_AUDIT_SELECTORS, sortFindings } from "./audits";
 
-/**
- * WCAG 4.1.3 · Status Messages (AA).
- *
- * axe validates ARIA attribute *syntax*, but not whether a live region is set
- * up so it can ever announce. We inspect every live region on the page and flag
- * the configurations that silently swallow updates: invalid aria-live values,
- * regions hidden with display:none / aria-hidden (so nothing is announced), and
- * alerts explicitly muted with aria-live="off".
- *
- * This is the static half of the check — it inspects configuration, not runtime
- * behaviour. Catching updates that happen *outside* any live region is a
- * separate, dynamic pass.
- */
-
 const VALID_LIVE = new Set(["polite", "assertive", "off"]);
-/** Roles that imply an interruptive (assertive) announcement. */
 const ASSERTIVE_ROLES = new Set(["alert"]);
 
 export type LiveRegion = {
   selector: string;
   role: string | null;
   ariaLive: string | null;
-  /** Removed from layout entirely (display:none / visibility:hidden). */
   hidden: boolean;
-  /** aria-hidden="true" — pruned from the accessibility tree. */
   ariaHidden: boolean;
 };
 

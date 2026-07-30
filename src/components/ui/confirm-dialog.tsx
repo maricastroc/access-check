@@ -3,10 +3,6 @@
 import type { ReactNode } from "react";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
 
-/**
- * Confirmação destrutiva reutilizável sobre o Radix AlertDialog — foco preso,
- * Esc pra cancelar, e a11y correta. `trigger` é o elemento que abre o diálogo.
- */
 export function ConfirmDialog({
   trigger,
   title,

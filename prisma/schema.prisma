@@ -65,10 +65,6 @@ model VerificationToken {
   @@map("verification_tokens")
 }
 
-/**
- * ===================== Domínio: histórico de scans =====================
- */
-
 model Scan {
   id     String @id @default(cuid())
   userId String

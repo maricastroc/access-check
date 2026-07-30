@@ -3,13 +3,6 @@ import { isIP } from "node:net";
 import type { BrowserContext } from "playwright-core";
 import { shouldBlockResource } from "./resource-policy";
 
-/**
- * Anti-SSRF guard. Every URL the user submits to be scanned passes through
- * here before it becomes a network request: the target is a public
- * "scan any URL" tool, so without this a single POST could point the
- * Chromium (or the discovery fetch) at `localhost`, private ranges, or the
- * cloud metadata endpoint (169.254.169.254).
- */
 export class BlockedUrlError extends Error {
   constructor(
     message = "This URL points to a private or reserved address and can't be scanned.",
@@ -135,11 +128,6 @@ function stripBrackets(host: string): string {
   return host.startsWith("[") && host.endsWith("]") ? host.slice(1, -1) : host;
 }
 
-/**
- * Throws `BlockedUrlError` if the URL isn't a public http(s) one. Resolves the
- * hostname and blocks if *any* returned address falls in a reserved range —
- * this covers a domain with several A records where only one is internal.
- */
 export async function assertPublicUrl(raw: string): Promise<void> {
   let url: URL;
   try {
@@ -173,13 +161,6 @@ export async function assertPublicUrl(raw: string): Promise<void> {
   }
 }
 
-/**
- * Defense in depth for the browser path: intercepts Chromium's requests and
- * aborts the ones pointing at a reserved address. Catches the vector the
- * initial URL-only check misses — a public host that 302s to
- * `http://169.254.169.254/`. Navigations go through full DNS resolution;
- * subresources get only the cheap literal-IP check.
- */
 export async function installNetworkGuard(context: BrowserContext): Promise<void> {
   await context.route("**/*", async (route) => {
     const req = route.request();

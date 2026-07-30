@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { faSpinner, faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
-import type { ScanResult } from "@/lib/scan/types";
+import type { ScanPhase, ScanResult } from "@/lib/scan/types";
+import { streamScan } from "@/lib/scan/stream";
 import { DEFAULT_URL, type Status } from "./shared";
 import { CenterState, PrintStyles, Toolbar } from "./chrome";
 import { SummaryPage } from "./summary-page";
@@ -11,6 +12,14 @@ import { FindingsPage } from "./findings-page";
 import { ProgressPage } from "./progress-page";
 
 const PAGE_WIDTH = 816;
+
+const PHASE_DETAIL: Record<ScanPhase, string> = {
+  preparing: "Starting a browser and preparing the page.",
+  loading: "Fetching and rendering the full DOM.",
+  auditing: "Running the WCAG audit against the rendered page.",
+  processing: "Grouping findings and mapping success criteria.",
+  finalizing: "Scoring and assembling the report.",
+};
 
 function FitToWidth({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -47,23 +56,20 @@ export function ReportView({ initialUrl }: { initialUrl: string }) {
   const [url, setUrl] = useState(start);
   const [status, setStatus] = useState<Status>("loading");
   const [result, setResult] = useState<ScanResult | null>(null);
+  const [phase, setPhase] = useState<ScanPhase>("preparing");
   const [error, setError] = useState("");
 
   const scan = useCallback(async (target: string) => {
     const value = target.trim();
     if (!value) return;
     setStatus("loading");
+    setPhase("preparing");
     setError("");
     setUrl(value);
     try {
-      const res = await fetch("/api/scan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: value }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Scan failed.");
-      setResult(json as ScanResult);
+      const scanned = await streamScan(value, { onPhase: setPhase });
+      setResult(scanned);
+      setUrl(scanned.finalUrl || value);
       setStatus("done");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Scan failed.");
@@ -88,7 +94,7 @@ export function ReportView({ initialUrl }: { initialUrl: string }) {
             spin
             progress
             title="Building report…"
-            subtitle={`Rendering ${url} and running the WCAG audit.`}
+            subtitle={PHASE_DETAIL[phase]}
           />
         )}
 

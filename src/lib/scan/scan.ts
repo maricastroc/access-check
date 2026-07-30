@@ -42,7 +42,6 @@ const MAX_VERIFY_OPS = 40;
 
 const SCAN_DEADLINE_MS = 50_000;
 
-/** Bounded settle after priming lazy content — replaces the old networkidle wait. */
 const SETTLE_MS = 700;
 
 const AXE_PATH = path.join(process.cwd(), "node_modules/axe-core/axe.min.js");
@@ -89,12 +88,6 @@ export function normalizeUrl(input: string): string {
   return trimmed;
 }
 
-/**
- * Scrolls the page top-to-bottom in steps, then back to the top, so lazy
- * content (native loading="lazy" images, IntersectionObserver-driven widgets)
- * actually loads before we screenshot and audit it. Bounded so a very tall page
- * can't stall the scan; short pages exit after a step or two.
- */
 async function primeLazyContent(page: Page): Promise<void> {
   await page
     .evaluate(async () => {
@@ -269,22 +262,10 @@ export type ScanOptions = {
   screenshot?: boolean;
   keyboard?: boolean;
   contexts?: boolean;
-  /** Our own detection engine: target size, reduced motion, live regions. */
   audits?: boolean;
   verifyFixes?: boolean;
-  /**
-   * Aborts browser requests to private/reserved addresses, including those that
-   * arrive via redirect. Enabled on the public path (API routes); left off by
-   * default so that tests/internal use can target 127.0.0.1.
-   */
   blockPrivateHosts?: boolean;
-  /** Called at each real milestone so the caller can stream progress. */
   onPhase?: (phase: ScanPhase) => void;
-  /**
-   * Called with the core result (WCAG violations, score, screenshot, markers)
-   * before the deep passes run, so a streaming caller can show the report
-   * immediately and merge keyboard/responsive/own-engine checks when they land.
-   */
   onCore?: (core: ScanResult) => void;
 };
 

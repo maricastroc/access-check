@@ -35,7 +35,6 @@ export function ComparisonCard({ diff, previousAt }: { diff: ScanDiff; previousA
           </h2>
         </div>
 
-        {/* score from → to + delta */}
         <div className="flex shrink-0 items-center gap-3">
           <span className="text-2xl font-bold text-muted">{diff.scoreFrom}</span>
           <FontAwesomeIcon icon={faMinus} className="rotate-0 text-xs text-line-strong" />
@@ -53,7 +52,6 @@ export function ComparisonCard({ diff, previousAt }: { diff: ScanDiff; previousA
         </div>
       </div>
 
-      {/* severity deltas */}
       <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
         {(["critical", "serious", "moderate", "minor"] as Severity[]).map((s) => {
           const c = diff.counts[s];

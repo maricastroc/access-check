@@ -4,10 +4,6 @@ import type { AuditsReport } from "./audits";
 
 export type Severity = "critical" | "serious" | "moderate" | "minor";
 
-/**
- * Real backend milestones emitted during a scan, in order. Streamed to the
- * client so the loading UI reflects actual progress instead of a fake animation.
- */
 export type ScanPhase = "preparing" | "loading" | "auditing" | "processing" | "finalizing";
 
 export type Effort = "Quick" | "Moderate" | "Involved";
@@ -88,7 +84,6 @@ export type ScanResult = {
   markers: ScanMarker[];
   keyboard?: KeyboardReport;
   contexts?: ContextReport;
-  /** Findings from our own detection engine — beyond what axe-core reports. */
   audits?: AuditsReport;
   fixFirst: {
     n: string;

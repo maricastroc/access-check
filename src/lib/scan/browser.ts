@@ -1,16 +1,9 @@
 import type { Browser } from "playwright-core";
 
-/**
- * Browser executor interface. The implementation changes depending on the
- * environment: local uses the full Playwright; serverless uses playwright-core +
- * @sparticuz/chromium. To swap in a container-based worker (Render etc.) just
- * create another executor and point getBrowserExecutor at it.
- */
 export interface BrowserExecutor {
   launch(): Promise<Browser>;
 }
 
-/** Local: full Playwright (the Chromium that ships with the package, in devDeps). */
 class LocalPlaywrightExecutor implements BrowserExecutor {
   async launch(): Promise<Browser> {
     const { chromium } = await import("playwright");
@@ -74,7 +67,6 @@ export async function acquireBrowser(): Promise<Browser> {
   return launching;
 }
 
-/** Closes the shared browser, if any. Mainly for test teardown. */
 export async function closeSharedBrowser(): Promise<void> {
   const browser = shared;
   shared = null;

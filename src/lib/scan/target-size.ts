@@ -2,16 +2,6 @@ import type { Page } from "playwright-core";
 import type { AuditFinding } from "./audits";
 import { MAX_AUDIT_SELECTORS } from "./audits";
 
-/**
- * WCAG 2.5.8 · Target Size (Minimum) — AA, added in WCAG 2.2.
- *
- * axe-core ships a `target-size` rule, but it is experimental and not part of
- * the wcag22aa tag set we run, so in practice this is a blind spot. We measure
- * every pointer target ourselves and apply the spacing exception the same way
- * the spec describes it: an undersized target is fine if a 24px-diameter circle
- * centred on it does not touch any neighbouring target's circle or box.
- */
-
 const MIN_SIZE = 24;
 const RADIUS = MIN_SIZE / 2;
 
@@ -21,7 +11,6 @@ export type TargetRect = {
   y: number;
   w: number;
   h: number;
-  /** Inline element sitting inside a run of text — exempt from 2.5.8. */
   inline: boolean;
 };
 
@@ -46,7 +35,6 @@ function centerDistance(a: TargetRect, b: TargetRect): number {
   return Math.hypot(ca.cx - cb.cx, ca.cy - cb.cy);
 }
 
-/** Distance from a point to the nearest edge of a rect (0 when inside it). */
 function pointRectDistance(cx: number, cy: number, r: TargetRect): number {
   const dx = Math.max(r.x - cx, 0, cx - (r.x + r.w));
   const dy = Math.max(r.y - cy, 0, cy - (r.y + r.h));
@@ -57,11 +45,6 @@ function isUndersized(t: TargetRect): boolean {
   return t.w > 0 && t.h > 0 && (t.w < MIN_SIZE || t.h < MIN_SIZE);
 }
 
-/**
- * An undersized target keeps enough spacing when no other target crowds the
- * 24px circle centred on it: neither another centre within 24px, nor another
- * target's box within the 12px radius.
- */
 function isCrowded(t: TargetRect, all: TargetRect[]): boolean {
   const { cx, cy } = center(t);
   return all.some(

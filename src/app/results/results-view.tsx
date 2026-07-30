@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClock, faSitemap, faArrowRotateRight } from "@fortawesome/free-solid-svg-icons";
 import type { ScanPhase, ScanResult } from "@/lib/scan/types";
+import { streamScan } from "@/lib/scan/stream";
 import { Button } from "@/components/ui";
 import { type SimKey } from "./data";
 import { DEFAULT_URL, type FilterKey, type Status } from "./shared";
@@ -44,58 +45,16 @@ export function ResultsView({
 
   const runFetch = useCallback(async (value: string) => {
     setPhase("preparing");
+
+    const apply = (r: ScanResult) => {
+      setResult(r);
+      setUrl(r.finalUrl || value);
+      setFromCrawl(false);
+      setStatus("done");
+    };
+
     try {
-      const res = await fetch("/api/scan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: value }),
-      });
-
-      if (!res.ok || !res.body) {
-        const json = await res.json().catch(() => ({}));
-        throw new Error(json.error || "Scan failed.");
-      }
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      let finalResult: ScanResult | null = null;
-
-      const apply = (r: ScanResult) => {
-        finalResult = r;
-        setResult(r);
-        setUrl(r.finalUrl || value);
-        setFromCrawl(false);
-        setStatus("done");
-      };
-
-      readLoop: for (;;) {
-        const { done, value: chunk } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(chunk, { stream: true });
-
-        let nl: number;
-        while ((nl = buffer.indexOf("\n")) >= 0) {
-          const line = buffer.slice(0, nl).trim();
-          buffer = buffer.slice(nl + 1);
-          if (!line) continue;
-          const evt = JSON.parse(line) as
-            | { type: "phase"; phase: ScanPhase }
-            | { type: "core"; result: ScanResult }
-            | { type: "result"; result: ScanResult }
-            | { type: "error"; error: string };
-          if (evt.type === "phase") setPhase(evt.phase);
-          else if (evt.type === "core") apply(evt.result);
-          else if (evt.type === "result") {
-            apply(evt.result);
-            break readLoop;
-          } else if (evt.type === "error") {
-            if (!finalResult) throw new Error(evt.error);
-          }
-        }
-      }
-
-      if (!finalResult) throw new Error("Scan failed.");
+      apply(await streamScan(value, { onPhase: setPhase, onCore: apply }));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Scan failed.");
       setStatus("error");
@@ -152,7 +111,9 @@ export function ResultsView({
                       className="mt-0.5 shrink-0 text-brand-600"
                     />
                     <p className="text-ink-soft">
-                      <span className="font-semibold text-ink">Quick scan from the site audit.</span>{" "}
+                      <span className="font-semibold text-ink">
+                        Quick scan from the site audit.
+                      </span>{" "}
                       Run the full analysis to add the screenshot preview, keyboard and
                       fix-verification passes — the score may adjust.
                     </p>
@@ -177,10 +138,10 @@ export function ResultsView({
                     className="mt-0.5 shrink-0 text-warning"
                   />
                   <p className="text-ink-soft">
-                    <span className="font-semibold text-ink">Partial scan.</span> This page was large
-                    enough that the deep passes (fix verification, keyboard, and responsive checks)
-                    were skipped to return the core WCAG results in time — the violations and score
-                    below are complete.
+                    <span className="font-semibold text-ink">Partial scan.</span> This page was
+                    large enough that the deep passes (fix verification, keyboard, and responsive
+                    checks) were skipped to return the core WCAG results in time — the violations
+                    and score below are complete.
                   </p>
                 </div>
               </div>

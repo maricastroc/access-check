@@ -32,7 +32,6 @@ export async function createSiteScan(
   return site.id;
 }
 
-/** Marks the entire crawl as failed (e.g. the pages couldn't be enqueued). */
 export async function failSiteScan(id: string, error: string): Promise<void> {
   await prisma.siteScan.update({
     where: { id },
@@ -40,7 +39,6 @@ export async function failSiteScan(id: string, error: string): Promise<void> {
   });
 }
 
-/** Marks the page as "running" (only if it's still pending). */
 export async function markPageRunning(siteScanId: string, url: string): Promise<void> {
   await prisma.siteScanPage.updateMany({
     where: { siteScanId, url, status: "pending" },
@@ -50,7 +48,6 @@ export async function markPageRunning(siteScanId: string, url: string): Promise<
 
 type PageOutcome = { ok: true; result: ScanResult } | { ok: false; error: string };
 
-/** Records a page's result (or error) and recomputes the site's progress. */
 export async function completePage(
   siteScanId: string,
   url: string,
@@ -76,12 +73,6 @@ export async function completePage(
   await recomputeSiteProgress(siteScanId);
 }
 
-/**
- * Recomputes the site's counts + completion in a single atomic UPDATE. The subquery
- * reads the pages' current state at execution time, so workers that finish in
- * parallel converge on the correct final state without a race: any recompute that
- * runs after the last page sees everything settled marks it "completed".
- */
 async function recomputeSiteProgress(siteScanId: string): Promise<void> {
   await prisma.$executeRaw`
     UPDATE "site_scans" s SET
@@ -127,7 +118,6 @@ export type SiteScanSnapshot = {
   pages: SiteScanPageView[];
 };
 
-/** Complete snapshot of a crawl (progress + pages), by id. */
 export async function getSiteScan(id: string): Promise<SiteScanSnapshot | null> {
   const s = await prisma.siteScan.findUnique({
     where: { id },
@@ -187,11 +177,6 @@ export async function getSiteScan(id: string): Promise<SiteScanSnapshot | null> 
   };
 }
 
-/**
- * ScanResult (lightweight profile) already collected for a crawl page. Lets the
- * results screen open instantly, without re-scanning. Returns null if the page
- * isn't part of this crawl, hasn't finished yet, or is from an old crawl without `result`.
- */
 export async function getSiteScanPageResult(
   siteScanId: string,
   url: string,

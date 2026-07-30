@@ -31,11 +31,6 @@ export const siteRatelimit = redis
     })
   : null;
 
-/**
- * True when rate limiting is unconfigured in an environment that requires it.
- * Public routes should reject with 503 rather than serve unlimited requests —
- * fail closed in production, stay permissive in local development.
- */
 export function rateLimitMissingInProd(): boolean {
   return redis === null && isProd();
 }

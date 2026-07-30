@@ -1,20 +1,3 @@
-/**
- * Latency benchmark for the scan pipeline.
- *
- * Runs the real `runScan` against one or more URLs and prints per-phase timing,
- * cold (first scan, pays the browser launch) vs warm (reuses the shared
- * browser). Uses the production options path (SSRF guard + resource blocking).
- *
- * Usage (run from the repo root so axe-core resolves):
- *   npx tsx scripts/bench.mjs
- *   npx tsx scripts/bench.mjs https://www.example.com https://www.nytimes.com
- *   npm run bench -- https://www.example.com
- *
- * Phase deltas map to: preparing→loading = browser acquire + context,
- * loading→auditing = goto + lazy-content priming + settle,
- * auditing→processing = screenshot ∥ axe, processing→finalizing = enrich +
- * verify + audits + keyboard + contexts.
- */
 import { performance } from "node:perf_hooks";
 import { runScan } from "../src/lib/scan/scan.ts";
 import { closeSharedBrowser } from "../src/lib/scan/browser.ts";
