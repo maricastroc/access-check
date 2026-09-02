@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { siteRatelimit, checkRateLimit, rateLimitMissingInProd } from "@/lib/redis";
+import { clientKey, siteScanRateLimit } from "@/lib/rate-limit";
 import { discoverUrls, normalizeRoot } from "@/lib/scan/discover";
 import { assertPublicUrl, BlockedUrlError } from "@/lib/scan/ssrf";
 import { createSiteScan, failSiteScan } from "@/lib/site-scans";
@@ -21,22 +21,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Missing 'url'." }, { status: 400 });
   }
 
-  if (rateLimitMissingInProd()) {
-    return NextResponse.json(
-      { error: "Rate limiting is unavailable right now. Please try again later." },
-      { status: 503 },
-    );
-  }
-
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
-  const verdict = await checkRateLimit(siteRatelimit, ip);
-  if (verdict === "unavailable") {
-    return NextResponse.json(
-      { error: "Rate limiting is unavailable right now. Please try again later." },
-      { status: 503 },
-    );
-  }
-  if (verdict === "limited") {
+  if ((await siteScanRateLimit.check(clientKey(req))) === "limited") {
     return NextResponse.json(
       { error: "Too many site scans. Try again in a few minutes." },
       { status: 429 },

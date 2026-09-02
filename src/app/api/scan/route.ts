@@ -4,7 +4,8 @@ import type { ScanResult } from "@/lib/scan/types";
 import type { ScanStreamEvent } from "@/lib/scan/stream";
 import { auth } from "@/auth";
 import { saveScan } from "@/lib/scans";
-import { cacheGet, cacheSet, ratelimit, checkRateLimit, rateLimitMissingInProd } from "@/lib/redis";
+import { cacheGet, cacheSet } from "@/lib/redis";
+import { clientKey, scanRateLimit } from "@/lib/rate-limit";
 import { assertPublicUrl, BlockedUrlError } from "@/lib/scan/ssrf";
 
 export const runtime = "nodejs";
@@ -54,22 +55,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Missing 'url'." }, { status: 400 });
   }
 
-  if (rateLimitMissingInProd()) {
-    return NextResponse.json(
-      { error: "Rate limiting is unavailable right now. Please try again later." },
-      { status: 503 },
-    );
-  }
-
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
-  const verdict = await checkRateLimit(ratelimit, ip);
-  if (verdict === "unavailable") {
-    return NextResponse.json(
-      { error: "Rate limiting is unavailable right now. Please try again later." },
-      { status: 503 },
-    );
-  }
-  if (verdict === "limited") {
+  if ((await scanRateLimit.check(clientKey(req))) === "limited") {
     return NextResponse.json({ error: "Too many scans. Try again in a minute." }, { status: 429 });
   }
 

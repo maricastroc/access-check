@@ -10,13 +10,6 @@ vi.mock("@upstash/redis", () => ({
   },
 }));
 
-vi.mock("@upstash/ratelimit", () => ({
-  Ratelimit: class {
-    static slidingWindow = () => ({});
-    limit = vi.fn();
-  },
-}));
-
 async function importConfigured() {
   vi.resetModules();
   vi.stubEnv("KV_REST_API_URL", "https://stub.upstash.io");
@@ -81,13 +74,5 @@ describe("cacheSet", () => {
     const { cacheSet } = await import("./redis");
     await cacheSet("scan:x", { score: 42 }, 300);
     expect(set).not.toHaveBeenCalled();
-  });
-});
-
-describe("rateLimitMissingInProd", () => {
-  it("is false once Redis is configured, even in production", async () => {
-    const { rateLimitMissingInProd } = await importConfigured();
-    vi.stubEnv("NODE_ENV", "production");
-    expect(rateLimitMissingInProd()).toBe(false);
   });
 });
