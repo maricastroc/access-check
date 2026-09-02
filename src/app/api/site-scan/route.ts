@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { siteRatelimit, rateLimitMissingInProd } from "@/lib/redis";
+import { siteRatelimit, checkRateLimit, rateLimitMissingInProd } from "@/lib/redis";
 import { discoverUrls, normalizeRoot } from "@/lib/scan/discover";
 import { assertPublicUrl, BlockedUrlError } from "@/lib/scan/ssrf";
 import { createSiteScan, failSiteScan } from "@/lib/site-scans";
@@ -29,14 +29,18 @@ export async function POST(req: Request) {
   }
 
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
-  if (siteRatelimit) {
-    const { success } = await siteRatelimit.limit(ip);
-    if (!success) {
-      return NextResponse.json(
-        { error: "Too many site scans. Try again in a few minutes." },
-        { status: 429 },
-      );
-    }
+  const verdict = await checkRateLimit(siteRatelimit, ip);
+  if (verdict === "unavailable") {
+    return NextResponse.json(
+      { error: "Rate limiting is unavailable right now. Please try again later." },
+      { status: 503 },
+    );
+  }
+  if (verdict === "limited") {
+    return NextResponse.json(
+      { error: "Too many site scans. Try again in a few minutes." },
+      { status: 429 },
+    );
   }
 
   const root = normalizeRoot(body.url);

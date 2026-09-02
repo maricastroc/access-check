@@ -34,3 +34,38 @@ export const siteRatelimit = redis
 export function rateLimitMissingInProd(): boolean {
   return redis === null && isProd();
 }
+
+export type RateLimitVerdict = "allowed" | "limited" | "unavailable";
+
+export async function checkRateLimit(
+  limiter: Ratelimit | null,
+  ip: string,
+): Promise<RateLimitVerdict> {
+  if (!limiter) return "allowed";
+  try {
+    const { success } = await limiter.limit(ip);
+    return success ? "allowed" : "limited";
+  } catch (e) {
+    console.error("Rate limit check failed — Redis is unreachable:", e);
+    return isProd() ? "unavailable" : "allowed";
+  }
+}
+
+export async function cacheGet<T>(key: string): Promise<T | null> {
+  if (!redis) return null;
+  try {
+    return await redis.get<T>(key);
+  } catch (e) {
+    console.error("Cache read failed:", e);
+    return null;
+  }
+}
+
+export async function cacheSet(key: string, value: unknown, ttlSeconds: number): Promise<void> {
+  if (!redis) return;
+  try {
+    await redis.set(key, value, { ex: ttlSeconds });
+  } catch (e) {
+    console.error("Cache write failed:", e);
+  }
+}

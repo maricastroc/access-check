@@ -4,7 +4,7 @@ import type { ScanResult } from "@/lib/scan/types";
 import type { ScanStreamEvent } from "@/lib/scan/stream";
 import { auth } from "@/auth";
 import { saveScan } from "@/lib/scans";
-import { redis, ratelimit, rateLimitMissingInProd } from "@/lib/redis";
+import { cacheGet, cacheSet, ratelimit, checkRateLimit, rateLimitMissingInProd } from "@/lib/redis";
 import { assertPublicUrl, BlockedUrlError } from "@/lib/scan/ssrf";
 
 export const runtime = "nodejs";
@@ -62,14 +62,15 @@ export async function POST(req: Request) {
   }
 
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
-  if (ratelimit) {
-    const { success } = await ratelimit.limit(ip);
-    if (!success) {
-      return NextResponse.json(
-        { error: "Too many scans. Try again in a minute." },
-        { status: 429 },
-      );
-    }
+  const verdict = await checkRateLimit(ratelimit, ip);
+  if (verdict === "unavailable") {
+    return NextResponse.json(
+      { error: "Rate limiting is unavailable right now. Please try again later." },
+      { status: 503 },
+    );
+  }
+  if (verdict === "limited") {
+    return NextResponse.json({ error: "Too many scans. Try again in a minute." }, { status: 429 });
   }
 
   const url = normalizeUrl(body.url);
@@ -83,8 +84,8 @@ export async function POST(req: Request) {
 
   const userId = (await auth())?.user?.id;
 
-  if (!userId && redis) {
-    const cached = await redis.get<CachedScan>(`scan:${url}`);
+  if (!userId) {
+    const cached = await cacheGet<CachedScan>(`scan:${url}`);
     if (cached) {
       return streamResponse((send) => {
         send({ type: "result", result: cached });
@@ -107,14 +108,10 @@ export async function POST(req: Request) {
         } catch (e) {
           console.error("Failed to save scan to history:", e);
         }
-      } else if (redis) {
+      } else {
         const { screenshot: _screenshot, ...light } = result;
         void _screenshot;
-        try {
-          await redis.set(`scan:${url}`, light, { ex: CACHE_TTL_SECONDS });
-        } catch (e) {
-          console.error("Failed to cache scan result:", e);
-        }
+        await cacheSet(`scan:${url}`, light, CACHE_TTL_SECONDS);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error during scan.";

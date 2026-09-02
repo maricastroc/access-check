@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { isProd } from "./env";
-import { rateLimitMissingInProd } from "./redis";
+import { checkRateLimit, rateLimitMissingInProd } from "./redis";
 import { verifyQstashSignature } from "./qstash";
 
 afterEach(() => {
@@ -27,6 +27,42 @@ describe("rateLimitMissingInProd", () => {
   it("stays permissive in development", () => {
     vi.stubEnv("NODE_ENV", "development");
     expect(rateLimitMissingInProd()).toBe(false);
+  });
+});
+
+describe("checkRateLimit", () => {
+  const limiter = (impl: () => Promise<{ success: boolean }>) =>
+    ({ limit: impl }) as unknown as Parameters<typeof checkRateLimit>[0];
+
+  it("allows when no limiter is configured", async () => {
+    expect(await checkRateLimit(null, "1.2.3.4")).toBe("allowed");
+  });
+
+  it("reports the limiter verdict", async () => {
+    expect(
+      await checkRateLimit(
+        limiter(async () => ({ success: true })),
+        "1.2.3.4",
+      ),
+    ).toBe("allowed");
+    expect(
+      await checkRateLimit(
+        limiter(async () => ({ success: false })),
+        "1.2.3.4",
+      ),
+    ).toBe("limited");
+  });
+
+  it("fails closed in production when Redis is unreachable", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    const down = limiter(() => Promise.reject(new Error("getaddrinfo ENOTFOUND")));
+    expect(await checkRateLimit(down, "1.2.3.4")).toBe("unavailable");
+  });
+
+  it("stays permissive in development when Redis is unreachable", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    const down = limiter(() => Promise.reject(new Error("getaddrinfo ENOTFOUND")));
+    expect(await checkRateLimit(down, "1.2.3.4")).toBe("allowed");
   });
 });
 
