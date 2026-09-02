@@ -5,15 +5,8 @@ export type RateLimitVerdict = "allowed" | "limited";
 
 type Rule = { tokens: number; windowSeconds: number };
 
-/** Coarse cap so a flood of distinct IPs can't grow the map without bound. */
 const MAX_TRACKED_KEYS = 10_000;
 
-/**
- * Sliding window held in the instance's own memory. On serverless each instance
- * counts separately, so the real ceiling is (live instances x tokens) — looser
- * than a shared counter, but it still stops the case that actually costs money:
- * one client hammering an endpoint that launches a browser per request.
- */
 class MemoryLimiter {
   private readonly hits = new Map<string, number[]>();
 
@@ -40,17 +33,10 @@ class MemoryLimiter {
     for (const [key, times] of this.hits) {
       if ((times[times.length - 1] ?? 0) <= cutoff) this.hits.delete(key);
     }
-    // Still saturated means every key is live; drop everything rather than
-    // grow. Worst case some callers get a fresh allowance, same as a cold start.
     if (this.hits.size >= MAX_TRACKED_KEYS) this.hits.clear();
   }
 }
 
-/**
- * Uses Redis when it's configured and reachable, and the in-memory window
- * otherwise. Redis is an accuracy upgrade here, never a requirement — losing it
- * degrades the limit, it doesn't take the endpoint down.
- */
 export class RateLimiter {
   private readonly memory: MemoryLimiter;
   private readonly shared: Ratelimit | null;
@@ -89,7 +75,6 @@ export class RateLimiter {
 export const scanRateLimit = new RateLimiter({ tokens: 5, windowSeconds: 60 }, "scan");
 export const siteScanRateLimit = new RateLimiter({ tokens: 2, windowSeconds: 300 }, "site-scan");
 
-/** Callers are identified by client IP; local requests share the "local" bucket. */
 export function clientKey(req: Request): string {
   return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
 }

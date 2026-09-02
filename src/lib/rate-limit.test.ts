@@ -13,7 +13,6 @@ vi.mock("@upstash/ratelimit", () => ({
   },
 }));
 
-/** Redis is built from env at import time, so each mode needs a fresh module. */
 async function importWithRedis() {
   vi.resetModules();
   vi.stubEnv("KV_REST_API_URL", "https://stub.upstash.io");
