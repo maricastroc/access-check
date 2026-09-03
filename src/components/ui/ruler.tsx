@@ -88,19 +88,23 @@ function ScoreTicks({ value }: { value: number }) {
       <span className="absolute top-0 left-1/2 h-[6px] w-px -translate-x-1/2 bg-ink" />
       <span className="absolute top-0 left-3/4 h-[4px] w-px bg-border" />
       <span className="absolute top-0 right-0 h-[6px] w-px bg-ink" />
-      {/* the score's own mark */}
-      <span
-        className="absolute top-0 h-[10px] w-px -translate-x-1/2 bg-ink"
-        style={{ left: `${value}%` }}
-      />
-      {/* labels */}
+      {/* the score's own mark — omit near the ends so it doesn't sit on 0/100 */}
+      {value > 4 && value < 96 && (
+        <span
+          className="absolute top-0 h-[10px] w-px -translate-x-1/2 bg-ink"
+          style={{ left: `${value}%` }}
+        />
+      )}
+      {/* labels: 0 and 100 always; the value only when it won't collide with them */}
       <span className="absolute top-[6px] left-0 font-cond text-[11px] text-muted">0</span>
-      <span
-        className="absolute top-[6px] -translate-x-1/2 font-cond text-[11px] font-medium text-ink tabular-nums"
-        style={{ left: `${value}%` }}
-      >
-        {Math.round(value)}
-      </span>
+      {value > 8 && value < 92 && (
+        <span
+          className="absolute top-[6px] -translate-x-1/2 font-cond text-[11px] font-medium text-ink tabular-nums"
+          style={{ left: `${value}%` }}
+        >
+          {Math.round(value)}
+        </span>
+      )}
       <span className="absolute top-[6px] right-0 font-cond text-[11px] text-muted">100</span>
     </div>
   );

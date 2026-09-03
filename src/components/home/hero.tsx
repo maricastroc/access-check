@@ -23,7 +23,7 @@ export function Hero() {
     <section className="border-b border-hairline bg-gradient-to-b from-band via-canvas to-canvas">
       <div className="mx-auto w-full max-w-[1200px] px-6">
         {/* first fold: message + form (left), live inspector (right) */}
-        <div className="grid grid-cols-1 gap-x-12 gap-y-10 pt-14 lg:grid-cols-[minmax(0,1fr)_536px] lg:items-start">
+        <div className="grid grid-cols-1 gap-x-14 gap-y-10 pt-14 lg:grid-cols-[minmax(0,1fr)_520px] lg:gap-x-20 lg:items-start">
           <div>
             <div className="flex flex-wrap items-center gap-3">
               <SectionKicker tone="steel">
@@ -41,7 +41,7 @@ export function Hero() {
               copy.
             </p>
             <div className="mt-6">
-              <UrlForm examples={["aurora-coffee.com", "wikipedia.org", "stripe.com"]} />
+              <UrlForm examples={["wikipedia.org", "stripe.com", "github.com"]} />
             </div>
             <p className="mt-4 flex items-start gap-2.5 border-l-[3px] border-steel bg-steel/[0.06] px-3 py-2 text-[13px] text-body">
               <SectionKicker tone="steel" className="mt-px shrink-0">
@@ -86,7 +86,7 @@ export function Hero() {
           <WcagReading model={wcag} />
         </div>
 
-        <div className="pb-14" />
+        <div className="pb-12" />
       </div>
     </section>
   );

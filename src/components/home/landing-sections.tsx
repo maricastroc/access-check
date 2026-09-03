@@ -93,37 +93,60 @@ function StageArtifact({ i }: { i: number }) {
 export function HowItWorks() {
   return (
     <section id="how" className="bg-band">
-      <div className="mx-auto w-full max-w-[1200px] px-6 py-16">
+      <div className="mx-auto w-full max-w-[1200px] px-6 py-12">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <SectionHead kicker="How it works" title="Three steps, no configuration" />
+          <SectionHead kicker="How it works" title="One page, opened, located and verified" />
           <p className="font-cond text-[15px] tracking-[0.04em] text-muted">
             <span className="text-serious">Open</span> → <span className="text-serious">Locate</span>{" "}
             → <span className="text-verified">Verify</span>
           </p>
         </div>
 
-        <div className="mt-9 grid grid-cols-1 gap-5 md:grid-cols-3">
-          {steps.map((s, i) => {
-            const tone = s.tone === "verified" ? "var(--color-verified)" : "var(--color-serious)";
-            return (
-              <div key={s.n} className="flex flex-col border border-border bg-surface p-5">
-                <div className="flex items-baseline gap-3">
-                  <span
-                    className="font-cond text-[56px] leading-[0.8] font-semibold tabular-nums"
-                    style={{ color: tone }}
-                  >
-                    {s.n}
-                  </span>
-                  <SectionKicker tone="ink">{STAGE_LABEL[i]}</SectionKicker>
+        <div className="relative mt-9">
+          {/* the path connecting the three stages, visible in the gutters */}
+          <div
+            aria-hidden
+            className="absolute top-[42px] left-[16.6%] right-[16.6%] hidden h-px bg-serious/50 md:block"
+          />
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+            {steps.map((s, i) => {
+              const tone = s.tone === "verified" ? "var(--color-verified)" : "var(--color-serious)";
+              return (
+                <div key={s.n} className="relative flex flex-col border border-border bg-surface p-5">
+                  {i > 0 && (
+                    <>
+                      <span
+                        aria-hidden
+                        className="absolute top-[32px] -left-[13px] hidden font-cond text-[17px] leading-none text-serious md:block"
+                      >
+                        →
+                      </span>
+                      <span
+                        aria-hidden
+                        className="absolute -top-[15px] left-1/2 -translate-x-1/2 font-cond text-[17px] leading-none text-serious md:hidden"
+                      >
+                        ↓
+                      </span>
+                    </>
+                  )}
+                  <div className="flex items-baseline gap-3">
+                    <span
+                      className="font-cond text-[56px] leading-[0.8] font-semibold tabular-nums"
+                      style={{ color: tone }}
+                    >
+                      {s.n}
+                    </span>
+                    <SectionKicker tone="ink">{STAGE_LABEL[i]}</SectionKicker>
+                  </div>
+                  <div className="mt-4 min-h-[92px]">
+                    <StageArtifact i={i} />
+                  </div>
+                  <h3 className="mt-4 text-[16.5px] font-semibold text-ink">{s.title}</h3>
+                  <p className="mt-1.5 text-[14px] leading-normal text-body">{s.body}</p>
                 </div>
-                <div className="mt-4 min-h-[92px]">
-                  <StageArtifact i={i} />
-                </div>
-                <h3 className="mt-4 text-[16.5px] font-semibold text-ink">{s.title}</h3>
-                <p className="mt-1.5 text-[14px] leading-normal text-body">{s.body}</p>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>
@@ -135,10 +158,10 @@ export function HowItWorks() {
 export function ChecksIncluded() {
   return (
     <section id="checks" className="bg-canvas">
-      <div className="mx-auto w-full max-w-[1200px] px-6 py-16">
+      <div className="mx-auto w-full max-w-[1200px] px-6 py-12">
         <SectionHead
           kicker="Checks included"
-          title="Automated rules on one side, complementary passes on the other"
+          title="Every axe rule, plus the passes it can't run alone"
         />
 
         <div className="mt-9 grid grid-cols-1 md:grid-cols-2">
@@ -207,11 +230,11 @@ export function EvidenceLensSection() {
   return (
     <section id="evidence" className="bg-band">
       <div className="mx-auto w-full max-w-[1200px] px-6 py-16">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-end">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-end">
           <div>
             <span aria-hidden className="mb-3 block h-[3px] w-10 bg-steel" />
             <h2 className="text-[34px] leading-[1.08] font-semibold tracking-[-0.02em] text-ink">
-              An inspector being demonstrated, not a screenshot beside a paragraph
+              See the barrier on the element that caused it
             </h2>
           </div>
           <p className="max-w-[46ch] text-[16px] leading-[1.55] text-body">
@@ -221,34 +244,37 @@ export function EvidenceLensSection() {
           </p>
         </div>
 
-        {/* the instrument */}
-        <div className="mt-8 border border-ink bg-surface">
-          <div className="flex items-center justify-between gap-3 border-b border-ink px-4 py-2.5">
-            <SectionKicker>Evidence Lens · aurora-coffee.com · 1200 × 800 · scale 43%</SectionKicker>
-            <div className="hidden items-stretch border border-border text-[12px] sm:flex">
-              <span className="bg-ink px-2.5 py-1 font-medium text-surface">Normal</span>
-              <span className="border-l border-border px-2.5 py-1 text-muted">Deuteranopia</span>
-              <span className="border-l border-border px-2.5 py-1 text-muted">Grayscale</span>
+        {/* the instrument — only the capture is framed; the diagnosis escapes it */}
+        <div className="mt-8 grid grid-cols-1 gap-0 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
+          <div className="border border-ink bg-surface">
+            <div className="flex items-center justify-between gap-3 border-b border-ink px-4 py-2.5">
+              <SectionKicker>Evidence Lens · aurora-coffee.com · 1200 × 800 · scale 43%</SectionKicker>
+              <div className="hidden items-stretch border border-border text-[12px] sm:flex">
+                <span className="bg-ink px-2.5 py-1 font-medium text-surface">Normal</span>
+                <span className="border-l border-border px-2.5 py-1 text-muted">Deuteranopia</span>
+                <span className="border-l border-border px-2.5 py-1 text-muted">Grayscale</span>
+              </div>
             </div>
+            <CapturePreview height={340} />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px]">
-            <div className="border-b border-ink lg:border-r lg:border-b-0">
-              <CapturePreview height={320} />
+          {/* diagnosis — un-boxed, chained across the boundary to the marker */}
+          <div className="relative pt-8 lg:pt-2 lg:pl-8">
+            {/* leader: crosses from the capture (left) into the diagnosis */}
+            <div className="flex items-center gap-2">
+              <span
+                aria-hidden
+                className="-ml-8 hidden h-px w-8 border-t border-dashed border-steel lg:block"
+              />
+              <span
+                aria-hidden
+                className="flex size-[20px] shrink-0 items-center justify-center bg-ink font-cond text-[12px] font-semibold text-surface"
+              >
+                1
+              </span>
+              <span aria-hidden className="h-px flex-1 border-t border-dashed border-steel" />
+              <span className="font-mono text-[12px] text-steel">a.hero__cta</span>
             </div>
-            {/* diagnosis, chained to the marker */}
-            <div className="p-5">
-              {/* leader: marker → selector */}
-              <div className="flex items-center gap-2">
-                <span
-                  aria-hidden
-                  className="flex size-[20px] shrink-0 items-center justify-center bg-ink font-cond text-[12px] font-semibold text-surface"
-                >
-                  1
-                </span>
-                <span aria-hidden className="h-px flex-1 border-t border-dashed border-steel" />
-                <span className="font-mono text-[12px] text-steel">a.hero__cta</span>
-              </div>
 
               <div className="mt-3 flex items-center gap-2">
                 <span className="font-cond text-[11px] tracking-[0.1em] text-serious uppercase">Serious</span>
@@ -290,7 +316,6 @@ export function EvidenceLensSection() {
               </div>
             </div>
           </div>
-        </div>
 
         <div className="mt-4 flex flex-wrap gap-x-8 gap-y-1.5 text-[13px] text-muted">
           <span>
@@ -341,7 +366,7 @@ export function SandboxSection() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] lg:items-end">
           <SectionHead
             kicker="Sandbox verification"
-            title="Before, correction, verified — proved on a copy of the page"
+            title="Every fix is proved on a copy — your site is never touched"
           />
           <p className="max-w-[52ch] text-[16px] leading-[1.55] text-body">
             The change is applied to the copy&apos;s DOM, the rule runs again, and the change is
@@ -448,7 +473,7 @@ function MiniPdf() {
 export function ExportSection() {
   return (
     <section className="bg-band">
-      <div className="mx-auto w-full max-w-[1200px] px-6 py-16">
+      <div className="mx-auto w-full max-w-[1200px] px-6 py-12">
         <SectionHead
           kicker="Export"
           title="Two results for two readers — whoever decides, whoever fixes"
@@ -554,7 +579,7 @@ export function FinalCta() {
             </p>
           </div>
           <div>
-            <UrlForm accent examples={["aurora-coffee.com", "wikipedia.org", "stripe.com"]} />
+            <UrlForm accent examples={["wikipedia.org", "stripe.com", "github.com"]} />
             <p className="mt-3 text-[13px] text-disabled">
               We audit public pages only. Internal and private addresses are refused.
             </p>
