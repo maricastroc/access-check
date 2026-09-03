@@ -60,7 +60,7 @@ export function UrlField({
 type Scope = "page" | "site";
 
 /** Landing hero form: URL + scope (single page / entire site) + audit action. */
-export function UrlForm() {
+export function UrlForm({ accent = false }: { accent?: boolean }) {
   const router = useRouter();
   const [value, setValue] = useState("");
   const [scope, setScope] = useState<Scope>("page");
@@ -105,9 +105,12 @@ export function UrlForm() {
         <button
           type="button"
           onClick={() => go(value, scope)}
-          className="inline-flex h-[66px] shrink-0 items-center justify-center gap-3 bg-ink px-8 text-[16.5px] font-semibold text-surface transition-colors hover:bg-ink-2"
+          className={cn(
+            "inline-flex h-[66px] shrink-0 items-center justify-center gap-3 px-8 text-[16.5px] font-semibold text-surface transition-colors",
+            accent ? "bg-serious hover:brightness-110" : "bg-ink hover:bg-ink-2",
+          )}
         >
-          Audit
+          Audit page
           <span aria-hidden className="h-px w-5 bg-surface" />
         </button>
       </div>

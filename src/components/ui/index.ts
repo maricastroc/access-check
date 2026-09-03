@@ -8,8 +8,6 @@ export { CodeBlock } from "./code-block";
 export type { CodeLine, CodeTone } from "./code-block";
 export { ColorSwatch } from "./color-swatch";
 export { ConfirmDialog } from "./confirm-dialog";
-export { ConformanceLadder } from "./conformance-ladder";
-export type { ConformanceLevel } from "./conformance-ladder";
 export { CopyableCode } from "./copyable-code";
 export { FindingDetail } from "./finding-detail";
 export { FindingRow } from "./finding-row";

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import type { ScanPhase, ScanWarning } from "@/lib/scan/types";
-import { Button, Ruler, ScanStages, SectionKicker, WarningList } from "@/components/ui";
+import { Button, Ruler, ScanStages, WarningList } from "@/components/ui";
 import { UrlField } from "@/components/home/url-form";
 
 const BUDGET_MS = 25_000;
@@ -118,24 +118,3 @@ export function PartialNotice({
   );
 }
 
-export function NoFindingsState({ passed, manualReview }: { passed: number; manualReview: number }) {
-  return (
-    <div className="border border-border bg-surface p-6">
-      <div className="flex items-end gap-2">
-        <span className="font-cond text-[48px] leading-none tabular-nums text-ink">100</span>
-        <span className="pb-1.5 font-cond text-[15px] text-muted">/100 · internal score</span>
-      </div>
-      <div className="mt-3">
-        <Ruler variant="score" score={100} deductions={[]} height={20} />
-      </div>
-      <p className="mt-4 text-[14.5px] leading-normal text-body">
-        <span className="font-semibold text-ink">No automated failures on this page.</span> {passed}{" "}
-        checks passed. This is not WCAG conformance: {manualReview} item
-        {manualReview === 1 ? "" : "s"} depend on human review.
-      </p>
-      <div className="mt-3">
-        <SectionKicker tone="steel">Coverage, not a pass</SectionKicker>
-      </div>
-    </div>
-  );
-}

@@ -55,7 +55,12 @@ export function FindingsMargin({
 
       <div className="flex flex-col gap-2 p-4">
         {findings.length === 0 ? (
-          <p className="text-[13.5px] text-muted">No automated findings on this page.</p>
+          <p className="text-[13.5px] leading-normal text-body">
+            <span className="font-semibold text-ink">No automated failures on this page.</span>{" "}
+            {result.counts.passed} checks passed. This is not WCAG conformance —{" "}
+            {result.counts.manualReview} item{result.counts.manualReview === 1 ? "" : "s"} depend on
+            human review below.
+          </p>
         ) : (
           findings.map((f) => (
             <div key={f.id} id={`finding-${f.id}`} className="scroll-mt-24">

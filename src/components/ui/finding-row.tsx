@@ -32,22 +32,26 @@ export function FindingRow({
 }: {
   finding: FindingView;
   selected: boolean;
-  onSelect: () => void;
+  onSelect?: () => void;
 }) {
   const label = finding.severity ? severityLabel[finding.severity] : "Best practice";
   const noMarker = finding.markers.length === 0;
+  const interactive = Boolean(onSelect);
 
   return (
     <button
       type="button"
-      aria-pressed={selected}
-      aria-expanded={selected}
+      aria-pressed={interactive ? selected : undefined}
+      aria-expanded={interactive ? selected : undefined}
       onClick={onSelect}
+      disabled={!interactive}
       className={cn(
-        "block w-full cursor-pointer border p-3 text-left transition-colors",
+        "block w-full border p-3 text-left transition-colors",
+        interactive ? "cursor-pointer" : "cursor-default",
         selected
           ? "border-ink bg-surface shadow-[var(--shadow-selected)]"
-          : "border-hairline bg-transparent hover:bg-surface",
+          : "border-hairline bg-transparent",
+        interactive && !selected && "hover:bg-surface",
       )}
       style={{
         borderLeftColor: railColor(finding),
