@@ -1,6 +1,6 @@
 import path from "path";
-import type { Page } from "playwright-core";
-import { acquireBrowser } from "./browser";
+import type { BrowserContext, Page } from "playwright-core";
+import { acquireBrowser, closeSharedBrowser } from "./browser";
 import { criterionFromTags } from "./wcag";
 import {
   fixAriaAllowedAttr,
@@ -42,6 +42,15 @@ import type {
 } from "./types";
 
 const VIEWPORT = { width: 1200, height: 800 };
+
+const CONTEXT_OPTIONS = {
+  viewport: VIEWPORT,
+  deviceScaleFactor: 1,
+  bypassCSP: true,
+  userAgent:
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " +
+    "(KHTML, like Gecko) Chrome/124.0 Safari/537.36 AccessCheckBot/2.1",
+} as const;
 const MAX_MARKERS = 6;
 const MAX_VERIFY_OPS = 40;
 
@@ -351,22 +360,28 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
   };
 
   phase("preparing");
-  const browser = await track("browserLaunch", () => acquireBrowser());
-  const context = await track("contextCreate", () =>
-    browser.newContext({
-      viewport: VIEWPORT,
-      deviceScaleFactor: 1,
-      bypassCSP: true,
-      userAgent:
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " +
-        "(KHTML, like Gecko) Chrome/124.0 Safari/537.36 AccessCheckBot/2.1",
-    }),
-  );
+
+  const openSession = async (): Promise<{ context: BrowserContext; page: Page }> => {
+    for (let attempt = 1; ; attempt++) {
+      let context: BrowserContext | undefined;
+      try {
+        const browser = await track("browserLaunch", () => acquireBrowser());
+        context = await track("contextCreate", () => browser.newContext(CONTEXT_OPTIONS));
+        if (blockPrivateHosts) await installNetworkGuard(context);
+        const page = await track("pageCreate", () => context!.newPage());
+        return { context, page };
+      } catch (err) {
+        await context?.close().catch(() => noop());
+        await closeSharedBrowser().catch(() => noop());
+        if (attempt >= 2) throw err;
+        timings.browserRecycled = (timings.browserRecycled ?? 0) + 1;
+      }
+    }
+  };
+
+  const { context, page } = await openSession();
 
   try {
-    if (blockPrivateHosts) await installNetworkGuard(context);
-    const page = await track("pageCreate", () => context.newPage());
-
     phase("loading");
 
     const navTimeout = Math.max(3_000, budget.slice(NAVIGATION_MAX_MS));

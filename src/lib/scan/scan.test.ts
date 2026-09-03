@@ -2,7 +2,8 @@ import { createServer, type Server } from "http";
 import type { AddressInfo, Socket } from "net";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { runScan, ScanFailure } from "./scan";
-import { closeSharedBrowser } from "./browser";
+import { closeSharedBrowser, getBrowserExecutor, setBrowserExecutor } from "./browser";
+import type { BrowserContext } from "playwright-core";
 
 const TALL_BODY = Array.from(
   { length: 4000 },
@@ -264,6 +265,86 @@ describe("runScan (integration — real browser)", () => {
 });
 
 describe("runScan (budget, degradation and resilience)", () => {
+  it("recycles the browser and retries once when the page cannot be created", async () => {
+    await closeSharedBrowser();
+    const real = getBrowserExecutor();
+    let launches = 0;
+
+    const bindThrough = (target: object, prop: string | symbol, receiver: unknown) => {
+      const value = Reflect.get(target, prop, receiver);
+      return typeof value === "function" ? value.bind(target) : value;
+    };
+
+    setBrowserExecutor({
+      async launch() {
+        launches += 1;
+        const browser = await real.launch();
+        if (launches > 1) return browser;
+
+        return new Proxy(browser, {
+          get(target, prop, receiver) {
+            if (prop !== "newContext") return bindThrough(target, prop, receiver);
+            return async (...args: unknown[]) => {
+              const context = await (
+                target.newContext as (...a: unknown[]) => Promise<BrowserContext>
+              )(...args);
+              return new Proxy(context, {
+                get(ctx, key, ref) {
+                  if (key !== "newPage") return bindThrough(ctx, key, ref);
+                  return async () => {
+                    throw new Error("Target page, context or browser has been closed");
+                  };
+                },
+              });
+            };
+          },
+        });
+      },
+    });
+
+    try {
+      let timings: Record<string, number> = {};
+      const result = await runScan(`${base}/clean`, {
+        screenshot: false,
+        keyboard: false,
+        contexts: false,
+        audits: false,
+        verifyFixes: false,
+        onTimings: (t) => {
+          timings = t;
+        },
+      });
+
+      expect(launches).toBe(2);
+      expect(timings.browserRecycled).toBe(1);
+      expect(result.title).toBe("Clean fixture");
+    } finally {
+      setBrowserExecutor(real);
+      await closeSharedBrowser();
+    }
+  }, 90_000);
+
+  it("gives up after a single retry when the browser never recovers", async () => {
+    await closeSharedBrowser();
+    const real = getBrowserExecutor();
+    let launches = 0;
+
+    setBrowserExecutor({
+      async launch() {
+        launches += 1;
+        throw new Error("Target page, context or browser has been closed");
+      },
+    });
+
+    try {
+      await expect(runScan(`${base}/clean`)).rejects.toThrow(/has been closed/);
+      expect(launches).toBe(2);
+    } finally {
+      setBrowserExecutor(real);
+      await closeSharedBrowser();
+    }
+  }, 60_000);
+
   it("keeps the stylesheet-dependent rules working under the resource policy", async () => {
     const result = await runScan(`${base}/broken`, {
       screenshot: false,
