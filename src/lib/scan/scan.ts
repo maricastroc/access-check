@@ -19,12 +19,13 @@ import {
 import { clusterFixes, type FixCluster } from "./group";
 import { collectKeyboard, type KeyboardReport } from "./keyboard";
 import { collectContexts, type ContextReport } from "./contexts";
-import { collectTargetSize, type TargetSizeReport } from "./target-size";
-import { collectReducedMotion, type ReducedMotionReport } from "./reduced-motion";
-import { collectLiveRegions, type LiveRegionsReport } from "./live-regions";
+import { collectTargetSize } from "./target-size";
+import { collectReducedMotion } from "./reduced-motion";
+import { collectLiveRegions } from "./live-regions";
 import type { AuditsReport } from "./audits";
 import { buildFixFirst, buildSummary, computeScore, severityOrder } from "./derive";
 import { Budget } from "./budget";
+import { OPTIONAL_ORDER, ScanPolicy, STAGES, type StageId } from "./policy";
 import { CONTENT_SIGNATURE, waitForContentReady } from "./page-ready";
 import { captureScreenshot, SCREENSHOT_QUALITY } from "./screenshot";
 import { installNetworkGuard } from "./ssrf";
@@ -36,7 +37,6 @@ import type {
   ScanPhase,
   ScanResult,
   ScanViolation,
-  ScanWarning,
   ScanWarningCode,
   Severity,
 } from "./types";
@@ -57,15 +57,10 @@ const MAX_VERIFY_OPS = 40;
 export const DEFAULT_SCAN_BUDGET_MS = 40_000;
 
 const FINALIZE_RESERVE_MS = 2_500;
-const NAVIGATION_MAX_MS = 20_000;
-const PRIME_MAX_MS = 2_500;
-const CONTENT_READY_MAX_MS = 8_000;
-const AXE_MAX_MS = 20_000;
-const SCREENSHOT_MAX_MS = 6_000;
-const VERIFY_MAX_MS = 6_000;
-const AUDIT_MAX_MS = 5_000;
-const KEYBOARD_MAX_MS = 8_000;
-const CONTEXTS_MAX_MS = 8_000;
+const FINALIZE_RESERVE_SHARE = 0.1;
+const SESSION_MAX_MS = 18_000;
+const RETRY_FLOOR_MS = 12_000;
+const EXPIRED = Symbol("expired");
 
 const AXE_PATH = path.join(process.cwd(), "node_modules/axe-core/axe.min.js");
 
@@ -81,6 +76,8 @@ export class ScanFailure extends Error {
 
 const WARNING_TEXT: Record<ScanWarningCode, string> = {
   "screenshot-unavailable": "The visual preview could not be captured in time.",
+  "fix-details-skipped": "Suggested fixes fall back to generic guidance for some issues.",
+  "markers-skipped": "Issue markers were not placed on the preview.",
   "content-unsettled": "The page was still loading content when the audit ran.",
   "verification-skipped": "Fixes were not verified live in the page.",
   "audits-skipped": "Target size, motion and live-region checks were skipped.",
@@ -316,7 +313,66 @@ export type ScanOptions = {
 
 const noop = (): void => undefined;
 
+const BROWSER_GONE =
+  /target (?:page, context or browser )?(?:has been )?closed|browser has been closed|browser has been disconnected|target crashed|session closed|protocol error/i;
+
+class SessionOpenError extends Error {
+  constructor(readonly cause: unknown) {
+    super(cause instanceof Error ? cause.message : String(cause));
+    this.name = "SessionOpenError";
+  }
+}
+
+function isBrowserGone(err: unknown): boolean {
+  return BROWSER_GONE.test(err instanceof Error ? err.message : String(err));
+}
+
 export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<ScanResult> {
+  const budgetMs = opts.budgetMs ?? DEFAULT_SCAN_BUDGET_MS;
+  const budget = new Budget(
+    budgetMs,
+    Math.min(FINALIZE_RESERVE_MS, Math.round(budgetMs * FINALIZE_RESERVE_SHARE)),
+  );
+  const timings: Record<string, number> = {};
+
+  const unavailable = () =>
+    new ScanFailure(
+      "The scan browser stopped responding before the audit could run.",
+      "browser-unavailable",
+    );
+
+  try {
+    try {
+      return await runScanAttempt(rawUrl, opts, budget, timings);
+    } catch (err) {
+      if (err instanceof SessionOpenError) throw err.cause;
+      if (!isBrowserGone(err)) throw err;
+      await closeSharedBrowser().catch(() => noop());
+      if (!budget.allows(RETRY_FLOOR_MS)) throw unavailable();
+      timings.browserRestarted = (timings.browserRestarted ?? 0) + 1;
+      try {
+        return await runScanAttempt(rawUrl, opts, budget, timings);
+      } catch (retryErr) {
+        if (retryErr instanceof SessionOpenError) throw retryErr.cause;
+        if (isBrowserGone(retryErr)) throw unavailable();
+        throw retryErr;
+      }
+    }
+  } finally {
+    try {
+      opts.onTimings?.(timings);
+    } catch {
+      noop();
+    }
+  }
+}
+
+async function runScanAttempt(
+  rawUrl: string,
+  opts: ScanOptions,
+  budget: Budget,
+  timings: Record<string, number>,
+): Promise<ScanResult> {
   const {
     screenshot: doScreenshot = true,
     keyboard: doKeyboard = true,
@@ -324,23 +380,13 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
     audits: doAudits = true,
     verifyFixes: doVerify = true,
     blockPrivateHosts = false,
-    budgetMs = DEFAULT_SCAN_BUDGET_MS,
     onPhase,
     onCore,
-    onTimings,
   } = opts;
 
   const url = normalizeUrl(rawUrl);
   const startedAt = Date.now();
-  const budget = new Budget(budgetMs, FINALIZE_RESERVE_MS);
-  const timings: Record<string, number> = {};
-  const warnings: ScanWarning[] = [];
-  let partial = false;
-
-  const warn = (code: ScanWarningCode) => {
-    if (warnings.some((w) => w.code === code)) return;
-    warnings.push({ code, message: WARNING_TEXT[code] });
-  };
+  const policy = new ScanPolicy(budget, WARNING_TEXT);
 
   const track = async <T>(label: string, fn: () => Promise<T>): Promise<T> => {
     const t0 = Date.now();
@@ -364,29 +410,53 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
   const openSession = async (): Promise<{ context: BrowserContext; page: Page }> => {
     for (let attempt = 1; ; attempt++) {
       let context: BrowserContext | undefined;
+      const allowance = Math.max(3_000, budget.slice(SESSION_MAX_MS));
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const expiry = new Promise<typeof EXPIRED>((resolve) => {
+        timer = setTimeout(() => resolve(EXPIRED), allowance);
+      });
       try {
-        const browser = await track("browserLaunch", () => acquireBrowser());
-        context = await track("contextCreate", () => browser.newContext(CONTEXT_OPTIONS));
-        if (blockPrivateHosts) await installNetworkGuard(context);
-        const page = await track("pageCreate", () => context!.newPage());
-        return { context, page };
+        const attempted = (async () => {
+          const browser = await track("browserLaunch", () => acquireBrowser());
+          context = await track("contextCreate", () => browser.newContext(CONTEXT_OPTIONS));
+          if (blockPrivateHosts) await installNetworkGuard(context);
+          const page = await track("pageCreate", () => context!.newPage());
+          return { context, page };
+        })();
+        attempted.catch(() => noop());
+
+        const opened = await Promise.race([attempted, expiry]);
+        if (opened !== EXPIRED) return opened;
+
+        await context?.close().catch(() => noop());
+        await closeSharedBrowser().catch(() => noop());
+        throw new ScanFailure(
+          "The scan browser took too long to start. Please try again.",
+          "browser-unavailable",
+        );
       } catch (err) {
+        if (err instanceof ScanFailure) throw err;
         await context?.close().catch(() => noop());
         await closeSharedBrowser().catch(() => noop());
         if (attempt >= 2) throw err;
         timings.browserRecycled = (timings.browserRecycled ?? 0) + 1;
+      } finally {
+        if (timer) clearTimeout(timer);
       }
     }
   };
 
-  const { context, page } = await openSession();
+  const { context, page } = await openSession().catch((err: unknown) => {
+    throw err instanceof ScanFailure ? err : new SessionOpenError(err);
+  });
 
   try {
     phase("loading");
 
-    const navTimeout = Math.max(3_000, budget.slice(NAVIGATION_MAX_MS));
+    const navTimeout = Math.max(STAGES.navigation.minMs, policy.allowance("navigation"));
     const response = await track("navigation", () =>
       page.goto(url, { waitUntil: "domcontentloaded", timeout: navTimeout }).catch((err) => {
+        if (isBrowserGone(err)) throw err;
         const message = err instanceof Error ? err.message : String(err);
         if (/timeout/i.test(message)) {
           throw new ScanFailure(
@@ -406,23 +476,21 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
       );
     }
 
-    if (budget.allows(PRIME_MAX_MS + CONTENT_READY_MAX_MS)) {
-      await track("prime", async () => {
-        await budget.run(() => primeLazyContent(page), PRIME_MAX_MS, undefined);
-      });
-    }
+    await track("prime", () => policy.run("prime", () => primeLazyContent(page), undefined));
 
     const readiness = await track("contentReady", () =>
-      waitForContentReady(
-        () => page.evaluate(CONTENT_SIGNATURE).catch(() => null),
-        (ms) => page.waitForTimeout(ms),
-        { maxMs: budget.slice(CONTENT_READY_MAX_MS) },
+      policy.run(
+        "content-ready",
+        (allowanceMs) =>
+          waitForContentReady(
+            () => page.evaluate(CONTENT_SIGNATURE).catch(() => null),
+            (ms) => page.waitForTimeout(ms),
+            { maxMs: allowanceMs },
+          ),
+        { ms: 0, settled: false, samples: 0 },
       ),
     );
-    if (!readiness.settled) {
-      partial = true;
-      warn("content-unsettled");
-    }
+    if (!readiness.value.settled) policy.skip("content-ready");
 
     const title = (await page.title().catch(() => "")) || url;
     const finalUrl = page.url();
@@ -451,13 +519,14 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
     };
 
     const axe = await track("axe", async (): Promise<AxeResults | null> => {
-      const first = await budget.run<AxeResults | null>(runAxe, AXE_MAX_MS, null);
+      if (!policy.canRun("axe")) return null;
+      const first = await policy.run<AxeResults | null>("axe", runAxe, null);
       if (first.value) return first.value;
-      if (first.timedOut) return null;
+      if (first.timedOut || !policy.canRun("axe")) return null;
       await page
-        .waitForLoadState("domcontentloaded", { timeout: budget.slice(5_000) })
+        .waitForLoadState("domcontentloaded", { timeout: Math.min(3_000, budget.spendable()) })
         .catch(() => null);
-      const second = await budget.run<AxeResults | null>(runAxe, AXE_MAX_MS, null);
+      const second = await policy.run<AxeResults | null>("axe", runAxe, null);
       return second.value;
     });
 
@@ -467,24 +536,6 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
         "audit-failed",
       );
     }
-
-    const screenshot = !doScreenshot
-      ? null
-      : await track("screenshot", () =>
-          captureScreenshot(
-            (timeoutMs) =>
-              page.screenshot({
-                type: "jpeg",
-                quality: SCREENSHOT_QUALITY,
-                clip: { x: 0, y: 0, ...VIEWPORT },
-                animations: "disabled",
-                timeout: timeoutMs,
-              }),
-            budget.slice(SCREENSHOT_MAX_MS),
-          ),
-        );
-
-    if (doScreenshot && !screenshot) warn("screenshot-unavailable");
 
     phase("processing");
 
@@ -503,40 +554,47 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
     const elementInfos: Record<string, ElementInfo> =
       elementSelectors.length === 0
         ? {}
-        : await page.evaluate((selectors) => {
-            const out: Record<string, ElementInfo> = {};
-            for (const sel of selectors) {
-              try {
-                const el = document.querySelector(sel);
-                if (!el) continue;
-                out[sel] = {
-                  tag: el.tagName.toLowerCase(),
-                  type: el.getAttribute("type") ?? undefined,
-                  id: el.id || undefined,
-                  name: el.getAttribute("name") ?? undefined,
-                  placeholder: el.getAttribute("placeholder") ?? undefined,
-                  ariaLabel: el.getAttribute("aria-label") ?? undefined,
-                  src: el.getAttribute("src") ?? undefined,
-                  role: el.getAttribute("role") ?? undefined,
-                  text: (el.textContent ?? "").replace(/\s+/g, " ").trim() || undefined,
-                  title: el.getAttribute("title") ?? undefined,
-                  nearbyText:
-                    (() => {
-                      const fig = el.closest("figure");
-                      const cap = fig?.querySelector("figcaption")?.textContent;
-                      if (cap && cap.trim()) return cap.replace(/\s+/g, " ").trim();
-                      const link = el.closest("a");
-                      const lt = link?.textContent;
-                      if (lt && lt.trim()) return lt.replace(/\s+/g, " ").trim();
-                      return undefined;
-                    })() ?? undefined,
-                };
-              } catch {
-                //
-              }
-            }
-            return out;
-          }, elementSelectors);
+        : (
+            await policy.run<Record<string, ElementInfo>>(
+              "element-info",
+              () =>
+                page.evaluate((selectors) => {
+                  const out: Record<string, ElementInfo> = {};
+                  for (const sel of selectors) {
+                    try {
+                      const el = document.querySelector(sel);
+                      if (!el) continue;
+                      out[sel] = {
+                        tag: el.tagName.toLowerCase(),
+                        type: el.getAttribute("type") ?? undefined,
+                        id: el.id || undefined,
+                        name: el.getAttribute("name") ?? undefined,
+                        placeholder: el.getAttribute("placeholder") ?? undefined,
+                        ariaLabel: el.getAttribute("aria-label") ?? undefined,
+                        src: el.getAttribute("src") ?? undefined,
+                        role: el.getAttribute("role") ?? undefined,
+                        text: (el.textContent ?? "").replace(/\s+/g, " ").trim() || undefined,
+                        title: el.getAttribute("title") ?? undefined,
+                        nearbyText:
+                          (() => {
+                            const fig = el.closest("figure");
+                            const cap = fig?.querySelector("figcaption")?.textContent;
+                            if (cap && cap.trim()) return cap.replace(/\s+/g, " ").trim();
+                            const link = el.closest("a");
+                            const lt = link?.textContent;
+                            if (lt && lt.trim()) return lt.replace(/\s+/g, " ").trim();
+                            return undefined;
+                          })() ?? undefined,
+                      };
+                    } catch {
+                      continue;
+                    }
+                  }
+                  return out;
+                }, elementSelectors),
+              {},
+            )
+          ).value;
 
     type Enriched = { v: ScanViolation; clusters: FixCluster[] };
     const enriched: Enriched[] = wcagViolations.map((v) => {
@@ -572,7 +630,28 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
       };
     });
 
-    if (doVerify) {
+    const applyFixGroups = () => {
+      for (const e of enriched) {
+        if (e.clusters.length > 0) {
+          e.v.fixGroups = e.clusters.map(
+            (c) =>
+              ({
+                text: c.text,
+                code: c.code,
+                count: c.count,
+                selectors: c.selectors,
+                verification: c.verification ?? "unchecked",
+              }) satisfies FixGroup,
+          );
+          const main = e.clusters.find((c) => c.selectors.includes(e.v.where)) ?? e.clusters[0];
+          e.v.verification = main.verification ?? "unchecked";
+        }
+      }
+    };
+
+    const verifyFixes = async () => {
+      if (!doVerify) return;
+
       const verifyOps: VerifyOp[] = [];
       const opClusters: FixCluster[] = [];
       for (const e of enriched) {
@@ -586,47 +665,24 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
           opClusters.push(cluster);
         }
       }
+      if (verifyOps.length === 0) return;
 
-      if (verifyOps.length > 0) {
-        if (!budget.allows(VERIFY_MAX_MS)) {
-          partial = true;
-          warn("verification-skipped");
-        } else {
-          const { value: verifications, timedOut } = await track("verify", () =>
-            budget.run(
-              () => page.evaluate(VERIFY_IN_PAGE, verifyOps),
-              VERIFY_MAX_MS,
-              [] as FixVerification[],
-            ),
-          );
-          if (timedOut) {
-            partial = true;
-            warn("verification-skipped");
-          } else {
-            verifications.forEach((res, i) => {
-              opClusters[i].verification = res;
-            });
-          }
-        }
-      }
-    }
+      const outcome = await track("verify", () =>
+        policy.run(
+          "verify",
+          () => page.evaluate(VERIFY_IN_PAGE, verifyOps),
+          [] as FixVerification[],
+        ),
+      );
+      if (outcome.skipped || outcome.timedOut) return;
 
-    for (const e of enriched) {
-      if (e.clusters.length > 0) {
-        e.v.fixGroups = e.clusters.map(
-          (c) =>
-            ({
-              text: c.text,
-              code: c.code,
-              count: c.count,
-              selectors: c.selectors,
-              verification: c.verification ?? "unchecked",
-            }) satisfies FixGroup,
-        );
-        const main = e.clusters.find((c) => c.selectors.includes(e.v.where)) ?? e.clusters[0];
-        e.v.verification = main.verification ?? "unchecked";
-      }
-    }
+      outcome.value.forEach((res, i) => {
+        opClusters[i].verification = res;
+      });
+      applyFixGroups();
+    };
+
+    applyFixGroups();
 
     const violations: ScanViolation[] = enriched
       .map((e) => e.v)
@@ -639,18 +695,25 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
       if (sel) targets.push({ selector: sel, severity, label: v.help });
     }
 
-    const rects = await page.evaluate((items) => {
-      return items.map((it) => {
-        try {
-          const el = document.querySelector(it.selector);
-          if (!el) return null;
-          const r = el.getBoundingClientRect();
-          return { x: r.left, y: r.top, w: r.width, h: r.height };
-        } catch {
-          return null;
-        }
-      });
-    }, targets);
+    const rects = (
+      await policy.run<({ x: number; y: number; w: number; h: number } | null)[]>(
+        "markers",
+        () =>
+          page.evaluate((items) => {
+            return items.map((it) => {
+              try {
+                const el = document.querySelector(it.selector);
+                if (!el) return null;
+                const r = el.getBoundingClientRect();
+                return { x: r.left, y: r.top, w: r.width, h: r.height };
+              } catch {
+                return null;
+              }
+            });
+          }, targets),
+        targets.map(() => null),
+      )
+    ).value;
 
     const markers: ScanMarker[] = [];
     targets.forEach((t, i) => {
@@ -714,7 +777,7 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
       title,
       scannedElements: axe.passes.length + axe.violations.length + axe.incomplete.length,
       durationMs: Date.now() - startedAt,
-      screenshot,
+      screenshot: null,
       score: computeScore(violations),
       counts,
       summary: buildSummary(counts),
@@ -724,118 +787,133 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
       passed,
       markers,
       fixFirst: buildFixFirst(violations),
-      partial,
-      warnings: warnings.length > 0 ? [...warnings] : undefined,
+      partial: policy.partial,
+      warnings: policy.warnings().length > 0 ? policy.warnings() : undefined,
     };
+
+    policy.releaseAssemblyReserve();
+
     try {
       onCore?.(core);
     } catch {
       noop();
     }
 
+    let screenshot: string | null = null;
     let audits: AuditsReport | undefined;
-    if (doAudits) {
-      if (!budget.allows(AUDIT_MAX_MS)) {
-        partial = true;
-        warn("audits-skipped");
-      } else {
-        audits = {};
-        const collected = await track("audits", async () => {
-          const targetSize = await budget.run<TargetSizeReport | undefined>(
-            () => collectTargetSize(page),
-            AUDIT_MAX_MS,
-            undefined,
-          );
-          const reducedMotion = await budget.run<ReducedMotionReport | undefined>(
-            () => collectReducedMotion(page),
-            AUDIT_MAX_MS,
-            undefined,
-          );
-          const liveRegions = await budget.run<LiveRegionsReport | undefined>(
-            () => collectLiveRegions(page),
-            AUDIT_MAX_MS,
-            undefined,
-          );
-          return { targetSize, reducedMotion, liveRegions };
-        });
-
-        audits.targetSize = collected.targetSize.value;
-        audits.reducedMotion = collected.reducedMotion.value;
-        audits.liveRegions = collected.liveRegions.value;
-
-        if (
-          collected.targetSize.timedOut ||
-          collected.reducedMotion.timedOut ||
-          collected.liveRegions.timedOut
-        ) {
-          partial = true;
-          warn("audits-skipped");
-        }
-      }
-    }
-
     let keyboard: KeyboardReport | undefined;
-    if (doKeyboard) {
-      if (!budget.allows(KEYBOARD_MAX_MS)) {
-        partial = true;
-        warn("keyboard-skipped");
-      } else {
-        const { value, timedOut } = await track("keyboard", () =>
-          budget.run<KeyboardReport | undefined>(
-            () => collectKeyboard(page, VIEWPORT, { maxMs: budget.slice(KEYBOARD_MAX_MS) * 0.75 }),
-            KEYBOARD_MAX_MS,
+    let contexts: ContextReport | undefined;
+
+    const runOptional: Record<StageId, () => Promise<void>> = {
+      verify: verifyFixes,
+
+      audits: async () => {
+        const collected = await track("audits", () =>
+          policy.run(
+            "audits",
+            async () => {
+              const report: AuditsReport = {};
+              report.targetSize = await collectTargetSize(page);
+              report.reducedMotion = await collectReducedMotion(page);
+              report.liveRegions = await collectLiveRegions(page);
+              return report;
+            },
+            undefined as AuditsReport | undefined,
+          ),
+        );
+        audits = collected.value;
+        if (collected.timedOut || (collected.ran && !collected.value)) policy.skip("audits");
+      },
+
+      screenshot: async () => {
+        const shot = await track("screenshot", () =>
+          policy.run<string | null>(
+            "screenshot",
+            (allowanceMs) =>
+              captureScreenshot(
+                (timeoutMs) =>
+                  page.screenshot({
+                    type: "jpeg",
+                    quality: SCREENSHOT_QUALITY,
+                    clip: { x: 0, y: 0, ...VIEWPORT },
+                    animations: "disabled",
+                    timeout: timeoutMs,
+                  }),
+                allowanceMs,
+              ),
+            null,
+          ),
+        );
+        screenshot = shot.value;
+        if (!screenshot) policy.skip("screenshot");
+      },
+
+      keyboard: async () => {
+        const collected = await track("keyboard", () =>
+          policy.run<KeyboardReport | undefined>(
+            "keyboard",
+            (allowanceMs) => collectKeyboard(page, VIEWPORT, { maxMs: allowanceMs * 0.75 }),
             undefined,
           ),
         );
-        keyboard = value;
-        if (timedOut || !value) {
-          partial = true;
-          warn("keyboard-skipped");
-        }
-      }
-    }
+        keyboard = collected.value;
+        if (!keyboard) policy.skip("keyboard");
+      },
 
-    let contexts: ContextReport | undefined;
-    if (doContexts) {
-      if (!budget.allows(CONTEXTS_MAX_MS)) {
-        partial = true;
-        warn("contexts-skipped");
-      } else {
-        const { value, timedOut } = await track("contexts", () =>
-          budget.run<ContextReport | undefined>(
-            () =>
+      contexts: async () => {
+        const collected = await track("contexts", () =>
+          policy.run<ContextReport | undefined>(
+            "contexts",
+            (allowanceMs) =>
               collectContexts(
                 page,
                 violations.map((v) => v.id),
+                { maxMs: allowanceMs * 0.8 },
               ),
-            CONTEXTS_MAX_MS,
             undefined,
           ),
         );
-        contexts = value;
-        if (timedOut || !value) {
-          partial = true;
-          warn("contexts-skipped");
-        }
+        contexts = collected.value;
+        if (!contexts) policy.skip("contexts");
+      },
+
+      navigation: async () => noop(),
+      prime: async () => noop(),
+      "content-ready": async () => noop(),
+      axe: async () => noop(),
+      "element-info": async () => noop(),
+      markers: async () => noop(),
+    };
+
+    const wanted: Record<string, boolean> = {
+      verify: doVerify,
+      audits: doAudits,
+      screenshot: doScreenshot,
+      keyboard: doKeyboard,
+      contexts: doContexts,
+    };
+
+    for (const stage of OPTIONAL_ORDER) {
+      if (!wanted[stage]) continue;
+      if (!policy.canRun(stage)) {
+        policy.skip(stage);
+        continue;
       }
+      await runOptional[stage]();
     }
 
     return {
       ...core,
       durationMs: Date.now() - startedAt,
+      screenshot,
       keyboard,
       contexts,
       audits,
-      partial,
-      warnings: warnings.length > 0 ? [...warnings] : undefined,
+      partial: policy.partial,
+      warnings: policy.warnings().length > 0 ? policy.warnings() : undefined,
     };
   } finally {
     timings.total = Date.now() - startedAt;
-    try {
-      onTimings?.(timings);
-    } catch {
-      noop();
-    }
     await context.close().catch(() => noop());
   }
 }

@@ -8,6 +8,8 @@ export type ScanPhase = "preparing" | "loading" | "auditing" | "processing" | "f
 
 export type ScanWarningCode =
   | "screenshot-unavailable"
+  | "fix-details-skipped"
+  | "markers-skipped"
   | "content-unsettled"
   | "verification-skipped"
   | "audits-skipped"
@@ -25,6 +27,7 @@ export type ScanErrorCode =
   | "navigation-failed"
   | "http-error"
   | "audit-failed"
+  | "browser-unavailable"
   | "timeout"
   | "interrupted"
   | "internal";

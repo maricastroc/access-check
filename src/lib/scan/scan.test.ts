@@ -3,7 +3,7 @@ import type { AddressInfo, Socket } from "net";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { runScan, ScanFailure } from "./scan";
 import { closeSharedBrowser, getBrowserExecutor, setBrowserExecutor } from "./browser";
-import type { BrowserContext } from "playwright-core";
+import type { Browser, BrowserContext } from "playwright-core";
 
 const TALL_BODY = Array.from(
   { length: 4000 },
@@ -345,6 +345,72 @@ describe("runScan (budget, degradation and resilience)", () => {
     }
   }, 60_000);
 
+  it("restarts the browser and still delivers when it dies mid-scan", async () => {
+    await closeSharedBrowser();
+    const real = getBrowserExecutor();
+    let launches = 0;
+    let opened: Browser | null = null;
+
+    setBrowserExecutor({
+      async launch() {
+        launches += 1;
+        opened = await real.launch();
+        return opened;
+      },
+    });
+
+    try {
+      const result = await runScan(`${base}/broken`, {
+        screenshot: false,
+        keyboard: false,
+        contexts: false,
+        audits: false,
+        verifyFixes: false,
+        onPhase: (p) => {
+          if (p === "loading" && launches === 1) void opened?.close().catch(() => undefined);
+        },
+      });
+
+      expect(launches).toBe(2);
+      expect(result.violations.map((v) => v.id)).toContain("image-alt");
+    } finally {
+      setBrowserExecutor(real);
+      await closeSharedBrowser();
+    }
+  }, 60_000);
+
+  it("reports an unavailable browser when it keeps dying mid-scan", async () => {
+    await closeSharedBrowser();
+    const real = getBrowserExecutor();
+    let opened: Browser | null = null;
+
+    setBrowserExecutor({
+      async launch() {
+        opened = await real.launch();
+        return opened;
+      },
+    });
+
+    try {
+      const err = await runScan(`${base}/clean`, {
+        screenshot: false,
+        keyboard: false,
+        contexts: false,
+        audits: false,
+        verifyFixes: false,
+        onPhase: (p) => {
+          if (p === "loading") void opened?.close().catch(() => undefined);
+        },
+      }).catch((e: unknown) => e);
+
+      expect(err).toBeInstanceOf(ScanFailure);
+      expect((err as ScanFailure).code).toBe("browser-unavailable");
+    } finally {
+      setBrowserExecutor(real);
+      await closeSharedBrowser();
+    }
+  }, 60_000);
+
   it("keeps the stylesheet-dependent rules working under the resource policy", async () => {
     const result = await runScan(`${base}/broken`, {
       screenshot: false,
@@ -412,9 +478,9 @@ describe("runScan (budget, degradation and resilience)", () => {
     expect((err as ScanFailure).code).toBe("navigation-timeout");
   }, 60_000);
 
-  it("returns a usable partial report when navigation eats most of the budget", async () => {
+  it("delivers a partial report instead of a timeout when the budget runs short", async () => {
     const result = await runScan(`${base}/slow`, {
-      budgetMs: SLOW_DELAY_MS + 6_000,
+      budgetMs: SLOW_DELAY_MS + 3_800,
       screenshot: false,
       keyboard: true,
       contexts: true,
@@ -424,6 +490,7 @@ describe("runScan (budget, degradation and resilience)", () => {
 
     expect(result.partial).toBe(true);
     expect(result.violations.map((v) => v.id)).toContain("image-alt");
+    expect(result.counts.passed).toBeGreaterThan(0);
     expect(result.score).toBeGreaterThanOrEqual(0);
 
     const codes = result.warnings?.map((w) => w.code) ?? [];
@@ -431,6 +498,40 @@ describe("runScan (budget, degradation and resilience)", () => {
     expect(codes).toContain("contexts-skipped");
     expect(result.keyboard).toBeUndefined();
     expect(result.contexts).toBeUndefined();
+  }, 60_000);
+
+  it("every warning names a stage that really did not run", async () => {
+    const result = await runScan(`${base}/slow`, {
+      budgetMs: SLOW_DELAY_MS + 3_800,
+      screenshot: true,
+      keyboard: true,
+      contexts: true,
+      audits: true,
+      verifyFixes: true,
+    });
+
+    const codes = new Set(result.warnings?.map((w) => w.code) ?? []);
+
+    expect(codes.has("keyboard-skipped")).toBe(result.keyboard === undefined);
+    expect(codes.has("contexts-skipped")).toBe(result.contexts === undefined);
+    expect(codes.has("audits-skipped")).toBe(result.audits === undefined);
+    expect(codes.has("screenshot-unavailable")).toBe(result.screenshot === null);
+
+    for (const w of result.warnings ?? []) expect(w.message.length).toBeGreaterThan(0);
+  }, 60_000);
+
+  it("still fails when not even the essential audit could be collected", async () => {
+    const err = await runScan(`${base}/slow`, {
+      budgetMs: SLOW_DELAY_MS + 600,
+      screenshot: false,
+      keyboard: false,
+      contexts: false,
+      audits: false,
+      verifyFixes: false,
+    }).catch((e: unknown) => e);
+
+    expect(err).toBeInstanceOf(ScanFailure);
+    expect((err as ScanFailure).code).toBe("audit-failed");
   }, 60_000);
 
   it("delivers the full report when the preview is switched off", async () => {
@@ -447,20 +548,20 @@ describe("runScan (budget, degradation and resilience)", () => {
     expect(result.warnings?.map((w) => w.code) ?? []).not.toContain("screenshot-unavailable");
   }, 60_000);
 
-  it("flags an unavailable preview without losing the audit", async () => {
-    const result = await runScan(`${base}/broken`, {
+  it("drops the preview before the audit when the budget runs short", async () => {
+    const result = await runScan(`${base}/slow`, {
+      budgetMs: SLOW_DELAY_MS + 2_600,
       screenshot: true,
-      keyboard: false,
-      contexts: false,
-      audits: false,
-      verifyFixes: false,
-      budgetMs: 3_200,
+      keyboard: true,
+      contexts: true,
+      audits: true,
+      verifyFixes: true,
     });
 
-    expect(result.violations.length).toBeGreaterThan(0);
-    if (!result.screenshot) {
-      expect(result.warnings?.map((w) => w.code)).toContain("screenshot-unavailable");
-    }
+    expect(result.violations.map((v) => v.id)).toContain("image-alt");
+    expect(result.screenshot).toBeNull();
+    expect(result.warnings?.map((w) => w.code)).toContain("screenshot-unavailable");
+    expect(result.partial).toBe(true);
   }, 60_000);
 
   it("reports timings for every stage it ran", async () => {

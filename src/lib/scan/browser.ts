@@ -15,11 +15,9 @@ class ServerlessChromiumExecutor implements BrowserExecutor {
   async launch(): Promise<Browser> {
     const chromium = (await import("@sparticuz/chromium")).default;
     const { chromium: playwright } = await import("playwright-core");
+    chromium.setGraphicsMode = false;
     const extraArgs = ["--disable-dev-shm-usage", "--disable-gpu"];
-    const args = [
-      ...chromium.args,
-      ...extraArgs.filter((flag) => !chromium.args.includes(flag)),
-    ];
+    const args = [...chromium.args, ...extraArgs.filter((flag) => !chromium.args.includes(flag))];
     return playwright.launch({
       args,
       executablePath: await chromium.executablePath(),

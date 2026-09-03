@@ -134,7 +134,7 @@ export async function POST(req: Request) {
       if (outcome.kind === "done") {
         const { screenshot: _screenshot, ...light } = outcome.result;
         void _screenshot;
-        send({ type: "result", result: core ? light : outcome.result });
+        send({ type: "result", result: outcome.result });
         log(outcome.result.partial ? "partial" : "ok", {
           score: outcome.result.score,
           warnings: outcome.result.warnings?.map((w) => w.code) ?? [],

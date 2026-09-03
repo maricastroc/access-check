@@ -39,6 +39,10 @@ export class Budget {
     this.startedAt = now();
   }
 
+  total(): number {
+    return this.totalMs;
+  }
+
   elapsed(): number {
     return this.now() - this.startedAt;
   }
