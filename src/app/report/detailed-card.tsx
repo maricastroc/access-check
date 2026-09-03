@@ -1,69 +1,86 @@
 import type { ScanResult } from "@/lib/scan/types";
-import { sevHex, sevLabel, sevTint } from "./shared";
+import { parseContrastFix } from "@/lib/report/contrast";
+import { toFixStatus } from "@/lib/report/severity";
+import { ColorSwatch, StatusSeal } from "@/components/ui";
+import { sevHex, sevLabel } from "./shared";
 import { FieldLabel } from "./primitives";
 
-type DetailedCardProps = {
-  v: ScanResult["violations"][number];
-};
+export function DetailedCard({ v }: { v: ScanResult["violations"][number] }) {
+  const measurement = parseContrastFix(v.fix, v.fixCode);
+  const status = toFixStatus(v.verification);
 
-export function DetailedCard({ v }: DetailedCardProps) {
   return (
-    <div
-      className="overflow-hidden rounded-2xl border bg-card"
-      style={{ borderColor: `${sevHex[v.severity]}40` }}
-    >
+    <div className="border border-hairline bg-surface" style={{ borderLeft: `3px solid ${sevHex[v.severity]}` }}>
       <div className="grid grid-cols-[1fr_1.7in]">
-        <div className="border-r border-line p-4">
+        <div className="border-r border-hairline p-4">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-[15px] font-semibold text-ink">{v.title}</span>
-
             <span
-              className="rounded-full border px-2 py-0.5 text-[9px] font-semibold tracking-wide uppercase"
-              style={{
-                color: sevHex[v.severity],
-                background: sevTint[v.severity],
-                borderColor: `${sevHex[v.severity]}55`,
-              }}
+              className="font-cond px-1.5 py-0.5 text-[10px] font-medium tracking-[0.08em] uppercase"
+              style={{ color: sevHex[v.severity] }}
             >
               {sevLabel[v.severity]}
             </span>
-
-            <span className="rounded-md border border-line bg-canvas px-1.5 py-0.5 font-mono text-[9.5px] font-semibold text-ink-soft">
-              {v.criterion.split(" · ")[0]}
+            <span className="border border-border bg-canvas px-1.5 py-0.5 font-mono text-[9.5px] text-steel">
+              {v.criterion.replace(/^WCAG\s/, "").split(" · ")[0]}
             </span>
           </div>
 
-          <p className="mt-2 text-[11.5px] leading-[1.45] text-ink-soft">{v.desc}</p>
+          <p className="mt-2 text-[11.5px] leading-[1.45] text-body">{v.desc}</p>
 
-          <div className="mt-2">
-            <FieldLabel tone="brand">Suggested fix</FieldLabel>
-
-            <div className="mt-0.5 font-mono text-[11px] leading-[1.45] whitespace-pre-line text-ink">
-              {v.fix}
-            </div>
+          <div className="mt-2.5">
+            <FieldLabel>Suggested fix</FieldLabel>
+            {measurement ? (
+              <div className="mt-1 text-[11.5px] text-body">
+                Measured {measurement.measured.toFixed(2)}:1 · minimum AA{" "}
+                {measurement.required.toFixed(1)}:1
+                {measurement.fixed != null && measurement.toHex && (
+                  <span className="mt-1.5 flex items-center gap-1.5">
+                    {measurement.fromHex && (
+                      <>
+                        <ColorSwatch hex={measurement.fromHex} size={12} />
+                        <span className="font-mono text-[10.5px] text-muted">
+                          {measurement.fromHex.toUpperCase()}
+                        </span>
+                        <span aria-hidden className="text-muted">→</span>
+                      </>
+                    )}
+                    <ColorSwatch hex={measurement.toHex} size={12} />
+                    <span className="font-mono text-[10.5px] text-ink">
+                      {measurement.toHex.toUpperCase()}
+                    </span>
+                    <span className="text-muted">→ {measurement.fixed.toFixed(2)}:1</span>
+                  </span>
+                )}
+              </div>
+            ) : (
+              <div className="mt-1 text-[11px] leading-[1.45] text-body">{v.fix}</div>
+            )}
 
             {v.fixCode && (
-              <code className="mt-1.5 block rounded-md border border-line bg-[#f6f8fa] px-2 py-1.5 font-mono text-[10.5px] leading-normal whitespace-pre-wrap text-ink">
+              <code className="mt-1.5 block border border-hairline bg-code px-2 py-1.5 font-mono text-[10.5px] leading-normal whitespace-pre-wrap text-[#2b2b2d]">
                 {v.fixCode}
               </code>
             )}
+
+            <div className="mt-2">
+              <StatusSeal status={status} />
+            </div>
+            <p className="mt-1.5 text-[9.5px] text-muted">
+              Applied and re-audited in a sandbox copy; the audited site was not altered.
+            </p>
           </div>
         </div>
 
-        <div className="flex flex-col gap-2.5 bg-[#fafbfc] p-3.5">
+        <div className="flex flex-col gap-2.5 bg-band p-3.5">
           <FieldLabel>Where</FieldLabel>
-
-          <code className="-mt-1.5 truncate rounded-md bg-card px-2 py-1 font-mono text-[10px] text-ink-soft">
+          <code className="-mt-1.5 truncate bg-surface px-2 py-1 font-mono text-[10px] text-steel">
             {v.where}
           </code>
-
           <FieldLabel>Instances</FieldLabel>
-
-          <span className="-mt-1.5 text-[20px] font-bold text-ink">{v.nodes}</span>
-
+          <span className="-mt-1.5 font-cond text-[20px] tabular-nums text-ink">{v.nodes}</span>
           <FieldLabel>Criterion</FieldLabel>
-
-          <span className="-mt-1.5 text-[11px] text-ink-soft">{v.criterion}</span>
+          <span className="-mt-1.5 text-[11px] text-body">{v.criterion}</span>
         </div>
       </div>
     </div>

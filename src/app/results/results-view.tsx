@@ -6,7 +6,7 @@ import { streamScan, ScanStreamError, SCAN_ERROR_HINT } from "@/lib/scan/stream"
 import { buildFindings, orderedMarkers } from "@/lib/report/findings";
 import { scoreBreakdown } from "@/lib/report/score";
 import { buildWcagReading } from "@/lib/report/wcag";
-import { buildMarkdown, markdownFilename } from "@/lib/scan/markdown";
+import { buildReportMarkdown, reportMarkdownFilename } from "@/lib/report/markdown";
 import { ColorBlindFilters } from "./color-blind-filters";
 import { DEFAULT_URL, clamp, safeHost, type Status } from "./shared";
 import { type SimKey } from "./data";
@@ -184,11 +184,11 @@ export function ResultsView({
 
   const exportMarkdown = useCallback(() => {
     if (!result) return;
-    const blob = new Blob([buildMarkdown(result)], { type: "text/markdown;charset=utf-8" });
+    const blob = new Blob([buildReportMarkdown(result)], { type: "text/markdown;charset=utf-8" });
     const href = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = href;
-    a.download = markdownFilename(result);
+    a.download = reportMarkdownFilename(result);
     a.click();
     URL.revokeObjectURL(href);
   }, [result]);
