@@ -95,10 +95,10 @@ export function UrlForm() {
           <span className="text-muted">Try an example:</span>
           <button
             type="button"
-            onClick={() => go("vercel.com", mode)}
+            onClick={() => go("developer.mozilla.org", mode)}
             className="rounded-md border border-brand-200 bg-brand-50 px-2 py-1 font-mono text-brand-700 transition-colors hover:bg-brand-100"
           >
-            vercel.com
+            developer.mozilla.org
           </button>
         </span>
       </div>

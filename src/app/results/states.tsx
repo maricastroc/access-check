@@ -92,7 +92,7 @@ export function ScanningState({ url, phase }: { url: string; phase: ScanPhase })
             </span>
             Auditing
           </span>
-          <span className="font-mono text-xs tabular-nums text-muted" aria-hidden>
+          <span className="font-mono text-xs text-muted tabular-nums" aria-hidden>
             {mmss}
           </span>
         </div>
@@ -105,7 +105,11 @@ export function ScanningState({ url, phase }: { url: string; phase: ScanPhase })
         </p>
 
         <div className="mt-4 flex items-center gap-2.5 rounded-xl border border-line-strong bg-surface px-3.5 py-2.5">
-          <FontAwesomeIcon icon={faGlobe} aria-hidden className="shrink-0 text-[13px] text-brand-600" />
+          <FontAwesomeIcon
+            icon={faGlobe}
+            aria-hidden
+            className="shrink-0 text-[13px] text-brand-600"
+          />
           <span className="truncate font-mono text-[13px] text-ink-soft">{url}</span>
         </div>
 
@@ -138,7 +142,9 @@ export function ScanningState({ url, phase }: { url: string; phase: ScanPhase })
                     {step.label}
                   </p>
                   {state === "active" && (
-                    <p className="mt-0.5 text-[13px] leading-relaxed text-ink-soft">{step.detail}</p>
+                    <p className="mt-0.5 text-[13px] leading-relaxed text-ink-soft">
+                      {step.detail}
+                    </p>
                   )}
                 </div>
               </li>
@@ -153,11 +159,13 @@ export function ScanningState({ url, phase }: { url: string; phase: ScanPhase })
 export function ErrorState({
   url,
   message,
+  hint,
   onChange,
   onRetry,
 }: {
   url: string;
   message: string;
+  hint?: string;
   onChange: (v: string) => void;
   onRetry: () => void;
 }) {
@@ -173,7 +181,7 @@ export function ErrorState({
         <p className="text-lg font-semibold">Couldn’t scan that page</p>
         <p className="mt-1.5 text-sm text-muted">{message}</p>
         <p className="mt-1 text-xs text-faint">
-          Some sites block bots or sit behind a login — try another URL.
+          {hint || "Some sites block bots or sit behind a login — try another URL."}
         </p>
       </div>
       <form

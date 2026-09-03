@@ -6,6 +6,29 @@ export type Severity = "critical" | "serious" | "moderate" | "minor";
 
 export type ScanPhase = "preparing" | "loading" | "auditing" | "processing" | "finalizing";
 
+export type ScanWarningCode =
+  | "screenshot-unavailable"
+  | "content-unsettled"
+  | "verification-skipped"
+  | "audits-skipped"
+  | "keyboard-skipped"
+  | "contexts-skipped"
+  | "stream-interrupted";
+
+export type ScanWarning = { code: ScanWarningCode; message: string };
+
+export type ScanErrorCode =
+  | "invalid-url"
+  | "blocked-url"
+  | "rate-limited"
+  | "navigation-timeout"
+  | "navigation-failed"
+  | "http-error"
+  | "audit-failed"
+  | "timeout"
+  | "interrupted"
+  | "internal";
+
 export type Effort = "Quick" | "Moderate" | "Involved";
 
 export type FixVerification = "verified" | "failed" | "unchecked";
@@ -92,6 +115,7 @@ export type ScanResult = {
     impact: "High" | "Medium" | "Low";
   }[];
   partial?: boolean;
+  warnings?: ScanWarning[];
 };
 
-export type ScanError = { error: string };
+export type ScanError = { error: string; code?: ScanErrorCode };

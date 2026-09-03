@@ -2,10 +2,12 @@ import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
 import type { BrowserContext } from "playwright-core";
 import { shouldBlockResource } from "./resource-policy";
+import type { ScanErrorCode } from "./types";
 
 export class BlockedUrlError extends Error {
   constructor(
     message = "This URL points to a private or reserved address and can't be scanned.",
+    readonly code: ScanErrorCode = "blocked-url",
   ) {
     super(message);
     this.name = "BlockedUrlError";
@@ -133,11 +135,11 @@ export async function assertPublicUrl(raw: string): Promise<void> {
   try {
     url = new URL(raw);
   } catch {
-    throw new BlockedUrlError("Invalid URL.");
+    throw new BlockedUrlError("Invalid URL.", "invalid-url");
   }
 
   if (url.protocol !== "http:" && url.protocol !== "https:") {
-    throw new BlockedUrlError("Only http and https URLs can be scanned.");
+    throw new BlockedUrlError("Only http and https URLs can be scanned.", "invalid-url");
   }
 
   const host = stripBrackets(url.hostname).toLowerCase();
@@ -154,7 +156,7 @@ export async function assertPublicUrl(raw: string): Promise<void> {
   try {
     addrs = await lookup(host, { all: true });
   } catch {
-    throw new BlockedUrlError("This host could not be resolved.");
+    throw new BlockedUrlError("This host could not be resolved.", "navigation-failed");
   }
   if (addrs.length === 0 || addrs.some((a) => isBlockedIp(a.address))) {
     throw new BlockedUrlError();

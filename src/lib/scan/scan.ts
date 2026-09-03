@@ -24,15 +24,20 @@ import { collectReducedMotion, type ReducedMotionReport } from "./reduced-motion
 import { collectLiveRegions, type LiveRegionsReport } from "./live-regions";
 import type { AuditsReport } from "./audits";
 import { buildFixFirst, buildSummary, computeScore, severityOrder } from "./derive";
-import { withBudget } from "./budget";
+import { Budget } from "./budget";
+import { CONTENT_SIGNATURE, waitForContentReady } from "./page-ready";
+import { captureScreenshot, SCREENSHOT_QUALITY } from "./screenshot";
 import { installNetworkGuard } from "./ssrf";
 import type {
   FixGroup,
   FixVerification,
+  ScanErrorCode,
   ScanMarker,
   ScanPhase,
   ScanResult,
   ScanViolation,
+  ScanWarning,
+  ScanWarningCode,
   Severity,
 } from "./types";
 
@@ -40,11 +45,40 @@ const VIEWPORT = { width: 1200, height: 800 };
 const MAX_MARKERS = 6;
 const MAX_VERIFY_OPS = 40;
 
-const SCAN_DEADLINE_MS = 50_000;
+export const DEFAULT_SCAN_BUDGET_MS = 40_000;
 
-const SETTLE_MS = 700;
+const FINALIZE_RESERVE_MS = 2_500;
+const NAVIGATION_MAX_MS = 20_000;
+const PRIME_MAX_MS = 2_500;
+const CONTENT_READY_MAX_MS = 8_000;
+const AXE_MAX_MS = 20_000;
+const SCREENSHOT_MAX_MS = 6_000;
+const VERIFY_MAX_MS = 6_000;
+const AUDIT_MAX_MS = 5_000;
+const KEYBOARD_MAX_MS = 8_000;
+const CONTEXTS_MAX_MS = 8_000;
 
 const AXE_PATH = path.join(process.cwd(), "node_modules/axe-core/axe.min.js");
+
+export class ScanFailure extends Error {
+  constructor(
+    message: string,
+    readonly code: ScanErrorCode,
+  ) {
+    super(message);
+    this.name = "ScanFailure";
+  }
+}
+
+const WARNING_TEXT: Record<ScanWarningCode, string> = {
+  "screenshot-unavailable": "The visual preview could not be captured in time.",
+  "content-unsettled": "The page was still loading content when the audit ran.",
+  "verification-skipped": "Fixes were not verified live in the page.",
+  "audits-skipped": "Target size, motion and live-region checks were skipped.",
+  "keyboard-skipped": "The keyboard and focus-order pass was skipped.",
+  "contexts-skipped": "The mobile and dynamic-state pass was skipped.",
+  "stream-interrupted": "The scan was cut short before every pass finished.",
+};
 
 type AxeCheck = { id: string; data?: unknown };
 type AxeNode = {
@@ -265,9 +299,13 @@ export type ScanOptions = {
   audits?: boolean;
   verifyFixes?: boolean;
   blockPrivateHosts?: boolean;
+  budgetMs?: number;
   onPhase?: (phase: ScanPhase) => void;
   onCore?: (core: ScanResult) => void;
+  onTimings?: (timings: Record<string, number>) => void;
 };
+
+const noop = (): void => undefined;
 
 export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<ScanResult> {
   const {
@@ -277,99 +315,161 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
     audits: doAudits = true,
     verifyFixes: doVerify = true,
     blockPrivateHosts = false,
+    budgetMs = DEFAULT_SCAN_BUDGET_MS,
     onPhase,
     onCore,
+    onTimings,
   } = opts;
+
   const url = normalizeUrl(rawUrl);
   const startedAt = Date.now();
+  const budget = new Budget(budgetMs, FINALIZE_RESERVE_MS);
+  const timings: Record<string, number> = {};
+  const warnings: ScanWarning[] = [];
   let partial = false;
-  const remainingMs = () => SCAN_DEADLINE_MS - (Date.now() - startedAt);
+
+  const warn = (code: ScanWarningCode) => {
+    if (warnings.some((w) => w.code === code)) return;
+    warnings.push({ code, message: WARNING_TEXT[code] });
+  };
+
+  const track = async <T>(label: string, fn: () => Promise<T>): Promise<T> => {
+    const t0 = Date.now();
+    try {
+      return await fn();
+    } finally {
+      timings[label] = Date.now() - t0;
+    }
+  };
+
   const phase = (p: ScanPhase) => {
     try {
       onPhase?.(p);
     } catch {
-      //
+      noop();
     }
   };
 
   phase("preparing");
-  const browser = await acquireBrowser();
-  const context = await browser.newContext({
-    viewport: VIEWPORT,
-    deviceScaleFactor: 1,
-    bypassCSP: true,
-    userAgent:
-      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " +
-      "(KHTML, like Gecko) Chrome/124.0 Safari/537.36 AccessCheckBot/2.1",
-  });
+  const browser = await track("browserLaunch", () => acquireBrowser());
+  const context = await track("contextCreate", () =>
+    browser.newContext({
+      viewport: VIEWPORT,
+      deviceScaleFactor: 1,
+      bypassCSP: true,
+      userAgent:
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " +
+        "(KHTML, like Gecko) Chrome/124.0 Safari/537.36 AccessCheckBot/2.1",
+    }),
+  );
+
   try {
     if (blockPrivateHosts) await installNetworkGuard(context);
-    const page = await context.newPage();
+    const page = await track("pageCreate", () => context.newPage());
 
     phase("loading");
 
-    const response = await page.goto(url, {
-      waitUntil: "load",
-      timeout: 30_000,
-    });
+    const navTimeout = Math.max(3_000, budget.slice(NAVIGATION_MAX_MS));
+    const response = await track("navigation", () =>
+      page.goto(url, { waitUntil: "domcontentloaded", timeout: navTimeout }).catch((err) => {
+        const message = err instanceof Error ? err.message : String(err);
+        if (/timeout/i.test(message)) {
+          throw new ScanFailure(
+            `The page took longer than ${Math.round(navTimeout / 1000)}s to respond.`,
+            "navigation-timeout",
+          );
+        }
+        throw new ScanFailure("The page could not be reached.", "navigation-failed");
+      }),
+    );
 
     const httpStatus = response?.status() ?? 0;
     if (httpStatus >= 400) {
-      throw new Error(
+      throw new ScanFailure(
         `The page responded with HTTP ${httpStatus}. Check the URL — it may be wrong, removed, or behind authentication.`,
+        "http-error",
       );
     }
 
-    await primeLazyContent(page);
-    await page.waitForTimeout(SETTLE_MS);
+    if (budget.allows(PRIME_MAX_MS + CONTENT_READY_MAX_MS)) {
+      await track("prime", async () => {
+        await budget.run(() => primeLazyContent(page), PRIME_MAX_MS, undefined);
+      });
+    }
 
-    const title = (await page.title()) || url;
+    const readiness = await track("contentReady", () =>
+      waitForContentReady(
+        () => page.evaluate(CONTENT_SIGNATURE).catch(() => null),
+        (ms) => page.waitForTimeout(ms),
+        { maxMs: budget.slice(CONTENT_READY_MAX_MS) },
+      ),
+    );
+    if (!readiness.settled) {
+      partial = true;
+      warn("content-unsettled");
+    }
+
+    const title = (await page.title().catch(() => "")) || url;
     const finalUrl = page.url();
 
     phase("auditing");
 
-    const capture = async (): Promise<[string | null, AxeResults]> => {
-      const shot: Promise<string | null> = doScreenshot
-        ? page
-            .screenshot({ type: "jpeg", quality: 80, clip: { x: 0, y: 0, ...VIEWPORT } })
-            .then((buf) => `data:image/jpeg;base64,${buf.toString("base64")}`)
-        : Promise.resolve(null);
-
-      const run: Promise<AxeResults> = page.addScriptTag({ path: AXE_PATH }).then(() =>
-        page.evaluate(async () => {
-          // @ts-expect-error axe
-          return await window.axe.run(document, {
-            runOnly: {
-              type: "tag",
-              values: [
-                "wcag2a",
-                "wcag2aa",
-                "wcag21a",
-                "wcag21aa",
-                "wcag22a",
-                "wcag22aa",
-                "best-practice",
-              ],
-            },
-          });
-        }),
-      );
-
-      return Promise.all([shot, run]);
+    const runAxe = async (): Promise<AxeResults> => {
+      await page.addScriptTag({ path: AXE_PATH });
+      return page.evaluate(async () => {
+        // @ts-expect-error axe
+        return await window.axe.run(document, {
+          runOnly: {
+            type: "tag",
+            values: [
+              "wcag2a",
+              "wcag2aa",
+              "wcag21a",
+              "wcag21aa",
+              "wcag22a",
+              "wcag22aa",
+              "best-practice",
+            ],
+          },
+        });
+      });
     };
 
-    let screenshot: string | null;
-    let axe: AxeResults;
-    try {
-      [screenshot, axe] = await capture();
-    } catch (err) {
-      if (/Execution context was destroyed|because of a navigation/i.test(String(err))) {
-        await page.waitForLoadState("load", { timeout: 10_000 }).catch(() => {});
-        [screenshot, axe] = await capture();
-      } else {
-        throw err;
-      }
+    const axe = await track("axe", async (): Promise<AxeResults | null> => {
+      const first = await budget.run<AxeResults | null>(runAxe, AXE_MAX_MS, null);
+      if (first.value) return first.value;
+      if (first.timedOut) return null;
+      await page
+        .waitForLoadState("domcontentloaded", { timeout: budget.slice(5_000) })
+        .catch(() => null);
+      const second = await budget.run<AxeResults | null>(runAxe, AXE_MAX_MS, null);
+      return second.value;
+    });
+
+    if (!axe) {
+      throw new ScanFailure(
+        "The accessibility audit could not finish on this page in time.",
+        "audit-failed",
+      );
     }
+
+    const screenshot = !doScreenshot
+      ? null
+      : await track("screenshot", () =>
+          captureScreenshot(
+            (timeoutMs) =>
+              page.screenshot({
+                type: "jpeg",
+                quality: SCREENSHOT_QUALITY,
+                clip: { x: 0, y: 0, ...VIEWPORT },
+                animations: "disabled",
+                timeout: timeoutMs,
+              }),
+            budget.slice(SCREENSHOT_MAX_MS),
+          ),
+        );
+
+    if (doScreenshot && !screenshot) warn("screenshot-unavailable");
 
     phase("processing");
 
@@ -473,16 +573,26 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
       }
 
       if (verifyOps.length > 0) {
-        const { value: verifications, timedOut } = await withBudget(
-          () => page.evaluate(VERIFY_IN_PAGE, verifyOps),
-          remainingMs(),
-          [] as FixVerification[],
-        );
-        if (timedOut) partial = true;
-        else
-          verifications.forEach((res, i) => {
-            opClusters[i].verification = res;
-          });
+        if (!budget.allows(VERIFY_MAX_MS)) {
+          partial = true;
+          warn("verification-skipped");
+        } else {
+          const { value: verifications, timedOut } = await track("verify", () =>
+            budget.run(
+              () => page.evaluate(VERIFY_IN_PAGE, verifyOps),
+              VERIFY_MAX_MS,
+              [] as FixVerification[],
+            ),
+          );
+          if (timedOut) {
+            partial = true;
+            warn("verification-skipped");
+          } else {
+            verifications.forEach((res, i) => {
+              opClusters[i].verification = res;
+            });
+          }
+        }
       }
     }
 
@@ -600,62 +710,99 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
       markers,
       fixFirst: buildFixFirst(violations),
       partial,
+      warnings: warnings.length > 0 ? [...warnings] : undefined,
     };
     try {
       onCore?.(core);
     } catch {
-      //
+      noop();
     }
 
     let audits: AuditsReport | undefined;
     if (doAudits) {
-      audits = {};
+      if (!budget.allows(AUDIT_MAX_MS)) {
+        partial = true;
+        warn("audits-skipped");
+      } else {
+        audits = {};
+        const collected = await track("audits", async () => {
+          const targetSize = await budget.run<TargetSizeReport | undefined>(
+            () => collectTargetSize(page),
+            AUDIT_MAX_MS,
+            undefined,
+          );
+          const reducedMotion = await budget.run<ReducedMotionReport | undefined>(
+            () => collectReducedMotion(page),
+            AUDIT_MAX_MS,
+            undefined,
+          );
+          const liveRegions = await budget.run<LiveRegionsReport | undefined>(
+            () => collectLiveRegions(page),
+            AUDIT_MAX_MS,
+            undefined,
+          );
+          return { targetSize, reducedMotion, liveRegions };
+        });
 
-      const targetSize = await withBudget<TargetSizeReport | undefined>(
-        () => collectTargetSize(page),
-        remainingMs(),
-        undefined,
-      );
-      if (targetSize.timedOut) partial = true;
-      else audits.targetSize = targetSize.value;
+        audits.targetSize = collected.targetSize.value;
+        audits.reducedMotion = collected.reducedMotion.value;
+        audits.liveRegions = collected.liveRegions.value;
 
-      const reducedMotion = await withBudget<ReducedMotionReport | undefined>(
-        () => collectReducedMotion(page),
-        remainingMs(),
-        undefined,
-      );
-      if (reducedMotion.timedOut) partial = true;
-      else audits.reducedMotion = reducedMotion.value;
-
-      const liveRegions = await withBudget<LiveRegionsReport | undefined>(
-        () => collectLiveRegions(page),
-        remainingMs(),
-        undefined,
-      );
-      if (liveRegions.timedOut) partial = true;
-      else audits.liveRegions = liveRegions.value;
+        if (
+          collected.targetSize.timedOut ||
+          collected.reducedMotion.timedOut ||
+          collected.liveRegions.timedOut
+        ) {
+          partial = true;
+          warn("audits-skipped");
+        }
+      }
     }
 
     let keyboard: KeyboardReport | undefined;
     if (doKeyboard) {
-      const { value, timedOut } = await withBudget<KeyboardReport | undefined>(
-        () => collectKeyboard(page, VIEWPORT),
-        remainingMs(),
-        undefined,
-      );
-      keyboard = value;
-      if (timedOut) partial = true;
+      if (!budget.allows(KEYBOARD_MAX_MS)) {
+        partial = true;
+        warn("keyboard-skipped");
+      } else {
+        const { value, timedOut } = await track("keyboard", () =>
+          budget.run<KeyboardReport | undefined>(
+            () => collectKeyboard(page, VIEWPORT, { maxMs: budget.slice(KEYBOARD_MAX_MS) * 0.75 }),
+            KEYBOARD_MAX_MS,
+            undefined,
+          ),
+        );
+        keyboard = value;
+        if (timedOut || !value) {
+          partial = true;
+          warn("keyboard-skipped");
+        }
+      }
     }
 
     let contexts: ContextReport | undefined;
     if (doContexts) {
-      const { value, timedOut } = await withBudget<ContextReport | undefined>(
-        () => collectContexts(page, violations.map((v) => v.id)),
-        remainingMs(),
-        undefined,
-      );
-      contexts = value;
-      if (timedOut) partial = true;
+      if (!budget.allows(CONTEXTS_MAX_MS)) {
+        partial = true;
+        warn("contexts-skipped");
+      } else {
+        const { value, timedOut } = await track("contexts", () =>
+          budget.run<ContextReport | undefined>(
+            () =>
+              collectContexts(
+                page,
+                violations.map((v) => v.id),
+              ),
+            CONTEXTS_MAX_MS,
+            undefined,
+          ),
+        );
+        contexts = value;
+        if (timedOut || !value) {
+          partial = true;
+          warn("contexts-skipped");
+        }
+      }
     }
 
     return {
@@ -665,8 +812,15 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
       contexts,
       audits,
       partial,
+      warnings: warnings.length > 0 ? [...warnings] : undefined,
     };
   } finally {
-    await context.close().catch(() => {});
+    timings.total = Date.now() - startedAt;
+    try {
+      onTimings?.(timings);
+    } catch {
+      noop();
+    }
+    await context.close().catch(() => noop());
   }
 }

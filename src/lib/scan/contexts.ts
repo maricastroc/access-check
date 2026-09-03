@@ -78,8 +78,13 @@ type PageAxe = {
 export async function collectContexts(
   page: Page,
   baselineIdsArr: string[],
+  opts: { maxMs?: number } = {},
 ): Promise<ContextReport> {
   const baseline = new Set(baselineIdsArr);
+  const budgeted = Boolean(opts.maxMs && opts.maxMs > 0);
+  const startedAt = Date.now();
+  const dynamicDeadline = budgeted ? startedAt + opts.maxMs! * 0.5 : Number.POSITIVE_INFINITY;
+  const mobileDeadline = budgeted ? startedAt + opts.maxMs! : Number.POSITIVE_INFINITY;
 
   const dynamicStates: DynamicState[] = [];
   let opened = 0;
@@ -154,6 +159,7 @@ export async function collectContexts(
     dynamicRan = true;
 
     for (const t of triggers) {
+      if (Date.now() >= dynamicDeadline) break;
       const state = await page.evaluate(
         async ({ t, tags }) => {
           const firstTarget = (x: unknown): string | null =>
@@ -240,6 +246,7 @@ export async function collectContexts(
   let mobileRan = false;
   let onlyOnMobile: ContextIssue[] = [];
   try {
+    if (Date.now() >= mobileDeadline) throw new Error("out of budget");
     await page.setViewportSize(MOBILE);
     await page.waitForTimeout(400);
     const rules = await page.evaluate(async (tags) => {

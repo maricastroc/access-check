@@ -233,7 +233,14 @@ type RawStop = {
   rect: { x: number; y: number; w: number; h: number } | null;
 };
 
-export async function collectKeyboard(page: Page, viewport: Viewport): Promise<KeyboardReport> {
+export async function collectKeyboard(
+  page: Page,
+  viewport: Viewport,
+  opts: { maxMs?: number } = {},
+): Promise<KeyboardReport> {
+  const tabDeadline =
+    opts.maxMs && opts.maxMs > 0 ? Date.now() + opts.maxMs * 0.6 : Number.POSITIVE_INFINITY;
+
   await page.evaluate(() => {
     const w = window as unknown as Record<string, unknown>;
     w.__acVisited = [];
@@ -286,6 +293,10 @@ export async function collectKeyboard(page: Page, viewport: Viewport): Promise<K
   let prevSelector: string | null = null;
 
   for (let i = 0; i < MAX_TAB_STOPS; i++) {
+    if (Date.now() >= tabDeadline) {
+      truncated = true;
+      break;
+    }
     await page.keyboard.press("Tab");
     const info = (await page.evaluate(() => {
       const el = document.activeElement as HTMLElement | null;

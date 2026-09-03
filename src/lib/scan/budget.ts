@@ -27,3 +27,39 @@ export async function withBudget<T>(
     if (timer) clearTimeout(timer);
   }
 }
+
+export class Budget {
+  private readonly startedAt: number;
+
+  constructor(
+    private readonly totalMs: number,
+    private readonly reserveMs = 0,
+    private readonly now: () => number = Date.now,
+  ) {
+    this.startedAt = now();
+  }
+
+  elapsed(): number {
+    return this.now() - this.startedAt;
+  }
+
+  remaining(): number {
+    return Math.max(0, this.totalMs - this.elapsed());
+  }
+
+  spendable(): number {
+    return Math.max(0, this.remaining() - this.reserveMs);
+  }
+
+  allows(ms: number): boolean {
+    return this.spendable() >= ms;
+  }
+
+  slice(maxMs: number): number {
+    return Math.min(maxMs, this.spendable());
+  }
+
+  async run<T>(fn: () => Promise<T>, maxMs: number, fallback: T): Promise<Budgeted<T>> {
+    return withBudget(fn, this.slice(maxMs), fallback);
+  }
+}

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClock, faSitemap, faArrowRotateRight } from "@fortawesome/free-solid-svg-icons";
 import type { ScanPhase, ScanResult } from "@/lib/scan/types";
-import { streamScan } from "@/lib/scan/stream";
+import { streamScan, ScanStreamError, SCAN_ERROR_HINT } from "@/lib/scan/stream";
 import { Button } from "@/components/ui";
 import { type SimKey } from "./data";
 import { DEFAULT_URL, type FilterKey, type Status } from "./shared";
@@ -36,6 +36,7 @@ export function ResultsView({
   const [result, setResult] = useState<ScanResult | null>(initialResult);
   const [phase, setPhase] = useState<ScanPhase>("preparing");
   const [error, setError] = useState("");
+  const [errorHint, setErrorHint] = useState("");
   const [fromCrawl, setFromCrawl] = useState(Boolean(initialResult));
 
   const [sim, setSim] = useState<SimKey>("normal");
@@ -56,7 +57,8 @@ export function ResultsView({
     try {
       apply(await streamScan(value, { onPhase: setPhase, onCore: apply }));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Scan failed.");
+      setError(e instanceof Error ? e.message : "The scan failed unexpectedly.");
+      setErrorHint(e instanceof ScanStreamError ? SCAN_ERROR_HINT[e.code] : "");
       setStatus("error");
     }
   }, []);
@@ -67,6 +69,7 @@ export function ResultsView({
       if (!value) return;
       setStatus("loading");
       setError("");
+      setErrorHint("");
       setUrl(value);
       setFilter("all");
       void runFetch(value);
@@ -96,7 +99,13 @@ export function ResultsView({
         {status === "loading" && <ScanningState url={url} phase={phase} />}
 
         {status === "error" && (
-          <ErrorState url={input} message={error} onChange={setInput} onRetry={() => scan(input)} />
+          <ErrorState
+            url={input}
+            message={error}
+            hint={errorHint}
+            onChange={setInput}
+            onRetry={() => scan(input)}
+          />
         )}
 
         {status === "done" && result && (
@@ -129,7 +138,7 @@ export function ResultsView({
                 </div>
               </div>
             )}
-            {result.partial && (
+            {(result.partial || (result.warnings?.length ?? 0) > 0) && (
               <div role="status" className="mx-auto w-full max-w-7xl px-6 pt-6">
                 <div className="flex items-start gap-3 rounded-xl border border-line bg-card px-4 py-3 text-sm shadow-soft">
                   <FontAwesomeIcon
@@ -137,12 +146,23 @@ export function ResultsView({
                     aria-hidden
                     className="mt-0.5 shrink-0 text-warning"
                   />
-                  <p className="text-ink-soft">
-                    <span className="font-semibold text-ink">Partial scan.</span> This page was
-                    large enough that the deep passes (fix verification, keyboard, and responsive
-                    checks) were skipped to return the core WCAG results in time — the violations
-                    and score below are complete.
-                  </p>
+                  <div className="text-ink-soft">
+                    <p>
+                      <span className="font-semibold text-ink">
+                        {result.partial ? "Partial scan." : "Scan complete, with notes."}
+                      </span>{" "}
+                      {result.partial
+                        ? "Some passes were cut short to return the report in time."
+                        : "Everything below is complete."}
+                    </p>
+                    {result.warnings && result.warnings.length > 0 && (
+                      <ul className="mt-1.5 list-disc space-y-0.5 pl-4">
+                        {result.warnings.map((w) => (
+                          <li key={w.code}>{w.message}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
