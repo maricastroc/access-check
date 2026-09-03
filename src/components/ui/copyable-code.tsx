@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faCopy } from "@fortawesome/free-solid-svg-icons";
+import { cn } from "@/lib/cn";
 
-export function CopyableCode({ code }: { code: string }) {
+/** A flat, copyable technical line — ivory code ground, hairline border, straight corners. */
+export function CopyableCode({ code, className }: { code: string; className?: string }) {
   const [copied, setCopied] = useState(false);
 
   const copy = async () => {
@@ -18,20 +20,25 @@ export function CopyableCode({ code }: { code: string }) {
   };
 
   return (
-    <div className="mt-2 flex items-center justify-between gap-2 rounded-lg border border-line bg-[#0d1117] px-3 py-2">
-      <code className="overflow-x-auto font-mono text-[12px] leading-relaxed whitespace-pre text-[#e6edf3]">
+    <div
+      className={cn(
+        "flex items-center justify-between gap-2 border border-hairline bg-code px-3 py-2",
+        className,
+      )}
+    >
+      <code className="overflow-x-auto font-mono text-[12.5px] leading-[1.7] whitespace-pre text-[#2b2b2d]">
         {code}
       </code>
       <button
         type="button"
         onClick={copy}
         aria-label={copied ? "Copied" : "Copy code"}
-        className="shrink-0 cursor-pointer rounded-md px-2 py-1 text-[11px] font-medium text-[#8b949e] transition-colors hover:bg-white/10 hover:text-white"
+        className={cn(
+          "shrink-0 cursor-pointer px-2 py-1 text-[11px] font-medium transition-colors",
+          copied ? "text-verified" : "text-muted hover:bg-band hover:text-ink",
+        )}
       >
-        <FontAwesomeIcon
-          icon={copied ? faCheck : faCopy}
-          className={copied ? "text-success" : ""}
-        />
+        <FontAwesomeIcon icon={copied ? faCheck : faCopy} />
         <span className="ml-1.5">{copied ? "Copied" : "Copy"}</span>
       </button>
     </div>

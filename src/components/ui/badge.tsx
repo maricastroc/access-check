@@ -1,18 +1,27 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
-export type BadgeTone = "brand" | "success" | "neutral";
+// `brand`/`success` are legacy aliases kept so out-of-scope pages keep compiling.
+export type BadgeTone = "neutral" | "steel" | "verified" | "serious" | "moderate" | "brand" | "success";
 
 const toneClasses: Record<BadgeTone, string> = {
-  brand: "border-brand-100 bg-brand-50 text-brand-600",
-  success: "border-transparent bg-[#e6f5ee] text-success",
-  neutral: "border-line bg-card text-ink-soft",
+  neutral: "border-border bg-surface text-muted",
+  steel: "border-border bg-surface text-steel",
+  brand: "border-border bg-surface text-steel",
+  verified: "border-verified/40 bg-surface text-verified",
+  success: "border-verified/40 bg-surface text-verified",
+  serious: "border-serious/40 bg-surface text-serious",
+  moderate: "border-moderate/40 bg-surface text-moderate-text",
 };
 
 const dotClasses: Record<BadgeTone, string> = {
-  brand: "bg-brand-500",
-  success: "bg-success",
-  neutral: "bg-faint",
+  neutral: "bg-muted",
+  steel: "bg-steel",
+  brand: "bg-steel",
+  verified: "bg-verified",
+  success: "bg-verified",
+  serious: "bg-serious",
+  moderate: "bg-moderate",
 };
 
 type BadgeProps = {
@@ -22,16 +31,17 @@ type BadgeProps = {
   className?: string;
 };
 
+/** A small, straight-corner tag. Severity/status tones use their fixed colors. */
 export function Badge({ children, tone = "neutral", dot = false, className }: BadgeProps) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium",
+        "inline-flex items-center gap-2 border px-2.5 py-1 text-[12.5px] font-medium",
         toneClasses[tone],
         className,
       )}
     >
-      {dot && <span className={cn("size-2 rounded-full", dotClasses[tone])} />}
+      {dot && <span aria-hidden className={cn("size-1.5", dotClasses[tone])} />}
       {children}
     </span>
   );

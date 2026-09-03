@@ -1,0 +1,59 @@
+import type { ScanPhase } from "@/lib/scan/types";
+import { cn } from "@/lib/cn";
+
+/** The real engine stages, in the order they run. */
+const STAGES = [
+  "Navigation and content settled",
+  "axe-core A and AA rules",
+  "Verifying fixes in a sandbox copy",
+  "Page capture",
+  "Keyboard and contexts",
+] as const;
+
+/** Coarse phase → stage index (the engine reports 5 phases across these stages). */
+const PHASE_STAGE: Record<ScanPhase, number> = {
+  preparing: 0,
+  loading: 0,
+  auditing: 1,
+  processing: 2,
+  finalizing: 3,
+};
+
+type StageState = "done" | "active" | "pending";
+
+export function ScanStages({ phase }: { phase: ScanPhase }) {
+  const current = PHASE_STAGE[phase];
+  return (
+    <ul className="w-full">
+      {STAGES.map((label, i) => {
+        const state: StageState = i < current ? "done" : i === current ? "active" : "pending";
+        return (
+          <li
+            key={label}
+            className={cn(
+              "flex items-center gap-2.5 py-2 text-[13px]",
+              i > 0 && "border-t border-hairline",
+              state === "done" && "text-body",
+              state === "active" && "font-semibold text-ink",
+              state === "pending" && "text-disabled",
+            )}
+          >
+            <span aria-hidden className="w-3 text-center font-cond">
+              {state === "done" ? (
+                <span className="text-verified">✓</span>
+              ) : state === "active" ? (
+                <span className="text-ink">▸</span>
+              ) : (
+                <span className="text-disabled">·</span>
+              )}
+            </span>
+            <span>
+              {label}
+              {state === "active" ? "…" : ""}
+            </span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
