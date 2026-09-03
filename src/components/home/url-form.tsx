@@ -60,7 +60,7 @@ export function UrlField({
 type Scope = "page" | "site";
 
 /** Landing hero form: URL + scope (single page / entire site) + audit action. */
-export function UrlForm({ accent = false }: { accent?: boolean }) {
+export function UrlForm({ accent = false, examples }: { accent?: boolean; examples?: string[] }) {
   const router = useRouter();
   const [value, setValue] = useState("");
   const [scope, setScope] = useState<Scope>("page");
@@ -114,13 +114,30 @@ export function UrlForm({ accent = false }: { accent?: boolean }) {
           <span aria-hidden className="h-px w-5 bg-surface" />
         </button>
       </div>
-      <p className="mt-3 text-[13.5px] text-muted">
+      <p className={cn("mt-3 text-[13.5px]", accent ? "text-disabled" : "text-muted")}>
         No account, no extension, no change to the audited site
         <span className="mx-2 text-border">|</span>
         PDF or Markdown
         <span className="mx-2 text-border">|</span>
         10–25s per page
       </p>
+      {examples && examples.length > 0 && (
+        <p className="mt-2 text-[13px] text-muted">
+          Quick examples:{" "}
+          {examples.map((ex, i) => (
+            <span key={ex}>
+              {i > 0 && <span aria-hidden className="mx-1.5 text-border">·</span>}
+              <button
+                type="button"
+                onClick={() => setValue(ex)}
+                className="cursor-pointer font-mono text-[12.5px] text-steel hover:underline"
+              >
+                {ex}
+              </button>
+            </span>
+          ))}
+        </p>
+      )}
     </div>
   );
 }

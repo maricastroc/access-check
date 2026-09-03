@@ -15,7 +15,7 @@ const GLYPH: Record<FixStatus, string> = {
 };
 
 const CLS: Record<FixStatus, string> = {
-  verified: "border border-solid border-verified text-verified",
+  verified: "border border-solid border-verified bg-verified/[0.08] text-verified",
   "needs-review": "border border-dashed border-moderate text-moderate-text",
   unchecked: "border border-dashed border-border text-muted",
 };

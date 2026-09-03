@@ -1,11 +1,8 @@
-import type { FindingView } from "@/lib/report/findings";
 import {
-  BrowserFrame,
   CodeBlock,
   ColorSwatch,
   FindingDetail,
   FindingRow,
-  Marker,
   Ruler,
   SectionKicker,
   StatusSeal,
@@ -13,63 +10,44 @@ import {
 import { ratioPosition } from "@/lib/report/contrast";
 import { axeRules, complementaryPasses, exampleFinding, exampleMarkdown, steps } from "./content";
 import { UrlForm } from "./url-form";
+import { CapturePreview, demoFinding } from "./evidence-preview";
 
-const demoFinding: FindingView = {
-  id: "demo",
-  n: 1,
-  kind: "wcag",
-  isWcag: true,
-  severity: "serious",
-  passLabel: null,
-  title: exampleFinding.title,
-  criterionSc: exampleFinding.sc,
-  criterionName: exampleFinding.name,
-  elements: exampleFinding.elements,
-  ruleId: exampleFinding.ruleId,
-  desc: "The white label on the light-green button disappears for low-vision users and anyone reading in bright light. It's the purchase button — the barrier sits on the page's main path.",
-  who: "Major barrier — many users can't complete the task.",
-  fixText: `Set the text color to ${exampleFinding.toHex.toUpperCase()} → ${exampleFinding.fixed}:1.`,
-  fixCode: `color: ${exampleFinding.toHex};`,
-  fixGroups: null,
-  fixStatus: "verified",
-  measurement: {
-    measured: exampleFinding.measured,
-    required: exampleFinding.required,
-    fixed: exampleFinding.fixed,
-    fromHex: exampleFinding.fromHex,
-    toHex: exampleFinding.toHex,
-    prop: "color",
-  },
-  selectors: [exampleFinding.selector],
-  markers: [
-    { n: 1, severity: "serious", label: exampleFinding.title, left: 8, top: 46, width: 14, height: 7 },
-  ],
-};
+/** Section header with a short steel rule — the landing's one brand accent. */
+function SectionHead({ kicker, title }: { kicker: string; title: string }) {
+  return (
+    <div className="border-b border-ink pb-3">
+      <span aria-hidden className="mb-2 block h-[3px] w-10 bg-steel" />
+      <SectionKicker>{kicker}</SectionKicker>
+      <h2 className="mt-1 text-[26px] leading-tight font-semibold tracking-[-0.015em] text-ink">
+        {title}
+      </h2>
+    </div>
+  );
+}
 
 /* — How it works — */
 export function HowItWorks() {
   return (
-    <section id="how" className="border-b border-hairline">
+    <section id="how" className="border-b border-hairline bg-band">
       <div className="mx-auto w-full max-w-[1200px] px-6 py-14">
-        <div className="border-b border-ink pb-3">
-          <SectionKicker>How it works</SectionKicker>
-          <h2 className="mt-1 text-[26px] leading-tight font-semibold tracking-[-0.015em] text-ink">
-            Three steps, no configuration
-          </h2>
-        </div>
-        <div className="mt-8 grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-0">
-          {steps.map((s, i) => (
-            <div key={s.n} className={i > 0 ? "md:border-l md:border-hairline md:pl-8" : "md:pr-8"}>
-              <span
-                className="font-cond text-[30px] leading-none font-semibold tabular-nums"
-                style={{ color: s.tone === "verified" ? "var(--color-verified)" : "var(--color-serious)" }}
-              >
-                {s.n}
-              </span>
-              <h3 className="mt-2 text-[17px] font-semibold text-ink">{s.title}</h3>
-              <p className="mt-1.5 text-[14.5px] leading-normal text-body">{s.body}</p>
-            </div>
-          ))}
+        <SectionHead kicker="How it works" title="Three steps, no configuration" />
+        <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+          {steps.map((s) => {
+            const tone = s.tone === "verified" ? "var(--color-verified)" : "var(--color-serious)";
+            return (
+              <div key={s.n} className="border border-border bg-surface p-5">
+                <span aria-hidden className="block h-1 w-8" style={{ background: tone }} />
+                <span
+                  className="mt-3 block font-cond text-[30px] leading-none font-semibold tabular-nums"
+                  style={{ color: tone }}
+                >
+                  {s.n}
+                </span>
+                <h3 className="mt-2 text-[17px] font-semibold text-ink">{s.title}</h3>
+                <p className="mt-1.5 text-[14.5px] leading-normal text-body">{s.body}</p>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>
@@ -79,14 +57,12 @@ export function HowItWorks() {
 /* — Checks included: axe rules vs complementary passes — */
 export function ChecksIncluded() {
   return (
-    <section id="checks" className="border-b border-hairline">
+    <section id="checks" className="border-b border-hairline bg-canvas">
       <div className="mx-auto w-full max-w-[1200px] px-6 py-14">
-        <div className="border-b border-ink pb-3">
-          <SectionKicker>Checks included</SectionKicker>
-          <h2 className="mt-1 text-[26px] leading-tight font-semibold tracking-[-0.015em] text-ink">
-            What&apos;s an automated rule and what&apos;s a complementary pass
-          </h2>
-        </div>
+        <SectionHead
+          kicker="Checks included"
+          title="What's an automated rule and what's a complementary pass"
+        />
         <div className="mt-8 grid grid-cols-1 gap-12 md:grid-cols-2">
           <div>
             <SectionKicker tone="steel">axe-core rules · A and AA</SectionKicker>
@@ -112,7 +88,7 @@ export function ChecksIncluded() {
                   key={p.label}
                   className="grid grid-cols-[76px_1fr] gap-3 border-t border-hairline py-2.5 text-[14px]"
                 >
-                  <span className="font-cond text-[11px] tracking-[0.1em] text-muted uppercase">
+                  <span className="font-cond text-[11px] tracking-[0.1em] text-steel uppercase">
                     {p.label}
                   </span>
                   <span className="text-body">{p.desc}</span>
@@ -132,6 +108,7 @@ export function EvidenceLensSection() {
     <section id="evidence" className="border-y border-border bg-band">
       <div className="mx-auto grid w-full max-w-[1200px] grid-cols-1 gap-12 px-6 py-14 lg:grid-cols-[minmax(0,1fr)_620px]">
         <div>
+          <span aria-hidden className="mb-3 block h-[3px] w-10 bg-steel" />
           <h2 className="text-[32px] leading-[1.12] font-semibold tracking-[-0.02em] text-ink">
             The difference between a list of errors and a barrier you can see
           </h2>
@@ -159,43 +136,21 @@ export function EvidenceLensSection() {
           </dl>
         </div>
 
-        <BrowserFrame
-          label="Captured page · 1200 × 800 · scale 43%"
-          trailing={
+        <div className="border border-ink bg-surface">
+          <div className="flex items-center justify-between gap-3 border-b border-ink px-3 py-2.5">
+            <SectionKicker>Captured page · 1200 × 800 · scale 43%</SectionKicker>
             <div className="hidden items-stretch border border-border text-[12px] sm:flex">
               <span className="bg-ink px-2.5 py-1 font-medium text-surface">Normal</span>
               <span className="border-l border-border px-2.5 py-1 text-muted">Deuteranopia</span>
               <span className="border-l border-border px-2.5 py-1 text-muted">Grayscale</span>
             </div>
-          }
-        >
-          <div className="relative h-[240px] overflow-hidden border-b border-ink" style={{ background: "#FBFAF7" }}>
-            {/* illustrative page */}
-            <div className="p-5">
-              <div className="h-2.5 w-24 bg-ink/70" />
-              <div className="mt-6 h-4 w-40 bg-ink/80" />
-              <div className="mt-2 h-4 w-52 bg-ink/80" />
-              <div className="mt-4 h-2 w-64 bg-ink/20" />
-              <div className="mt-1.5 h-2 w-56 bg-ink/20" />
-            </div>
-            {/* highlight box + selected marker */}
-            <span
-              aria-hidden
-              className="absolute"
-              style={{ left: "6%", top: "44%", width: "16%", height: "9%", border: "2px solid var(--color-ink)", background: "rgba(168,90,6,.16)" }}
-            />
-            <span className="absolute" style={{ left: "22%", top: "44%", transform: "translate(-50%,-50%)" }}>
-              <Marker n={1} state="selected" label="2.1:1 · needs 4.5:1" ariaLabel="Occurrence 1" />
-            </span>
-            <span className="absolute" style={{ left: "84%", top: "12%", transform: "translate(-50%,-50%)" }}>
-              <Marker n={2} state="idle" dimmed ariaLabel="Occurrence 2" />
-            </span>
           </div>
+          <CapturePreview />
           <div className="p-4">
             <FindingRow finding={demoFinding} selected />
             <FindingDetail finding={demoFinding} host="aurora-coffee.com" />
           </div>
-        </BrowserFrame>
+        </div>
       </div>
     </section>
   );
@@ -204,9 +159,10 @@ export function EvidenceLensSection() {
 /* — Sandbox — */
 export function SandboxSection() {
   return (
-    <section className="border-b border-hairline">
+    <section className="border-b border-hairline bg-canvas">
       <div className="mx-auto grid w-full max-w-[1200px] grid-cols-1 gap-12 px-6 py-14 lg:grid-cols-2">
         <div>
+          <span aria-hidden className="mb-3 block h-[3px] w-10 bg-steel" />
           <h2 className="text-[28px] leading-[1.12] font-semibold tracking-[-0.02em] text-ink">
             The fix is proved on a copy of the page — your site is never touched
           </h2>
@@ -272,14 +228,12 @@ export function SandboxSection() {
 /* — Export — */
 export function ExportSection() {
   return (
-    <section className="border-b border-hairline">
+    <section className="border-b border-hairline bg-band">
       <div className="mx-auto w-full max-w-[1200px] px-6 py-14">
-        <div className="border-b border-ink pb-3">
-          <SectionKicker>Export</SectionKicker>
-          <h2 className="mt-1 text-[26px] leading-tight font-semibold tracking-[-0.015em] text-ink">
-            Leaves the product in the format of whoever receives it
-          </h2>
-        </div>
+        <SectionHead
+          kicker="Export"
+          title="Leaves the product in the format of whoever receives it"
+        />
         <div className="mt-8 grid grid-cols-1 gap-8 md:grid-cols-[1fr_1fr_340px]">
           <div>
             <h3 className="text-[16px] font-semibold text-ink">PDF for whoever decides</h3>
