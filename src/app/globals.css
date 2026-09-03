@@ -1,124 +1,87 @@
 @import "tailwindcss";
-@import "tw-animate-css";
+
+/* AccessCheck — Direção "Régua" v2
+ * Marfim + preto-tinta, cantos retos, hairlines. Cores de severidade têm papel fixo.
+ * Fonts (Barlow / Barlow Condensed) are wired through next/font in src/app/layout.tsx.
+ */
 
 @theme {
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  /* — tipografia — */
+  --font-sans: var(--font-barlow), ui-sans-serif, system-ui, sans-serif;
+  --font-cond: var(--font-barlow-condensed), var(--font-barlow), system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --color-brand-50: #eff6ff;
-  --color-brand-100: #dbeafe;
-  --color-brand-200: #bfdbfe;
-  --color-brand-300: #93c5fd;
-  --color-brand-400: #60a5fa;
-  --color-brand-500: #3b82f6;
-  --color-brand-600: #2563eb;
-  --color-brand-700: #1d4ed8;
-  --color-brand-800: #1e40af;
-  --color-brand-900: #1e3a8a;
+  /* — fundos e superfícies — */
+  --color-canvas: #f6f4ef;
+  --color-surface: #fcfbf8;
+  --color-band: #efece4;
+  --color-code: #f0ede5;
 
-  --color-ink: #16181d;
-  --color-ink-soft: #5b616e;
-  --color-muted: #63676f;
-  --color-faint: #6b7079;
+  /* — tinta e texto — */
+  --color-ink: #17181a;
+  --color-ink-2: #2f3134;
+  --color-body: #4a4b4e;
+  --color-muted: #6b6c70;
+  --color-disabled: #a3a099;
 
-  --color-canvas: #f4f5f7;
-  --color-surface: #f7f8fa;
-  --color-ui-bg: #eaebef;
-  --color-ui-border: #b7bcc4;
-  --color-card: #ffffff;
-  --color-line: #ecedf0;
-  --color-line-strong: #e2e4e9;
-  --color-line-hover: #dcdee4;
-  --color-chip: #f0f1f4;
-  --color-dot: #c2c6ce;
+  /* — linhas — */
+  --color-hairline: #e2dfd6;
+  --color-border: #cfcbbf;
 
-  --color-success-surface: #eef7f1;
-  --color-success-border: #dceee3;
-  --color-success-fg: #3f7a5f;
-  --color-warning-surface: #fdf8ee;
-  --color-warning-border: #e8dfc8;
-  --color-warning-fg: #7a5c20;
-
-  --color-success: #16764f;
-  --color-warning: #9c6407;
-  --color-critical: #c62a2f;
+  /* — severidade e status (papel fixo, não decorativo) — */
+  --color-critical: #b3261e;
   --color-serious: #a85a06;
+  --color-serious-hatch: #cf9553;
   --color-moderate: #8a6a00;
+  --color-moderate-text: #7a6100;
+  --color-moderate-hatch: #c2ab55;
+  --color-verified: #16764f;
+  --color-steel: #3c5c7a;
 
-  --radius-card: 1.25rem;
-  --radius-field: 1rem;
+  /* — geometria — */
+  --radius-none: 0px;
+  --radius-sm: 2px;
 
-  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 12px 32px -8px rgba(16, 24, 40, 0.12);
-  --shadow-soft: 0 1px 2px rgba(16, 24, 40, 0.05), 0 2px 8px rgba(16, 24, 40, 0.04);
+  /* — sombra: usada com parcimônia, só em elemento selecionado — */
+  --shadow-selected: 0 2px 12px rgba(23, 24, 26, 0.14);
+  --shadow-marker: 0 4px 12px rgba(23, 24, 26, 0.4);
+  --shadow-board: 0 14px 40px rgba(23, 24, 26, 0.18);
+}
+
+/* — tramas de severidade (usar como background completo) — */
+.hatch-serious {
+  background: repeating-linear-gradient(135deg, #a85a06 0 3px, #cf9553 3px 6px);
+}
+.hatch-moderate {
+  background: repeating-linear-gradient(90deg, #8a6a00 0 2px, #c2ab55 2px 4px);
+}
+.hatch-critical {
+  background: repeating-linear-gradient(135deg, #b3261e 0 3px, #d47a74 3px 6px);
+}
+.hatch-progress {
+  background: repeating-linear-gradient(90deg, #17181a 0 2px, transparent 2px 4px);
+}
+.hatch-outside {
+  background: repeating-linear-gradient(135deg, rgba(107, 108, 112, 0.12) 0 4px, transparent 4px 8px);
+}
+
+/* progresso em curso: a mesma trama, deslizando */
+.hatch-progress-live {
+  background: repeating-linear-gradient(90deg, #17181a 0 2px, transparent 2px 4px);
+  background-size: 8px 100%;
+  animation: ac-progress-slide 0.9s linear infinite;
+}
+@keyframes ac-progress-slide {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 8px 0;
+  }
 }
 
 html {
   -webkit-font-smoothing: antialiased;
-}
-
-:focus-visible {
-  outline: 2px solid var(--color-brand-500);
-  outline-offset: 2px;
-}
-
-.url-field:focus-within {
-  outline: 2px solid var(--color-brand-500);
-  outline-offset: 2px;
-}
-.url-field input:focus-visible {
-  outline: none;
-}
-
-.ac-focusring {
-  position: relative;
-}
-.ac-focusring::after {
-  content: "";
-  position: absolute;
-  inset: -6px;
-  border-radius: inherit;
-  border: 2px dashed var(--color-brand-300);
-  pointer-events: none;
-}
-
-.ac-grid {
-  background-image: radial-gradient(var(--color-line-strong) 1px, transparent 1px);
-  background-size: 22px 22px;
-  -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 0%, #000 40%, transparent 100%);
-  mask-image: radial-gradient(ellipse 80% 80% at 50% 0%, #000 40%, transparent 100%);
-}
-
-.scroll-slim {
-  scrollbar-width: thin;
-  scrollbar-color: transparent transparent;
-}
-.scroll-slim:hover {
-  scrollbar-color: rgba(16, 18, 29, 0.18) transparent;
-}
-.scroll-slim::-webkit-scrollbar {
-  width: 6px;
-}
-.scroll-slim::-webkit-scrollbar-thumb {
-  background-color: transparent;
-  border-radius: 9999px;
-}
-.scroll-slim:hover::-webkit-scrollbar-thumb {
-  background-color: rgba(16, 18, 29, 0.18);
-}
-
-details > summary {
-  list-style: none;
-}
-details > summary::-webkit-details-marker {
-  display: none;
-}
-details[open] .v-chev {
-  transform: rotate(90deg);
-}
-details[open] {
-  box-shadow:
-    0 1px 2px rgba(16, 18, 29, 0.05),
-    0 6px 20px rgba(16, 18, 29, 0.05);
 }
 
 body {
@@ -127,76 +90,53 @@ body {
   font-family: var(--font-sans);
 }
 
-.ac-indeterminate {
-  position: absolute;
-  inset: 0;
-  width: 40%;
-  border-radius: inherit;
-  background: var(--color-brand-500);
-  animation: ac-indeterminate 1.15s ease-in-out infinite;
-}
-@keyframes ac-indeterminate {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(350%);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .ac-indeterminate {
-    animation-duration: 2.4s;
-  }
+/* — foco: um único anel em toda a interface — */
+:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
 }
 
-.ac-skeleton {
-  background: linear-gradient(
-    100deg,
-    var(--color-line-strong) 30%,
-    var(--color-surface) 50%,
-    var(--color-line-strong) 70%
-  );
-  background-size: 200% 100%;
-  animation: ac-shimmer 1.4s ease-in-out infinite;
+/* margens roláveis discretas */
+.scroll-slim {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
 }
-@keyframes ac-shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
+.scroll-slim:hover {
+  scrollbar-color: rgba(23, 24, 26, 0.22) transparent;
 }
-@media (prefers-reduced-motion: reduce) {
-  .ac-skeleton {
-    animation: none;
-    background: var(--color-line-strong);
-  }
+.scroll-slim::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+.scroll-slim::-webkit-scrollbar-thumb {
+  background-color: transparent;
+}
+.scroll-slim:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(23, 24, 26, 0.22);
 }
 
-.ac-node-ring {
-  animation: ac-node-ring 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+details > summary {
+  list-style: none;
 }
-@keyframes ac-node-ring {
-  0% {
-    transform: scale(0.82);
-    opacity: 0.5;
-  }
-  70%,
-  100% {
-    transform: scale(1.9);
-    opacity: 0;
-  }
+details > summary::-webkit-details-marker {
+  display: none;
 }
-@media (prefers-reduced-motion: reduce) {
-  .ac-node-ring {
-    animation: none;
-    opacity: 0;
-  }
+details[open] .ac-chev {
+  transform: rotate(90deg);
 }
 
+/* rolagem suave ≤200ms até marcador/achado; vira salto com reduced-motion */
+.ac-scroll-smooth {
+  scroll-behavior: smooth;
+}
+
+/* — reduced motion: a direção não depende de animação — */
 @media (prefers-reduced-motion: reduce) {
-  .ac-scan [class*="animate-"] {
+  *,
+  *::before,
+  *::after {
     animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
   }
 }
