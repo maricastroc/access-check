@@ -79,7 +79,11 @@ export function UrlForm({ accent = false, examples }: { accent?: boolean; exampl
             onSubmit={() => go(value, scope)}
             size="lg"
             trailing={
-              <div className="hidden items-stretch border border-border sm:flex" role="tablist" aria-label="What to audit">
+              <div
+                className="hidden items-stretch border border-border sm:flex"
+                role="tablist"
+                aria-label="What to audit"
+              >
                 {(["page", "site"] as Scope[]).map((s) => (
                   <button
                     key={s}
@@ -124,7 +128,11 @@ export function UrlForm({ accent = false, examples }: { accent?: boolean; exampl
           Quick examples:{" "}
           {examples.map((ex, i) => (
             <span key={ex}>
-              {i > 0 && <span aria-hidden className="mx-1.5 text-border">·</span>}
+              {i > 0 && (
+                <span aria-hidden className="mx-1.5 text-border">
+                  ·
+                </span>
+              )}
               <button
                 type="button"
                 onClick={() => setValue(ex)}

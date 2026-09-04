@@ -164,7 +164,9 @@ export function CaptureStage({
         style={{ height, background: "#FBFAF7" }}
       >
         <div className="hatch-outside flex items-center gap-3 border border-dashed border-border px-6 py-8">
-          <span className="text-[13px] text-muted">The screenshot could not be taken this time.</span>
+          <span className="text-[13px] text-muted">
+            The screenshot could not be taken this time.
+          </span>
         </div>
       </div>
     );
@@ -222,7 +224,9 @@ export function EvidenceFrame({
     ? "Screenshot collapsed"
     : `Screenshot · ${CAPTURE_WIDTH} × ${CAPTURE_HEIGHT} · scale ${scalePct}%`;
   const visionNote =
-    sim === "normal" ? "default render · no vision filter" : `simulating ${modeDesc[sim].split(".")[0].toLowerCase()}`;
+    sim === "normal"
+      ? "default render · no vision filter"
+      : `simulating ${modeDesc[sim].split(".")[0].toLowerCase()}`;
 
   return (
     <div className="border border-ink bg-surface">
@@ -262,13 +266,18 @@ export function EvidenceFrame({
                 {selectedFinding.affectedSelectors[0] ?? selectedFinding.ruleId}
               </code>
               <p className="text-[12.5px] text-muted">
-                <span className="font-medium text-ink tabular-nums">{selectedFinding.elements}</span>{" "}
-                element{selectedFinding.elements === 1 ? "" : "s"} · {selectedFinding.markers.length}{" "}
-                shown on the screenshot
+                <span className="font-medium text-ink tabular-nums">
+                  {selectedFinding.elements}
+                </span>{" "}
+                element{selectedFinding.elements === 1 ? "" : "s"} ·{" "}
+                {selectedFinding.markers.length} shown on the screenshot
               </p>
               {selectedFinding.markers.length === 0 && (
                 <p className="flex items-start gap-2 text-[12px] text-muted">
-                  <span aria-hidden className="mt-0.5 inline-block h-3 w-3 shrink-0 border border-dashed border-border" />
+                  <span
+                    aria-hidden
+                    className="mt-0.5 inline-block h-3 w-3 shrink-0 border border-dashed border-border"
+                  />
                   {selectedFinding.noMarkerReason}
                 </p>
               )}

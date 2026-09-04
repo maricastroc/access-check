@@ -24,10 +24,10 @@ export function ComparisonCard({ diff, previousAt }: { diff: ScanDiff; previousA
   const deltaColor = up ? "#16764f" : down ? "#c62a2f" : "#63676f";
 
   return (
-    <section className="w-full max-w-204 rounded-2xl border border-line bg-card p-6 shadow-card print:hidden">
+    <section className="border-line bg-card shadow-card w-full max-w-204 rounded-2xl border p-6 print:hidden">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <span className="text-[10px] font-semibold tracking-[0.2em] text-brand-600 uppercase">
+          <span className="text-brand-600 text-[10px] font-semibold tracking-[0.2em] uppercase">
             Changes since last audit
           </span>
           <h2 className="mt-1.5 text-xl font-bold tracking-tight text-ink">
@@ -37,7 +37,7 @@ export function ComparisonCard({ diff, previousAt }: { diff: ScanDiff; previousA
 
         <div className="flex shrink-0 items-center gap-3">
           <span className="text-2xl font-bold text-muted">{diff.scoreFrom}</span>
-          <FontAwesomeIcon icon={faMinus} className="rotate-0 text-xs text-line-strong" />
+          <FontAwesomeIcon icon={faMinus} className="text-line-strong rotate-0 text-xs" />
           <span className="text-2xl font-bold text-ink">{diff.scoreTo}</span>
           <span
             className="flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-bold"
@@ -56,14 +56,14 @@ export function ComparisonCard({ diff, previousAt }: { diff: ScanDiff; previousA
         {(["critical", "serious", "moderate", "minor"] as Severity[]).map((s) => {
           const c = diff.counts[s];
           return (
-            <div key={s} className="rounded-xl border border-line bg-canvas px-3 py-2.5">
+            <div key={s} className="border-line rounded-xl border bg-canvas px-3 py-2.5">
               <div className="flex items-center gap-1.5">
                 <span className="size-2 rounded-full" style={{ background: sevHex[s] }} />
                 <span className="text-[11px] font-semibold text-ink">{sevLabel[s]}</span>
               </div>
               <div className="mt-1 flex items-baseline gap-1.5">
                 <span className="text-sm text-muted">{c.from}</span>
-                <span className="text-[10px] text-line-strong">→</span>
+                <span className="text-line-strong text-[10px]">→</span>
                 <span className="text-sm font-semibold text-ink">{c.to}</span>
                 {c.delta !== 0 && (
                   <span
@@ -113,7 +113,7 @@ function DiffList({
   empty: string;
 }) {
   return (
-    <div className="rounded-xl border border-line p-4">
+    <div className="border-line rounded-xl border p-4">
       <div className="flex items-center gap-2">
         <span
           className="flex size-5 items-center justify-center rounded-full text-[10px] text-white"
@@ -130,7 +130,7 @@ function DiffList({
       ) : (
         <ul className="mt-2.5 flex flex-col gap-1.5">
           {items.slice(0, MAX_LISTED).map((v) => (
-            <li key={v.id} className="flex items-center gap-2 text-[12.5px] text-ink-soft">
+            <li key={v.id} className="text-ink-soft flex items-center gap-2 text-[12.5px]">
               <span
                 className="size-1.5 shrink-0 rounded-full"
                 style={{ background: sevHex[v.severity] }}

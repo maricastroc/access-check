@@ -87,8 +87,7 @@ export async function collectReducedMotion(page: Page): Promise<ReducedMotionRep
         return parts.join(" > ");
       };
 
-      const anims =
-        typeof document.getAnimations === "function" ? document.getAnimations() : [];
+      const anims = typeof document.getAnimations === "function" ? document.getAnimations() : [];
 
       const out: {
         selector: string;

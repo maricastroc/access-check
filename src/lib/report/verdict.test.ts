@@ -33,7 +33,12 @@ describe("buildVerdict — never extrapolates one representative to a whole clus
     const v = buildVerdict({
       ...base,
       elements: 7,
-      fixGroups: [group(3, "verified"), group(2, "failed"), group(1, "verified"), group(1, "failed")],
+      fixGroups: [
+        group(3, "verified"),
+        group(2, "failed"),
+        group(1, "verified"),
+        group(1, "failed"),
+      ],
     });
     expect(v.kind).toBe("sampled");
     expect(v.reaudited).toBe(4);
@@ -82,7 +87,15 @@ describe("buildVerdict — never extrapolates one representative to a whole clus
     const v = buildVerdict({ ...base, fixVerification: "failed", fixGroups: null });
     expect(v.kind).toBe("failed");
     expect(
-      verdictMessage(v, { measured: 2.4, required: 4.5, fixed: 3.01, fromHex: null, toHex: null, bgHex: null, prop: null }),
+      verdictMessage(v, {
+        measured: 2.4,
+        required: 4.5,
+        fixed: 3.01,
+        fromHex: null,
+        toHex: null,
+        bgHex: null,
+        prop: null,
+      }),
     ).toContain("3.01:1");
   });
 
@@ -105,16 +118,24 @@ describe("buildVerdict — never extrapolates one representative to a whole clus
   });
 
   it("best-practice and complementary never claim a WCAG fix", () => {
-    expect(buildVerdict({ ...base, kind: "best-practice", isWcag: false }).kind).toBe("best-practice");
+    expect(buildVerdict({ ...base, kind: "best-practice", isWcag: false }).kind).toBe(
+      "best-practice",
+    );
     expect(buildVerdict({ ...base, kind: "keyboard" }).kind).toBe("complementary");
   });
 
   it("labels stay honest — verified is the only 'Verified fix'", () => {
-    expect(verdictLabel(buildVerdict({ ...base, fixVerification: "verified" }))).toBe("Verified fix");
-    expect(verdictLabel(buildVerdict({ ...base, elements: 7, fixGroups: [group(7, "verified")] }))).toBe(
-      "One example checked",
+    expect(verdictLabel(buildVerdict({ ...base, fixVerification: "verified" }))).toBe(
+      "Verified fix",
     );
-    expect(verdictLabel(buildVerdict({ ...base, fixVerification: "failed" }))).not.toContain("Verified");
-    expect(verdictLabel(buildVerdict({ ...base, kind: "best-practice", isWcag: false }))).toBe("Best practice");
+    expect(
+      verdictLabel(buildVerdict({ ...base, elements: 7, fixGroups: [group(7, "verified")] })),
+    ).toBe("One example checked");
+    expect(verdictLabel(buildVerdict({ ...base, fixVerification: "failed" }))).not.toContain(
+      "Verified",
+    );
+    expect(verdictLabel(buildVerdict({ ...base, kind: "best-practice", isWcag: false }))).toBe(
+      "Best practice",
+    );
   });
 });

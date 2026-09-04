@@ -38,9 +38,10 @@ export async function POST(req: Request) {
   try {
     await assertPublicUrl(root);
   } catch (err) {
-    const message = err instanceof BlockedUrlError
-      ? err.message
-      : "That doesn't look like a valid web address. Check it and try again.";
+    const message =
+      err instanceof BlockedUrlError
+        ? err.message
+        : "That doesn't look like a valid web address. Check it and try again.";
     return NextResponse.json({ error: message }, { status: 400 });
   }
 

@@ -56,16 +56,16 @@ A tool that measures contrast shouldn't have questionable contrast of its own, s
 
 ## ♿ Features
 
-|                           |                                                                                                                                                  |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+|                           |                                                                                                                                                                                                                                |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **🌐 Whole-Site Crawl**   | Point it at a domain and it discovers pages from the sitemap (or by crawling links) and audits them in parallel — a background job fans out one short serverless run per page, with live progress and an aggregate site score. |
-| **🔧 Copy-Paste Fixes**   | Each violation gets a generated code snippet — the exact contrast color, alt text, or label to paste — not just a restated rule.                 |
-| **✅ Verified Fixes**     | Every fix is applied in the page and the audit is re-run to prove it actually clears the violation before it's suggested.                        |
-| **👁️ Vision Simulations** | Preview the page through deuteranopia, protanopia, tritanopia, low vision, and grayscale filters to check meaning survives without color.        |
-| **📊 Score & Export**     | A weighted 0–100 score, a prioritized "Fix First" list, and an exportable PDF / Markdown report you can hand to a client or paste into a ticket. |
-| **🔍 Beyond Violations**  | Surfaces axe's "best practice" recommendations and flags items that need manual review — the two buckets most tools silently discard.            |
-| **⌨️ Keyboard Path**      | Tabs through the page in a real browser and maps the focus order — flagging invisible focus, keyboard traps, positive `tabindex`, and controls that can't be reached by keyboard. |
-| **📱 Context-Aware Scan** | Re-audits at a mobile viewport and after opening menus / disclosures, catching violations that only surface on small screens or once the UI is expanded. |
+| **🔧 Copy-Paste Fixes**   | Each violation gets a generated code snippet — the exact contrast color, alt text, or label to paste — not just a restated rule.                                                                                               |
+| **✅ Verified Fixes**     | Every fix is applied in the page and the audit is re-run to prove it actually clears the violation before it's suggested.                                                                                                      |
+| **👁️ Vision Simulations** | Preview the page through deuteranopia, protanopia, tritanopia, low vision, and grayscale filters to check meaning survives without color.                                                                                      |
+| **📊 Score & Export**     | A weighted 0–100 score, a prioritized "Fix First" list, and an exportable PDF / Markdown report you can hand to a client or paste into a ticket.                                                                               |
+| **🔍 Beyond Violations**  | Surfaces axe's "best practice" recommendations and flags items that need manual review — the two buckets most tools silently discard.                                                                                          |
+| **⌨️ Keyboard Path**      | Tabs through the page in a real browser and maps the focus order — flagging invisible focus, keyboard traps, positive `tabindex`, and controls that can't be reached by keyboard.                                              |
+| **📱 Context-Aware Scan** | Re-audits at a mobile viewport and after opening menus / disclosures, catching violations that only surface on small screens or once the UI is expanded.                                                                       |
 
 <br/>
 
@@ -168,7 +168,7 @@ URL → headless Chromium (Playwright) → inject axe-core → WCAG audit
 
 <br/>
 
-## 🛠️ Engineering challenges 
+## 🛠️ Engineering challenges
 
 The most challenging part of this project was making the remediation **trustworthy** rather than just plausible. Generating a fix is easy; proving it actually clears the violation meant building a structured apply-and-revert layer over a live DOM and re-running the audit scoped to a single rule. Getting the contrast math right — guaranteeing the suggested color passes its WCAG target _after_ rounding — pushed me toward property-based testing. The deterministic core (color math, fix generators, scoring, grouping, and the history diff) is fully unit-tested with Vitest, ensuring reliability and maintainability of the codebase.
 

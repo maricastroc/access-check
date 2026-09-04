@@ -60,10 +60,16 @@ describe("buildFindings", () => {
   it("orders by severity and appends best-practice last with no WCAG severity", () => {
     const r = baseResult({
       violations: [heading, contrast],
-      bestPractice: [{ id: "region", title: "All content in landmarks", desc: "d", nodes: 1, selectors: [".n"] }],
+      bestPractice: [
+        { id: "region", title: "All content in landmarks", desc: "d", nodes: 1, selectors: [".n"] },
+      ],
     });
     const f = buildFindings(r);
-    expect(f.map((x) => x.id)).toEqual(["wcag:color-contrast", "wcag:heading-order", "best-practice:region"]);
+    expect(f.map((x) => x.id)).toEqual([
+      "wcag:color-contrast",
+      "wcag:heading-order",
+      "best-practice:region",
+    ]);
     expect(f[0].n).toBe(1);
     const bp = f[2];
     expect(bp.isWcag).toBe(false);
@@ -73,7 +79,12 @@ describe("buildFindings", () => {
 
   it("parses a real contrast measurement, and separates finding verdict from located-element preview", () => {
     const f = buildFindings(baseResult({ violations: [contrast] }))[0];
-    expect(f.measurement).toMatchObject({ measured: 2.1, required: 4.5, fixed: 4.62, bgHex: "#ffffff" });
+    expect(f.measurement).toMatchObject({
+      measured: 2.1,
+      required: 4.5,
+      fixed: 4.62,
+      bgHex: "#ffffff",
+    });
     expect(f.verdict.kind).toBe("sampled");
     expect(f.verdict.reaudited).toBe(1);
     expect(f.impact).toContain("low vision");

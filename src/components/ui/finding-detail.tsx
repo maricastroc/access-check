@@ -25,7 +25,12 @@ const SEAL: Record<Verdict["kind"], { cls: string; glyph: string }> = {
 function VerdictSeal({ verdict }: { verdict: Verdict }) {
   const s = SEAL[verdict.kind];
   return (
-    <span className={cn("inline-flex items-center gap-2 border px-2.5 py-1.5 text-[12.5px] leading-tight", s.cls)}>
+    <span
+      className={cn(
+        "inline-flex items-center gap-2 border px-2.5 py-1.5 text-[12.5px] leading-tight",
+        s.cls,
+      )}
+    >
       <span aria-hidden className="font-cond text-[13px]">
         {s.glyph}
       </span>
@@ -47,8 +52,14 @@ function RatioBar({
 }) {
   return (
     <div className="relative h-3 w-full overflow-hidden border border-ink bg-surface">
-      <span className="hatch-serious absolute inset-y-0 left-0" style={{ width: `${ratioPosition(found)}%` }} />
-      <span className="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-ink" style={{ left: `${ratioPosition(required)}%` }} />
+      <span
+        className="hatch-serious absolute inset-y-0 left-0"
+        style={{ width: `${ratioPosition(found)}%` }}
+      />
+      <span
+        className="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-ink"
+        style={{ left: `${ratioPosition(required)}%` }}
+      />
       {fixed != null && (
         <span
           className="absolute inset-y-0 w-0.5 -translate-x-1/2"
@@ -101,8 +112,14 @@ function ContrastFixPreview({ preview }: { preview: ContrastPreview }) {
 
   return (
     <div className="mt-2">
-      <p className="font-cond text-[11px] tracking-[0.08em] text-muted uppercase">Contrast preview</p>
-      <div role="group" aria-label="Contrast preview" className="mt-1.5 inline-flex border border-border text-[12.5px]">
+      <p className="font-cond text-[11px] tracking-[0.08em] text-muted uppercase">
+        Contrast preview
+      </p>
+      <div
+        role="group"
+        aria-label="Contrast preview"
+        className="mt-1.5 inline-flex border border-border text-[12.5px]"
+      >
         {(["original", "suggested"] as const).map((v, i) => (
           <button
             key={v}
@@ -160,7 +177,9 @@ function ContrastFixPreview({ preview }: { preview: ContrastPreview }) {
       <p className="mt-2 text-[11.5px] text-muted">
         Preview uses the detected foreground and background colors. Typography and page context are
         not reproduced.
-        {preview.shared ? ` ${preview.sharedCount} occurrences share this detected color pair.` : ""}
+        {preview.shared
+          ? ` ${preview.sharedCount} occurrences share this detected color pair.`
+          : ""}
       </p>
     </div>
   );
@@ -173,7 +192,10 @@ export function FindingDetail({ finding, host }: { finding: FindingView; host: s
   const railColor = finding.severity ? severityColorVar[finding.severity] : "var(--color-steel)";
 
   return (
-    <div className="-mt-px border border-t-0 border-ink bg-surface" style={{ borderLeft: `4px solid ${railColor}` }}>
+    <div
+      className="-mt-px border border-t-0 border-ink bg-surface"
+      style={{ borderLeft: `4px solid ${railColor}` }}
+    >
       <section className="p-3.5">
         <SectionKicker>Impact on users</SectionKicker>
         <p className="mt-2 text-[14px] leading-normal text-ink-2">{finding.impact}</p>
@@ -192,7 +214,9 @@ export function FindingDetail({ finding, host }: { finding: FindingView; host: s
                   1
                 </span>
               )}
-              <code className="font-mono text-[12.5px] text-steel">{finding.affectedSelectors[0]}</code>
+              <code className="font-mono text-[12.5px] text-steel">
+                {finding.affectedSelectors[0]}
+              </code>
               {located > 0 && <span className="text-[11.5px] text-muted">· on the screenshot</span>}
             </p>
             <p className="mt-1.5 text-[12.5px] text-muted">
@@ -202,7 +226,10 @@ export function FindingDetail({ finding, host }: { finding: FindingView; host: s
             {finding.affectedSelectors.length > 1 && (
               <ul className="mt-2 flex flex-wrap gap-1.5">
                 {affectedShown.slice(1).map((s) => (
-                  <li key={s} className="border border-hairline bg-code px-1.5 py-0.5 font-mono text-[11px] text-body">
+                  <li
+                    key={s}
+                    className="border border-hairline bg-code px-1.5 py-0.5 font-mono text-[11px] text-body"
+                  >
                     {s}
                   </li>
                 ))}
@@ -217,7 +244,10 @@ export function FindingDetail({ finding, host }: { finding: FindingView; host: s
         )}
         {located === 0 && (
           <p className="mt-2 flex items-start gap-2 text-[12px] text-muted">
-            <span aria-hidden className="mt-0.5 inline-block size-3 shrink-0 border border-dashed border-border" />
+            <span
+              aria-hidden
+              className="mt-0.5 inline-block size-3 shrink-0 border border-dashed border-border"
+            />
             {finding.noMarkerReason}
           </p>
         )}
@@ -249,7 +279,14 @@ export function FindingDetail({ finding, host }: { finding: FindingView; host: s
             <p className="mt-2 text-[13.5px] leading-normal text-body">{finding.fixText}</p>
             {finding.fixCode && (
               <div className="mt-2.5">
-                <CodeBlock lines={[{ text: finding.fixCode, tone: finding.verdict.kind === "verified" ? "added" : "default" }]} />
+                <CodeBlock
+                  lines={[
+                    {
+                      text: finding.fixCode,
+                      tone: finding.verdict.kind === "verified" ? "added" : "default",
+                    },
+                  ]}
+                />
               </div>
             )}
           </>

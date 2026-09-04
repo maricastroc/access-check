@@ -44,7 +44,13 @@ type StatusPillProps = {
 
 export function StatusPill({ children, tone, className }: StatusPillProps) {
   return (
-    <span className={cn("inline-flex items-center gap-2 text-[13px] font-medium", toneText[tone], className)}>
+    <span
+      className={cn(
+        "inline-flex items-center gap-2 text-[13px] font-medium",
+        toneText[tone],
+        className,
+      )}
+    >
       <span aria-hidden className={cn("size-2.5 shrink-0", toneSquare[tone])} />
       {children}
     </span>

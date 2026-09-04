@@ -55,7 +55,8 @@ describe("isBlockedIp", () => {
 });
 
 describe("assertPublicUrl", () => {
-  const rejects = (url: string) => expect(assertPublicUrl(url)).rejects.toBeInstanceOf(BlockedUrlError);
+  const rejects = (url: string) =>
+    expect(assertPublicUrl(url)).rejects.toBeInstanceOf(BlockedUrlError);
 
   it("rejects localhost and private ranges by literal IP", async () => {
     await rejects("http://localhost/");

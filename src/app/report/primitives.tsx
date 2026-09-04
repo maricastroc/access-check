@@ -48,9 +48,7 @@ function PageFooter({ page, host }: { page: number; host: string }) {
     <div className="mt-auto flex items-center justify-between border-t border-hairline pt-3 text-[10px] text-muted">
       <span className="flex items-center gap-1.5">
         <BrandMark size={13} />
-        <span>
-          Internal score · not a conformance statement
-        </span>
+        <span>Internal score · not a conformance statement</span>
       </span>
       <span className="truncate px-2 font-mono text-[9.5px]">{host}</span>
       <span>WCAG A &amp; AA · Page {page} / 3</span>
@@ -87,7 +85,7 @@ export function GroupHeading({ sev, count }: { sev: Severity; count: number }) {
       <span aria-hidden className="size-2.5" style={{ background: sevHex[sev] }} />
       <span className="text-[13px] font-semibold text-ink">{sevLabel[sev]}</span>
       <span
-        className="font-cond px-2 py-0.5 text-[10px] font-medium tracking-[0.08em] uppercase"
+        className="px-2 py-0.5 font-cond text-[10px] font-medium tracking-[0.08em] uppercase"
         style={{ color: sevHex[sev] }}
       >
         {count} finding{count > 1 ? "s" : ""}

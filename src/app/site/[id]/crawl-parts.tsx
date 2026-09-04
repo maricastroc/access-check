@@ -45,7 +45,7 @@ export function ProgressHeader({ snap }: { snap: CrawlSnapshot }) {
               ? "border-brand-500/25 bg-brand-50 text-brand-700"
               : snap.status === "failed"
                 ? "border-critical/25 bg-[#fdecec] text-critical"
-                : "border-success/20 bg-[#e7f5ef] text-success"
+                : "border-success/20 text-success bg-[#e7f5ef]"
           }`}
         >
           {running && <FontAwesomeIcon icon={faSpinner} aria-hidden className="animate-spin" />}
@@ -58,7 +58,7 @@ export function ProgressHeader({ snap }: { snap: CrawlSnapshot }) {
       </div>
 
       <div
-        className="mt-4 h-2 w-full overflow-hidden rounded-full bg-line"
+        className="bg-line mt-4 h-2 w-full overflow-hidden rounded-full"
         role="progressbar"
         aria-valuenow={pct}
         aria-valuemin={0}
@@ -76,7 +76,7 @@ export function ProgressHeader({ snap }: { snap: CrawlSnapshot }) {
       {snap.status === "failed" && snap.error && (
         <div
           role="alert"
-          className="mt-4 flex items-start gap-3 rounded-xl border border-line bg-card px-4 py-3 text-sm shadow-soft"
+          className="border-line bg-card shadow-soft mt-4 flex items-start gap-3 rounded-xl border px-4 py-3 text-sm"
         >
           <FontAwesomeIcon
             icon={faTriangleExclamation}
@@ -98,12 +98,12 @@ export function SiteSummary({ snap, score }: { snap: CrawlSnapshot; score: numbe
   }));
 
   return (
-    <section className="mt-6 grid grid-cols-1 gap-4 rounded-2xl border border-line bg-card p-5 shadow-soft sm:grid-cols-[auto_1fr] sm:gap-6 sm:p-6">
+    <section className="border-line bg-card shadow-soft mt-6 grid grid-cols-1 gap-4 rounded-2xl border p-5 sm:grid-cols-[auto_1fr] sm:gap-6 sm:p-6">
       <div className="flex items-center gap-4">
         {score !== null ? (
           <ScoreRing value={score} />
         ) : (
-          <div className="flex size-24 items-center justify-center rounded-full border-8 border-line text-sm text-muted">
+          <div className="border-line flex size-24 items-center justify-center rounded-full border-8 text-sm text-muted">
             …
           </div>
         )}
@@ -166,13 +166,13 @@ function PageStatusBadge({ page }: { page: CrawlPage }) {
   }
   if (page.status === "running") {
     return (
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-500">
+      <span className="bg-brand-50 text-brand-500 flex size-9 shrink-0 items-center justify-center rounded-full">
         <FontAwesomeIcon icon={faSpinner} aria-hidden className="animate-spin" />
       </span>
     );
   }
   return (
-    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-canvas text-faint">
+    <span className="text-faint flex size-9 shrink-0 items-center justify-center rounded-full bg-canvas">
       <FontAwesomeIcon icon={faClock} aria-hidden />
     </span>
   );
@@ -180,10 +180,11 @@ function PageStatusBadge({ page }: { page: CrawlPage }) {
 
 export function PageRow({ page, siteId }: { page: CrawlPage; siteId: string }) {
   const done = page.status === "done";
-  const total = page.counts.critical + page.counts.serious + page.counts.moderate + page.counts.minor;
+  const total =
+    page.counts.critical + page.counts.serious + page.counts.moderate + page.counts.minor;
 
   const inner = (
-    <div className="flex items-center gap-3.5 rounded-xl border border-line bg-card px-4 py-3 shadow-soft transition-shadow group-hover:shadow-card">
+    <div className="border-line bg-card shadow-soft group-hover:shadow-card flex items-center gap-3.5 rounded-xl border px-4 py-3 transition-shadow">
       <PageStatusBadge page={page} />
 
       <div className="min-w-0 flex-1">
@@ -206,7 +207,7 @@ export function PageRow({ page, siteId }: { page: CrawlPage; siteId: string }) {
       {done && (
         <div className="hidden items-center gap-3 text-xs text-muted sm:flex">
           {total === 0 ? (
-            <span className="flex items-center gap-1.5 text-success">
+            <span className="text-success flex items-center gap-1.5">
               <FontAwesomeIcon icon={faCircleCheck} aria-hidden />
               No findings
             </span>
@@ -225,7 +226,7 @@ export function PageRow({ page, siteId }: { page: CrawlPage; siteId: string }) {
         <FontAwesomeIcon
           icon={faArrowRight}
           aria-hidden
-          className="text-xs text-faint transition-colors group-hover:text-brand-600"
+          className="text-faint group-hover:text-brand-600 text-xs transition-colors"
         />
       )}
     </div>

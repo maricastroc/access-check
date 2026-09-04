@@ -36,7 +36,9 @@ function streamResponse(
         await produce(send);
       } catch (err) {
         const message =
-          err instanceof Error ? err.message : "Something went wrong on our side. Please try again.";
+          err instanceof Error
+            ? err.message
+            : "Something went wrong on our side. Please try again.";
         send({ type: "error", error: message, code: "internal" });
       } finally {
         closed = true;
@@ -59,15 +61,27 @@ export async function POST(req: Request) {
   try {
     body = await req.json();
   } catch {
-    return fail("We couldn't read that request. Please reload the page and try again.", "invalid-url", 400);
+    return fail(
+      "We couldn't read that request. Please reload the page and try again.",
+      "invalid-url",
+      400,
+    );
   }
 
   if (!body.url || typeof body.url !== "string") {
-    return fail("No web address was provided. Enter a page address and try again.", "invalid-url", 400);
+    return fail(
+      "No web address was provided. Enter a page address and try again.",
+      "invalid-url",
+      400,
+    );
   }
 
   if ((await scanRateLimit.check(clientKey(req))) === "limited") {
-    return fail("Too many audits in a short time. Please wait about a minute and try again.", "rate-limited", 429);
+    return fail(
+      "Too many audits in a short time. Please wait about a minute and try again.",
+      "rate-limited",
+      429,
+    );
   }
 
   const url = normalizeUrl(body.url);
@@ -167,7 +181,8 @@ export async function POST(req: Request) {
       if (outcome.kind === "expired") {
         send({
           type: "error",
-          error: "This page took too long to finish. Try a single, lighter page instead of a large home page.",
+          error:
+            "This page took too long to finish. Try a single, lighter page instead of a large home page.",
           code: "timeout",
         });
         log("deadline");

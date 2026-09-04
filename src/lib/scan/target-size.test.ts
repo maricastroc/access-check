@@ -47,10 +47,7 @@ describe("analyzeTargetSize", () => {
 
   it("inline links inside text are exempt", () => {
     const r = analyzeTargetSize({
-      targets: [
-        target("#link", 0, 0, 16, 16, true),
-        target("#other", 20, 0, 16, 16, true),
-      ],
+      targets: [target("#link", 0, 0, 16, 16, true), target("#other", 20, 0, 16, 16, true)],
     });
     expect(r.findings).toHaveLength(0);
   });

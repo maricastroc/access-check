@@ -8,7 +8,8 @@ export type ButtonVariant = "primary" | "accent" | "secondary" | "tertiary" | "d
 export type ButtonSize = "sm" | "md" | "lg";
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary: "bg-ink text-surface hover:bg-ink-2 disabled:bg-canvas disabled:text-disabled disabled:border disabled:border-hairline",
+  primary:
+    "bg-ink text-surface hover:bg-ink-2 disabled:bg-canvas disabled:text-disabled disabled:border disabled:border-hairline",
   dark: "bg-ink text-surface hover:bg-ink-2 disabled:bg-canvas disabled:text-disabled",
   accent: "bg-serious text-surface hover:brightness-110 disabled:bg-canvas disabled:text-disabled",
   secondary:

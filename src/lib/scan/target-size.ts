@@ -54,9 +54,7 @@ function isCrowded(t: TargetRect, all: TargetRect[]): boolean {
 
 export function analyzeTargetSize(raw: RawTargetSize): TargetSizeReport {
   const { targets } = raw;
-  const offenders = targets.filter(
-    (t) => !t.inline && isUndersized(t) && isCrowded(t, targets),
-  );
+  const offenders = targets.filter((t) => !t.inline && isUndersized(t) && isCrowded(t, targets));
 
   const findings: AuditFinding[] = [];
   if (offenders.length > 0) {

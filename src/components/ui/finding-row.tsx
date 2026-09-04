@@ -10,8 +10,7 @@ function railColor(f: FindingView): string {
 }
 
 function VerdictCue({ kind }: { kind: Verdict["kind"] }) {
-  if (kind === "verified")
-    return <span className="text-verified">· verified in sandbox</span>;
+  if (kind === "verified") return <span className="text-verified">· verified in sandbox</span>;
   if (kind === "partial") return <span className="text-moderate-text">· partly verified</span>;
   if (kind === "sampled") return <span className="text-muted">· one example checked</span>;
   if (kind === "failed") return <span className="text-moderate-text">· needs review</span>;
@@ -75,17 +74,21 @@ export function FindingRow({
             "inline-flex size-5.5 shrink-0 items-center justify-center font-cond text-[13px] font-semibold tabular-nums",
             selected ? "bg-ink text-surface" : "bg-transparent",
           )}
-          style={selected ? undefined : { border: `1px solid ${railColor(finding)}`, color: railColor(finding) }}
+          style={
+            selected
+              ? undefined
+              : { border: `1px solid ${railColor(finding)}`, color: railColor(finding) }
+          }
         >
           {finding.n}
         </span>
         <span
           className="font-cond text-[11px] tracking-widest uppercase"
-          style={{ color: finding.severity ? severityColorVar[finding.severity] : "var(--color-steel)" }}
+          style={{
+            color: finding.severity ? severityColorVar[finding.severity] : "var(--color-steel)",
+          }}
         >
-          {finding.passLabel && finding.kind !== "best-practice"
-            ? finding.passLabel
-            : label}
+          {finding.passLabel && finding.kind !== "best-practice" ? finding.passLabel : label}
         </span>
         <span className="ml-auto">
           <TopTag f={finding} />

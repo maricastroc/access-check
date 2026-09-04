@@ -58,13 +58,17 @@ export function FindingsMargin({
           <p className="text-[13.5px] leading-normal text-body">
             <span className="font-semibold text-ink">No automated failures on this page.</span>{" "}
             {result.counts.passed} checks passed. This is not the same as WCAG conformance:{" "}
-            {result.counts.manualReview} item{result.counts.manualReview === 1 ? "" : "s"} still need
-            a person to review, listed below.
+            {result.counts.manualReview} item{result.counts.manualReview === 1 ? "" : "s"} still
+            need a person to review, listed below.
           </p>
         ) : (
           findings.map((f) => (
             <div key={f.id} id={`finding-${f.id}`} className="scroll-mt-24">
-              <FindingRow finding={f} selected={f.id === selectedId} onSelect={() => onSelect(f.id)} />
+              <FindingRow
+                finding={f}
+                selected={f.id === selectedId}
+                onSelect={() => onSelect(f.id)}
+              />
               {f.id === selectedId && <FindingDetail finding={f} host={host} />}
             </div>
           ))
@@ -85,7 +89,10 @@ export function FindingsMargin({
           </ul>
         </Secondary>
 
-        <Secondary label="manual-review items, with how to check" count={result.counts.manualReview}>
+        <Secondary
+          label="manual-review items, with how to check"
+          count={result.counts.manualReview}
+        >
           <ul className="flex flex-col gap-3">
             {result.incomplete.map((inc) => {
               const guide = reviewGuidance(inc.id);
@@ -112,7 +119,9 @@ export function FindingsMargin({
                 <span className="font-cond text-muted tabular-nums">{s.n}</span>
                 <span className="min-w-0 truncate">{s.label}</span>
                 {!s.focusVisible && (
-                  <span className="ml-auto shrink-0 text-[11px] text-critical">no visible focus</span>
+                  <span className="ml-auto shrink-0 text-[11px] text-critical">
+                    no visible focus
+                  </span>
                 )}
               </li>
             ))}

@@ -24,7 +24,10 @@ function findingBlock(f: FindingView, out: string[]) {
   }
   if (f.passLabel && f.kind !== "best-practice") out.push(`- **Pass:** ${f.passLabel}`);
   if (f.affectedSelectors.length > 0) {
-    const shown = f.affectedSelectors.slice(0, 5).map((s) => `\`${s}\``).join(", ");
+    const shown = f.affectedSelectors
+      .slice(0, 5)
+      .map((s) => `\`${s}\``)
+      .join(", ");
     const extra = f.affectedSelectors.length - 5;
     out.push(`- **Affected:** ${shown}${extra > 0 ? ` (+${extra} more)` : ""}`);
   }
@@ -41,9 +44,14 @@ function findingBlock(f: FindingView, out: string[]) {
   out.push("");
   out.push("**Suggested fix:**");
   out.push("");
-  out.push(f.measurement?.toHex ? `Set \`${f.measurement.prop ?? "color"}\` to ${f.measurement.toHex.toUpperCase()}.` : f.fixText);
+  out.push(
+    f.measurement?.toHex
+      ? `Set \`${f.measurement.prop ?? "color"}\` to ${f.measurement.toHex.toUpperCase()}.`
+      : f.fixText,
+  );
   if (f.fixCode) out.push("", "```", f.fixCode, "```");
-  else if (f.guidance?.example) out.push("", "```" + f.guidance.example.lang, f.guidance.example.code, "```");
+  else if (f.guidance?.example)
+    out.push("", "```" + f.guidance.example.lang, f.guidance.example.code, "```");
   out.push("", `_${verdictLabel(f.verdict)}: ${verdictMessage(f.verdict, f.measurement)}_`);
   out.push("");
 }
@@ -57,7 +65,9 @@ export function buildReportMarkdown(result: ScanResult): string {
   out.push(`# Accessibility report: ${result.title || host(result.finalUrl)}`);
   out.push("");
   out.push(`- **URL:** ${result.finalUrl}`);
-  out.push(`- **Internal priority score:** ${result.score} / 100 _(priority, not a WCAG conformance grade)_`);
+  out.push(
+    `- **Internal priority score:** ${result.score} / 100 _(priority, not a WCAG conformance grade)_`,
+  );
   out.push(`- **Elements scanned:** ${result.scannedElements}`);
   out.push(`- **Generated:** ${new Date().toISOString().slice(0, 10)}`);
   out.push("");
@@ -109,7 +119,9 @@ export function buildReportMarkdown(result: ScanResult): string {
   if (result.incomplete.length > 0) {
     out.push("## Needs manual review");
     out.push("");
-    out.push("Automated testing couldn't decide these, so confirm them by hand. They stay outside the score.");
+    out.push(
+      "Automated testing couldn't decide these, so confirm them by hand. They stay outside the score.",
+    );
     out.push("");
     for (const inc of result.incomplete) {
       out.push(`### ${inc.title}`);

@@ -61,10 +61,7 @@ function ScoreRuler({
           <span
             key={d.severity}
             aria-hidden
-            className={cn(
-              "h-full",
-              d.severity === "minor" ? "bg-muted" : hatchFor(d.severity),
-            )}
+            className={cn("h-full", d.severity === "minor" ? "bg-muted" : hatchFor(d.severity))}
             style={{ width: `${d.deduction}%` }}
           />
         ))}
@@ -188,7 +185,11 @@ function ProgressRuler({
       className="flex h-3.5 w-full overflow-hidden border border-ink bg-surface"
     >
       <span aria-hidden className="h-full bg-ink" style={{ width: `${donePct}%` }} />
-      <span aria-hidden className="hatch-progress-live h-full" style={{ width: `${runningPct}%` }} />
+      <span
+        aria-hidden
+        className="hatch-progress-live h-full"
+        style={{ width: `${runningPct}%` }}
+      />
     </div>
   );
 }

@@ -12,7 +12,15 @@ function result(over: Partial<ScanResult>): ScanResult {
     durationMs: 1000,
     screenshot: null,
     score: 71,
-    counts: { critical: 0, serious: 1, moderate: 0, minor: 0, passed: 39, bestPractice: 0, manualReview: 0 },
+    counts: {
+      critical: 0,
+      serious: 1,
+      moderate: 0,
+      minor: 0,
+      passed: 39,
+      bestPractice: 0,
+      manualReview: 0,
+    },
     summary: "s",
     violations: [],
     incomplete: [],
@@ -77,7 +85,15 @@ describe("buildReportView", () => {
     const v = buildReportView(
       result({
         keyboard: keyboard([
-          stop({ n: 1, left: 50, top: 40, width: 10, height: 6, focusVisible: true, label: "Skip link" }),
+          stop({
+            n: 1,
+            left: 50,
+            top: 40,
+            width: 10,
+            height: 6,
+            focusVisible: true,
+            label: "Skip link",
+          }),
           stop({ n: 2, left: null, top: null }),
           stop({ n: 3, left: 99, top: 0, width: 4, height: 4, focusVisible: false, label: "Cart" }),
         ]),

@@ -4,7 +4,14 @@ import type { ScanResult } from "@/lib/scan/types";
 import type { FindingView } from "@/lib/report/findings";
 import type { ScoreBreakdown } from "@/lib/report/score";
 import type { WcagReadingModel } from "@/lib/report/wcag";
-import { Button, FindingDetail, FindingRow, Ruler, SectionKicker, WcagChips } from "@/components/ui";
+import {
+  Button,
+  FindingDetail,
+  FindingRow,
+  Ruler,
+  SectionKicker,
+  WcagChips,
+} from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { modeList, type SimKey } from "./data";
 import { CaptureStage, type FocusPoint } from "./evidence-frame";
@@ -59,11 +66,16 @@ export function MobileReport({
           </span>
         </div>
         <div className="mt-2 flex items-center gap-3">
-          <span className="font-cond text-[38px] leading-none tabular-nums text-ink">
+          <span className="font-cond text-[38px] leading-none text-ink tabular-nums">
             {result.score}
           </span>
           <div className="flex-1">
-            <Ruler variant="score" score={result.score} deductions={breakdown.deductions} height={20} />
+            <Ruler
+              variant="score"
+              score={result.score}
+              deductions={breakdown.deductions}
+              height={20}
+            />
           </div>
         </div>
         <div className="mt-2.5">
@@ -156,7 +168,11 @@ export function MobileReport({
           ) : (
             findings.map((f) => (
               <div key={f.id}>
-                <FindingRow finding={f} selected={f.id === selectedId} onSelect={() => onSelect(f.id)} />
+                <FindingRow
+                  finding={f}
+                  selected={f.id === selectedId}
+                  onSelect={() => onSelect(f.id)}
+                />
                 {f.id === selectedId && (
                   <>
                     <FindingDetail finding={f} host={host} />
@@ -184,7 +200,12 @@ export function MobileReport({
         <Button variant="secondary" size="md" onClick={onMarkdown} className="flex-1">
           Export Markdown
         </Button>
-        <Button href={`/report?url=${encodeURIComponent(result.finalUrl)}`} variant="primary" size="md" className="flex-1">
+        <Button
+          href={`/report?url=${encodeURIComponent(result.finalUrl)}`}
+          variant="primary"
+          size="md"
+          className="flex-1"
+        >
           Export PDF
         </Button>
       </div>

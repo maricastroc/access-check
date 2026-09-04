@@ -37,7 +37,7 @@ export function OccurrenceStepper({
       <span
         aria-live="polite"
         className={cn(
-          "text-center font-cond text-[15px] font-medium tabular-nums text-ink",
+          "text-center font-cond text-[15px] font-medium text-ink tabular-nums",
           counterWidth,
         )}
       >

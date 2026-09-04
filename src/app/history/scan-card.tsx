@@ -20,9 +20,9 @@ export function ScanCard({ scan, delta }: { scan: ScanListItem; delta: number | 
       <DeleteScanButton id={scan.id} />
       <Link
         href={`/report/${scan.id}`}
-        className="flex flex-col overflow-hidden rounded-2xl border border-line bg-card shadow-soft transition-shadow hover:shadow-card"
+        className="border-line bg-card shadow-soft hover:shadow-card flex flex-col overflow-hidden rounded-2xl border transition-shadow"
       >
-        <div className="relative aspect-video overflow-hidden border-b border-line bg-canvas">
+        <div className="border-line relative aspect-video overflow-hidden border-b bg-canvas">
           {!loaded && <div aria-hidden className="ac-skeleton absolute inset-0" />}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -36,7 +36,7 @@ export function ScanCard({ scan, delta }: { scan: ScanListItem; delta: number | 
             }`}
           />
           <span
-            className="absolute top-3 right-3 flex size-11 items-center justify-center rounded-full text-sm font-bold text-white shadow-card"
+            className="shadow-card absolute top-3 right-3 flex size-11 items-center justify-center rounded-full text-sm font-bold text-white"
             style={{ background: scoreColor(scan.score) }}
           >
             <span className="sr-only">Score </span>
@@ -72,7 +72,7 @@ export function ScanCard({ scan, delta }: { scan: ScanListItem; delta: number | 
                 {s.value}
               </span>
             ))}
-            <span className="ml-auto font-medium text-success">{scan.counts.passed} passed</span>
+            <span className="text-success ml-auto font-medium">{scan.counts.passed} passed</span>
           </div>
         </div>
       </Link>

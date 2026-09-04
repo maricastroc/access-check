@@ -52,7 +52,9 @@ export function usePageAudit({
 
       void (async () => {
         try {
-          apply(await streamScan(value, { onPhase: setPhase, onCore: incremental ? apply : undefined }));
+          apply(
+            await streamScan(value, { onPhase: setPhase, onCore: incremental ? apply : undefined }),
+          );
         } catch (e) {
           setError(e instanceof Error ? e.message : fallbackError);
           setErrorHint(e instanceof ScanStreamError ? SCAN_ERROR_HINT[e.code] : "");

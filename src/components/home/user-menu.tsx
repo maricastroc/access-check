@@ -30,7 +30,7 @@ export function UserMenu({
       <DropdownMenu.Trigger asChild>
         <button
           type="button"
-          className="group flex cursor-pointer items-center gap-2.5 rounded-full border border-line bg-card py-2 pr-4 pl-1.5 text-sm font-medium text-ink shadow-soft transition-all outline-none hover:bg-canvas hover:shadow-card"
+          className="group border-line bg-card shadow-soft hover:shadow-card flex cursor-pointer items-center gap-2.5 rounded-full border py-2 pr-4 pl-1.5 text-sm font-medium text-ink transition-all outline-none hover:bg-canvas"
         >
           <Avatar user={user} />
           <span className="hidden sm:block">{firstName}</span>
@@ -45,9 +45,9 @@ export function UserMenu({
         <DropdownMenu.Content
           align="end"
           sideOffset={8}
-          className="z-50 w-56 overflow-hidden rounded-xl border border-line bg-card shadow-card duration-150 data-[side=bottom]:slide-in-from-top-2 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"
+          className="border-line bg-card shadow-card data-[side=bottom]:slide-in-from-top-2 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 z-50 w-56 overflow-hidden rounded-xl border duration-150"
         >
-          <div className="border-b border-line px-4 py-3">
+          <div className="border-line border-b px-4 py-3">
             <div className="truncate text-sm font-semibold text-ink">{user.name ?? "Account"}</div>
             {user.email && <div className="truncate text-xs text-muted">{user.email}</div>}
           </div>
@@ -81,13 +81,13 @@ function Avatar({ user }: { user: UserData }) {
       <img
         src={user.image}
         alt=""
-        className="size-8 rounded-full border border-line object-cover"
+        className="border-line size-8 rounded-full border object-cover"
       />
     );
   }
   const initial = (user.name ?? user.email ?? "?").charAt(0).toUpperCase();
   return (
-    <span className="flex size-8 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-700">
+    <span className="bg-brand-100 text-brand-700 flex size-8 items-center justify-center rounded-full text-xs font-bold">
       {initial}
     </span>
   );

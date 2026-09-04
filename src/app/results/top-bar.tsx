@@ -38,23 +38,23 @@ export function TopBar({
             <span className="text-[19px] font-semibold tracking-[-0.01em]">AccessCheck</span>
           </Link>
           {result && (
-          <div className="hidden min-w-0 items-baseline gap-3 text-[13px] text-muted lg:flex">
-            <span className="truncate font-mono text-ink">{result.finalUrl}</span>
-            <span aria-hidden className="text-border">
-              ·
-            </span>
-            <span className="whitespace-nowrap">{formatWhen()}</span>
-            <span aria-hidden className="text-border">
-              ·
-            </span>
-            <span className="whitespace-nowrap tabular-nums">
-              {(result.durationMs / 1000).toFixed(1)}s
-            </span>
-            <span aria-hidden className="text-border">
-              ·
-            </span>
-            <span className="whitespace-nowrap tabular-nums">{viewport}</span>
-          </div>
+            <div className="hidden min-w-0 items-baseline gap-3 text-[13px] text-muted lg:flex">
+              <span className="truncate font-mono text-ink">{result.finalUrl}</span>
+              <span aria-hidden className="text-border">
+                ·
+              </span>
+              <span className="whitespace-nowrap">{formatWhen()}</span>
+              <span aria-hidden className="text-border">
+                ·
+              </span>
+              <span className="whitespace-nowrap tabular-nums">
+                {(result.durationMs / 1000).toFixed(1)}s
+              </span>
+              <span aria-hidden className="text-border">
+                ·
+              </span>
+              <span className="whitespace-nowrap tabular-nums">{viewport}</span>
+            </div>
           )}
         </div>
         <div className="ml-auto flex items-center gap-2">

@@ -18,7 +18,8 @@ export function FindingsPage({ result }: { result: ScanResult }) {
         </h2>
         <p className="mt-1.5 max-w-xl text-[12px] leading-[1.45] text-muted">
           Each finding grouped by severity and mapped to its WCAG&nbsp;A/AA success criterion, with
-          the human impact, the measurement where one exists, and a fix re-audited in a sandbox copy.
+          the human impact, the measurement where one exists, and a fix re-audited in a sandbox
+          copy.
         </p>
       </div>
 

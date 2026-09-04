@@ -24,8 +24,8 @@ export function ConfirmDialog({
     <AlertDialog.Root>
       <AlertDialog.Trigger asChild>{trigger}</AlertDialog.Trigger>
       <AlertDialog.Portal>
-        <AlertDialog.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm duration-200 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0" />
-        <AlertDialog.Content className="fixed top-1/2 left-1/2 z-50 w-[90vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-line bg-card p-6 shadow-card duration-200 focus:outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]">
+        <AlertDialog.Overlay className="data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/40 backdrop-blur-sm duration-200" />
+        <AlertDialog.Content className="border-line bg-card shadow-card data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] fixed top-1/2 left-1/2 z-50 w-[90vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border p-6 duration-200 focus:outline-none">
           <AlertDialog.Title className="text-lg font-bold tracking-tight text-ink">
             {title}
           </AlertDialog.Title>
@@ -37,7 +37,7 @@ export function ConfirmDialog({
             <AlertDialog.Cancel asChild>
               <button
                 type="button"
-                className="flex h-9 cursor-pointer items-center rounded-[10px] border border-line-strong bg-card px-4 text-sm font-medium text-ink transition-colors hover:bg-canvas"
+                className="border-line-strong bg-card flex h-9 cursor-pointer items-center rounded-[10px] border px-4 text-sm font-medium text-ink transition-colors hover:bg-canvas"
               >
                 {cancelLabel}
               </button>

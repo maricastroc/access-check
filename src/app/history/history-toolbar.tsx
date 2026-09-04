@@ -23,7 +23,7 @@ export function HistoryToolbar({
         <label htmlFor="history-search" className="sr-only">
           Search audits by domain
         </label>
-        <div className="flex h-9 w-full items-center gap-2.5 rounded-[10px] border border-line-strong bg-card px-3 focus-within:border-brand-400">
+        <div className="border-line-strong bg-card focus-within:border-brand-400 flex h-9 w-full items-center gap-2.5 rounded-[10px] border px-3">
           <FontAwesomeIcon icon={faMagnifyingGlass} aria-hidden className="text-xs text-muted" />
           <input
             id="history-search"
@@ -50,7 +50,7 @@ export function HistoryToolbar({
         <div
           role="group"
           aria-label="Filter by score"
-          className="flex h-9 items-center gap-0.5 rounded-[10px] border border-line-strong bg-card p-0.5"
+          className="border-line-strong bg-card flex h-9 items-center gap-0.5 rounded-[10px] border p-0.5"
         >
           {BANDS.map((b) => (
             <button
@@ -74,7 +74,7 @@ export function HistoryToolbar({
           id="history-sort"
           value={sort}
           onChange={(e) => onSort(e.target.value as SortKey)}
-          className="h-9 cursor-pointer rounded-[10px] border border-line-strong bg-card px-2.5 text-[12.5px] font-medium text-ink-soft transition-colors hover:border-line-hover focus:border-brand-400 focus:outline-none"
+          className="border-line-strong bg-card text-ink-soft hover:border-line-hover focus:border-brand-400 h-9 cursor-pointer rounded-[10px] border px-2.5 text-[12.5px] font-medium transition-colors focus:outline-none"
         >
           {SORTS.map((s) => (
             <option key={s.key} value={s.key}>

@@ -95,7 +95,8 @@ const IMPACT: Record<Category, string> = {
   alt: "Screen-reader users get nothing where this image should carry meaning. They hear a file name, or silence, instead of the content.",
   name: "Screen-reader users hear only the element's type (“link”, “button”, “edit”) with no idea what it does, so they can't decide whether to activate it.",
   lang: "Screen readers pick the wrong pronunciation rules, so the page is read aloud in the wrong accent or language and can become unintelligible.",
-  title: "The page title is the first thing a screen reader announces, and the label shown in tabs, history and bookmarks. Without it, people can't tell pages apart.",
+  title:
+    "The page title is the first thing a screen reader announces, and the label shown in tabs, history and bookmarks. Without it, people can't tell pages apart.",
   zoom: "Blocking pinch-zoom stops low-vision users from enlarging the text, which many rely on to read at all on a phone.",
   "heading-order":
     "Screen-reader users navigate by heading level to skim a page; a skipped or out-of-order level makes the structure misleading and hides where sections begin.",
@@ -107,7 +108,8 @@ const IMPACT: Record<Category, string> = {
   aria: "Incorrect or incomplete ARIA makes assistive technology announce the wrong role or state, which is often worse than no ARIA at all.",
   "duplicate-id":
     "Duplicate ids break the links between labels, controls and ARIA references, so the wrong element gets announced or activated.",
-  frame: "Screen-reader users hear an unlabeled frame with no idea what it contains, so they may skip important embedded content.",
+  frame:
+    "Screen-reader users hear an unlabeled frame with no idea what it contains, so they may skip important embedded content.",
   "focus-visible":
     "Sighted keyboard users lose track of where they are on the page when the focus indicator disappears, and can't tell which control they're about to activate.",
   "focus-order":
@@ -185,18 +187,21 @@ const GUIDANCE: Partial<Record<Category, Guidance>> = {
   },
   tabindex: {
     action:
-      "Remove tabindex values greater than 0. Use tabindex=\"0\" to make a custom control focusable, or -1 to focus it from code. Never use positive numbers.",
+      'Remove tabindex values greater than 0. Use tabindex="0" to make a custom control focusable, or -1 to focus it from code. Never use positive numbers.',
   },
   reachable: {
     action:
-      "Make each control a real focusable element: use <button>/<a> instead of a clickable <div>, or add tabindex=\"0\" plus keyboard handlers to the custom control.",
-    example: { lang: "html", code: "<button type=\"button\">Menu</button>" },
+      'Make each control a real focusable element: use <button>/<a> instead of a clickable <div>, or add tabindex="0" plus keyboard handlers to the custom control.',
+    example: { lang: "html", code: '<button type="button">Menu</button>' },
     humanDecision: true,
   },
   "target-size": {
     action:
       "Give the target at least 24×24px of hit area (44×44 is safer on touch), or leave enough spacing around it. Pad the control rather than only enlarging an icon.",
-    example: { lang: "css", code: ".control {\n  min-block-size: 24px;\n  min-inline-size: 24px;\n}" },
+    example: {
+      lang: "css",
+      code: ".control {\n  min-block-size: 24px;\n  min-inline-size: 24px;\n}",
+    },
   },
   motion: {
     action:
@@ -208,7 +213,7 @@ const GUIDANCE: Partial<Record<Category, Guidance>> = {
   },
   live: {
     action:
-      "Announce dynamic updates through a live region: put status text in an element with aria-live=\"polite\" (or role=\"status\"), and errors in aria-live=\"assertive\".",
+      'Announce dynamic updates through a live region: put status text in an element with aria-live="polite" (or role="status"), and errors in aria-live="assertive".',
     example: { lang: "html", code: '<p role="status" aria-live="polite">…</p>' },
   },
 };

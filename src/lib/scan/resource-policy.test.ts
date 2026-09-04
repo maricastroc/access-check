@@ -17,9 +17,9 @@ describe("shouldBlockResource", () => {
     expect(shouldBlockResource("script", "https://www.google-analytics.com/analytics.js")).toBe(
       true,
     );
-    expect(
-      shouldBlockResource("script", "https://connect.facebook.net/en_US/fbevents.js"),
-    ).toBe(true);
+    expect(shouldBlockResource("script", "https://connect.facebook.net/en_US/fbevents.js")).toBe(
+      true,
+    );
     expect(shouldBlockResource("image", "https://sb.scorecardresearch.com/p?c1=2")).toBe(true);
   });
 

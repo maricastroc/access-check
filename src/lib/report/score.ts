@@ -18,7 +18,7 @@ export type ScoreDeduction = {
   penalty: number;
   deduction: number;
   ifFixed: number;
-  gain: number; 
+  gain: number;
 };
 
 export type ScoreBreakdown = {
@@ -39,7 +39,10 @@ export function scoreBreakdown(violations: ScanViolation[], score: number): Scor
       0,
     );
 
-    const ifFixed = Math.max(score, computeScore(violations.filter((v) => v.severity !== severity)));
+    const ifFixed = Math.max(
+      score,
+      computeScore(violations.filter((v) => v.severity !== severity)),
+    );
     return { severity, issues: items.length, elements, penalty, ifFixed, gain: ifFixed - score };
   }).filter((r) => r.penalty > 0);
 
@@ -48,9 +51,7 @@ export function scoreBreakdown(violations: ScanViolation[], score: number): Scor
   const raw = rows.map((r) => (penaltySum > 0 ? (r.penalty / penaltySum) * totalDeduction : 0));
   const floors = raw.map((x) => Math.floor(x));
   let remainder = totalDeduction - floors.reduce((s, x) => s + x, 0);
-  const order = raw
-    .map((x, i) => ({ i, frac: x - Math.floor(x) }))
-    .sort((a, b) => b.frac - a.frac);
+  const order = raw.map((x, i) => ({ i, frac: x - Math.floor(x) })).sort((a, b) => b.frac - a.frac);
   const deductionByIndex = [...floors];
   for (const { i } of order) {
     if (remainder <= 0) break;

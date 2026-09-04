@@ -29,13 +29,13 @@ export default async function LoginPage() {
           <ProviderButton provider="google" icon={faGoogle} label="Sign in with Google" />
         </div>
 
-        <p className="mt-6 text-center text-xs leading-relaxed text-faint">
+        <p className="text-faint mt-6 text-center text-xs leading-relaxed">
           No passwords. We use GitHub or Google only to confirm who you are. AccessCheck stays free
           without an account.
         </p>
 
         <p className="mt-6 text-center text-sm">
-          <Link href="/" className="font-medium text-ink-soft transition-colors hover:text-ink">
+          <Link href="/" className="text-ink-soft font-medium transition-colors hover:text-ink">
             ← Back to home
           </Link>
         </p>

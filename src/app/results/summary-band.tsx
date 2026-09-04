@@ -20,13 +20,19 @@ export function SummaryBand({
         <div>
           <SectionKicker>Internal priority score</SectionKicker>
           <div className="mt-1 flex items-end gap-2">
-            <span className="font-cond text-[56px] leading-[0.85] tabular-nums text-ink">
+            <span className="font-cond text-[56px] leading-[0.85] text-ink tabular-nums">
               {result.score}
             </span>
             <span className="pb-1.5 font-cond text-[18px] text-muted">/100</span>
           </div>
           <div className="mt-3 max-w-[560px]">
-            <Ruler variant="score" score={result.score} deductions={breakdown.deductions} height={26} ticks />
+            <Ruler
+              variant="score"
+              score={result.score}
+              deductions={breakdown.deductions}
+              height={26}
+              ticks
+            />
           </div>
           <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[13px] text-body">
             <span>
@@ -49,8 +55,8 @@ export function SummaryBand({
               ·
             </span>
             <span className="text-muted tabular-nums">
-              {counts.manualReview} manual-review item{counts.manualReview === 1 ? "" : "s"} · outside
-              the score
+              {counts.manualReview} manual-review item{counts.manualReview === 1 ? "" : "s"} ·
+              outside the score
             </span>
           </div>
         </div>

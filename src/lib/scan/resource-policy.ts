@@ -1,4 +1,3 @@
-
 const BLOCKED_TYPES = new Set(["media", "font"]);
 
 const TRACKER_HOSTS = [

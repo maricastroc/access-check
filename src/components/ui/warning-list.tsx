@@ -29,7 +29,9 @@ export function WarningList({
           </li>
         ))}
       </ul>
-      {note && <p className="mt-3 border-t border-hairline pt-2.5 text-[12.5px] text-muted">{note}</p>}
+      {note && (
+        <p className="mt-3 border-t border-hairline pt-2.5 text-[12.5px] text-muted">{note}</p>
+      )}
     </div>
   );
 }

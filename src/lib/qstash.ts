@@ -8,9 +8,7 @@ const nextSigningKey = process.env.QSTASH_NEXT_SIGNING_KEY;
 export const qstash = token ? new Client({ token }) : null;
 
 export const qstashReceiver =
-  currentSigningKey && nextSigningKey
-    ? new Receiver({ currentSigningKey, nextSigningKey })
-    : null;
+  currentSigningKey && nextSigningKey ? new Receiver({ currentSigningKey, nextSigningKey }) : null;
 
 export function appBaseUrl(): string | null {
   const explicit = process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL;

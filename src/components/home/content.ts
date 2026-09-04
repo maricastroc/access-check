@@ -16,12 +16,24 @@ export const axeRules: AxeRule[] = [
 export type Pass = { label: string; desc: string };
 
 export const complementaryPasses: Pass[] = [
-  { label: "Keyboard", desc: "Tabs through the page to check focus order, keyboard traps and focus you can't see" },
-  { label: "Context", desc: "Checks the page again at mobile size and after opening menus and expandable sections" },
-  { label: "Vision", desc: "Simulates color blindness (deuteranopia, protanopia, tritanopia), low vision and grayscale" },
+  {
+    label: "Keyboard",
+    desc: "Tabs through the page to check focus order, keyboard traps and focus you can't see",
+  },
+  {
+    label: "Context",
+    desc: "Checks the page again at mobile size and after opening menus and expandable sections",
+  },
+  {
+    label: "Vision",
+    desc: "Simulates color blindness (deuteranopia, protanopia, tritanopia), low vision and grayscale",
+  },
   { label: "Motion", desc: "Checks that the page respects the visitor's reduced-motion setting" },
   { label: "Live", desc: "Watches for updates announced to screen readers (live regions)" },
-  { label: "Review", desc: "Lists what a person still needs to check, with the steps to confirm it" },
+  {
+    label: "Review",
+    desc: "Lists what a person still needs to check, with the steps to confirm it",
+  },
 ];
 
 export type Step = { n: string; title: string; body: string; tone: "serious" | "verified" };
@@ -67,8 +79,24 @@ export const exampleScore = {
   passed: 39,
   manualReview: 4,
   deductions: [
-    { severity: "serious" as Severity, issues: 1, elements: 7, penalty: 25, deduction: 41, ifFixed: 91, gain: 38 },
-    { severity: "moderate" as Severity, issues: 2, elements: 2, penalty: 4, deduction: 6, ifFixed: 57, gain: 4 },
+    {
+      severity: "serious" as Severity,
+      issues: 1,
+      elements: 7,
+      penalty: 25,
+      deduction: 41,
+      ifFixed: 91,
+      gain: 38,
+    },
+    {
+      severity: "moderate" as Severity,
+      issues: 2,
+      elements: 2,
+      penalty: 4,
+      deduction: 6,
+      ifFixed: 57,
+      gain: 4,
+    },
   ],
 };
 

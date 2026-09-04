@@ -30,10 +30,13 @@ export function SiteStarter({ initialUrl }: { initialUrl: string }) {
           body: JSON.stringify({ url: initialUrl }),
         });
         const json = await res.json();
-        if (!res.ok) throw new Error(json.error || "We couldn't start the site audit. Please try again.");
+        if (!res.ok)
+          throw new Error(json.error || "We couldn't start the site audit. Please try again.");
         router.replace(`/site/${json.id}`);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "We couldn't start the site audit. Please try again.");
+        setError(
+          e instanceof Error ? e.message : "We couldn't start the site audit. Please try again.",
+        );
       }
     })();
   }, [initialUrl, router]);
@@ -43,7 +46,7 @@ export function SiteStarter({ initialUrl }: { initialUrl: string }) {
       {error ? (
         <div
           role="alert"
-          className="mt-10 flex flex-col items-center gap-5 rounded-2xl border border-line bg-card px-6 py-14 text-center shadow-soft"
+          className="border-line bg-card shadow-soft mt-10 flex flex-col items-center gap-5 rounded-2xl border px-6 py-14 text-center"
         >
           <span className="flex size-14 items-center justify-center rounded-2xl bg-[#fdecec] text-critical">
             <FontAwesomeIcon icon={faTriangleExclamation} aria-hidden className="text-xl" />
@@ -60,7 +63,7 @@ export function SiteStarter({ initialUrl }: { initialUrl: string }) {
           aria-live="polite"
           className="mt-10 flex flex-col items-center gap-5 px-6 py-14 text-center"
         >
-          <span className="flex size-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-500">
+          <span className="bg-brand-50 text-brand-500 flex size-14 items-center justify-center rounded-2xl">
             <FontAwesomeIcon icon={faSpinner} aria-hidden className="animate-spin text-xl" />
           </span>
           <div>

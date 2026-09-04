@@ -67,8 +67,7 @@ export function analyzeLiveRegions(raw: RawLiveRegions): LiveRegionsReport {
       "live-region-hidden",
       "serious",
       hidden,
-      (n) =>
-        `${n} live ${n === 1 ? "region is" : "regions are"} hidden and can't announce`,
+      (n) => `${n} live ${n === 1 ? "region is" : "regions are"} hidden and can't announce`,
       "The region is removed from the accessibility tree (display:none, visibility:hidden or " +
         "aria-hidden), so updates written into it are never announced. Note this is different " +
         "from the valid visually-hidden pattern, which keeps the node in the tree.",
@@ -113,9 +112,7 @@ export async function collectLiveRegions(page: Page): Promise<LiveRegionsReport>
     };
 
     const nodes = Array.from(
-      document.querySelectorAll(
-        '[aria-live], [role="alert"], [role="status"], [role="log"]',
-      ),
+      document.querySelectorAll('[aria-live], [role="alert"], [role="status"], [role="log"]'),
     );
 
     const regions = nodes.map((el) => {

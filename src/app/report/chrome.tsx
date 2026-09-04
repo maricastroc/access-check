@@ -58,10 +58,16 @@ export function CenterState({
     >
       <span
         className={`flex size-12 items-center justify-center ${
-          tone === "critical" ? "bg-critical text-surface" : "border border-border bg-surface text-steel"
+          tone === "critical"
+            ? "bg-critical text-surface"
+            : "border border-border bg-surface text-steel"
         }`}
       >
-        <FontAwesomeIcon icon={icon} aria-hidden className={`text-lg ${spin ? "animate-spin" : ""}`} />
+        <FontAwesomeIcon
+          icon={icon}
+          aria-hidden
+          className={`text-lg ${spin ? "animate-spin" : ""}`}
+        />
       </span>
       <div className="max-w-md">
         <p className="text-[17px] font-semibold text-ink">{title}</p>

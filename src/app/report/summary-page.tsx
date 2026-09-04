@@ -65,13 +65,18 @@ export function SummaryPage({ result }: { result: ScanResult }) {
         <div className="border border-border p-4">
           <SectionKickerMuted>Internal priority score</SectionKickerMuted>
           <div className="mt-1 flex items-end gap-1.5">
-            <span className="font-cond text-[52px] leading-[0.85] tabular-nums text-ink">
+            <span className="font-cond text-[52px] leading-[0.85] text-ink tabular-nums">
               {result.score}
             </span>
             <span className="pb-1.5 font-cond text-[16px] text-muted">/100</span>
           </div>
           <div className="mt-2">
-            <Ruler variant="score" score={result.score} deductions={breakdown.deductions} height={22} />
+            <Ruler
+              variant="score"
+              score={result.score}
+              deductions={breakdown.deductions}
+              height={22}
+            />
           </div>
           <div className="mt-3">
             <WcagChips model={wcag} />
@@ -83,7 +88,7 @@ export function SummaryPage({ result }: { result: ScanResult }) {
             {counts.map((c, i) => (
               <div key={c.label} className={`p-2.5 ${i > 0 ? "border-l border-hairline" : ""}`}>
                 <span aria-hidden className="block h-1 w-5" style={{ background: c.color }} />
-                <span className="mt-1.5 block font-cond text-[26px] leading-none tabular-nums text-ink">
+                <span className="mt-1.5 block font-cond text-[26px] leading-none text-ink tabular-nums">
                   {c.value}
                 </span>
                 <div className="mt-1 text-[9.5px] leading-tight text-muted">{c.label}</div>
@@ -104,8 +109,10 @@ export function SummaryPage({ result }: { result: ScanResult }) {
         <SectionKickerMuted>Executive summary</SectionKickerMuted>
         <p className="mt-2 max-w-[6.7in] text-[13px] leading-normal text-body">
           {result.summary} The page passed{" "}
-          <strong className="font-semibold text-ink">{result.counts.passed} automated checks</strong>.
-          The score is our own priority measure, not a pass or fail for WCAG. Meeting WCAG also
+          <strong className="font-semibold text-ink">
+            {result.counts.passed} automated checks
+          </strong>
+          . The score is our own priority measure, not a pass or fail for WCAG. Meeting WCAG also
           depends on the {result.counts.manualReview} manual-review item
           {result.counts.manualReview === 1 ? "" : "s"} listed on page 3.
         </p>
@@ -144,7 +151,7 @@ export function SummaryPage({ result }: { result: ScanResult }) {
                   </div>
                 </div>
                 <span
-                  className="justify-self-end font-cond px-2 py-1 text-[11px] font-medium tracking-[0.06em] uppercase"
+                  className="justify-self-end px-2 py-1 font-cond text-[11px] font-medium tracking-[0.06em] uppercase"
                   style={{ color: f.impact === "High" ? sevHex.critical : sevHex.serious }}
                 >
                   {f.impact} impact

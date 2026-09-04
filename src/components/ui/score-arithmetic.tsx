@@ -17,7 +17,7 @@ export function ScoreArithmetic({
       <div className="flex items-center gap-2.5 text-body">
         <span aria-hidden className="h-3 w-3 shrink-0 bg-ink" />
         <span>{passed} automated checks passed</span>
-        <span className="ml-auto font-mono text-[13px] font-semibold tabular-nums text-ink">
+        <span className="ml-auto font-mono text-[13px] font-semibold text-ink tabular-nums">
           {score}
           <span className="text-muted"> / 100</span>
         </span>
@@ -43,10 +43,12 @@ export function ScoreArithmetic({
                   {d.elements === 1 ? "" : "s"}
                 </span>
                 <span className="ml-auto flex items-baseline gap-1.5">
-                  <span className="font-mono text-[13px] font-semibold tabular-nums text-ink">
+                  <span className="font-mono text-[13px] font-semibold text-ink tabular-nums">
                     {d.ifFixed}
                   </span>
-                  <span className="font-cond text-[11px] text-verified tabular-nums">+{d.gain}</span>
+                  <span className="font-cond text-[11px] text-verified tabular-nums">
+                    +{d.gain}
+                  </span>
                 </span>
               </div>
             ))}

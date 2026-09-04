@@ -36,7 +36,10 @@ export type MarkerView = {
   findingId: string | null;
 };
 
-export function buildMarkerViews(markers: ScanMarker[], selected: FindingView | null): MarkerView[] {
+export function buildMarkerViews(
+  markers: ScanMarker[],
+  selected: FindingView | null,
+): MarkerView[] {
   const selectedNs = new Set((selected?.markers ?? []).map((m) => m.n));
 
   return markers.map((marker) => {

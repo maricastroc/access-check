@@ -11,8 +11,7 @@ export type ContrastMeasurement = {
 export function parseContrastFix(fix: string, fixCode?: string): ContrastMeasurement | null {
   const text = fix ?? "";
 
-  const measuredM =
-    text.match(/\(was\s+([\d.]+):1/i) ?? text.match(/reaches only\s+([\d.]+):1/i);
+  const measuredM = text.match(/\(was\s+([\d.]+):1/i) ?? text.match(/reaches only\s+([\d.]+):1/i);
   const requiredM = text.match(/needs\s+([\d.]+):1/i);
   if (!measuredM || !requiredM) return null;
 
@@ -47,8 +46,8 @@ export function parseContrastFix(fix: string, fixCode?: string): ContrastMeasure
   const fromHex = text.match(/text color\s+(#[0-9a-fA-F]{6})/i)?.[1].toLowerCase() ?? null;
 
   const bgHex =
-    (text.match(/against\s+(#[0-9a-fA-F]{6})/i) ?? text.match(/\bon\s+(#[0-9a-fA-F]{6})/i))?.[1].toLowerCase() ??
-    null;
+    (text.match(/against\s+(#[0-9a-fA-F]{6})/i) ??
+      text.match(/\bon\s+(#[0-9a-fA-F]{6})/i))?.[1].toLowerCase() ?? null;
 
   return {
     measured,

@@ -32,7 +32,7 @@ export function ScanningState({ url, phase }: { url: string; phase: ScanPhase })
     <div className="mx-auto w-full max-w-160 px-4 py-16">
       <div className="border border-border bg-surface p-6">
         <div className="flex items-baseline gap-2">
-          <span className="font-cond text-[28px] leading-none tabular-nums text-ink">{secs}s</span>
+          <span className="font-cond text-[28px] leading-none text-ink tabular-nums">{secs}s</span>
           <span className="text-[13px] text-muted">of up to {budget}s</span>
           <span className="ml-auto truncate font-mono text-[12.5px] text-muted">{url}</span>
         </div>
@@ -125,4 +125,3 @@ export function PartialNotice({
     </div>
   );
 }
-

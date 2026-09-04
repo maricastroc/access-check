@@ -10,13 +10,16 @@ export function DetailedCard({ v }: { v: ScanResult["violations"][number] }) {
   const status = toFixStatus(v.verification);
 
   return (
-    <div className="border border-hairline bg-surface" style={{ borderLeft: `3px solid ${sevHex[v.severity]}` }}>
+    <div
+      className="border border-hairline bg-surface"
+      style={{ borderLeft: `3px solid ${sevHex[v.severity]}` }}
+    >
       <div className="grid grid-cols-[1fr_1.7in]">
         <div className="border-r border-hairline p-4">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-[15px] font-semibold text-ink">{v.title}</span>
             <span
-              className="font-cond px-1.5 py-0.5 text-[10px] font-medium tracking-[0.08em] uppercase"
+              className="px-1.5 py-0.5 font-cond text-[10px] font-medium tracking-[0.08em] uppercase"
               style={{ color: sevHex[v.severity] }}
             >
               {sevLabel[v.severity]}
@@ -42,7 +45,9 @@ export function DetailedCard({ v }: { v: ScanResult["violations"][number] }) {
                         <span className="font-mono text-[10.5px] text-muted">
                           {measurement.fromHex.toUpperCase()}
                         </span>
-                        <span aria-hidden className="text-muted">→</span>
+                        <span aria-hidden className="text-muted">
+                          →
+                        </span>
                       </>
                     )}
                     <ColorSwatch hex={measurement.toHex} size={12} />
@@ -78,7 +83,7 @@ export function DetailedCard({ v }: { v: ScanResult["violations"][number] }) {
             {v.where}
           </code>
           <FieldLabel>Elements affected</FieldLabel>
-          <span className="-mt-1.5 font-cond text-[20px] tabular-nums text-ink">{v.nodes}</span>
+          <span className="-mt-1.5 font-cond text-[20px] text-ink tabular-nums">{v.nodes}</span>
           <FieldLabel>Criterion</FieldLabel>
           <span className="-mt-1.5 text-[11px] text-body">{v.criterion}</span>
         </div>

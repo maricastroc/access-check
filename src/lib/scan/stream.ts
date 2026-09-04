@@ -36,7 +36,8 @@ const FALLBACK_MESSAGE: Record<ScanErrorCode, string> = {
   "rate-limited": "Too many audits in a short time. Try again in a minute.",
   "navigation-timeout": "The page took too long to respond.",
   "navigation-failed": "We couldn't reach the page.",
-  "http-error": "The page returned an error, so we couldn't audit it. Check the address and try again.",
+  "http-error":
+    "The page returned an error, so we couldn't audit it. Check the address and try again.",
   "audit-failed": "We couldn't finish the audit on this page.",
   "browser-unavailable": "We couldn't start the browser used to open the page. Please try again.",
   timeout: "The audit ran out of time on this page.",

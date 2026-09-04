@@ -24,7 +24,10 @@ describe("scoreBreakdown", () => {
   });
 
   it("per-severity deductions sum exactly to the total deduction", () => {
-    const b = scoreBreakdown([v("critical", 3), v("serious", 7), v("moderate", 4), v("minor", 9)], 42);
+    const b = scoreBreakdown(
+      [v("critical", 3), v("serious", 7), v("moderate", 4), v("minor", 9)],
+      42,
+    );
     const sum = b.deductions.reduce((s, d) => s + d.deduction, 0);
     expect(sum).toBe(b.totalDeduction);
     expect(b.deductions.every((d) => Number.isInteger(d.deduction))).toBe(true);

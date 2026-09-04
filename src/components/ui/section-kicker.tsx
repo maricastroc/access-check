@@ -14,7 +14,12 @@ const toneClass = {
   ink: "text-ink",
 } as const;
 
-export function SectionKicker({ children, tone = "muted", as: Tag = "span", className }: SectionKickerProps) {
+export function SectionKicker({
+  children,
+  tone = "muted",
+  as: Tag = "span",
+  className,
+}: SectionKickerProps) {
   return (
     <Tag
       className={cn(

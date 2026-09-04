@@ -68,7 +68,11 @@ function affectedFrom(v: ScanViolation): string[] {
   return all;
 }
 
-function wcagFinding(v: ScanViolation, markers: ScanMarker[], verifySkipped: boolean): Omit<FindingView, "n"> {
+function wcagFinding(
+  v: ScanViolation,
+  markers: ScanMarker[],
+  verifySkipped: boolean,
+): Omit<FindingView, "n"> {
   const { sc, name } = splitCriterion(v.criterion);
   const measurement = parseContrastFix(v.fix, v.fixCode);
   const fixGroups = v.fixGroups && v.fixGroups.length > 0 ? v.fixGroups : null;
@@ -186,7 +190,8 @@ function contextFinding(issue: ContextIssue, where: string): Omit<FindingView, "
     ruleId: issue.id,
     desc: `Found only in this context (${where}). It does not fail on the first desktop load.`,
     impact: humanImpact(issue.id, "context"),
-    fixText: "Re-check this element in the affected context; the engine did not sandbox a fix here.",
+    fixText:
+      "Re-check this element in the affected context; the engine did not sandbox a fix here.",
     fixCode: null,
     fixGroups: null,
     guidance: fixGuidance(issue.id, "context"),
@@ -255,7 +260,8 @@ export function buildFindings(result: ScanResult): FindingView[] {
   const verifySkipped = (result.warnings ?? []).some((w) => w.code === "verification-skipped");
   const withSeverity: Omit<FindingView, "n">[] = [];
 
-  for (const v of result.violations) withSeverity.push(wcagFinding(v, result.markers, verifySkipped));
+  for (const v of result.violations)
+    withSeverity.push(wcagFinding(v, result.markers, verifySkipped));
 
   for (const f of result.keyboard?.findings ?? [])
     withSeverity.push(complementaryFinding(f, "keyboard"));

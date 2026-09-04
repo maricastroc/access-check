@@ -22,7 +22,7 @@ export function Hero() {
   return (
     <section className="border-b border-hairline bg-canvas">
       <div className="mx-auto w-full max-w-300 px-6">
-        <div className="grid grid-cols-1 gap-x-14 gap-y-10 pt-14 lg:grid-cols-[minmax(0,1fr)_520px] lg:gap-x-20 lg:items-start">
+        <div className="grid grid-cols-1 gap-x-14 gap-y-10 pt-14 lg:grid-cols-[minmax(0,1fr)_520px] lg:items-start lg:gap-x-20">
           <div>
             <div className="flex flex-wrap items-center gap-3">
               <SectionKicker tone="steel">
@@ -36,8 +36,8 @@ export function Hero() {
             </h1>
             <p className="mt-4 max-w-[52ch] text-[17px] leading-normal text-body">
               This is not another report. It is a visual inspector: paste a web address and every
-              finding comes tied to the element that caused it, with the contrast ratio, the selector
-              and a fix we test on a copy of the page.
+              finding comes tied to the element that caused it, with the contrast ratio, the
+              selector and a fix we test on a copy of the page.
             </p>
             <div className="mt-6">
               <UrlForm examples={["wikipedia.org", "stripe.com", "github.com"]} />
@@ -46,8 +46,8 @@ export function Hero() {
               <SectionKicker tone="steel" className="mt-px shrink-0">
                 Not
               </SectionKicker>
-              a conformance seal. It measures what automated tools can prove, and marks the rest for a
-              human to review.
+              a conformance seal. It measures what automated tools can prove, and marks the rest for
+              a human to review.
             </p>
           </div>
 
@@ -65,7 +65,7 @@ export function Hero() {
             <span aria-hidden className="mb-2.5 block h-0.75 w-10 bg-steel" />
             <SectionKicker>Most recent public audit · internal priority score</SectionKicker>
             <div className="mt-1 flex items-end gap-2">
-              <span className="font-cond text-[64px] leading-[0.85] tabular-nums text-ink">
+              <span className="font-cond text-[64px] leading-[0.85] text-ink tabular-nums">
                 {exampleScore.score}
               </span>
               <span className="pb-2 font-cond text-[18px] text-muted">/100</span>
@@ -74,7 +74,13 @@ export function Hero() {
               {exampleSummary}
             </p>
             <div className="mt-3 max-w-130">
-              <Ruler variant="score" score={exampleScore.score} deductions={breakdown.deductions} height={30} ticks />
+              <Ruler
+                variant="score"
+                score={exampleScore.score}
+                deductions={breakdown.deductions}
+                height={30}
+                ticks
+              />
             </div>
             <div className="mt-5 max-w-115">
               <ScoreArithmetic

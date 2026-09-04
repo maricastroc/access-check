@@ -11,7 +11,7 @@ export function CrawlShell({ children }: { children: ReactNode }) {
         <Logo meta="Site audit" />
         <Link
           href="/"
-          className="flex h-8.5 items-center gap-2 rounded-[9px] px-2.5 text-[13px] font-medium text-ink-soft transition-colors hover:bg-[#f6f7f9] hover:text-ink"
+          className="text-ink-soft flex h-8.5 items-center gap-2 rounded-[9px] px-2.5 text-[13px] font-medium transition-colors hover:bg-[#f6f7f9] hover:text-ink"
         >
           <FontAwesomeIcon icon={faArrowLeft} className="text-xs" />
           <span className="hidden sm:inline">New audit</span>

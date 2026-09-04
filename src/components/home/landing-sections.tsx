@@ -41,7 +41,9 @@ function StageArtifact({ i }: { i: number }) {
           <span className="text-ink">aurora-coffee.com</span>
         </div>
         <div className="flex items-center gap-1.5 text-[11px] text-muted">
-          <span aria-hidden className="text-verified">✓</span>
+          <span aria-hidden className="text-verified">
+            ✓
+          </span>
           Chromium · axe-core injected · content settled
         </div>
       </div>
@@ -49,7 +51,10 @@ function StageArtifact({ i }: { i: number }) {
   }
   if (i === 1) {
     return (
-      <div className="relative h-17.5 overflow-hidden border border-hairline" style={{ background: "#FBFAF7" }}>
+      <div
+        className="relative h-17.5 overflow-hidden border border-hairline"
+        style={{ background: "#FBFAF7" }}
+      >
         <div className="px-3 pt-3">
           <div className="h-2 w-16 bg-ink/70" />
           <span className="relative mt-3 inline-block">
@@ -65,7 +70,13 @@ function StageArtifact({ i }: { i: number }) {
               Order now
             </span>
             <span className="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2">
-              <Marker n={1} state="selected" label="2.1:1" size={22} ariaLabel="Located occurrence" />
+              <Marker
+                n={1}
+                state="selected"
+                label="2.1:1"
+                size={22}
+                ariaLabel="Located occurrence"
+              />
             </span>
           </span>
         </div>
@@ -77,7 +88,9 @@ function StageArtifact({ i }: { i: number }) {
       <div className="flex items-center gap-2 text-[12px]">
         <ColorSwatch hex={exampleFinding.fromHex} size={14} />
         <span className="font-mono text-[11px] text-muted line-through">#8FB8A8</span>
-        <span aria-hidden className="text-muted">→</span>
+        <span aria-hidden className="text-muted">
+          →
+        </span>
         <ColorSwatch hex={exampleFinding.toHex} size={14} />
         <span className="font-mono text-[11px] text-ink">#2F6B57</span>
         <span className="font-cond text-verified">4.62:1</span>
@@ -94,21 +107,25 @@ export function HowItWorks() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <SectionHead kicker="How it works" title="One page, opened, located and verified" />
           <p className="font-cond text-[15px] tracking-[0.04em] text-muted">
-            <span className="text-serious">Open</span> → <span className="text-serious">Locate</span>{" "}
-            → <span className="text-verified">Verify</span>
+            <span className="text-serious">Open</span> →{" "}
+            <span className="text-serious">Locate</span> →{" "}
+            <span className="text-verified">Verify</span>
           </p>
         </div>
 
         <div className="relative mt-9">
           <div
             aria-hidden
-            className="absolute top-10.5 left-[16.6%] right-[16.6%] hidden h-px bg-serious/50 md:block"
+            className="absolute top-10.5 right-[16.6%] left-[16.6%] hidden h-px bg-serious/50 md:block"
           />
           <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
             {steps.map((s, i) => {
               const tone = s.tone === "verified" ? "var(--color-verified)" : "var(--color-serious)";
               return (
-                <div key={s.n} className="relative flex flex-col border border-border bg-surface p-5">
+                <div
+                  key={s.n}
+                  className="relative flex flex-col border border-border bg-surface p-5"
+                >
                   {i > 0 && (
                     <>
                       <span
@@ -165,7 +182,7 @@ export function ChecksIncluded() {
               <span className="text-[12px] text-muted">pass or fail, objectively</span>
             </div>
             <div className="flex items-end gap-3 px-5 pt-5">
-              <span className="font-cond text-[52px] leading-[0.8] tabular-nums text-ink">
+              <span className="font-cond text-[52px] leading-[0.8] text-ink tabular-nums">
                 {axeRules.length}
               </span>
               <span className="pb-2 text-[13px] leading-tight text-muted">
@@ -190,7 +207,7 @@ export function ChecksIncluded() {
               <span className="text-[12px] text-muted">what a tool can&apos;t judge alone</span>
             </div>
             <div className="flex items-end gap-3 px-5 pt-5">
-              <span className="font-cond text-[52px] leading-[0.8] tabular-nums text-ink">
+              <span className="font-cond text-[52px] leading-[0.8] text-ink tabular-nums">
                 {complementaryPasses.length}
               </span>
               <span className="pb-2 text-[13px] leading-tight text-muted">
@@ -237,7 +254,9 @@ export function EvidenceLensSection() {
         <div className="mt-8 grid grid-cols-1 gap-0 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
           <div className="border border-ink bg-surface">
             <div className="flex items-center justify-between gap-3 border-b border-ink px-4 py-2.5">
-              <SectionKicker>Evidence Lens · aurora-coffee.com · 1200 × 800 · scale 43%</SectionKicker>
+              <SectionKicker>
+                Evidence Lens · aurora-coffee.com · 1200 × 800 · scale 43%
+              </SectionKicker>
               <div className="hidden items-stretch border border-border text-[12px] sm:flex">
                 <span className="bg-ink px-2.5 py-1 font-medium text-surface">Normal</span>
                 <span className="border-l border-border px-2.5 py-1 text-muted">Deuteranopia</span>
@@ -263,46 +282,58 @@ export function EvidenceLensSection() {
               <span className="font-mono text-[12px] text-steel">a.hero__cta</span>
             </div>
 
-              <div className="mt-3 flex items-center gap-2">
-                <span className="font-cond text-[11px] tracking-widest text-serious uppercase">Serious</span>
-                <span className="ml-auto font-mono text-[12px] text-steel">1.4.3 AA</span>
-              </div>
-              <h3 className="mt-1.5 text-[16px] font-semibold text-ink">{exampleFinding.title}</h3>
-              <p className="mt-1.5 text-[13.5px] leading-normal text-ink-2">
-                The white text on the light-green button disappears for people with low vision, or
-                for anyone in bright sunlight. And this is the checkout button.
-              </p>
+            <div className="mt-3 flex items-center gap-2">
+              <span className="font-cond text-[11px] tracking-widest text-serious uppercase">
+                Serious
+              </span>
+              <span className="ml-auto font-mono text-[12px] text-steel">1.4.3 AA</span>
+            </div>
+            <h3 className="mt-1.5 text-[16px] font-semibold text-ink">{exampleFinding.title}</h3>
+            <p className="mt-1.5 text-[13.5px] leading-normal text-ink-2">
+              The white text on the light-green button disappears for people with low vision, or for
+              anyone in bright sunlight. And this is the checkout button.
+            </p>
 
-              <div className="mt-4 border-t border-hairline pt-3">
-                <SectionKicker>Measurement</SectionKicker>
-                <div className="mt-1.5 flex items-end gap-2">
-                  <span className="font-cond text-[30px] leading-none tabular-nums text-serious">2.1:1</span>
-                  <span className="pb-1 text-[12px] text-muted">min AA 4.5:1 · corrected 4.62:1</span>
-                </div>
-                <div className="mt-2">
-                  <Ruler variant="ratio" found={exampleFinding.measured} required={exampleFinding.required} fixed={exampleFinding.fixed} height={16} />
-                </div>
+            <div className="mt-4 border-t border-hairline pt-3">
+              <SectionKicker>Measurement</SectionKicker>
+              <div className="mt-1.5 flex items-end gap-2">
+                <span className="font-cond text-[30px] leading-none text-serious tabular-nums">
+                  2.1:1
+                </span>
+                <span className="pb-1 text-[12px] text-muted">min AA 4.5:1 · corrected 4.62:1</span>
               </div>
-
-              <div className="mt-4 border-t border-hairline pt-3">
-                <SectionKicker>Suggested fix</SectionKicker>
-                <div className="mt-2 flex flex-wrap items-center gap-2 text-[12.5px]">
-                  <ColorSwatch hex={exampleFinding.fromHex} size={14} />
-                  <span className="font-mono text-[11.5px] text-muted line-through">#8FB8A8</span>
-                  <span aria-hidden className="text-muted">→</span>
-                  <ColorSwatch hex={exampleFinding.toHex} size={14} />
-                  <span className="font-mono text-[11.5px] text-ink">#2F6B57</span>
-                  <span className="text-muted">(color)</span>
-                </div>
-                <div className="mt-3">
-                  <StatusSeal status="verified" />
-                </div>
-                <p className="mt-2 text-[12px] text-muted">
-                  Tested in a sandbox copy. aurora-coffee.com was not altered.
-                </p>
+              <div className="mt-2">
+                <Ruler
+                  variant="ratio"
+                  found={exampleFinding.measured}
+                  required={exampleFinding.required}
+                  fixed={exampleFinding.fixed}
+                  height={16}
+                />
               </div>
             </div>
+
+            <div className="mt-4 border-t border-hairline pt-3">
+              <SectionKicker>Suggested fix</SectionKicker>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-[12.5px]">
+                <ColorSwatch hex={exampleFinding.fromHex} size={14} />
+                <span className="font-mono text-[11.5px] text-muted line-through">#8FB8A8</span>
+                <span aria-hidden className="text-muted">
+                  →
+                </span>
+                <ColorSwatch hex={exampleFinding.toHex} size={14} />
+                <span className="font-mono text-[11.5px] text-ink">#2F6B57</span>
+                <span className="text-muted">(color)</span>
+              </div>
+              <div className="mt-3">
+                <StatusSeal status="verified" />
+              </div>
+              <p className="mt-2 text-[12px] text-muted">
+                Tested in a sandbox copy. aurora-coffee.com was not altered.
+              </p>
+            </div>
           </div>
+        </div>
 
         <div className="mt-4 flex flex-wrap gap-x-8 gap-y-1.5 text-[13px] text-muted">
           <span>
@@ -320,7 +351,15 @@ export function EvidenceLensSection() {
   );
 }
 
-function BeatButton({ hex, ratio, tone }: { hex: string; ratio: string; tone: "serious" | "verified" }) {
+function BeatButton({
+  hex,
+  ratio,
+  tone,
+}: {
+  hex: string;
+  ratio: string;
+  tone: "serious" | "verified";
+}) {
   return (
     <div>
       <div
@@ -354,12 +393,12 @@ export function SandboxSection() {
             title="Every fix is proved on a copy, so your site is never touched"
           />
           <p className="max-w-[52ch] text-[16px] leading-[1.55] text-body">
-            We apply the change to a copy of the page, run the check again, then undo it. If the issue
-            stops showing up, we mark the fix as verified. It is never a guarantee, and it never
-            touches your real site.
+            We apply the change to a copy of the page, run the check again, then undo it. If the
+            issue stops showing up, we mark the fix as verified. It is never a guarantee, and it
+            never touches your real site.
           </p>
         </div>
-        
+
         <div className="mt-8 border border-ink bg-surface">
           <div className="flex items-center justify-between border-b border-ink px-4 py-2.5">
             <SectionKicker>Contrast measurement · 1.4.3 AA</SectionKicker>
@@ -368,13 +407,21 @@ export function SandboxSection() {
 
           <div className="p-6">
             <div className="flex items-end gap-3">
-              <span className="font-cond text-[52px] leading-[0.8] tabular-nums text-serious">2.1:1</span>
+              <span className="font-cond text-[52px] leading-[0.8] text-serious tabular-nums">
+                2.1:1
+              </span>
               <span className="pb-2 text-[13px] text-muted">
                 found · minimum for normal text is {exampleFinding.required}:1
               </span>
             </div>
             <div className="mt-3">
-              <Ruler variant="ratio" found={exampleFinding.measured} required={exampleFinding.required} fixed={exampleFinding.fixed} height={22} />
+              <Ruler
+                variant="ratio"
+                found={exampleFinding.measured}
+                required={exampleFinding.required}
+                fixed={exampleFinding.fixed}
+                height={22}
+              />
             </div>
 
             <div className="mt-9 grid grid-cols-1 items-center gap-5 sm:grid-cols-[1fr_auto_1fr]">
@@ -385,14 +432,18 @@ export function SandboxSection() {
                 </div>
               </div>
               <div className="flex flex-col items-center gap-1 text-muted">
-                <span aria-hidden className="font-cond text-[22px] text-serious">→</span>
+                <span aria-hidden className="font-cond text-[22px] text-serious">
+                  →
+                </span>
                 <span className="max-w-[16ch] text-center text-[11px] leading-tight">
                   nearest passing lightness, same hue
                 </span>
               </div>
               <div>
                 <div className="flex items-center justify-between">
-                  <SectionKicker tone="steel" className="text-verified!">After</SectionKicker>
+                  <SectionKicker tone="steel" className="text-verified!">
+                    After
+                  </SectionKicker>
                   <StatusSeal status="verified">Verified</StatusSeal>
                 </div>
                 <div className="mt-2">
@@ -422,13 +473,18 @@ function MiniPdf() {
           Internal priority score
         </span>
         <div className="mt-0.5 flex items-end gap-1.5">
-          <span className="font-cond text-[34px] leading-[0.8] tabular-nums text-ink">
+          <span className="font-cond text-[34px] leading-[0.8] text-ink tabular-nums">
             {exampleScore.score}
           </span>
           <span className="pb-1 font-cond text-[11px] text-muted">/100</span>
         </div>
         <div className="mt-2">
-          <Ruler variant="score" score={exampleScore.score} deductions={exampleScore.deductions} height={14} />
+          <Ruler
+            variant="score"
+            score={exampleScore.score}
+            deductions={exampleScore.deductions}
+            height={14}
+          />
         </div>
       </div>
       <div className="mt-3 space-y-1.5">
@@ -441,7 +497,9 @@ function MiniPdf() {
         </div>
         <div className="border-l-2 border-moderate bg-band px-2 py-1">
           <div className="flex items-center justify-between text-[9px]">
-            <span className="font-cond tracking-[0.08em] text-moderate-text uppercase">Moderate</span>
+            <span className="font-cond tracking-[0.08em] text-moderate-text uppercase">
+              Moderate
+            </span>
             <span className="font-mono text-steel">1.3.1</span>
           </div>
           <div className="text-[10px] font-semibold text-ink">Heading level skips</div>
@@ -472,10 +530,12 @@ export function ExportSection() {
                   for the person who decides
                 </span>
               </div>
-              <h3 className="mt-2.5 text-[17px] font-semibold text-ink">Score, ruler and impact in plain language</h3>
+              <h3 className="mt-2.5 text-[17px] font-semibold text-ink">
+                Score, ruler and impact in plain language
+              </h3>
               <p className="mt-1.5 text-[14px] leading-normal text-body">
-                Summary, severity levels and each finding&apos;s impact on people. Ready to send to a
-                client or a product team, with no engineering context required.
+                Summary, severity levels and each finding&apos;s impact on people. Ready to send to
+                a client or a product team, with no engineering context required.
               </p>
             </div>
           </div>
@@ -484,7 +544,9 @@ export function ExportSection() {
             <div className="border border-ink bg-surface">
               <div className="flex items-center gap-2 border-b border-hairline px-3 py-1.5">
                 <span aria-hidden className="size-2 bg-steel" />
-                <span className="font-mono text-[10.5px] text-muted">accesscheck-aurora-coffee-com.md</span>
+                <span className="font-mono text-[10.5px] text-muted">
+                  accesscheck-aurora-coffee-com.md
+                </span>
               </div>
               <div className="bg-code px-3 py-2.5 font-mono text-[12px] leading-[1.7]">
                 {exampleMarkdown.split("\n").map((text, i) => (
@@ -512,7 +574,9 @@ export function ExportSection() {
                   for the person who fixes
                 </span>
               </div>
-              <h3 className="mt-2.5 text-[17px] font-semibold text-ink">Selector, snippet and verification status</h3>
+              <h3 className="mt-2.5 text-[17px] font-semibold text-ink">
+                Selector, snippet and verification status
+              </h3>
               <p className="mt-1.5 text-[14px] leading-normal text-body">
                 A severity table and a prioritized list, ready to paste into a ticket or a pull
                 request, with the verified fixes already marked.

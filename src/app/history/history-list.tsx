@@ -64,7 +64,7 @@ export function HistoryList({ scans }: { scans: ScanListItem[] }) {
 
   return (
     <>
-      <div className="border-b border-line bg-card">
+      <div className="border-line bg-card border-b">
         <div className="mx-auto w-full max-w-7xl px-6 py-5">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -77,7 +77,7 @@ export function HistoryList({ scans }: { scans: ScanListItem[] }) {
                   <span
                     role="status"
                     aria-live="polite"
-                    className="rounded-full bg-chip px-2 py-0.5 text-[12px] font-semibold text-ink-soft"
+                    className="bg-chip text-ink-soft rounded-full px-2 py-0.5 text-[12px] font-semibold"
                   >
                     {resultLabel}
                   </span>
@@ -113,7 +113,7 @@ export function HistoryList({ scans }: { scans: ScanListItem[] }) {
         {!hasScans ? (
           <NoScans />
         ) : visible.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-line-strong bg-card px-6 py-16 text-center">
+          <div className="border-line-strong bg-card flex flex-col items-center justify-center rounded-2xl border border-dashed px-6 py-16 text-center">
             <p className="text-base font-semibold text-ink">No audits match your filters</p>
             <p className="mt-1.5 max-w-sm text-sm text-muted">
               Try a different domain, or clear the score filter to see everything again.
@@ -133,7 +133,7 @@ export function HistoryList({ scans }: { scans: ScanListItem[] }) {
 
 function NoScans() {
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-line-strong bg-card px-6 py-16 text-center">
+    <div className="border-line-strong bg-card flex flex-col items-center justify-center rounded-2xl border border-dashed px-6 py-16 text-center">
       <p className="text-base font-semibold text-ink">No audits yet</p>
       <p className="mt-1.5 max-w-sm text-sm text-muted">
         Run an audit while signed in and it’ll show up here, so you can track each site’s score over
@@ -141,7 +141,7 @@ function NoScans() {
       </p>
       <Link
         href="/"
-        className="mt-5 rounded-[10px] bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
+        className="bg-brand-600 hover:bg-brand-700 mt-5 rounded-[10px] px-4 py-2 text-sm font-semibold text-white transition-colors"
       >
         Run an audit
       </Link>

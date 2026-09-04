@@ -36,10 +36,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${barlow.variable} ${barlowCondensed.variable} h-full antialiased`}
-    >
+    <html lang="en" className={`${barlow.variable} ${barlowCondensed.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col bg-canvas font-sans text-ink">
         <a
           href="#main"

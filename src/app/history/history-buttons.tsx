@@ -20,7 +20,7 @@ export function DeleteScanButton({ id }: { id: string }) {
           type="button"
           disabled={pending}
           aria-label="Delete this audit"
-          className="absolute top-2.5 left-2.5 z-10 flex size-8 cursor-pointer items-center justify-center rounded-full border border-line bg-card/90 text-muted opacity-0 shadow-soft backdrop-blur transition-all group-hover:opacity-100 hover:text-critical disabled:opacity-100"
+          className="border-line bg-card/90 shadow-soft absolute top-2.5 left-2.5 z-10 flex size-8 cursor-pointer items-center justify-center rounded-full border text-muted opacity-0 backdrop-blur transition-all group-hover:opacity-100 hover:text-critical disabled:opacity-100"
         >
           <FontAwesomeIcon
             icon={pending ? faSpinner : faTrash}
@@ -45,7 +45,7 @@ export function ClearHistoryButton() {
         <button
           type="button"
           disabled={pending}
-          className="flex h-9 cursor-pointer items-center gap-2 rounded-[10px] border border-line bg-card px-3.5 text-sm font-medium text-ink-soft shadow-soft transition-colors hover:border-critical/40 hover:text-critical disabled:opacity-50"
+          className="border-line bg-card text-ink-soft shadow-soft flex h-9 cursor-pointer items-center gap-2 rounded-[10px] border px-3.5 text-sm font-medium transition-colors hover:border-critical/40 hover:text-critical disabled:opacity-50"
         >
           <FontAwesomeIcon
             icon={pending ? faSpinner : faTrash}
