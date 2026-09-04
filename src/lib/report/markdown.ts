@@ -71,16 +71,26 @@ export function buildReportMarkdown(result: ScanResult): string {
   out.push(`> ${result.summary}`);
   out.push("");
 
-  out.push("## Score arithmetic");
+  out.push("## Where the score can go");
   out.push("");
-  out.push("| Item | Deduction |");
-  out.push("| --- | --- |");
-  out.push(`| Base | 100 |`);
-  for (const d of breakdown.deductions) {
-    out.push(`| ${d.issues} ${severityLabel[d.severity].toLowerCase()} · ${d.elements} elements | −${d.deduction} |`);
+  out.push(`Current internal priority score: **${result.score} / 100**.`);
+  out.push("");
+  if (breakdown.deductions.length > 0) {
+    out.push("| If you fix | Elements | Score rises to |");
+    out.push("| --- | --- | --- |");
+    for (const d of breakdown.deductions) {
+      out.push(
+        `| ${d.issues} ${severityLabel[d.severity].toLowerCase()} | ${d.elements} | ${d.ifFixed} (+${d.gain}) |`,
+      );
+    }
+    out.push("");
   }
-  out.push(`| ${result.counts.manualReview} manual-review items | outside score |`);
-  out.push(`| **Internal priority score** | **${result.score}** |`);
+  out.push(
+    `${result.counts.manualReview} manual-review items sit outside the score.` +
+      (breakdown.deductions.length > 1
+        ? " Each row is the score after fixing that severity on its own; the score is non-linear, so fixing more than one recovers less than the rows added together."
+        : ""),
+  );
   out.push("");
 
   out.push("## WCAG reading");

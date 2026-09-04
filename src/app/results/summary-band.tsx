@@ -41,7 +41,7 @@ export function SummaryBand({
                   {d.issues} {severityLabel[d.severity].toLowerCase()}
                 </span>
                 <span className="text-muted tabular-nums">
-                  · {d.elements} element{d.elements === 1 ? "" : "s"} · −{d.deduction}
+                  · {d.elements} element{d.elements === 1 ? "" : "s"} · fix → {d.ifFixed}
                 </span>
               </span>
             ))}

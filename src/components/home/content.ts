@@ -70,18 +70,23 @@ export const exampleFinding = {
   toHex: "#2f6b57",
 };
 
-/** The demo score and its arithmetic (base 100 − serious − moderate). */
+/**
+ * The demo score, computed with the engine's real (non-linear) formula:
+ * penalty = 5·min(7,5) + 2·(1+1) = 29 → score = round(100·e^(-29/45)) = 53.
+ * `ifFixed` is the score the page would reach if that severity were fixed on its
+ * own (serious → 91, moderate → 57), the same projection the live report shows.
+ */
 export const exampleScore = {
-  score: 71,
+  score: 53,
   passed: 39,
   manualReview: 4,
   deductions: [
-    { severity: "serious" as Severity, issues: 1, elements: 7, penalty: 25, deduction: 25 },
-    { severity: "moderate" as Severity, issues: 2, elements: 2, penalty: 4, deduction: 4 },
+    { severity: "serious" as Severity, issues: 1, elements: 7, penalty: 25, deduction: 41, ifFixed: 91, gain: 38 },
+    { severity: "moderate" as Severity, issues: 2, elements: 2, penalty: 4, deduction: 6, ifFixed: 57, gain: 4 },
   ],
 };
 
-export const exampleMarkdown = `## aurora-coffee.com: 71/100
+export const exampleMarkdown = `## aurora-coffee.com: 53/100
 | severity | findings | elements |
 | serious  | 1 | 7 |
 | moderate | 2 | 2 |
