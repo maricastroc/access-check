@@ -75,15 +75,15 @@ export class ScanFailure extends Error {
 }
 
 const WARNING_TEXT: Record<ScanWarningCode, string> = {
-  "screenshot-unavailable": "The visual preview could not be captured in time.",
-  "fix-details-skipped": "Suggested fixes fall back to generic guidance for some issues.",
-  "markers-skipped": "Issue markers were not placed on the preview.",
-  "content-unsettled": "The page was still loading content when the audit ran.",
-  "verification-skipped": "Fixes were not verified live in the page.",
-  "audits-skipped": "Target size, motion and live-region checks were skipped.",
-  "keyboard-skipped": "The keyboard and focus-order pass was skipped.",
-  "contexts-skipped": "The mobile and dynamic-state pass was skipped.",
-  "stream-interrupted": "The scan was cut short before every pass finished.",
+  "screenshot-unavailable": "The screenshot could not be taken in time.",
+  "fix-details-skipped": "Some findings show general guidance instead of a specific suggested fix.",
+  "markers-skipped": "The markers could not be placed on the screenshot.",
+  "content-unsettled": "The page was still loading when the audit ran.",
+  "verification-skipped": "Fixes were not tested on a copy of the page this time.",
+  "audits-skipped": "The target-size, motion and live-region checks were skipped.",
+  "keyboard-skipped": "The keyboard and focus-order check was skipped.",
+  "contexts-skipped": "The mobile and dynamic-state check was skipped.",
+  "stream-interrupted": "The audit was cut short before every check finished.",
 };
 
 type AxeCheck = { id: string; data?: unknown };
@@ -337,7 +337,7 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
 
   const unavailable = () =>
     new ScanFailure(
-      "The scan browser stopped responding before the audit could run.",
+      "The browser we use to open the page stopped responding before the audit could run.",
       "browser-unavailable",
     );
 
@@ -431,7 +431,7 @@ async function runScanAttempt(
         await context?.close().catch(() => noop());
         await closeSharedBrowser().catch(() => noop());
         throw new ScanFailure(
-          "The scan browser took too long to start. Please try again.",
+          "The browser we use to open the page took too long to start. Please try again.",
           "browser-unavailable",
         );
       } catch (err) {
@@ -471,7 +471,7 @@ async function runScanAttempt(
     const httpStatus = response?.status() ?? 0;
     if (httpStatus >= 400) {
       throw new ScanFailure(
-        `The page responded with HTTP ${httpStatus}. Check the URL — it may be wrong, removed, or behind authentication.`,
+        `The page returned an error (HTTP ${httpStatus}). The address may be wrong or removed, or the page may need a login.`,
         "http-error",
       );
     }

@@ -16,10 +16,10 @@ export function SummaryPage({ result }: { result: ScanResult }) {
   }).format(new Date());
 
   const meta = [
-    { label: "Analysis date", value: date },
-    { label: "Scan duration", value: `${(result.durationMs / 1000).toFixed(1)}s` },
-    { label: "WCAG scope", value: "A & AA · 2.0 / 2.1 / 2.2" },
-    { label: "Elements scanned", value: String(result.scannedElements) },
+    { label: "Audit date", value: date },
+    { label: "Audit duration", value: `${(result.durationMs / 1000).toFixed(1)}s` },
+    { label: "WCAG levels checked", value: "A & AA · 2.0 / 2.1 / 2.2" },
+    { label: "Elements checked", value: String(result.scannedElements) },
   ];
 
   const counts: { label: string; value: number; color: string }[] = [
@@ -107,8 +107,8 @@ export function SummaryPage({ result }: { result: ScanResult }) {
         <p className="mt-2 max-w-[6.7in] text-[13px] leading-normal text-body">
           {result.summary} The page passed{" "}
           <strong className="font-semibold text-ink">{result.counts.passed} automated checks</strong>.
-          The score is an internal priority measure — WCAG conformance also depends on the{" "}
-          {result.counts.manualReview} manual-review item
+          The score is our own priority measure, not a pass or fail for WCAG. Meeting WCAG also
+          depends on the {result.counts.manualReview} manual-review item
           {result.counts.manualReview === 1 ? "" : "s"} listed on page 3.
         </p>
       </div>

@@ -72,7 +72,7 @@ export function HistoryList({ scans }: { scans: ScanListItem[] }) {
                 History
               </p>
               <div className="mt-0.5 flex items-center gap-2.5">
-                <h1 className="text-2xl font-bold tracking-tight text-ink">Scan history</h1>
+                <h1 className="text-2xl font-bold tracking-tight text-ink">Audit history</h1>
                 {hasScans && (
                   <span
                     role="status"
@@ -114,9 +114,9 @@ export function HistoryList({ scans }: { scans: ScanListItem[] }) {
           <NoScans />
         ) : visible.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-line-strong bg-card px-6 py-16 text-center">
-            <p className="text-base font-semibold text-ink">No scans match your filters</p>
+            <p className="text-base font-semibold text-ink">No audits match your filters</p>
             <p className="mt-1.5 max-w-sm text-sm text-muted">
-              Try a different domain or clear the score filter to see everything again.
+              Try a different domain, or clear the score filter to see everything again.
             </p>
           </div>
         ) : (
@@ -134,7 +134,7 @@ export function HistoryList({ scans }: { scans: ScanListItem[] }) {
 function NoScans() {
   return (
     <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-line-strong bg-card px-6 py-16 text-center">
-      <p className="text-base font-semibold text-ink">No scans yet</p>
+      <p className="text-base font-semibold text-ink">No audits yet</p>
       <p className="mt-1.5 max-w-sm text-sm text-muted">
         Run an audit while signed in and it’ll show up here, so you can track each site’s score over
         time.
@@ -143,7 +143,7 @@ function NoScans() {
         href="/"
         className="mt-5 rounded-[10px] bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
       >
-        Run a scan
+        Run an audit
       </Link>
     </div>
   );

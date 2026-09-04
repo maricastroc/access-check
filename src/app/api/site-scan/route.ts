@@ -14,16 +14,22 @@ export async function POST(req: Request) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
+    return NextResponse.json(
+      { error: "We couldn't read that request. Please reload the page and try again." },
+      { status: 400 },
+    );
   }
 
   if (!body.url || typeof body.url !== "string") {
-    return NextResponse.json({ error: "Missing 'url'." }, { status: 400 });
+    return NextResponse.json(
+      { error: "No web address was provided. Enter a site address and try again." },
+      { status: 400 },
+    );
   }
 
   if ((await siteScanRateLimit.check(clientKey(req))) === "limited") {
     return NextResponse.json(
-      { error: "Too many site scans. Try again in a few minutes." },
+      { error: "Too many site audits in a short time. Please wait a few minutes and try again." },
       { status: 429 },
     );
   }
@@ -32,7 +38,9 @@ export async function POST(req: Request) {
   try {
     await assertPublicUrl(root);
   } catch (err) {
-    const message = err instanceof BlockedUrlError ? err.message : "Invalid URL.";
+    const message = err instanceof BlockedUrlError
+      ? err.message
+      : "That doesn't look like a valid web address. Check it and try again.";
     return NextResponse.json({ error: message }, { status: 400 });
   }
 
@@ -57,16 +65,17 @@ export async function POST(req: Request) {
       if (onServerless) {
         await failSiteScan(
           id,
-          "Couldn't enqueue the crawl. Check the QStash configuration (token, region URL, signing keys).",
+          "Site audits are temporarily unavailable. Please audit a single page instead, or try again later.",
         );
       } else {
         await runInline();
       }
     }
   } else if (onServerless) {
+    console.error("Site scan unavailable: QStash env vars are not configured.");
     await failSiteScan(
       id,
-      "Background jobs aren't configured. Set the QStash env vars in the deployment, then redeploy.",
+      "Site audits aren't available right now. Please audit a single page instead.",
     );
   } else {
     await runInline();

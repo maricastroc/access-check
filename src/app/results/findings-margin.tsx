@@ -57,9 +57,9 @@ export function FindingsMargin({
         {findings.length === 0 ? (
           <p className="text-[13.5px] leading-normal text-body">
             <span className="font-semibold text-ink">No automated failures on this page.</span>{" "}
-            {result.counts.passed} checks passed. This is not WCAG conformance —{" "}
-            {result.counts.manualReview} item{result.counts.manualReview === 1 ? "" : "s"} depend on
-            human review below.
+            {result.counts.passed} checks passed. This is not the same as WCAG conformance:{" "}
+            {result.counts.manualReview} item{result.counts.manualReview === 1 ? "" : "s"} still need
+            a person to review, listed below.
           </p>
         ) : (
           findings.map((f) => (

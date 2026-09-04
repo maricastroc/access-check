@@ -6,7 +6,7 @@ import type { ScanErrorCode } from "./types";
 
 export class BlockedUrlError extends Error {
   constructor(
-    message = "This URL points to a private or reserved address and can't be scanned.",
+    message = "This address is a private or internal one, so we can't audit it. Enter a public web page instead.",
     readonly code: ScanErrorCode = "blocked-url",
   ) {
     super(message);
@@ -135,11 +135,11 @@ export async function assertPublicUrl(raw: string): Promise<void> {
   try {
     url = new URL(raw);
   } catch {
-    throw new BlockedUrlError("Invalid URL.", "invalid-url");
+    throw new BlockedUrlError("That doesn't look like a valid web address. Check it and try again.", "invalid-url");
   }
 
   if (url.protocol !== "http:" && url.protocol !== "https:") {
-    throw new BlockedUrlError("Only http and https URLs can be scanned.", "invalid-url");
+    throw new BlockedUrlError("Only web pages (addresses starting with http or https) can be audited.", "invalid-url");
   }
 
   const host = stripBrackets(url.hostname).toLowerCase();
@@ -156,7 +156,7 @@ export async function assertPublicUrl(raw: string): Promise<void> {
   try {
     addrs = await lookup(host, { all: true });
   } catch {
-    throw new BlockedUrlError("This host could not be resolved.", "navigation-failed");
+    throw new BlockedUrlError("We couldn't find a site at that address. Check the spelling and try again.", "navigation-failed");
   }
   if (addrs.length === 0 || addrs.some((a) => isBlockedIp(a.address))) {
     throw new BlockedUrlError();

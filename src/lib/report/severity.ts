@@ -60,7 +60,7 @@ export const SEVERITY_META: Record<Severity, SeverityMeta> = {
   serious: {
     label: "Serious",
     blocksAA: true,
-    who: "Major barrier — many users can't complete the task.",
+    who: "Major barrier. Many people can't complete the task.",
     short: "major barrier",
   },
   moderate: {

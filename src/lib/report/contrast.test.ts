@@ -5,7 +5,7 @@ describe("parseContrastFix", () => {
   it("parses a foreground-color fix (text + code)", () => {
     const fix =
       "Replace text color #8fb8a8 with #2f6b57 → 4.62:1 against #ffffff " +
-      "(was 2.10:1, needs 4.5:1). Same hue — only the lightness changes.";
+      "(was 2.10:1, needs 4.5:1). The hue stays the same; only the lightness changes.";
     const m = parseContrastFix(fix, "color: #2f6b57;");
     expect(m).toMatchObject({
       measured: 2.1,
@@ -21,7 +21,7 @@ describe("parseContrastFix", () => {
     const fix =
       "Text color #8fb8a8 can't reach 4.5:1 on #ffffff by changing the text alone. " +
       "Set the background to #2f6b57 instead → 4.62:1 (was 2.10:1, needs 4.5:1). " +
-      "Same background hue — only its lightness changes.";
+      "The background hue stays the same; only its lightness changes.";
     const m = parseContrastFix(fix, "background: #2f6b57;");
     expect(m).toMatchObject({
       measured: 2.1,

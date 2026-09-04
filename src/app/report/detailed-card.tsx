@@ -67,17 +67,17 @@ export function DetailedCard({ v }: { v: ScanResult["violations"][number] }) {
               <StatusSeal status={status} />
             </div>
             <p className="mt-1.5 text-[9.5px] text-muted">
-              Applied and re-audited in a sandbox copy; the audited site was not altered.
+              Applied and re-checked on a copy of the page. The audited site was not altered.
             </p>
           </div>
         </div>
 
         <div className="flex flex-col gap-2.5 bg-band p-3.5">
-          <FieldLabel>Where</FieldLabel>
+          <FieldLabel>Selector</FieldLabel>
           <code className="-mt-1.5 truncate bg-surface px-2 py-1 font-mono text-[10px] text-steel">
             {v.where}
           </code>
-          <FieldLabel>Instances</FieldLabel>
+          <FieldLabel>Elements affected</FieldLabel>
           <span className="-mt-1.5 font-cond text-[20px] tabular-nums text-ink">{v.nodes}</span>
           <FieldLabel>Criterion</FieldLabel>
           <span className="-mt-1.5 text-[11px] text-body">{v.criterion}</span>

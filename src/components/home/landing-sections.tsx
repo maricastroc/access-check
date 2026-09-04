@@ -161,7 +161,7 @@ export function ChecksIncluded() {
       <div className="mx-auto w-full max-w-[1200px] px-6 py-12">
         <SectionHead
           kicker="Checks included"
-          title="Every axe rule, plus the passes it can't run alone"
+          title="Every automated check, plus the passes a tool can't run on its own"
         />
 
         <div className="mt-9 grid grid-cols-1 md:grid-cols-2">
@@ -169,7 +169,7 @@ export function ChecksIncluded() {
           <div className="border border-ink bg-surface">
             <div className="flex items-baseline justify-between border-b border-ink px-5 py-3">
               <SectionKicker tone="steel">axe-core rules</SectionKicker>
-              <span className="text-[12px] text-muted">pass / fail objectively</span>
+              <span className="text-[12px] text-muted">pass or fail, objectively</span>
             </div>
             <div className="flex items-end gap-3 px-5 pt-5">
               <span className="font-cond text-[52px] leading-[0.8] tabular-nums text-ink">
@@ -195,7 +195,7 @@ export function ChecksIncluded() {
           <div className="border border-ink bg-band md:border-l-0">
             <div className="flex items-baseline justify-between border-b border-ink px-5 py-3">
               <SectionKicker tone="steel">complementary passes</SectionKicker>
-              <span className="text-[12px] text-muted">what axe can&apos;t do alone</span>
+              <span className="text-[12px] text-muted">what a tool can&apos;t judge alone</span>
             </div>
             <div className="flex items-end gap-3 px-5 pt-5">
               <span className="font-cond text-[52px] leading-[0.8] tabular-nums text-ink">
@@ -238,9 +238,9 @@ export function EvidenceLensSection() {
             </h2>
           </div>
           <p className="max-w-[46ch] text-[16px] leading-[1.55] text-body">
-            Element, selector, measure and diagnosis are one chain. Select the violation and its
-            marker fills; the active occurrence is labelled with the ratio, its siblings stay in a
-            dashed outline — the distinction never depends on color.
+            Element, selector, measurement and diagnosis stay in one chain. Select a finding and its
+            marker fills in. The located element is labeled with the ratio, and the others keep a
+            dashed outline, so you can tell them apart without relying on color.
           </p>
         </div>
 
@@ -282,8 +282,8 @@ export function EvidenceLensSection() {
               </div>
               <h3 className="mt-1.5 text-[16px] font-semibold text-ink">{exampleFinding.title}</h3>
               <p className="mt-1.5 text-[13.5px] leading-normal text-ink-2">
-                The white label on the light-green button disappears for low-vision users and anyone
-                in bright light — and it&apos;s the purchase button.
+                The white text on the light-green button disappears for people with low vision, or
+                for anyone in bright sunlight. And this is the checkout button.
               </p>
 
               <div className="mt-4 border-t border-hairline pt-3">
@@ -366,12 +366,12 @@ export function SandboxSection() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] lg:items-end">
           <SectionHead
             kicker="Sandbox verification"
-            title="Every fix is proved on a copy — your site is never touched"
+            title="Every fix is proved on a copy, so your site is never touched"
           />
           <p className="max-w-[52ch] text-[16px] leading-[1.55] text-body">
-            The change is applied to the copy&apos;s DOM, the rule runs again, and the change is
-            reverted. If it stops flagging, the fix is labelled verified — never a certainty, and
-            never a touch on your site.
+            We apply the change to a copy of the page, run the check again, then undo it. If the issue
+            stops showing up, we mark the fix as verified. It is never a guarantee, and it never
+            touches your real site.
           </p>
         </div>
 
@@ -476,7 +476,7 @@ export function ExportSection() {
       <div className="mx-auto w-full max-w-[1200px] px-6 py-12">
         <SectionHead
           kicker="Export"
-          title="Two results for two readers — whoever decides, whoever fixes"
+          title="Two exports for two readers: the person who decides and the person who fixes"
         />
 
         <div className="mt-9 grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -489,13 +489,13 @@ export function ExportSection() {
                   PDF
                 </span>
                 <span className="font-cond text-[11px] tracking-[0.1em] text-muted uppercase">
-                  for whoever decides
+                  for the person who decides
                 </span>
               </div>
               <h3 className="mt-2.5 text-[17px] font-semibold text-ink">Score, ruler and impact in plain language</h3>
               <p className="mt-1.5 text-[14px] leading-normal text-body">
-                Summary, severities and the findings with human impact — to send to a client or a
-                product team, no engineering context required.
+                Summary, severity levels and each finding&apos;s impact on people. Ready to send to a
+                client or a product team, with no engineering context required.
               </p>
             </div>
           </div>
@@ -530,13 +530,13 @@ export function ExportSection() {
                   MD
                 </span>
                 <span className="font-cond text-[11px] tracking-[0.1em] text-muted uppercase">
-                  for whoever fixes
+                  for the person who fixes
                 </span>
               </div>
               <h3 className="mt-2.5 text-[17px] font-semibold text-ink">Selector, snippet and verification status</h3>
               <p className="mt-1.5 text-[14px] leading-normal text-body">
-                Severity table and a prioritized list, ready to paste into an issue or a PR — the
-                verified line already marked.
+                A severity table and a prioritized list, ready to paste into a ticket or a pull
+                request, with the verified fixes already marked.
               </p>
             </div>
           </div>
@@ -571,17 +571,17 @@ export function FinalCta() {
         <div className="grid grid-cols-1 gap-10 pt-8 lg:grid-cols-[minmax(0,1fr)_560px] lg:items-center">
           <div>
             <h2 className="text-[32px] leading-[1.1] font-semibold tracking-[-0.02em]">
-              Measure a page now and see where the barrier is
+              Audit a page now and see where each barrier is
             </h2>
             <p className="mt-3 max-w-[52ch] text-[15px] leading-normal text-band">
-              No account, no extension, no change to the site. The report is ready in under half a
-              minute and leaves as PDF or Markdown.
+              No account, no extension, no change to your site. The report is ready in under half a
+              minute and exports as PDF or Markdown.
             </p>
           </div>
           <div>
             <UrlForm accent examples={["wikipedia.org", "stripe.com", "github.com"]} />
             <p className="mt-3 text-[13px] text-disabled">
-              We audit public pages only. Internal and private addresses are refused.
+              We can only audit public pages. Private or internal addresses will be refused.
             </p>
           </div>
         </div>
@@ -590,7 +590,7 @@ export function FinalCta() {
       <div className="border-t border-ink-2">
         <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-2 px-6 py-6 text-[13px] text-disabled sm:flex-row sm:items-center sm:justify-between">
           <span>AccessCheck · axe-core · Playwright · WCAG 2.0 / 2.1 / 2.2 levels A and AA</span>
-          <span>Internal score · not a conformance statement</span>
+          <span>Internal priority score · not a conformance statement</span>
         </div>
       </div>
     </section>

@@ -25,7 +25,7 @@ export function ProgressPage({ result }: { result: ScanResult }) {
       color: sevHex.critical,
       term: "Immediate · 0–1 week",
       title: "Resolve critical findings",
-      body: `Clear the ${result.counts.critical} critical finding${result.counts.critical === 1 ? "" : "s"} — they carry the heaviest priority weight.`,
+      body: `Clear the ${result.counts.critical} critical finding${result.counts.critical === 1 ? "" : "s"} first. They weigh the most in the score.`,
     },
     {
       color: sevHex.serious,
@@ -162,8 +162,8 @@ export function ProgressPage({ result }: { result: ScanResult }) {
 
         <p className="mt-3.5 border-t border-hairline pt-3 text-[11px] leading-normal text-body">
           If the critical and serious findings were resolved, the internal priority score would rise
-          to an estimated <b className="text-ink">{estimated} / 100</b>. This is a priority
-          projection — not a statement of WCAG conformance, which also depends on moderate items and
+          to an estimated <b className="text-ink">{estimated} / 100</b>. This is only a projection of
+          the score, not a pass for WCAG. Meeting WCAG also depends on the moderate items and on
           manual review.
         </p>
       </div>
@@ -188,9 +188,10 @@ export function ProgressPage({ result }: { result: ScanResult }) {
       </div>
 
       <p className="mt-4 max-w-[6.8in] text-[9.5px] leading-normal text-muted">
-        The engine runs axe-core against WCAG A and AA (2.0/2.1/2.2). Automated testing covers a
-        portion of the success criteria; the rest needs manual review with assistive technology.
-        AAA is not evaluated, and this report is not a statement of conformance.
+        AccessCheck runs axe-core against WCAG levels A and AA (2.0, 2.1 and 2.2). Automated testing
+        covers only part of the WCAG checkpoints. The rest need a person to review, often with a
+        screen reader or other assistive technology. Level AAA is not checked, and this report is not
+        a statement of conformance.
       </p>
     </PageShell>
   );

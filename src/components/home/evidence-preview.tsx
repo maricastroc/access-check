@@ -40,7 +40,7 @@ export const demoFinding: FindingView = {
   ruleId: exampleFinding.ruleId,
   desc: "Ensures the contrast between foreground and background colors meets the WCAG threshold.",
   impact:
-    "People with low vision or reduced contrast sensitivity may be unable to read this text, especially in bright light.",
+    "People with low vision or reduced contrast sensitivity may be unable to read this text, especially on low-quality screens or in bright light.",
   fixText: `Set the text color to ${exampleFinding.toHex.toUpperCase()} → ${exampleFinding.fixed}:1.`,
   fixCode: `color: ${exampleFinding.toHex};`,
   fixGroups: null,
@@ -120,7 +120,7 @@ export function CapturePreview({ height = 240 }: { height?: number }) {
 export function HeroEvidencePreview() {
   return (
     <BrowserFrame
-      label="Captured page · scale 43%"
+      label="Screenshot · scale 43%"
       trailing={
         <div className="hidden items-stretch border border-border text-[11px] sm:flex">
           <span className="bg-ink px-2 py-0.5 font-medium text-surface">Normal</span>

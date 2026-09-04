@@ -68,7 +68,7 @@ function MarkerLayer({
                 state={v.state}
                 label={v.label}
                 ariaPressed={v.state === "selected"}
-                ariaLabel={`Occurrence ${v.marker.n}: ${v.marker.label}`}
+                ariaLabel={`Marker ${v.marker.n}: ${v.marker.label}`}
                 onSelect={() => onSelect(v.marker.n)}
               />
             </span>
@@ -108,7 +108,7 @@ function FocusLayer({ points }: { points: FocusPoint[] }) {
             background: p.visible ? "var(--color-steel)" : "var(--color-critical)",
             borderColor: "var(--color-surface)",
           }}
-          title={`${p.n}. ${p.label}${p.visible ? "" : " — no visible focus indicator"}`}
+          title={`${p.n}. ${p.label}${p.visible ? "" : " (no visible focus indicator)"}`}
         >
           {p.n}
         </span>
@@ -170,8 +170,7 @@ export function CaptureStage({
         style={{ height, background: "#FBFAF7" }}
       >
         <div className="hatch-outside flex items-center gap-3 border border-dashed border-border px-6 py-8">
-          <span className="text-[13px] text-muted">capture not generated ·</span>
-          <code className="font-mono text-[12.5px] text-moderate-text">screenshot-unavailable</code>
+          <span className="text-[13px] text-muted">The screenshot could not be taken this time.</span>
         </div>
       </div>
     );
@@ -186,7 +185,7 @@ export function CaptureStage({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={result.screenshot ?? undefined}
-          alt={`Captured screenshot of ${host}`}
+          alt={`Screenshot of ${host}`}
           className="block w-full transition-[filter] duration-200"
           style={{ filter: previewFilters[sim] }}
         />
@@ -229,10 +228,10 @@ export function EvidenceFrame({
   const [scalePct, setScalePct] = useState(60);
 
   const legend = collapsed
-    ? "Capture collapsed"
-    : `Captured page · ${CAPTURE_WIDTH} × ${CAPTURE_HEIGHT} · scale ${scalePct}%`;
+    ? "Screenshot collapsed"
+    : `Screenshot · ${CAPTURE_WIDTH} × ${CAPTURE_HEIGHT} · scale ${scalePct}%`;
   const visionNote =
-    sim === "normal" ? "default render · no vision filter" : `simulating ${modeDesc[sim].split(" —")[0].toLowerCase()}`;
+    sim === "normal" ? "default render · no vision filter" : `simulating ${modeDesc[sim].split(".")[0].toLowerCase()}`;
 
   return (
     <div className="border border-ink bg-surface">
@@ -243,7 +242,7 @@ export function EvidenceFrame({
           {!collapsed && <span className="text-[12px] text-muted">{visionNote}</span>}
         </div>
         <Button variant="secondary" size="sm" onClick={onToggleCollapse} className="shrink-0">
-          {collapsed ? "Show capture" : "Collapse capture"}
+          {collapsed ? "Show screenshot" : "Collapse screenshot"}
         </Button>
       </div>
 
@@ -277,7 +276,7 @@ export function EvidenceFrame({
               <p className="text-[12.5px] text-muted">
                 <span className="font-medium text-ink tabular-nums">{selectedFinding.elements}</span>{" "}
                 element{selectedFinding.elements === 1 ? "" : "s"} · {selectedFinding.markers.length}{" "}
-                located on the capture
+                shown on the screenshot
               </p>
               {selectedFinding.markers.length === 0 && (
                 <p className="flex items-start gap-2 text-[12px] text-muted">

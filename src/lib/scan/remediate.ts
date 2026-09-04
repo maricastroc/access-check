@@ -166,8 +166,8 @@ export function fixImageAlt(el: ElementInfo): FixResult {
   if (guess) {
     return {
       text:
-        `This image has no alt text. Suggested description below — confirm it ` +
-        `matches the image, or use an empty alt ("") if it's purely decorative.`,
+        `This image has no alt text. There's a suggested description below. Confirm it ` +
+        `matches the image, or use an empty alt ("") if the image is purely decorative.`,
       code: `alt="${guess}"`,
       apply: { kind: "attr", name: "alt", value: guess },
     };
@@ -338,8 +338,8 @@ export function fixContrast(data: ContrastData): FixResult | null {
     const newHex = toHex(fgFix.rgb);
     const ratio = contrastRatio(fgFix.rgb, bg);
     const hueNote = fgFix.huePreserved
-      ? " Same hue — only the lightness changes."
-      : " (hue shifted toward neutral to reach contrast on this background)";
+      ? " The hue stays the same; only the lightness changes."
+      : " (the hue is shifted toward neutral to reach the needed contrast on this background)";
     let text =
       `Replace text color ${toHex(fg)} with ${newHex} → ${ratio.toFixed(2)}:1 ` +
       `against ${toHex(bg)} ${was}.${hueNote}`;
@@ -358,7 +358,7 @@ export function fixContrast(data: ContrastData): FixResult | null {
       text:
         `Text color ${toHex(fg)} can't reach ${target.toFixed(1)}:1 on ${toHex(bg)} ` +
         `by changing the text alone. Set the background to ${bgHex} instead → ` +
-        `${ratio.toFixed(2)}:1 ${was}. Same background hue — only its lightness changes.`,
+        `${ratio.toFixed(2)}:1 ${was}. The background hue stays the same; only its lightness changes.`,
       code: `background: ${bgHex};`,
       apply: { kind: "style", prop: "background-color", value: bgHex },
     };
@@ -369,6 +369,6 @@ export function fixContrast(data: ContrastData): FixResult | null {
       `Text color ${toHex(fg)} on ${toHex(bg)} reaches only ` +
       `${data.contrastRatio.toFixed(2)}:1 (needs ${target.toFixed(1)}:1). ` +
       `Neither the text nor the background clears it by lightness alone on these ` +
-      `hues — pick a darker or lighter pairing.`,
+      `hues, so pick a darker or lighter pairing.`,
   };
 }

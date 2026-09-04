@@ -91,7 +91,7 @@ export function VisionRail({
 
       <RailButton
         active={false}
-        title={collapsed ? "Show capture" : "Collapse capture"}
+        title={collapsed ? "Show screenshot" : "Collapse screenshot"}
         onClick={onToggleCollapse}
       >
         <FontAwesomeIcon icon={collapsed ? faChevronRight : faChevronLeft} className="text-xs" />

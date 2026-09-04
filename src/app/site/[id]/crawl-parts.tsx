@@ -50,7 +50,7 @@ export function ProgressHeader({ snap }: { snap: CrawlSnapshot }) {
         >
           {running && <FontAwesomeIcon icon={faSpinner} aria-hidden className="animate-spin" />}
           {running
-            ? `Scanning ${settled} / ${snap.totalPages}`
+            ? `Auditing ${settled} / ${snap.totalPages}`
             : snap.status === "failed"
               ? "Audit failed"
               : `Done · ${snap.totalPages} pages`}
@@ -63,7 +63,7 @@ export function ProgressHeader({ snap }: { snap: CrawlSnapshot }) {
         aria-valuenow={pct}
         aria-valuemin={0}
         aria-valuemax={100}
-        aria-label="Crawl progress"
+        aria-label="Site audit progress"
       >
         <div
           className={`h-full rounded-full transition-all duration-500 ${
@@ -104,7 +104,7 @@ export function SiteSummary({ snap, score }: { snap: CrawlSnapshot; score: numbe
           <ScoreRing value={score} />
         ) : (
           <div className="flex size-24 items-center justify-center rounded-full border-8 border-line text-sm text-muted">
-            —
+            …
           </div>
         )}
         <div className="sm:hidden">
@@ -120,8 +120,8 @@ export function SiteSummary({ snap, score }: { snap: CrawlSnapshot; score: numbe
           <p className="text-sm font-semibold text-ink">Site score</p>
           <p className="text-xs text-muted">
             {snap.status === "running"
-              ? "running average across scanned pages"
-              : "average across all scanned pages"}
+              ? "running average across audited pages"
+              : "average across all audited pages"}
           </p>
         </div>
 
@@ -194,11 +194,11 @@ export function PageRow({ page, siteId }: { page: CrawlPage; siteId: string }) {
         </div>
         <div className="mt-0.5 truncate text-xs text-muted">
           {page.status === "failed"
-            ? page.error || "Scan failed"
+            ? page.error || "This page could not be audited."
             : page.status === "pending"
               ? "Waiting…"
               : page.status === "running"
-                ? "Scanning…"
+                ? "Auditing…"
                 : page.title || page.url}
         </div>
       </div>
@@ -208,7 +208,7 @@ export function PageRow({ page, siteId }: { page: CrawlPage; siteId: string }) {
           {total === 0 ? (
             <span className="flex items-center gap-1.5 text-success">
               <FontAwesomeIcon icon={faCircleCheck} aria-hidden />
-              No violations
+              No findings
             </span>
           ) : (
             SEV.map((s) => (

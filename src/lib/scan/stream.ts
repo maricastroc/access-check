@@ -18,30 +18,30 @@ export class ScanStreamError extends Error {
 
 export const SCAN_ERROR_HINT: Record<ScanErrorCode, string> = {
   "invalid-url": "Check the address and try again.",
-  "blocked-url": "Only public http and https pages can be scanned.",
-  "rate-limited": "Wait a moment before starting another scan.",
-  "navigation-timeout": "The site may be slow or blocking automated browsers.",
+  "blocked-url": "Only public web pages can be audited.",
+  "rate-limited": "Wait a moment before starting another audit.",
+  "navigation-timeout": "The site may be slow, or it may block automated browsers.",
   "navigation-failed": "Check the address, or the site may be offline.",
-  "http-error": "The page may be wrong, removed, or behind a login.",
-  "audit-failed": "This page is unusually heavy — try a specific page instead of the home page.",
+  "http-error": "The address may be wrong, removed, or behind a login.",
+  "audit-failed": "This page is unusually heavy. Try one specific page instead of the home page.",
   "browser-unavailable": "Give it a moment and try again.",
-  timeout: "This page is unusually heavy — try a specific page instead of the home page.",
-  interrupted: "The connection dropped mid-scan. Try again.",
+  timeout: "This page is unusually heavy. Try one specific page instead of the home page.",
+  interrupted: "The connection dropped during the audit. Try again.",
   internal: "Something went wrong on our side. Try again.",
 };
 
 const FALLBACK_MESSAGE: Record<ScanErrorCode, string> = {
-  "invalid-url": "That address could not be read.",
-  "blocked-url": "That address cannot be scanned.",
-  "rate-limited": "Too many scans. Try again in a minute.",
+  "invalid-url": "We couldn't read that address.",
+  "blocked-url": "That address can't be audited.",
+  "rate-limited": "Too many audits in a short time. Try again in a minute.",
   "navigation-timeout": "The page took too long to respond.",
-  "navigation-failed": "The page could not be reached.",
-  "http-error": "The page returned an error.",
-  "audit-failed": "The audit could not finish on this page.",
-  "browser-unavailable": "The scan browser could not be started.",
-  timeout: "The scan ran out of time on this page.",
-  interrupted: "The scan stopped before finishing.",
-  internal: "The scan failed unexpectedly.",
+  "navigation-failed": "We couldn't reach the page.",
+  "http-error": "The page returned an error, so we couldn't audit it. Check the address and try again.",
+  "audit-failed": "We couldn't finish the audit on this page.",
+  "browser-unavailable": "We couldn't start the browser used to open the page. Please try again.",
+  timeout: "The audit ran out of time on this page.",
+  interrupted: "The audit stopped before finishing.",
+  internal: "The audit stopped before it could finish. Please try again.",
 };
 
 function codeFromStatus(status: number): ScanErrorCode {
@@ -70,7 +70,7 @@ function markInterrupted(result: ScanResult): ScanResult {
           ...warnings,
           {
             code: "stream-interrupted",
-            message: "The scan was cut short before every pass finished.",
+            message: "The audit was cut short before every check finished.",
           },
         ],
   };

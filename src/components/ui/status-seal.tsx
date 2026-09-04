@@ -3,8 +3,8 @@ import type { FixStatus } from "@/lib/report/severity";
 import { cn } from "@/lib/cn";
 
 const DEFAULT_TEXT: Record<FixStatus, string> = {
-  verified: "Verified — the rule stopped flagging the element",
-  "needs-review": "Needs review — the suggestion alone doesn't clear it",
+  verified: "Verified: the rule stopped flagging the element",
+  "needs-review": "Needs review: the suggestion alone doesn't clear it",
   unchecked: "Not re-audited",
 };
 

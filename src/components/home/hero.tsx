@@ -36,9 +36,9 @@ export function Hero() {
               Every barrier measured, located on the element, and tested before it&apos;s suggested.
             </h1>
             <p className="mt-4 max-w-[52ch] text-[17px] leading-[1.5] text-body">
-              Not another report — a visual inspector. Paste a URL and each finding comes tied to the
-              element that caused it, with the ratio, the selector and a fix re-audited in a sandbox
-              copy.
+              This is not another report. It is a visual inspector: paste a web address and every
+              finding comes tied to the element that caused it, with the contrast ratio, the selector
+              and a fix we test on a copy of the page.
             </p>
             <div className="mt-6">
               <UrlForm examples={["wikipedia.org", "stripe.com", "github.com"]} />
@@ -47,16 +47,16 @@ export function Hero() {
               <SectionKicker tone="steel" className="mt-px shrink-0">
                 Not
               </SectionKicker>
-              a conformance seal — it measures what tooling can prove, and declares the rest as manual
-              review.
+              a conformance seal. It measures what automated tools can prove, and marks the rest for a
+              human to review.
             </p>
           </div>
 
           <div className="lg:pt-1">
             <HeroEvidencePreview />
             <p className="mt-2.5 text-[12.5px] text-muted">
-              Select a violation and its marker lights up; click the marker and the diagnosis opens —
-              the same instrument, capture and code in one frame.
+              Select a finding and its marker lights up. Click the marker and the details open: the
+              screenshot, the measurement and the code in one place.
             </p>
           </div>
         </div>
@@ -65,7 +65,7 @@ export function Hero() {
         <div className="mt-12 grid grid-cols-1 gap-12 border border-border bg-surface p-6 lg:grid-cols-[minmax(0,1fr)_420px]">
           <div>
             <span aria-hidden className="mb-2.5 block h-[3px] w-10 bg-steel" />
-            <SectionKicker>Last public audit · AccessCheck internal score</SectionKicker>
+            <SectionKicker>Most recent public audit · internal priority score</SectionKicker>
             <div className="mt-1 flex items-end gap-2">
               <span className="font-cond text-[64px] leading-[0.85] tabular-nums text-ink">
                 {exampleScore.score}

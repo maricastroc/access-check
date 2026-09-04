@@ -149,21 +149,21 @@ export function verdictMessage(v: Verdict, measurement?: ContrastMeasurement | n
       return `Re-audited each occurrence in a sandbox copy: ${v.sampledCleared} of ${n} cleared, ${v.sampledFailed} still flag. Review the ones that still flag.`;
     case "sampled":
       if (v.reaudited === 1) {
-        return `The sampled element passed after the simulated change in a sandbox copy. ${others(notChecked)}`;
+        return `The sampled element passed after the suggested change in a sandbox copy. ${others(notChecked)}`;
       }
       return `Re-audited ${v.reaudited} of ${n} occurrences in a sandbox copy (one representative per suggested fix): ${v.sampledCleared} passed${v.sampledFailed > 0 ? `, ${v.sampledFailed} still flag` : ""}. The other ${notChecked} ${notChecked === 1 ? "was" : "were"} not individually verified.`;
     case "failed": {
       const subject = n === 1 ? "This element" : "The sampled element";
       const tail = n > 1 ? ` ${others(notChecked)}` : "";
       if (measurement?.fixed != null) {
-        return `${subject} still fails after the simulated change: the suggested color reaches ${measurement.fixed.toFixed(2)}:1 against the sampled background, but the rule still flags it — the real background may be an image, gradient or overlapping layer.${tail}`;
+        return `${subject} still fails after the suggested change: the new color reaches ${measurement.fixed.toFixed(2)}:1 against the sampled background, but the rule still flags it. The real background may be an image, gradient or overlapping layer.${tail}`;
       }
       return `${subject} still fails after the change was applied in a sandbox copy. Review it by hand.${tail}`;
     }
     case "unverifiable":
       return "The element couldn't be re-audited in the sandbox copy (it wasn't found, or verification was cut short for time). Confirm the change by hand.";
     case "no-auto-fix":
-      return "This finding has no automatic correction — it needs a person to decide the right change for the page.";
+      return "This finding has no automatic fix. A person needs to decide the right change for the page.";
     case "best-practice":
       return "Best practice, not a WCAG success criterion. Worth fixing, but it does not affect the WCAG reading.";
     case "complementary":

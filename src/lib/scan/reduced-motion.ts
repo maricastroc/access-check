@@ -50,8 +50,8 @@ export function analyzeReducedMotion(raw: RawReducedMotion): ReducedMotionReport
         "ran a looping or long, non-trivial animation. Motion the user asked to avoid can trigger " +
         "nausea, dizziness or migraines for people with vestibular disorders.",
       fix:
-        "Wrap non-essential animation in @media (prefers-reduced-motion: reduce) and disable or " +
-        "shorten it there — e.g. animation: none or a brief opacity fade instead of movement.",
+        "Wrap non-essential animation in @media (prefers-reduced-motion: reduce) and turn it off or " +
+        "shorten it there. For example, use animation: none, or a brief opacity fade instead of movement.",
       count: n,
       selectors: selectors.slice(0, MAX_AUDIT_SELECTORS),
     });

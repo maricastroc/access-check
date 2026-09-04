@@ -45,7 +45,7 @@ export function UrlField({
               onSubmit();
             }
           }}
-          aria-label="URL to audit"
+          aria-label="Website address to audit"
           placeholder={placeholder}
           autoFocus={autoFocus}
           className="min-w-0 flex-1 bg-transparent font-mono text-[16px] text-ink placeholder:text-disabled focus:outline-none"
@@ -81,7 +81,7 @@ export function UrlForm({ accent = false, examples }: { accent?: boolean; exampl
             onSubmit={() => go(value, scope)}
             size="lg"
             trailing={
-              <div className="hidden items-stretch border border-border sm:flex" role="tablist" aria-label="Scan scope">
+              <div className="hidden items-stretch border border-border sm:flex" role="tablist" aria-label="What to audit">
                 {(["page", "site"] as Scope[]).map((s) => (
                   <button
                     key={s}
@@ -110,16 +110,16 @@ export function UrlForm({ accent = false, examples }: { accent?: boolean; exampl
             accent ? "bg-serious hover:brightness-110" : "bg-ink hover:bg-ink-2",
           )}
         >
-          Audit page
+          {scope === "site" ? "Audit site" : "Audit page"}
           <span aria-hidden className="h-px w-5 bg-surface" />
         </button>
       </div>
       <p className={cn("mt-3 text-[13.5px]", accent ? "text-disabled" : "text-muted")}>
         No account, no extension, no change to the audited site
         <span className="mx-2 text-border">|</span>
-        PDF or Markdown
+        Export as PDF or Markdown
         <span className="mx-2 text-border">|</span>
-        10–25s per page
+        About 10 to 25 seconds per page
       </p>
       {examples && examples.length > 0 && (
         <p className="mt-2 text-[13px] text-muted">

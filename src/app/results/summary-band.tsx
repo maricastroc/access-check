@@ -49,7 +49,8 @@ export function SummaryBand({
               ·
             </span>
             <span className="text-muted tabular-nums">
-              {counts.manualReview} manual review · outside score
+              {counts.manualReview} manual-review item{counts.manualReview === 1 ? "" : "s"} · outside
+              the score
             </span>
           </div>
         </div>

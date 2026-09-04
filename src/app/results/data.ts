@@ -27,12 +27,12 @@ export const previewFilters: Record<SimKey, string> = {
 };
 
 export const modeDesc: Record<SimKey, string> = {
-  normal: "Default rendering — no vision filter applied.",
-  deuteranopia: "Red-green color deficiency (missing green cones) — affects ~6% of men.",
-  protanopia: "Red-green color deficiency (missing red cones) — affects ~2% of men.",
-  tritanopia: "Blue-yellow color deficiency (missing blue cones) — rare, ~0.01%.",
-  lowvision: "Reduced acuity and contrast sensitivity simulation.",
-  grayscale: "All color removed — verifies meaning survives without hue.",
+  normal: "Default rendering, with no vision filter.",
+  deuteranopia: "Red-green color blindness, missing green cones. Affects about 6% of men.",
+  protanopia: "Red-green color blindness, missing red cones. Affects about 2% of men.",
+  tritanopia: "Blue-yellow color blindness, missing blue cones. Rare, about 0.01%.",
+  lowvision: "Reduced sharpness and contrast sensitivity.",
+  grayscale: "All color removed. Checks that meaning survives without hue.",
 };
 
 export const sevDot: Record<Severity, string> = {

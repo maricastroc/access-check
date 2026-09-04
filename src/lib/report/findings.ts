@@ -186,7 +186,7 @@ function contextFinding(issue: ContextIssue, where: string): Omit<FindingView, "
     criterionName: name,
     elements: issue.nodes,
     ruleId: issue.id,
-    desc: `Surfaced only in this context (${where}) — it does not fail on the initial desktop load.`,
+    desc: `Found only in this context (${where}). It does not fail on the first desktop load.`,
     impact: humanImpact(issue.id, "context"),
     fixText: "Re-check this element in the affected context; the engine did not sandbox a fix here.",
     fixCode: null,

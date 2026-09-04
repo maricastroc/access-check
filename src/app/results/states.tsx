@@ -9,6 +9,15 @@ import { UrlField } from "@/components/home/url-form";
 
 const BUDGET_MS = 25_000;
 
+/** Plain words for each scan phase, for the screen-reader status line. */
+const PHASE_LABEL: Record<ScanPhase, string> = {
+  preparing: "getting ready",
+  loading: "opening the page",
+  auditing: "running the checks",
+  processing: "processing the results",
+  finalizing: "finishing up",
+};
+
 export function ScanningState({ url, phase }: { url: string; phase: ScanPhase }) {
   const [elapsed, setElapsed] = useState(0);
   useEffect(() => {
@@ -35,10 +44,10 @@ export function ScanningState({ url, phase }: { url: string; phase: ScanPhase })
           <ScanStages phase={phase} />
         </div>
         <p className="mt-3 text-[12.5px] text-muted">
-          These are the engine&apos;s real stages, in the order they run.
+          These are the real steps AccessCheck runs, in the order they happen.
         </p>
         <p className="sr-only" role="status" aria-live="polite">
-          Scanning {url}, phase {phase}.
+          Auditing {url}. Currently {PHASE_LABEL[phase]}.
         </p>
       </div>
     </div>
@@ -85,7 +94,7 @@ export function ErrorState({
               Try another URL
             </Button>
             <Button href="/" variant="tertiary">
-              What&apos;s auditable
+              See what we can audit
             </Button>
           </div>
         </form>
@@ -107,7 +116,7 @@ export function PartialNotice({
       <WarningList
         warnings={warnings}
         title="Partial report"
-        note="The score reflects what was measured. Missing passes are declared, not estimated."
+        note="The score reflects only what we could measure. Anything we skipped is listed below, not guessed."
       />
       <div className="mt-2">
         <Button variant="secondary" size="sm" onClick={onRerun}>

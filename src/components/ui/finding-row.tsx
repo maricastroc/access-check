@@ -107,7 +107,7 @@ export function FindingRow({
       {noMarker && (
         <p className="mt-1 flex items-center gap-1.5 text-[11.5px] text-muted">
           <span aria-hidden className="inline-block h-3 w-3 border border-dashed border-border" />
-          no marker · outside the capture
+          no marker · outside the screenshot
         </p>
       )}
     </button>

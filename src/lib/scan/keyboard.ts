@@ -103,8 +103,8 @@ export function buildKeyboardReport(raw: RawKeyboard): KeyboardReport {
         "Pressing Tab kept focus on the same element instead of advancing. " +
         "Keyboard and screen-reader users can get stuck here with no way out.",
       fix:
-        "Ensure the element doesn't intercept Tab, or (if it's a modal) provide " +
-        "a documented way to leave — Esc to close and returning focus to the trigger.",
+        "Make sure the element doesn't intercept Tab, or (if it's a dialog) give a clear " +
+        "way to leave: press Esc to close it and return focus to the control that opened it.",
       count: 1,
       selectors: [raw.trapSelector],
     });
@@ -120,7 +120,7 @@ export function buildKeyboardReport(raw: RawKeyboard): KeyboardReport {
       desc:
         `${n} ${plural(n, "element behaves", "elements behave")} as interactive ` +
         "(click handlers or ARIA roles) but Tab never reaches " +
-        `${plural(n, "it", "them")} — so ${plural(n, "it's", "they're")} usable by mouse only.`,
+        `${plural(n, "it", "them")}, so ${plural(n, "it's", "they're")} usable by mouse only.`,
       fix:
         "Give each control a native focusable element (<button>, <a href>) or " +
         'add tabindex="0" and keyboard handlers so it can be reached and operated.',
@@ -142,8 +142,8 @@ export function buildKeyboardReport(raw: RawKeyboard): KeyboardReport {
         "no detectable outline, box-shadow, border or background change. Sighted " +
         "keyboard users can't tell where they are on the page.",
       fix:
-        "Add a clear :focus-visible style — e.g. outline: 2px solid; outline-offset: 2px; " +
-        "— instead of removing the outline with outline: none.",
+        "Add a clear :focus-visible style (for example outline: 2px solid; outline-offset: 2px;) " +
+        "instead of removing the outline with outline: none.",
       count: n,
       selectors: invisible.slice(0, MAX_FINDING_SELECTORS).map((s) => s.selector),
     });
@@ -177,7 +177,7 @@ export function buildKeyboardReport(raw: RawKeyboard): KeyboardReport {
       title: `${n} ${plural(n, "element uses", "elements use")} a positive tabindex`,
       desc:
         "A positive tabindex overrides the natural tab order and is almost always " +
-        "a source of confusing, hard-to-maintain focus behaviour.",
+        "a source of confusing, hard-to-maintain focus behavior.",
       fix:
         'Replace positive tabindex values with tabindex="0" (or none) and let the ' +
         "DOM order define the sequence.",

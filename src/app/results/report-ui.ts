@@ -7,18 +7,18 @@ export type Layer = "markers" | "focus" | "none";
 
 /** Vision modes surfaced on the desktop control rail (all filters the engine supports). */
 export const VISION_RAIL: { key: SimKey; short: string; title: string }[] = [
-  { key: "normal", short: "Nor", title: "Normal render" },
-  { key: "deuteranopia", short: "Deu", title: "Deuteranopia" },
-  { key: "protanopia", short: "Pro", title: "Protanopia" },
-  { key: "tritanopia", short: "Tri", title: "Tritanopia" },
-  { key: "lowvision", short: "Low", title: "Low vision" },
-  { key: "grayscale", short: "Gry", title: "Grayscale" },
+  { key: "normal", short: "Nor", title: "Normal, no vision filter" },
+  { key: "deuteranopia", short: "Deu", title: "Deuteranopia (red-green color blindness)" },
+  { key: "protanopia", short: "Pro", title: "Protanopia (red-green color blindness)" },
+  { key: "tritanopia", short: "Tri", title: "Tritanopia (blue-yellow color blindness)" },
+  { key: "lowvision", short: "Low", title: "Low vision (reduced sharpness and contrast)" },
+  { key: "grayscale", short: "Gry", title: "Grayscale (no color)" },
 ];
 
 export const LAYER_RAIL: { key: Layer; short: string; title: string }[] = [
-  { key: "markers", short: "Mrk", title: "Issue markers" },
-  { key: "focus", short: "Foc", title: "Keyboard focus path" },
-  { key: "none", short: "Off", title: "No overlay" },
+  { key: "markers", short: "Mrk", title: "Show issue markers" },
+  { key: "focus", short: "Foc", title: "Show the keyboard focus order" },
+  { key: "none", short: "Off", title: "Hide the overlay" },
 ];
 
 /** Short label shown on a selected marker — the measured ratio when we have one, else the criterion. */

@@ -54,7 +54,7 @@ export function buildContrastPreview(
   } else if (locatedVerification === "failed") {
     confidence = "inconclusive";
     reason =
-      "The calculated pair reaches the minimum, but the located element's live re-audit still flags it — the real background is probably an image, gradient or overlapping layer, so this sampled solid color isn't the true background.";
+      "The calculated pair reaches the minimum, but the located element's live re-audit still flags it. The real background is probably an image, gradient or overlapping layer, so this sampled solid color isn't the true background.";
   } else if (passesCalc) {
     confidence = "calculated";
   } else {

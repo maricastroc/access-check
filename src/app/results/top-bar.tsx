@@ -62,7 +62,7 @@ export function TopBar({
             <span className="hidden sm:inline">Re-audit</span>
           </Button>
           <Button variant="secondary" size="sm" onClick={onMarkdown} disabled={!result}>
-            Markdown
+            Export Markdown
           </Button>
           {result ? (
             <Button
@@ -77,7 +77,7 @@ export function TopBar({
               href="/"
               className="inline-flex h-9 items-center justify-center bg-ink px-4 text-[13.5px] font-semibold text-surface hover:bg-ink-2"
             >
-              New scan
+              New audit
             </Link>
           )}
         </div>

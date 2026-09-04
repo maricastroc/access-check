@@ -1,9 +1,8 @@
 import type { ScanWarning } from "@/lib/scan/types";
 
 /**
- * Partial-scan notices. Each line carries the exact code the engine emitted (in
- * mono) followed by the plain-language reason — olive, a caveat, never a failure
- * of the audited page.
+ * Partial-audit notices: a plain-language reason per skipped or incomplete step,
+ * in olive. These are caveats about the audit, never a failure of the audited page.
  */
 export function WarningList({
   warnings,
@@ -28,8 +27,8 @@ export function WarningList({
       </div>
       <ul className="mt-3 space-y-2">
         {warnings.map((w) => (
-          <li key={w.code} className="flex flex-col gap-0.5 text-[13px] leading-normal sm:flex-row sm:gap-2.5">
-            <code className="shrink-0 font-mono text-[12px] text-moderate-text">{w.code}</code>
+          <li key={w.code} className="flex items-start gap-2.5 text-[13px] leading-normal">
+            <span aria-hidden className="mt-[7px] size-1.5 shrink-0 bg-moderate" />
             <span className="text-body">{w.message}</span>
           </li>
         ))}

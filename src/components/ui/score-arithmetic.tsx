@@ -47,7 +47,7 @@ export function ScoreArithmetic({
       <span className="font-cond text-[11px] tracking-[0.1em] text-muted uppercase">
         outside score
       </span>
-      <span className="text-muted">—</span>
+      <span className="font-mono text-[12.5px] tabular-nums text-muted">0</span>
 
       <span aria-hidden className="h-3 w-3" />
       <span className="border-t border-hairline pt-2 font-medium text-ink">Internal priority score</span>

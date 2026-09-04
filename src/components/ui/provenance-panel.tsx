@@ -19,12 +19,12 @@ export function ProvenancePanel({
       <div className="mt-2 space-y-2 text-[12.5px] leading-normal text-body">
         <p>
           Headless Chromium · axe-core with WCAG A &amp; AA rules
-          {viewport ? ` · captured at ${viewport}` : ""}
+          {viewport ? ` · screenshot taken at ${viewport}` : ""}
           {typeof durationMs === "number" ? ` in ${(durationMs / 1000).toFixed(1)}s` : ""}.
         </p>
         <p>{passes ?? "Complementary passes: keyboard, mobile viewport, expanded UI, vision, motion, live regions."}</p>
         <p>
-          Fixes are applied and reverted in a copy — the audited site is not altered.
+          Fixes are applied and reverted on a copy, so the audited site is never altered.
         </p>
       </div>
     </div>

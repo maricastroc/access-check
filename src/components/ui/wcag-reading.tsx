@@ -69,7 +69,7 @@ export function WcagReading({ model }: { model: WcagReadingModel }) {
         <li className="flex items-start gap-3 border-t border-hairline pt-3">
           <LevelSquare level="AAA" fill="hollow" />
           <p className="text-[14px] leading-snug text-muted">
-            Not evaluated — the engine runs A and AA
+            Not evaluated. AccessCheck runs A and AA
           </p>
         </li>
       </ul>

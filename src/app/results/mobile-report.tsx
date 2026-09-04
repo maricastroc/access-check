@@ -85,7 +85,7 @@ export function MobileReport({
               tab === t ? "bg-ink text-surface" : "bg-surface text-ink",
             )}
           >
-            {t === "capture" ? "Capture" : `Findings · ${findings.length}`}
+            {t === "capture" ? "Screenshot" : `Findings · ${findings.length}`}
           </button>
         ))}
       </div>
@@ -129,7 +129,7 @@ export function MobileReport({
               <div className="flex items-center justify-between gap-3">
                 <span className="text-[12.5px] text-muted">
                   {selectedFinding.elements} element{selectedFinding.elements === 1 ? "" : "s"} ·{" "}
-                  {selectedFinding.markers.length} located
+                  {selectedFinding.markers.length} on the screenshot
                 </span>
                 <Button variant="primary" size="md" onClick={() => setTab("findings")}>
                   View finding
@@ -151,7 +151,10 @@ export function MobileReport({
       ) : (
         <div className="flex flex-col gap-2 p-4">
           {findings.length === 0 ? (
-            <p className="text-[13.5px] text-muted">No automated findings on this page.</p>
+            <p className="text-[13.5px] text-muted">
+              No automated failures on this page. Some things still need a person to check, shown as
+              manual-review items below.
+            </p>
           ) : (
             findings.map((f) => (
               <div key={f.id}>
@@ -162,7 +165,7 @@ export function MobileReport({
                     {f.markers.length > 0 && (
                       <div className="mt-2">
                         <Button variant="secondary" size="md" onClick={() => setTab("capture")}>
-                          Show on capture
+                          Show on screenshot
                         </Button>
                       </div>
                     )}
@@ -173,7 +176,7 @@ export function MobileReport({
           )}
           <div className="mt-2">
             <SectionKicker tone="steel">
-              {result.counts.passed} passed · {result.counts.manualReview} manual review
+              {result.counts.passed} passed · {result.counts.manualReview} need review
             </SectionKicker>
           </div>
         </div>
@@ -182,7 +185,7 @@ export function MobileReport({
       {/* fixed export footer */}
       <div className="fixed inset-x-0 bottom-0 z-30 flex gap-2 border-t border-border bg-surface px-4 py-2.5">
         <Button variant="secondary" size="md" onClick={onMarkdown} className="flex-1">
-          Markdown
+          Export Markdown
         </Button>
         <Button href={`/report?url=${encodeURIComponent(result.finalUrl)}`} variant="primary" size="md" className="flex-1">
           Export PDF

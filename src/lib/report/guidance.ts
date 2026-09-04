@@ -104,10 +104,10 @@ export function categoryOf(ruleId: string, kind?: string): Category {
 const IMPACT: Record<Category, string> = {
   contrast:
     "People with low vision or reduced contrast sensitivity may be unable to read this text, especially on low-quality screens or in bright light.",
-  alt: "Screen-reader users get nothing where this image should convey meaning — they hear a filename, or silence, instead of the content.",
+  alt: "Screen-reader users get nothing where this image should carry meaning. They hear a file name, or silence, instead of the content.",
   name: "Screen-reader users hear only the element's type (“link”, “button”, “edit”) with no idea what it does, so they can't decide whether to activate it.",
   lang: "Screen readers pick the wrong pronunciation rules, so the page is read aloud in the wrong accent or language and can become unintelligible.",
-  title: "The page title is the first thing a screen reader announces and the label in tabs, history and bookmarks — without it, users can't tell pages apart.",
+  title: "The page title is the first thing a screen reader announces, and the label shown in tabs, history and bookmarks. Without it, people can't tell pages apart.",
   zoom: "Blocking pinch-zoom stops low-vision users from enlarging the text, which many rely on to read at all on a phone.",
   "heading-order":
     "Screen-reader users navigate by heading level to skim a page; a skipped or out-of-order level makes the structure misleading and hides where sections begin.",
@@ -116,7 +116,7 @@ const IMPACT: Record<Category, string> = {
   landmark:
     "Landmark regions let screen-reader users jump straight to navigation, main content or the footer; content outside them can only be reached by reading everything in order.",
   list: "Screen readers announce “list, N items” and let users skip it; broken list markup loses that count and the ability to move item by item.",
-  aria: "Incorrect or incomplete ARIA makes assistive tech announce the wrong role or state — often worse than no ARIA at all.",
+  aria: "Incorrect or incomplete ARIA makes assistive technology announce the wrong role or state, which is often worse than no ARIA at all.",
   "duplicate-id":
     "Duplicate ids break the links between labels, controls and ARIA references, so the wrong element gets announced or activated.",
   frame: "Screen-reader users hear an unlabeled frame with no idea what it contains, so they may skip important embedded content.",
@@ -134,7 +134,7 @@ const IMPACT: Record<Category, string> = {
     "Small touch targets are hard to hit for people with motor or dexterity limitations, and for anyone on a moving bus or with large fingers.",
   motion:
     "Users who set “reduce motion” (often because animation triggers nausea or vertigo) still get movement they asked the system to suppress.",
-  live: "Screen-reader users miss dynamic updates — errors, confirmations, counts — because the region that should announce them isn't set up to.",
+  live: "Screen-reader users miss updates like errors, confirmations and counts, because the region that should announce them isn't set up to.",
   generic:
     "Assistive-technology users hit a barrier here that sighted mouse users don't, so the same task is harder or impossible for them.",
 };
@@ -152,7 +152,7 @@ const GUIDANCE: Partial<Record<Category, Guidance>> = {
   },
   "heading-order": {
     action:
-      "Change the flagged heading so levels only ever increase by one (h2 → h3, never h2 → h4). Renumber for structure, not for visual size — use CSS to size it.",
+      "Change the flagged heading so levels only ever increase by one (h2 to h3, never h2 to h4). Renumber for structure, not for visual size, and use CSS to size it.",
     caution: "Never skip a level to get a smaller font; style the correct level instead.",
   },
   landmark: {
@@ -178,7 +178,7 @@ const GUIDANCE: Partial<Record<Category, Guidance>> = {
   },
   "focus-visible": {
     action:
-      "Give interactive elements a clearly visible focus style. Style :focus-visible rather than removing outlines — never set outline: none without a replacement.",
+      "Give interactive elements a clearly visible focus style. Style :focus-visible rather than removing outlines. Never set outline: none without a replacement.",
     example: {
       lang: "css",
       code: ":focus-visible {\n  outline: 2px solid #17181a;\n  outline-offset: 2px;\n}",
@@ -197,7 +197,7 @@ const GUIDANCE: Partial<Record<Category, Guidance>> = {
   },
   tabindex: {
     action:
-      "Remove tabindex values greater than 0. Use tabindex=\"0\" to make a custom control focusable, or -1 to focus it programmatically — never positive numbers.",
+      "Remove tabindex values greater than 0. Use tabindex=\"0\" to make a custom control focusable, or -1 to focus it from code. Never use positive numbers.",
   },
   reachable: {
     action:
@@ -238,18 +238,18 @@ export function fixGuidance(ruleId: string, kind?: string): Guidance | null {
 /** Why the finding has no marker on the capture — mapped from its category/kind. */
 export function markerReason(ruleId: string, kind: string, isDocLevel: boolean): string {
   if (kind === "best-practice") {
-    return "Best practice — reported as coverage, not tied to one positioned element.";
+    return "Best practice, reported as coverage. It is not tied to one positioned element.";
   }
   if (kind === "context") {
-    return "Surfaced in a different context (mobile viewport or an opened state), so it isn't on the desktop capture.";
+    return "Found in a different context (mobile size or an opened state), so it is not on the desktop screenshot.";
   }
   if (kind === "keyboard") {
-    return "From the keyboard pass — see the focus path, not the issue markers.";
+    return "From the keyboard pass, so it appears on the focus path rather than as an issue marker.";
   }
   if (isDocLevel) {
-    return "Applies to the document or page structure, not a single positioned element.";
+    return "Applies to the whole document or page structure, not a single positioned element.";
   }
-  return "The affected element is outside the captured viewport (the first 1200×800), is hidden, or has no visible box on the capture.";
+  return "The affected element is outside the part of the page we captured (the first 1200×800 pixels), is hidden, or has no visible box on the screenshot.";
 }
 
 const DOC_LEVEL = new Set<Category>(["lang", "title", "zoom", "heading-one", "landmark"]);

@@ -21,9 +21,9 @@ const barlowCondensed = Barlow_Condensed({
 });
 
 export const metadata: Metadata = {
-  title: "AccessCheck — Measure, locate and trace every accessibility barrier",
+  title: "AccessCheck: measure, locate and trace every accessibility barrier",
   description:
-    "Paste a URL. AccessCheck opens the page in a real browser, runs axe-core (WCAG A and AA) plus keyboard, viewport and vision passes, and returns each finding tied to the element that caused it — with a fix tested in a sandbox copy.",
+    "Paste a web address. AccessCheck opens the page in a real browser, runs axe-core (WCAG levels A and AA) plus keyboard, mobile and vision passes, and returns each finding tied to the element that caused it, with a fix tested on a copy of the page.",
   icons: {
     icon: "/app-icon-512.png",
     apple: "/app-icon-512.png",

@@ -23,12 +23,12 @@ export const axeRules: AxeRule[] = [
 export type Pass = { label: string; desc: string };
 
 export const complementaryPasses: Pass[] = [
-  { label: "Keyboard", desc: "Walks the page with Tab and maps focus order, traps and invisible focus" },
-  { label: "Context", desc: "Re-audits in a mobile viewport and after opening menus and disclosures" },
-  { label: "Vision", desc: "Simulates deuteranopia, protanopia, tritanopia, low vision and grayscale on the capture" },
-  { label: "Motion", desc: "Checks that the page respects prefers-reduced-motion" },
-  { label: "Live", desc: "Watches live regions and dynamic announcements" },
-  { label: "Review", desc: "Lists what needs a human eye, with the steps to confirm it" },
+  { label: "Keyboard", desc: "Tabs through the page to check focus order, keyboard traps and focus you can't see" },
+  { label: "Context", desc: "Checks the page again at mobile size and after opening menus and expandable sections" },
+  { label: "Vision", desc: "Simulates color blindness (deuteranopia, protanopia, tritanopia), low vision and grayscale" },
+  { label: "Motion", desc: "Checks that the page respects the visitor's reduced-motion setting" },
+  { label: "Live", desc: "Watches for updates announced to screen readers (live regions)" },
+  { label: "Review", desc: "Lists what a person still needs to check, with the steps to confirm it" },
 ];
 
 export type Step = { n: string; title: string; body: string; tone: "serious" | "verified" };
@@ -36,20 +36,20 @@ export type Step = { n: string; title: string; body: string; tone: "serious" | "
 export const steps: Step[] = [
   {
     n: "01",
-    title: "The page is really opened",
-    body: "Headless Chromium loads the URL, waits for content to settle and injects axe-core — it works on sites with strict CSP.",
+    title: "Opened in a real browser",
+    body: "We open the page in a real browser, let it finish loading, then run the axe-core accessibility tests on it. This works even on sites with strict security rules (CSP).",
     tone: "serious",
   },
   {
     n: "02",
-    title: "Each finding gets a measure and an element",
-    body: "Contrast ratio, selector, snippet and position on the capture. Identical findings are grouped: one fix, N elements.",
+    title: "Every finding is measured and tied to an element",
+    body: "Contrast ratio, selector, code snippet and position on the screenshot. Repeated issues are grouped, so one fix can cover several elements at once.",
     tone: "serious",
   },
   {
     n: "03",
-    title: "The fix is tested before it's suggested",
-    body: "The change is applied to a copy of the page, the rule runs again, and the result is labelled: verified, or needs review.",
+    title: "Each fix is tested before we suggest it",
+    body: "We apply the change to a copy of the page, run the check again, then mark the result as verified or needs review.",
     tone: "verified",
   },
 ];
@@ -81,7 +81,7 @@ export const exampleScore = {
   ],
 };
 
-export const exampleMarkdown = `## aurora-coffee.com — 71/100
+export const exampleMarkdown = `## aurora-coffee.com: 71/100
 | severity | findings | elements |
 | serious  | 1 | 7 |
 | moderate | 2 | 2 |

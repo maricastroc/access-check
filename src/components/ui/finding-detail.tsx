@@ -78,14 +78,14 @@ function CONF_META(preview: ContrastPreview) {
       label: "Verified on this element",
       cls: "text-verified",
       accent: "var(--color-verified)",
-      result: "Passes WCAG AA — confirmed by re-audit of the located element",
+      result: "Passes WCAG AA, confirmed by re-audit of the located element",
     };
   if (preview.confidence === "calculated")
     return {
       label: "Calculated",
       cls: "text-steel",
       accent: "var(--color-steel)",
-      result: `Would reach ${preview.simulated.ratio.toFixed(2)}:1 — calculated from the detected colors, not verified live`,
+      result: `Would reach ${preview.simulated.ratio.toFixed(2)}:1, calculated from the detected colors, not verified live`,
     };
   return {
     label: "Result uncertain",
@@ -201,11 +201,11 @@ export function FindingDetail({ finding, host }: { finding: FindingView; host: s
                 </span>
               )}
               <code className="font-mono text-[12.5px] text-steel">{finding.affectedSelectors[0]}</code>
-              {located > 0 && <span className="text-[11.5px] text-muted">· on the capture</span>}
+              {located > 0 && <span className="text-[11.5px] text-muted">· on the screenshot</span>}
             </p>
             <p className="mt-1.5 text-[12.5px] text-muted">
               <span className="font-medium text-ink tabular-nums">{finding.elements}</span> element
-              {finding.elements === 1 ? "" : "s"} affected · {located} located on the capture
+              {finding.elements === 1 ? "" : "s"} affected · {located} shown on the screenshot
             </p>
             {finding.affectedSelectors.length > 1 && (
               <ul className="mt-2 flex flex-wrap gap-1.5">
@@ -249,7 +249,7 @@ export function FindingDetail({ finding, host }: { finding: FindingView; host: s
             )}
             {finding.guidance.humanDecision && (
               <p className="mt-2 text-[12px] text-muted">
-                The right change depends on the page&apos;s structure — confirm it in context.
+                The right change depends on the page&apos;s structure, so confirm it in context.
               </p>
             )}
           </>

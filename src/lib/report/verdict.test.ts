@@ -103,7 +103,7 @@ describe("buildVerdict — never extrapolates one representative to a whole clus
   it("no-auto-fix — no applicable correction", () => {
     const v = buildVerdict({ ...base, fixVerification: "unchecked", hasAutoFix: false });
     expect(v.kind).toBe("no-auto-fix");
-    expect(verdictMessage(v)).toContain("no automatic correction");
+    expect(verdictMessage(v)).toContain("no automatic fix");
   });
 
   it("best-practice and complementary never claim a WCAG fix", () => {

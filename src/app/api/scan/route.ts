@@ -35,7 +35,8 @@ function streamResponse(
       try {
         await produce(send);
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Unknown error.";
+        const message =
+          err instanceof Error ? err.message : "Something went wrong on our side. Please try again.";
         send({ type: "error", error: message, code: "internal" });
       } finally {
         closed = true;
@@ -58,15 +59,15 @@ export async function POST(req: Request) {
   try {
     body = await req.json();
   } catch {
-    return fail("Invalid JSON body.", "invalid-url", 400);
+    return fail("We couldn't read that request. Please reload the page and try again.", "invalid-url", 400);
   }
 
   if (!body.url || typeof body.url !== "string") {
-    return fail("Missing 'url'.", "invalid-url", 400);
+    return fail("No web address was provided. Enter a page address and try again.", "invalid-url", 400);
   }
 
   if ((await scanRateLimit.check(clientKey(req))) === "limited") {
-    return fail("Too many scans. Try again in a minute.", "rate-limited", 429);
+    return fail("Too many audits in a short time. Please wait about a minute and try again.", "rate-limited", 429);
   }
 
   const url = normalizeUrl(body.url);
@@ -75,7 +76,11 @@ export async function POST(req: Request) {
     await assertPublicUrl(url);
   } catch (err) {
     const blocked = err instanceof BlockedUrlError;
-    return fail(blocked ? err.message : "Invalid URL.", blocked ? err.code : "invalid-url", 400);
+    return fail(
+      blocked ? err.message : "That doesn't look like a valid web address. Check it and try again.",
+      blocked ? err.code : "invalid-url",
+      400,
+    );
   }
 
   const userId = (await auth())?.user?.id;
@@ -162,7 +167,7 @@ export async function POST(req: Request) {
       if (outcome.kind === "expired") {
         send({
           type: "error",
-          error: "This page took longer than we can wait. Try a lighter page.",
+          error: "This page took too long to finish. Try a single, lighter page instead of a large home page.",
           code: "timeout",
         });
         log("deadline");
@@ -174,7 +179,7 @@ export async function POST(req: Request) {
       const message =
         error instanceof ScanFailure
           ? error.message
-          : "Could not scan this page. Please try another URL.";
+          : "We couldn't audit this page. Please try another web address.";
       send({ type: "error", error: message, code });
       log("error", { code, detail: error instanceof Error ? error.message : String(error) });
     } finally {

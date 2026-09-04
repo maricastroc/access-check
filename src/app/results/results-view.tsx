@@ -70,7 +70,7 @@ export function ResultsView({
     try {
       apply(await streamScan(value, { onPhase: setPhase, onCore: apply }));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "The scan failed unexpectedly.");
+      setError(e instanceof Error ? e.message : "The audit stopped before it could finish. Please try again.");
       setErrorHint(e instanceof ScanStreamError ? SCAN_ERROR_HINT[e.code] : "");
       setStatus("error");
     }
@@ -207,14 +207,14 @@ export function ResultsView({
               <div className="mx-auto w-full max-w-[1560px] px-4 pt-4 sm:px-6">
                 <div className="flex flex-col items-start gap-2 border border-border bg-surface px-4 py-3 text-[13px] sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-body">
-                    <span className="font-semibold text-ink">Quick scan from the site audit.</span>{" "}
-                    Run the full analysis to add the capture, keyboard and sandbox passes.
+                    <span className="font-semibold text-ink">Quick result from the site audit.</span>{" "}
+                    Run the full audit to add the screenshot, keyboard checks and fix testing.
                   </p>
                   <button
                     onClick={() => scan(url)}
                     className="shrink-0 bg-ink px-3.5 py-1.5 text-[13px] font-semibold text-surface hover:bg-ink-2"
                   >
-                    Run full analysis
+                    Run full audit
                   </button>
                 </div>
               </div>

@@ -3,11 +3,11 @@ import { cn } from "@/lib/cn";
 
 /** The real engine stages, in the order they run. */
 const STAGES = [
-  "Navigation and content settled",
-  "axe-core A and AA rules",
-  "Verifying fixes in a sandbox copy",
-  "Page capture",
-  "Keyboard and contexts",
+  "Opening the page and waiting for it to settle",
+  "Running the WCAG A and AA checks (axe-core)",
+  "Testing fixes on a copy of the page",
+  "Taking the screenshot",
+  "Keyboard and mobile checks",
 ] as const;
 
 /** Coarse phase → stage index (the engine reports 5 phases across these stages). */

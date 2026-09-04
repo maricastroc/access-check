@@ -194,7 +194,7 @@ function ProgressRuler({
       aria-valuemin={0}
       aria-valuemax={budgetMs}
       aria-valuenow={elapsedMs}
-      aria-label={label ?? `Scan progress: ${secs}s of up to ${budgetSecs}s`}
+      aria-label={label ?? `Audit progress: ${secs}s of up to ${budgetSecs}s`}
       className="flex h-[14px] w-full overflow-hidden border border-ink bg-surface"
     >
       <span aria-hidden className="h-full bg-ink" style={{ width: `${donePct}%` }} />

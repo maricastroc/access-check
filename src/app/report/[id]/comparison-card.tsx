@@ -28,7 +28,7 @@ export function ComparisonCard({ diff, previousAt }: { diff: ScanDiff; previousA
       <div className="flex items-start justify-between gap-4">
         <div>
           <span className="text-[10px] font-semibold tracking-[0.2em] text-brand-600 uppercase">
-            Changes since last scan
+            Changes since last audit
           </span>
           <h2 className="mt-1.5 text-xl font-bold tracking-tight text-ink">
             What moved since {dateFmt.format(previousAt)}
@@ -85,14 +85,14 @@ export function ComparisonCard({ diff, previousAt }: { diff: ScanDiff; previousA
           items={diff.fixed}
           icon={faCheck}
           tone="#16764f"
-          empty="No rules cleared since last scan."
+          empty="No rules cleared since the last audit."
         />
         <DiffList
-          title="New / regressed"
+          title="New or worse"
           items={diff.regressed}
           icon={faTriangleExclamation}
           tone="#c62a2f"
-          empty="No new rules flagged — nothing regressed."
+          empty="No new rules flagged. Nothing got worse."
         />
       </div>
     </section>
