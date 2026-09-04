@@ -7,11 +7,12 @@ import { Button, CodeBlock, Marker, ProvenancePanel, SectionKicker } from "@/com
 import { modeDesc, previewFilters, type SimKey } from "./data";
 import { clamp } from "./shared";
 import { type Layer, type MarkerView } from "./report-ui";
+import type { FocusPoint } from "./report-model";
+
+export type { FocusPoint };
 
 const CAPTURE_WIDTH = 1200;
 const CAPTURE_HEIGHT = 800;
-
-export type FocusPoint = { n: number; cx: number; cy: number; visible: boolean; label: string };
 
 function tintFor(severity: Severity | null): string {
   switch (severity) {

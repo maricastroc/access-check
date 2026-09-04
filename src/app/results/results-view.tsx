@@ -1,25 +1,27 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { ScanPhase, ScanResult } from "@/lib/scan/types";
-import { streamScan, ScanStreamError, SCAN_ERROR_HINT } from "@/lib/scan/stream";
-import { buildFindings, orderedMarkers } from "@/lib/report/findings";
-import { scoreBreakdown } from "@/lib/report/score";
-import { buildWcagReading } from "@/lib/report/wcag";
+import type { ScanResult } from "@/lib/scan/types";
+import type { FindingView } from "@/lib/report/findings";
+import { orderedMarkers } from "@/lib/report/findings";
 import { buildReportMarkdown, reportMarkdownFilename } from "@/lib/report/markdown";
+import { usePageAudit } from "@/hooks/use-page-audit";
 import { ColorBlindFilters } from "./color-blind-filters";
-import { DEFAULT_URL, clamp, safeHost, type Status } from "./shared";
+import { DEFAULT_URL, safeHost } from "./shared";
 import { type SimKey } from "./data";
 import { buildMarkerViews, type Layer } from "./report-ui";
+import { buildReportView } from "./report-model";
+import { useFindingSelection } from "./use-finding-selection";
 import { TopBar } from "./top-bar";
 import { SummaryBand } from "./summary-band";
 import { VisionRail } from "./vision-rail";
-import { EvidenceFrame, type FocusPoint } from "./evidence-frame";
+import { EvidenceFrame } from "./evidence-frame";
 import { FindingsMargin } from "./findings-margin";
 import { MobileReport } from "./mobile-report";
 import { ScanningState, ErrorState, PartialNotice } from "./states";
 
 const VIEWPORT_LABEL = "1200 × 800";
+const NO_FINDINGS: FindingView[] = [];
 
 function useIsDesktop() {
   const [desktop, setDesktop] = useState(true);
@@ -43,15 +45,16 @@ export function ResultsView({
   initialResult: ScanResult | null;
 }) {
   const start = initialUrl || DEFAULT_URL;
-  const [url, setUrl] = useState(start);
-  const [input, setInput] = useState(start);
-  const [status, setStatus] = useState<Status>(initialResult ? "done" : "loading");
-  const [result, setResult] = useState<ScanResult | null>(initialResult);
-  const [phase, setPhase] = useState<ScanPhase>("preparing");
-  const [error, setError] = useState("");
-  const [errorHint, setErrorHint] = useState("");
+  const audit = usePageAudit({
+    initialUrl: start,
+    initialResult,
+    incremental: true,
+    fallbackError: "The audit stopped before it could finish. Please try again.",
+  });
+  const { status, result, phase, url, error, errorHint, scan } = audit;
 
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [input, setInput] = useState(start);
+
   const [sim, setSim] = useState<SimKey>("normal");
   const [layer, setLayer] = useState<Layer>("markers");
   const [collapsed, setCollapsed] = useState(false);
@@ -59,108 +62,15 @@ export function ResultsView({
 
   const desktop = useIsDesktop();
 
-  const runFetch = useCallback(async (value: string) => {
-    setPhase("preparing");
-    const apply = (r: ScanResult) => {
-      setResult(r);
-      setUrl(r.finalUrl || value);
-      setStatus("done");
-    };
-    try {
-      apply(await streamScan(value, { onPhase: setPhase, onCore: apply }));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "The audit stopped before it could finish. Please try again.");
-      setErrorHint(e instanceof ScanStreamError ? SCAN_ERROR_HINT[e.code] : "");
-      setStatus("error");
-    }
-  }, []);
-
-  const scan = useCallback(
-    (target: string) => {
-      const value = target.trim();
-      if (!value) return;
-      setStatus("loading");
-      setError("");
-      setErrorHint("");
-      setUrl(value);
-      setSelectedId(null);
-      void runFetch(value);
-    },
-    [runFetch],
-  );
-
-  useEffect(() => {
-    if (initialResult) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void runFetch(initialUrl || DEFAULT_URL);
-  }, [initialUrl, initialResult, runFetch]);
-
-  const findings = useMemo(() => (result ? buildFindings(result) : []), [result]);
-  const breakdown = useMemo(
-    () => (result ? scoreBreakdown(result.violations, result.score) : null),
-    [result],
-  );
-  const wcag = useMemo(() => (result ? buildWcagReading(result.violations) : null), [result]);
-
-  const markerOwner = useMemo(() => {
-    const map = new Map<number, string>();
-    for (const f of findings) for (const m of f.markers) map.set(m.n, f.id);
-    return map;
-  }, [findings]);
-
-  const selectedFinding = useMemo(
-    () => findings.find((f) => f.id === selectedId) ?? null,
-    [findings, selectedId],
-  );
-
-  const focusPoints: FocusPoint[] = useMemo(() => {
-    return (result?.keyboard?.focusPath ?? [])
-      .filter((s) => s.left !== null && s.top !== null)
-      .map((s) => ({
-        n: s.n,
-        cx: clamp(s.left! + (s.width ?? 0) / 2, 2, 98),
-        cy: clamp(s.top! + (s.height ?? 0) / 2, 2, 98),
-        visible: s.focusVisible,
-        label: s.label,
-      }));
-  }, [result]);
+  const view = useMemo(() => (result ? buildReportView(result) : null), [result]);
+  const selection = useFindingSelection(view?.findings ?? NO_FINDINGS);
 
   const effectiveLayer: Layer = result?.screenshot ? layer : "none";
-
   const markerViews = useMemo(
-    () => (result ? buildMarkerViews(orderedMarkers(result), selectedFinding) : []),
-    [result, selectedFinding],
+    () => (result ? buildMarkerViews(orderedMarkers(result), selection.selectedFinding) : []),
+    [result, selection.selectedFinding],
   );
-
-  const host = result ? safeHost(result.finalUrl) : safeHost(url);
-
-  const selectFinding = useCallback((id: string) => {
-    setSelectedId(id);
-  }, []);
-
-  const selectMarker = useCallback(
-    (markerN: number) => {
-      const ownerId = markerOwner.get(markerN);
-      if (ownerId) setSelectedId(ownerId);
-    },
-    [markerOwner],
-  );
-
-  useEffect(() => {
-    if (!selectedId) return;
-    const id = window.setTimeout(() => {
-      document.getElementById(`finding-${selectedId}`)?.scrollIntoView({ block: "center" });
-    }, 20);
-    return () => window.clearTimeout(id);
-  }, [selectedId]);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setSelectedId(null);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  const host = view?.host ?? safeHost(url);
 
   const exportMarkdown = useCallback(() => {
     if (!result) return;
@@ -197,7 +107,7 @@ export function ResultsView({
           />
         )}
 
-        {status === "done" && result && breakdown && wcag && (
+        {status === "done" && result && view && (
           <>
             {siteId && initialResult && (
               <div className="mx-auto w-full max-w-[1560px] px-4 pt-4 sm:px-6">
@@ -222,7 +132,7 @@ export function ResultsView({
 
             {desktop ? (
               <>
-                <SummaryBand result={result} breakdown={breakdown} wcag={wcag} />
+                <SummaryBand result={result} breakdown={view.breakdown} wcag={view.wcag} />
                 <div className="mx-auto grid w-full max-w-[1560px] grid-cols-[164px_minmax(0,1fr)_420px] items-start">
                   <div className="sticky top-15.5 self-start">
                     <VisionRail
@@ -244,18 +154,18 @@ export function ResultsView({
                       collapsed={collapsed}
                       onToggleCollapse={() => setCollapsed((c) => !c)}
                       markerViews={markerViews}
-                      focusPoints={focusPoints}
-                      selectedFinding={selectedFinding}
-                      onSelectMarker={selectMarker}
+                      focusPoints={view.focusPoints}
+                      selectedFinding={selection.selectedFinding}
+                      onSelectMarker={selection.selectMarker}
                     />
                   </div>
                   <div className="scroll-slim sticky top-15.5 max-h-[calc(100vh-62px)] self-start overflow-y-auto">
                     <FindingsMargin
-                      findings={findings}
+                      findings={view.findings}
                       result={result}
                       host={host}
-                      selectedId={selectedId}
-                      onSelect={selectFinding}
+                      selectedId={selection.selectedId}
+                      onSelect={selection.selectFinding}
                     />
                   </div>
                 </div>
@@ -264,18 +174,18 @@ export function ResultsView({
               <MobileReport
                 result={result}
                 host={host}
-                breakdown={breakdown}
-                wcag={wcag}
+                breakdown={view.breakdown}
+                wcag={view.wcag}
                 sim={sim}
                 setSim={setSim}
                 layer={effectiveLayer}
-                findings={findings}
-                selectedFinding={selectedFinding}
-                selectedId={selectedId}
-                onSelect={selectFinding}
+                findings={view.findings}
+                selectedFinding={selection.selectedFinding}
+                selectedId={selection.selectedId}
+                onSelect={selection.selectFinding}
                 markerViews={markerViews}
-                focusPoints={focusPoints}
-                onSelectMarker={selectMarker}
+                focusPoints={view.focusPoints}
+                onSelectMarker={selection.selectMarker}
                 tab={mobileTab}
                 setTab={setMobileTab}
                 onMarkdown={exportMarkdown}
