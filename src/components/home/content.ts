@@ -86,6 +86,10 @@ export const exampleScore = {
   ],
 };
 
+/** Plain-language read of the demo result, the same one-liner the report shows. */
+export const exampleSummary =
+  "No critical blockers, but 1 serious finding still makes the page harder to use for people who rely on assistive technology.";
+
 export const exampleMarkdown = `## aurora-coffee.com: 53/100
 | severity | findings | elements |
 | serious  | 1 | 7 |

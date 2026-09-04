@@ -227,7 +227,7 @@ export function ResultsView({
             {desktop ? (
               <>
                 <SummaryBand result={result} breakdown={breakdown} wcag={wcag} />
-                <div className="mx-auto grid w-full max-w-[1560px] grid-cols-[60px_minmax(0,1fr)_420px] items-start">
+                <div className="mx-auto grid w-full max-w-[1560px] grid-cols-[164px_minmax(0,1fr)_420px] items-start">
                   <div className="sticky top-[62px] self-start">
                     <VisionRail
                       sim={sim}

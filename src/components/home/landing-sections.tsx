@@ -553,14 +553,14 @@ export function FinalCta() {
     <section className="bg-ink text-surface">
       <div className="mx-auto w-full max-w-[1200px] px-6 py-16">
         {/* a signature line recovering the page's motifs */}
-        <div className="flex flex-wrap items-center gap-x-8 gap-y-2 border-b border-ink-2 pb-6 font-cond text-[13px] tracking-[0.06em] uppercase">
-          <span className="flex items-center gap-2 text-serious">
+        <div className="flex flex-wrap items-center gap-x-8 gap-y-2 border-b border-ink-2 pb-6 font-cond text-[13px] tracking-[0.06em] text-band uppercase">
+          <span className="flex items-center gap-2">
             <span aria-hidden className="hatch-serious size-2.5" /> Measured
           </span>
-          <span className="flex items-center gap-2 text-steel">
+          <span className="flex items-center gap-2">
             <span aria-hidden className="size-2.5 bg-steel" /> Located
           </span>
-          <span className="flex items-center gap-2 text-verified">
+          <span className="flex items-center gap-2">
             <span aria-hidden className="size-2.5 bg-verified" /> Verified
           </span>
           <span className="ml-auto font-sans text-[12px] tracking-normal text-disabled normal-case">

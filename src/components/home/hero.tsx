@@ -3,7 +3,7 @@ import type { WcagReadingModel } from "@/lib/report/wcag";
 import { Ruler, ScoreArithmetic, SectionKicker, WcagReading } from "@/components/ui";
 import { UrlForm } from "./url-form";
 import { HeroEvidencePreview } from "./evidence-preview";
-import { exampleScore } from "./content";
+import { exampleScore, exampleSummary } from "./content";
 
 const breakdown: ScoreBreakdown = {
   base: 100,
@@ -20,7 +20,7 @@ const wcag: WcagReadingModel = {
 
 export function Hero() {
   return (
-    <section className="border-b border-hairline bg-gradient-to-b from-band via-canvas to-canvas">
+    <section className="border-b border-hairline bg-canvas">
       <div className="mx-auto w-full max-w-[1200px] px-6">
         {/* first fold: message + form (left), live inspector (right) */}
         <div className="grid grid-cols-1 gap-x-14 gap-y-10 pt-14 lg:grid-cols-[minmax(0,1fr)_520px] lg:gap-x-20 lg:items-start">
@@ -72,6 +72,9 @@ export function Hero() {
               </span>
               <span className="pb-2 font-cond text-[18px] text-muted">/100</span>
             </div>
+            <p className="mt-2.5 max-w-[48ch] text-[14px] leading-normal text-body">
+              {exampleSummary}
+            </p>
             <div className="mt-3 max-w-[520px]">
               <Ruler variant="score" score={exampleScore.score} deductions={breakdown.deductions} height={30} ticks />
             </div>

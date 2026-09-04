@@ -21,7 +21,7 @@
   --color-ink: #17181a;
   --color-ink-2: #2f3134;
   --color-body: #4a4b4e;
-  --color-muted: #6b6c70;
+  --color-muted: #616266; /* AA (≥4.5:1) as small text on canvas, band and code backgrounds */
   --color-disabled: #a3a099;
 
   /* — linhas — */
@@ -30,7 +30,7 @@
 
   /* — severidade e status (papel fixo, não decorativo) — */
   --color-critical: #b3261e;
-  --color-serious: #a85a06;
+  --color-serious: #985104; /* AA (≥4.5:1) as small text on canvas, band and surface */
   --color-serious-hatch: #cf9553;
   --color-moderate: #8a6a00;
   --color-moderate-text: #7a6100;

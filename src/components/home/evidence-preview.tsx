@@ -69,8 +69,8 @@ export function CapturePreview({ height = 240 }: { height?: number }) {
       <div className="flex items-center justify-between px-5 pt-3.5">
         <span className="font-cond text-[13px] font-semibold tracking-[0.22em] text-ink">AURORA</span>
         <div className="flex items-center gap-3.5">
-          <span className="hidden text-[10px] text-ink/40 sm:inline">Menu</span>
-          <span className="hidden text-[10px] text-ink/40 sm:inline">Beans</span>
+          <span className="hidden text-[10px] text-ink/70 sm:inline">Menu</span>
+          <span className="hidden text-[10px] text-ink/70 sm:inline">Beans</span>
           <span className="relative inline-block">
             <span
               aria-hidden
@@ -94,7 +94,7 @@ export function CapturePreview({ height = 240 }: { height?: number }) {
           <br />
           small batch, since 2011
         </h3>
-        <p className="mt-2 max-w-[62%] text-[10px] leading-normal text-ink/35">
+        <p className="mt-2 max-w-[62%] text-[10px] leading-normal text-ink/70">
           Roasted in Porto every Tuesday and shipped the same week.
         </p>
         <span className="relative mt-4 inline-block">

@@ -6,19 +6,19 @@ import type { SimKey } from "./data";
 export type Layer = "markers" | "focus" | "none";
 
 /** Vision modes surfaced on the desktop control rail (all filters the engine supports). */
-export const VISION_RAIL: { key: SimKey; short: string; title: string }[] = [
-  { key: "normal", short: "Nor", title: "Normal, no vision filter" },
-  { key: "deuteranopia", short: "Deu", title: "Deuteranopia (red-green color blindness)" },
-  { key: "protanopia", short: "Pro", title: "Protanopia (red-green color blindness)" },
-  { key: "tritanopia", short: "Tri", title: "Tritanopia (blue-yellow color blindness)" },
-  { key: "lowvision", short: "Low", title: "Low vision (reduced sharpness and contrast)" },
-  { key: "grayscale", short: "Gry", title: "Grayscale (no color)" },
+export const VISION_RAIL: { key: SimKey; label: string; title: string }[] = [
+  { key: "normal", label: "Normal", title: "Normal, no vision filter" },
+  { key: "deuteranopia", label: "Deuteranopia", title: "Deuteranopia (red-green color blindness)" },
+  { key: "protanopia", label: "Protanopia", title: "Protanopia (red-green color blindness)" },
+  { key: "tritanopia", label: "Tritanopia", title: "Tritanopia (blue-yellow color blindness)" },
+  { key: "lowvision", label: "Low vision", title: "Low vision (reduced sharpness and contrast)" },
+  { key: "grayscale", label: "Grayscale", title: "Grayscale (no color)" },
 ];
 
-export const LAYER_RAIL: { key: Layer; short: string; title: string }[] = [
-  { key: "markers", short: "Mrk", title: "Show issue markers" },
-  { key: "focus", short: "Foc", title: "Show the keyboard focus order" },
-  { key: "none", short: "Off", title: "Hide the overlay" },
+export const LAYER_RAIL: { key: Layer; label: string; title: string }[] = [
+  { key: "markers", label: "Issue markers", title: "Show the issue markers on the screenshot" },
+  { key: "focus", label: "Focus path", title: "Show the keyboard focus order" },
+  { key: "none", label: "No overlay", title: "Hide the overlay" },
 ];
 
 /** Short label shown on a selected marker — the measured ratio when we have one, else the criterion. */

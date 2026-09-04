@@ -25,11 +25,10 @@ function RailButton({
       type="button"
       title={title}
       aria-pressed={active}
-      aria-label={title}
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "flex h-10 w-11 items-center justify-center border font-cond text-[13px] font-medium transition-colors",
+        "flex h-9 w-full items-center border px-2.5 text-left text-[13px] font-medium transition-colors",
         active
           ? "border-ink bg-ink text-surface"
           : "border-border bg-surface text-ink hover:bg-band",
@@ -59,7 +58,7 @@ export function VisionRail({
   onToggleCollapse: () => void;
 }) {
   return (
-    <div className="flex flex-col items-center gap-2 border-r border-border bg-band py-3">
+    <div className="flex flex-col gap-1.5 border-r border-border bg-band px-3 py-3">
       <SectionKicker className="mb-0.5">Vision</SectionKicker>
       {VISION_RAIL.map((m) => (
         <RailButton
@@ -68,13 +67,13 @@ export function VisionRail({
           title={m.title}
           onClick={() => setSim(m.key)}
         >
-          {m.short}
+          {m.label}
         </RailButton>
       ))}
 
-      <span aria-hidden className="my-1 h-px w-8 bg-border" />
+      <span aria-hidden className="my-1.5 h-px w-full bg-border" />
 
-      <SectionKicker className="mb-0.5">Layer</SectionKicker>
+      <SectionKicker className="mb-0.5">Overlay</SectionKicker>
       {LAYER_RAIL.map((l) => (
         <RailButton
           key={l.key}
@@ -83,18 +82,21 @@ export function VisionRail({
           title={l.title}
           onClick={() => setLayer(l.key)}
         >
-          {l.short}
+          {l.label}
         </RailButton>
       ))}
 
-      <span aria-hidden className="my-1 h-px w-8 bg-border" />
+      <span aria-hidden className="my-1.5 h-px w-full bg-border" />
 
       <RailButton
         active={false}
         title={collapsed ? "Show screenshot" : "Collapse screenshot"}
         onClick={onToggleCollapse}
       >
-        <FontAwesomeIcon icon={collapsed ? faChevronRight : faChevronLeft} className="text-xs" />
+        <span className="flex items-center gap-2">
+          <FontAwesomeIcon icon={collapsed ? faChevronRight : faChevronLeft} className="text-xs" />
+          {collapsed ? "Show screenshot" : "Collapse"}
+        </span>
       </RailButton>
     </div>
   );
