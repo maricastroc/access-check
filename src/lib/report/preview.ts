@@ -1,17 +1,22 @@
+import type { FixVerification } from "@/lib/scan/types";
 import type { ContrastMeasurement } from "./contrast";
-import type { VerdictKind } from "./verdict";
 
 /**
- * The "Original | Simulated fix" preview model for text-contrast findings.
+ * The contrast/color preview model for text-contrast findings.
  *
  * It only ever uses colors the engine actually resolved (original text color,
  * sampled background, and the engine's minimal hue-preserving suggestion that
- * reaches this element's own threshold). It never claims a fix is applied to the
- * site. Confidence is graded honestly:
- *   verified     → a real sandbox re-audit confirmed the rule stopped flagging;
+ * reaches this element's own threshold) — it reproduces the color pair, not the
+ * real element (no typography, no page context). It never claims a fix is
+ * applied to the site.
+ *
+ * Confidence is graded from the LOCATED element's own re-audit (not the whole
+ * finding's aggregate verdict), because the preview shows exactly that one
+ * element's color pair:
+ *   verified     → the located element itself was re-audited and stopped flagging;
  *   calculated   → the known values reach the minimum, but it wasn't re-audited;
- *   inconclusive → the live re-audit still flags (background is likely an image/
- *                  gradient/overlay) or no color change clears the pair.
+ *   inconclusive → the located element's live re-audit still flags (background is
+ *                  likely an image/gradient/overlay) or no color change clears it.
  */
 
 export type PreviewConfidence = "verified" | "calculated" | "inconclusive";
@@ -32,7 +37,7 @@ export type ContrastPreview = {
 
 export function buildContrastPreview(
   m: ContrastMeasurement | null,
-  verdict: VerdictKind,
+  locatedVerification: FixVerification | undefined,
   elements: number,
 ): ContrastPreview | null {
   if (!m || !m.fromHex || !m.bgHex || !m.toHex || m.fixed == null || !m.prop) return null;
@@ -44,12 +49,12 @@ export function buildContrastPreview(
 
   let confidence: PreviewConfidence;
   let reason: string | undefined;
-  if (verdict === "verified") {
+  if (locatedVerification === "verified") {
     confidence = "verified";
-  } else if (verdict === "failed" || verdict === "partial") {
+  } else if (locatedVerification === "failed") {
     confidence = "inconclusive";
     reason =
-      "The calculated pair reaches the minimum, but the live re-audit still flags it — the real background is probably an image, gradient or overlapping layer, so this sampled solid color isn't the true background.";
+      "The calculated pair reaches the minimum, but the located element's live re-audit still flags it — the real background is probably an image, gradient or overlapping layer, so this sampled solid color isn't the true background.";
   } else if (passesCalc) {
     confidence = "calculated";
   } else {

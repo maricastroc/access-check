@@ -49,7 +49,7 @@ export type FindingView = {
   fixGroups: FixGroup[] | null;
   guidance: Guidance | null; // actionable guidance when the engine text is generic
   measurement: ContrastMeasurement | null;
-  preview: ContrastPreview | null; // contrast "Original | Simulated fix" model
+  preview: ContrastPreview | null; // contrast "Original | Suggested" color preview
   verdict: Verdict; // single source of truth for the verification state
   affectedSelectors: string[]; // distinct affected element selectors
   selectors: string[]; // legacy alias of affectedSelectors
@@ -102,7 +102,9 @@ function wcagFinding(v: ScanViolation, markers: ScanMarker[], verifySkipped: boo
     fixGroups,
     guidance: v.fixCode || measurement ? null : fixGuidance(v.id),
     measurement,
-    preview: buildContrastPreview(measurement, verdict.kind, v.nodes),
+    // The preview shows the located element's own color pair, so its confidence
+    // is graded from that element's re-audit (v.verification), not the aggregate.
+    preview: buildContrastPreview(measurement, v.verification, v.nodes),
     verdict,
     affectedSelectors: affected,
     selectors: affected,

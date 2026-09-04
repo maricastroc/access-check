@@ -49,11 +49,15 @@ describe("buildReportMarkdown", () => {
     expect(md).toContain("**AAA:** not evaluated");
   });
 
-  it("keeps sandbox language and the real measurement", () => {
-    expect(md).toContain("Verified fix");
-    expect(md).toContain("Applied in a sandbox copy and re-audited");
+  it("keeps sandbox language, the real measurement, and never extrapolates the sample", () => {
+    // 7 nodes, one verification value → the export must say only one example was checked.
+    expect(md).toContain("One example checked");
+    expect(md).toContain("sandbox copy");
+    expect(md).toContain("not individually verified");
     expect(md).toContain("the audited site is not altered");
     expect(md).toMatch(/2\.10:1 · minimum AA 4\.5:1 · fix reaches 4\.62:1/);
+    expect(md.toLowerCase()).not.toContain("clears all");
+    expect(md.toLowerCase()).not.toMatch(/of 7 (occurrences )?(were )?cleared/);
   });
 
   it("never uses forbidden conformance vocabulary", () => {

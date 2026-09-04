@@ -71,10 +71,13 @@ describe("buildFindings", () => {
     expect(bp.passLabel).toBe("Best practice");
   });
 
-  it("parses a real contrast measurement, verdict and preview", () => {
+  it("parses a real contrast measurement, and separates finding verdict from located-element preview", () => {
+    // 7 nodes, one verification result: the finding is only SAMPLED (not all 7 verified),
+    // but the located element's own preview can still be verified.
     const f = buildFindings(baseResult({ violations: [contrast] }))[0];
     expect(f.measurement).toMatchObject({ measured: 2.1, required: 4.5, fixed: 4.62, bgHex: "#ffffff" });
-    expect(f.verdict.kind).toBe("verified");
+    expect(f.verdict.kind).toBe("sampled");
+    expect(f.verdict.reaudited).toBe(1);
     expect(f.impact).toContain("low vision");
     expect(f.preview?.confidence).toBe("verified");
     expect(f.preview?.simulated).toMatchObject({ fg: "#2f6b57", bg: "#ffffff" });

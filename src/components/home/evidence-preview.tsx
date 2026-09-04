@@ -46,7 +46,7 @@ export const demoFinding: FindingView = {
   fixGroups: null,
   guidance: null,
   measurement: demoMeasurement,
-  preview: buildContrastPreview(demoMeasurement, demoVerdict.kind, exampleFinding.elements),
+  preview: buildContrastPreview(demoMeasurement, "verified", exampleFinding.elements),
   verdict: demoVerdict,
   affectedSelectors: [exampleFinding.selector],
   selectors: [exampleFinding.selector],
@@ -81,7 +81,7 @@ export function CapturePreview({ height = 240 }: { height?: number }) {
               Order now
             </span>
             <span className="absolute top-1/2 left-0 -translate-x-[135%] -translate-y-1/2">
-              <Marker n={2} state="idle" dimmed size={24} ariaLabel="Occurrence 2 of the contrast finding" />
+              <Marker n={2} state="idle" dimmed size={24} ariaLabel="Contrast finding, another element sharing this color" />
             </span>
           </span>
         </div>
@@ -108,7 +108,7 @@ export function CapturePreview({ height = 240 }: { height?: number }) {
             Order now
           </span>
           <span className="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2">
-            <Marker n={1} state="selected" label="2.1:1 · needs 4.5:1" ariaLabel="Occurrence 1 of the contrast finding" />
+            <Marker n={1} state="selected" label="2.1:1 · needs 4.5:1" ariaLabel="Contrast finding, located element" />
           </span>
         </span>
       </div>
@@ -151,7 +151,7 @@ export function HeroEvidencePreview() {
             <span className="font-cond text-ink">4.5:1</span>
           </span>
           <span aria-hidden className="text-border">·</span>
-          <span>7 elements</span>
+          <span>7 elements share this color</span>
         </div>
         {/* the fix, tested in a sandbox copy */}
         <div className="mt-2.5 flex flex-wrap items-center gap-2 border-t border-hairline pt-2.5 text-[12.5px]">
@@ -164,7 +164,7 @@ export function HeroEvidencePreview() {
           <span className="font-mono text-[11.5px] text-ink">{exampleFinding.toHex.toUpperCase()}</span>
           <span className="font-cond text-verified">→ 4.62:1</span>
           <span className="ml-auto">
-            <StatusSeal status="verified">Verified in sandbox</StatusSeal>
+            <StatusSeal status="verified">Located element verified</StatusSeal>
           </span>
         </div>
       </div>

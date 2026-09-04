@@ -15,6 +15,7 @@ import { cn } from "@/lib/cn";
 const SEAL: Record<Verdict["kind"], { cls: string; glyph: string }> = {
   verified: { cls: "border-solid border-verified bg-verified/[0.08] text-verified", glyph: "✓" },
   partial: { cls: "border-dashed border-moderate text-moderate-text", glyph: "◑" },
+  sampled: { cls: "border-dashed border-steel text-steel", glyph: "◐" },
   failed: { cls: "border-dashed border-moderate text-moderate-text", glyph: "?" },
   unverifiable: { cls: "border-dashed border-border text-muted", glyph: "·" },
   "no-auto-fix": { cls: "border-dashed border-border text-muted", glyph: "·" },
@@ -34,16 +35,26 @@ function VerdictSeal({ verdict }: { verdict: Verdict }) {
   );
 }
 
-/* ── contrast "Original | Simulated fix" preview ── */
-function RatioBar({ found, required, fixed }: { found: number; required: number; fixed?: number }) {
+/* ── contrast / color preview (detected colors only — not the real element) ── */
+function RatioBar({
+  found,
+  required,
+  fixed,
+  fixedColor,
+}: {
+  found: number;
+  required: number;
+  fixed?: number;
+  fixedColor?: string;
+}) {
   return (
     <div className="relative h-3 w-full overflow-hidden border border-ink bg-surface">
       <span className="hatch-serious absolute inset-y-0 left-0" style={{ width: `${ratioPosition(found)}%` }} />
       <span className="absolute inset-y-0 w-[2px] -translate-x-1/2 bg-ink" style={{ left: `${ratioPosition(required)}%` }} />
       {fixed != null && (
         <span
-          className="absolute inset-y-0 w-[2px] -translate-x-1/2 bg-verified"
-          style={{ left: `${ratioPosition(fixed)}%` }}
+          className="absolute inset-y-0 w-[2px] -translate-x-1/2"
+          style={{ left: `${ratioPosition(fixed)}%`, background: fixedColor ?? "var(--color-ink)" }}
         />
       )}
     </div>
@@ -63,77 +74,98 @@ function Chip({ fg, bg, large }: { fg: string; bg: string; large: boolean }) {
 
 function CONF_META(preview: ContrastPreview) {
   if (preview.confidence === "verified")
-    return { label: "Verified fix", cls: "text-verified", result: "Passes WCAG AA — confirmed by re-audit" };
+    return {
+      label: "Verified on this element",
+      cls: "text-verified",
+      accent: "var(--color-verified)",
+      result: "Passes WCAG AA — confirmed by re-audit of the located element",
+    };
   if (preview.confidence === "calculated")
     return {
-      label: "Calculated simulation",
+      label: "Calculated",
       cls: "text-steel",
-      result: `Would pass WCAG AA at ${preview.simulated.ratio.toFixed(2)}:1 — calculated, not verified live`,
+      accent: "var(--color-steel)",
+      result: `Would reach ${preview.simulated.ratio.toFixed(2)}:1 — calculated from the detected colors, not verified live`,
     };
-  return { label: "Result uncertain", cls: "text-moderate-text", result: "Can't confirm this reaches the minimum" };
+  return {
+    label: "Result uncertain",
+    cls: "text-moderate-text",
+    accent: "var(--color-moderate)",
+    result: "Can't confirm this reaches the minimum on the real background",
+  };
 }
 
 function ContrastFixPreview({ preview }: { preview: ContrastPreview }) {
-  const [view, setView] = useState<"original" | "simulated">("simulated");
+  const [view, setView] = useState<"original" | "suggested">("suggested");
   const shown = view === "original" ? preview.original : preview.simulated;
   const large = preview.required <= 3;
   const meta = CONF_META(preview);
 
   return (
     <div className="mt-2">
-      {/* toggle */}
-      <div role="group" aria-label="Preview" className="inline-flex border border-border text-[12.5px]">
-        {(["original", "simulated"] as const).map((v, i) => (
+      <p className="font-cond text-[11px] tracking-[0.08em] text-muted uppercase">Contrast preview</p>
+      {/* toggle — the detected color pair, before and with the suggested value */}
+      <div role="group" aria-label="Contrast preview" className="mt-1.5 inline-flex border border-border text-[12.5px]">
+        {(["original", "suggested"] as const).map((v, i) => (
           <button
             key={v}
             type="button"
             aria-pressed={view === v}
             onClick={() => setView(v)}
             className={cn(
-              "px-3 py-1.5 font-medium",
+              "px-3 py-1.5 font-medium capitalize",
               i > 0 && "border-l border-border",
               view === v ? "bg-ink text-surface" : "bg-surface text-ink hover:bg-band",
             )}
           >
-            {v === "original" ? "Original" : "Simulated fix"}
+            {v}
           </button>
         ))}
       </div>
 
-      {/* the isolated reproduction on the real color pair */}
+      {/* the isolated reproduction on the detected color pair */}
       <div className="mt-2 border border-border">
         <Chip fg={shown.fg} bg={shown.bg} large={large} />
         <div className="flex items-center justify-between border-t border-hairline px-3 py-1.5">
-          <span className="font-cond text-[15px] tabular-nums" style={{ color: view === "original" ? "var(--color-serious)" : meta.cls.includes("verified") ? "var(--color-verified)" : "var(--color-ink)" }}>
+          <span
+            className="font-cond text-[15px] tabular-nums"
+            style={{ color: view === "original" ? "var(--color-serious)" : meta.accent }}
+          >
             {shown.ratio.toFixed(2)}:1
           </span>
           <span className="text-[11.5px] text-muted">
-            {view === "original" ? "current" : meta.label} · min AA {preview.required.toFixed(1)}:1{large ? " (large text)" : ""}
+            {view === "original" ? "current" : meta.label} · min AA {preview.required.toFixed(1)}:1
+            {large ? " (large text)" : ""}
           </span>
         </div>
       </div>
 
       <div className="mt-2">
-        <RatioBar found={preview.original.ratio} required={preview.required} fixed={preview.simulated.ratio} />
+        <RatioBar
+          found={preview.original.ratio}
+          required={preview.required}
+          fixed={preview.simulated.ratio}
+          fixedColor={meta.accent}
+        />
       </div>
 
       {/* objective values */}
       <dl className="mt-2.5 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[12.5px]">
         <dt className="text-muted">Property</dt>
         <dd className="font-mono text-ink">{preview.prop}</dd>
-        <dt className="text-muted">Original</dt>
+        <dt className="text-muted">Detected</dt>
         <dd className="font-mono text-ink">{preview.originalValue.toUpperCase()}</dd>
         <dt className="text-muted">Suggested</dt>
         <dd className="font-mono text-ink">{preview.suggestedValue.toUpperCase()}</dd>
-        <dt className="text-muted">Expected</dt>
+        <dt className="text-muted">Result</dt>
         <dd className={meta.cls}>{meta.result}</dd>
       </dl>
 
       {preview.reason && <p className="mt-2 text-[12px] text-moderate-text">{preview.reason}</p>}
       <p className="mt-2 text-[11.5px] text-muted">
-        This is a visual simulation. The final result may vary with the site&apos;s styles and actual
-        background.
-        {preview.shared ? ` It represents the located element; ${preview.sharedCount} occurrences share this color pair.` : ""}
+        Preview uses the detected foreground and background colors. Typography and page context are
+        not reproduced.
+        {preview.shared ? ` ${preview.sharedCount} occurrences share this detected color pair.` : ""}
       </p>
     </div>
   );

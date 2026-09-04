@@ -14,6 +14,7 @@ function VerdictCue({ kind }: { kind: Verdict["kind"] }) {
   if (kind === "verified")
     return <span className="text-verified">· verified in sandbox</span>;
   if (kind === "partial") return <span className="text-moderate-text">· partly verified</span>;
+  if (kind === "sampled") return <span className="text-muted">· one example checked</span>;
   if (kind === "failed") return <span className="text-moderate-text">· needs review</span>;
   return null;
 }
