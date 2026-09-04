@@ -1,85 +1,257 @@
+"use client";
+
+import { useState } from "react";
 import type { FindingView } from "@/lib/report/findings";
+import type { Verdict } from "@/lib/report/verdict";
+import { verdictLabel, verdictMessage } from "@/lib/report/verdict";
+import { ratioPosition } from "@/lib/report/contrast";
+import type { ContrastPreview } from "@/lib/report/preview";
 import { severityColorVar } from "@/lib/report/severity";
 import { SectionKicker } from "./section-kicker";
-import { Ruler } from "./ruler";
-import { StatusSeal } from "./status-seal";
-import { ColorSwatch } from "./color-swatch";
 import { CodeBlock } from "./code-block";
+import { cn } from "@/lib/cn";
 
-function sealText(f: FindingView): string | undefined {
-  if (f.fixStatus === "unchecked") {
-    return f.kind === "best-practice"
-      ? "Not a WCAG criterion — reported as coverage"
-      : "Not re-audited — complementary pass";
-  }
-  return undefined; // verified / needs-review use their defaults
+/* ── verdict seal ── */
+const SEAL: Record<Verdict["kind"], { cls: string; glyph: string }> = {
+  verified: { cls: "border-solid border-verified bg-verified/[0.08] text-verified", glyph: "✓" },
+  partial: { cls: "border-dashed border-moderate text-moderate-text", glyph: "◑" },
+  failed: { cls: "border-dashed border-moderate text-moderate-text", glyph: "?" },
+  unverifiable: { cls: "border-dashed border-border text-muted", glyph: "·" },
+  "no-auto-fix": { cls: "border-dashed border-border text-muted", glyph: "·" },
+  "best-practice": { cls: "border-solid border-steel text-steel", glyph: "◇" },
+  complementary: { cls: "border-dashed border-border text-muted", glyph: "·" },
+};
+
+function VerdictSeal({ verdict }: { verdict: Verdict }) {
+  const s = SEAL[verdict.kind];
+  return (
+    <span className={cn("inline-flex items-center gap-2 border px-2.5 py-1.5 text-[12.5px] leading-tight", s.cls)}>
+      <span aria-hidden className="font-cond text-[13px]">
+        {s.glyph}
+      </span>
+      {verdictLabel(verdict)}
+    </span>
+  );
 }
 
-export function FindingDetail({ finding, host }: { finding: FindingView; host: string }) {
-  const m = finding.measurement;
-  const sevColor = finding.severity ? severityColorVar[finding.severity] : "var(--color-steel)";
-
+/* ── contrast "Original | Simulated fix" preview ── */
+function RatioBar({ found, required, fixed }: { found: number; required: number; fixed?: number }) {
   return (
-    <div className="-mt-px border border-t-0 border-ink bg-surface p-3.5">
-      {/* 1 — human impact */}
-      <div className="pb-3.5">
-        <SectionKicker>What happens to people who use it</SectionKicker>
-        <p className="mt-2 text-[14.5px] leading-normal text-ink-2">{finding.desc}</p>
-        <p className="mt-1.5 text-[13px] text-muted">{finding.who}</p>
-      </div>
-
-      {/* 2 — measurement (only when a real ratio was measured) */}
-      {m && (
-        <div className="border-t border-hairline py-3.5">
-          <SectionKicker>Measurement</SectionKicker>
-          <div className="mt-2 flex items-end gap-3">
-            <span className="font-cond text-[34px] leading-none tabular-nums" style={{ color: sevColor }}>
-              {m.measured.toFixed(1)}:1
-            </span>
-            <span className="pb-1 text-[12.5px] text-muted">
-              minimum AA {m.required.toFixed(1)}:1
-              {m.fixed != null ? ` · corrected ${m.fixed.toFixed(2)}:1` : ""}
-            </span>
-          </div>
-          <div className="mt-2">
-            <Ruler variant="ratio" found={m.measured} required={m.required} fixed={m.fixed} height={18} />
-          </div>
-        </div>
+    <div className="relative h-3 w-full overflow-hidden border border-ink bg-surface">
+      <span className="hatch-serious absolute inset-y-0 left-0" style={{ width: `${ratioPosition(found)}%` }} />
+      <span className="absolute inset-y-0 w-[2px] -translate-x-1/2 bg-ink" style={{ left: `${ratioPosition(required)}%` }} />
+      {fixed != null && (
+        <span
+          className="absolute inset-y-0 w-[2px] -translate-x-1/2 bg-verified"
+          style={{ left: `${ratioPosition(fixed)}%` }}
+        />
       )}
-
-      {/* 3 — suggested fix (sandbox language always) */}
-      <div className="border-t border-hairline pt-3.5">
-        <SectionKicker>Suggested fix</SectionKicker>
-        {m && m.toHex ? (
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-[13px]">
-            {m.fromHex && (
-              <>
-                <ColorSwatch hex={m.fromHex} />
-                <span className="font-mono text-[12.5px] text-muted">{m.fromHex.toUpperCase()}</span>
-                <span aria-hidden className="text-muted">→</span>
-              </>
-            )}
-            <ColorSwatch hex={m.toHex} />
-            <span className="font-mono text-[12.5px] text-ink">{m.toHex.toUpperCase()}</span>
-            {m.prop && <span className="text-muted">({m.prop})</span>}
-          </div>
-        ) : (
-          <p className="mt-2 text-[13.5px] leading-normal text-body">{finding.fixText}</p>
-        )}
-
-        {finding.fixCode && (
-          <div className="mt-2.5">
-            <CodeBlock lines={[{ text: finding.fixCode, tone: finding.fixStatus === "verified" ? "added" : "default" }]} />
-          </div>
-        )}
-
-        <div className="mt-3">
-          <StatusSeal status={finding.fixStatus}>{sealText(finding)}</StatusSeal>
-        </div>
-        <p className="mt-2 text-[12px] text-muted">
-          Tested in a sandbox copy. {host} was not altered.
-        </p>
-      </div>
     </div>
   );
+}
+
+function Chip({ fg, bg, large }: { fg: string; bg: string; large: boolean }) {
+  return (
+    <div
+      className="flex h-16 items-center justify-center px-3 text-center"
+      style={{ background: bg, color: fg }}
+    >
+      <span className={large ? "text-[19px] font-semibold" : "text-[15px]"}>Sample text</span>
+    </div>
+  );
+}
+
+function CONF_META(preview: ContrastPreview) {
+  if (preview.confidence === "verified")
+    return { label: "Verified fix", cls: "text-verified", result: "Passes WCAG AA — confirmed by re-audit" };
+  if (preview.confidence === "calculated")
+    return {
+      label: "Calculated simulation",
+      cls: "text-steel",
+      result: `Would pass WCAG AA at ${preview.simulated.ratio.toFixed(2)}:1 — calculated, not verified live`,
+    };
+  return { label: "Result uncertain", cls: "text-moderate-text", result: "Can't confirm this reaches the minimum" };
+}
+
+function ContrastFixPreview({ preview }: { preview: ContrastPreview }) {
+  const [view, setView] = useState<"original" | "simulated">("simulated");
+  const shown = view === "original" ? preview.original : preview.simulated;
+  const large = preview.required <= 3;
+  const meta = CONF_META(preview);
+
+  return (
+    <div className="mt-2">
+      {/* toggle */}
+      <div role="group" aria-label="Preview" className="inline-flex border border-border text-[12.5px]">
+        {(["original", "simulated"] as const).map((v, i) => (
+          <button
+            key={v}
+            type="button"
+            aria-pressed={view === v}
+            onClick={() => setView(v)}
+            className={cn(
+              "px-3 py-1.5 font-medium",
+              i > 0 && "border-l border-border",
+              view === v ? "bg-ink text-surface" : "bg-surface text-ink hover:bg-band",
+            )}
+          >
+            {v === "original" ? "Original" : "Simulated fix"}
+          </button>
+        ))}
+      </div>
+
+      {/* the isolated reproduction on the real color pair */}
+      <div className="mt-2 border border-border">
+        <Chip fg={shown.fg} bg={shown.bg} large={large} />
+        <div className="flex items-center justify-between border-t border-hairline px-3 py-1.5">
+          <span className="font-cond text-[15px] tabular-nums" style={{ color: view === "original" ? "var(--color-serious)" : meta.cls.includes("verified") ? "var(--color-verified)" : "var(--color-ink)" }}>
+            {shown.ratio.toFixed(2)}:1
+          </span>
+          <span className="text-[11.5px] text-muted">
+            {view === "original" ? "current" : meta.label} · min AA {preview.required.toFixed(1)}:1{large ? " (large text)" : ""}
+          </span>
+        </div>
+      </div>
+
+      <div className="mt-2">
+        <RatioBar found={preview.original.ratio} required={preview.required} fixed={preview.simulated.ratio} />
+      </div>
+
+      {/* objective values */}
+      <dl className="mt-2.5 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[12.5px]">
+        <dt className="text-muted">Property</dt>
+        <dd className="font-mono text-ink">{preview.prop}</dd>
+        <dt className="text-muted">Original</dt>
+        <dd className="font-mono text-ink">{preview.originalValue.toUpperCase()}</dd>
+        <dt className="text-muted">Suggested</dt>
+        <dd className="font-mono text-ink">{preview.suggestedValue.toUpperCase()}</dd>
+        <dt className="text-muted">Expected</dt>
+        <dd className={meta.cls}>{meta.result}</dd>
+      </dl>
+
+      {preview.reason && <p className="mt-2 text-[12px] text-moderate-text">{preview.reason}</p>}
+      <p className="mt-2 text-[11.5px] text-muted">
+        This is a visual simulation. The final result may vary with the site&apos;s styles and actual
+        background.
+        {preview.shared ? ` It represents the located element; ${preview.sharedCount} occurrences share this color pair.` : ""}
+      </p>
+    </div>
+  );
+}
+
+/* ── the four-block detail ── */
+export function FindingDetail({ finding, host }: { finding: FindingView; host: string }) {
+  const located = finding.markers.length;
+  const affectedShown = finding.affectedSelectors.slice(0, 6);
+  const affectedExtra = finding.affectedSelectors.length - affectedShown.length;
+  const railColor = finding.severity ? severityColorVar[finding.severity] : "var(--color-steel)";
+
+  return (
+    <div className="-mt-px border border-t-0 border-ink bg-surface" style={{ borderLeft: `4px solid ${railColor}` }}>
+      {/* 1 — impact on users */}
+      <section className="p-3.5">
+        <SectionKicker>Impact on users</SectionKicker>
+        <p className="mt-2 text-[14px] leading-normal text-ink-2">{finding.impact}</p>
+      </section>
+
+      {/* 2 — affected element */}
+      <section className="border-t border-hairline p-3.5">
+        <SectionKicker>Affected element</SectionKicker>
+        {finding.affectedSelectors.length > 0 ? (
+          <>
+            <p className="mt-2 flex items-center gap-2 text-[13px]">
+              {located > 0 && (
+                <span
+                  aria-hidden
+                  className="inline-flex size-[18px] shrink-0 items-center justify-center bg-ink font-cond text-[11px] font-semibold text-surface"
+                >
+                  1
+                </span>
+              )}
+              <code className="font-mono text-[12.5px] text-steel">{finding.affectedSelectors[0]}</code>
+              {located > 0 && <span className="text-[11.5px] text-muted">· on the capture</span>}
+            </p>
+            <p className="mt-1.5 text-[12.5px] text-muted">
+              <span className="font-medium text-ink tabular-nums">{finding.elements}</span> element
+              {finding.elements === 1 ? "" : "s"} affected · {located} located on the capture
+            </p>
+            {finding.affectedSelectors.length > 1 && (
+              <ul className="mt-2 flex flex-wrap gap-1.5">
+                {affectedShown.slice(1).map((s) => (
+                  <li key={s} className="border border-hairline bg-code px-1.5 py-0.5 font-mono text-[11px] text-body">
+                    {s}
+                  </li>
+                ))}
+                {affectedExtra > 0 && (
+                  <li className="px-1 py-0.5 text-[11px] text-muted">+{affectedExtra} more</li>
+                )}
+              </ul>
+            )}
+          </>
+        ) : (
+          <p className="mt-2 text-[13px] text-body">{finding.elements} affected</p>
+        )}
+        {located === 0 && (
+          <p className="mt-2 flex items-start gap-2 text-[12px] text-muted">
+            <span aria-hidden className="mt-0.5 inline-block size-3 shrink-0 border border-dashed border-border" />
+            {finding.noMarkerReason}
+          </p>
+        )}
+      </section>
+
+      {/* 3 — how to fix */}
+      <section className="border-t border-hairline p-3.5">
+        <SectionKicker>How to fix</SectionKicker>
+        {finding.preview ? (
+          <ContrastFixPreview preview={finding.preview} />
+        ) : finding.guidance ? (
+          <>
+            <p className="mt-2 text-[13.5px] leading-normal text-body">{finding.guidance.action}</p>
+            {finding.guidance.example && (
+              <div className="mt-2.5">
+                <CodeBlock lines={exampleLines(finding.guidance.example.code)} />
+              </div>
+            )}
+            {finding.guidance.caution && (
+              <p className="mt-2 text-[12px] text-moderate-text">{finding.guidance.caution}</p>
+            )}
+            {finding.guidance.humanDecision && (
+              <p className="mt-2 text-[12px] text-muted">
+                The right change depends on the page&apos;s structure — confirm it in context.
+              </p>
+            )}
+          </>
+        ) : (
+          <>
+            <p className="mt-2 text-[13.5px] leading-normal text-body">{finding.fixText}</p>
+            {finding.fixCode && (
+              <div className="mt-2.5">
+                <CodeBlock lines={[{ text: finding.fixCode, tone: finding.verdict.kind === "verified" ? "added" : "default" }]} />
+              </div>
+            )}
+          </>
+        )}
+      </section>
+
+      {/* 4 — verification result */}
+      <section className="border-t border-hairline p-3.5">
+        <SectionKicker>Verification result</SectionKicker>
+        <div className="mt-2">
+          <VerdictSeal verdict={finding.verdict} />
+        </div>
+        <p className="mt-2 text-[12.5px] leading-normal text-body">
+          {verdictMessage(finding.verdict, finding.measurement)}
+        </p>
+        {finding.verdict.kind !== "best-practice" && finding.verdict.kind !== "complementary" && (
+          <p className="mt-1.5 text-[11.5px] text-muted">
+            Fixes are applied and reverted in a sandbox copy. {host} was not altered.
+          </p>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function exampleLines(code: string): { text: string; tone?: "added" | "default" }[] {
+  return code.split("\n").map((text) => ({ text, tone: "default" }));
 }

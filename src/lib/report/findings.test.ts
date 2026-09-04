@@ -71,11 +71,13 @@ describe("buildFindings", () => {
     expect(bp.passLabel).toBe("Best practice");
   });
 
-  it("parses a real contrast measurement and derives verified status", () => {
+  it("parses a real contrast measurement, verdict and preview", () => {
     const f = buildFindings(baseResult({ violations: [contrast] }))[0];
-    expect(f.measurement).toMatchObject({ measured: 2.1, required: 4.5, fixed: 4.62 });
-    expect(f.fixStatus).toBe("verified");
-    expect(f.who).toContain("Major barrier");
+    expect(f.measurement).toMatchObject({ measured: 2.1, required: 4.5, fixed: 4.62, bgHex: "#ffffff" });
+    expect(f.verdict.kind).toBe("verified");
+    expect(f.impact).toContain("low vision");
+    expect(f.preview?.confidence).toBe("verified");
+    expect(f.preview?.simulated).toMatchObject({ fg: "#2f6b57", bg: "#ffffff" });
   });
 
   it("links only the finding's own capture markers", () => {
@@ -113,7 +115,8 @@ describe("buildFindings", () => {
     });
     const f = buildFindings(r).find((x) => x.kind === "keyboard")!;
     expect(f.passLabel).toBe("Keyboard");
-    expect(f.fixStatus).toBe("unchecked");
+    expect(f.verdict.kind).toBe("complementary");
     expect(f.criterionSc).toBe("2.4.7");
+    expect(f.guidance?.action).toContain("focus");
   });
 });

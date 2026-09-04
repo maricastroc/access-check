@@ -1,6 +1,29 @@
 import type { FindingView } from "@/lib/report/findings";
+import type { ContrastMeasurement } from "@/lib/report/contrast";
+import { buildVerdict } from "@/lib/report/verdict";
+import { buildContrastPreview } from "@/lib/report/preview";
 import { BrowserFrame, ColorSwatch, Marker, StatusSeal } from "@/components/ui";
 import { exampleFinding } from "./content";
+
+const demoMeasurement: ContrastMeasurement = {
+  measured: exampleFinding.measured,
+  required: exampleFinding.required,
+  fixed: exampleFinding.fixed,
+  fromHex: exampleFinding.fromHex,
+  toHex: exampleFinding.toHex,
+  bgHex: "#ffffff",
+  prop: "color",
+};
+
+const demoVerdict = buildVerdict({
+  kind: "wcag",
+  isWcag: true,
+  elements: exampleFinding.elements,
+  fixGroups: null,
+  fixVerification: "verified",
+  hasAutoFix: true,
+  verifySkipped: false,
+});
 
 /** The fixed demo finding shared by the hero preview and the Evidence Lens section. */
 export const demoFinding: FindingView = {
@@ -15,24 +38,23 @@ export const demoFinding: FindingView = {
   criterionName: exampleFinding.name,
   elements: exampleFinding.elements,
   ruleId: exampleFinding.ruleId,
-  desc: "The white label on the light-green button disappears for low-vision users and anyone reading in bright light. It's the purchase button — the barrier sits on the page's main path.",
-  who: "Major barrier — many users can't complete the task.",
+  desc: "Ensures the contrast between foreground and background colors meets the WCAG threshold.",
+  impact:
+    "People with low vision or reduced contrast sensitivity may be unable to read this text, especially in bright light.",
   fixText: `Set the text color to ${exampleFinding.toHex.toUpperCase()} → ${exampleFinding.fixed}:1.`,
   fixCode: `color: ${exampleFinding.toHex};`,
   fixGroups: null,
-  fixStatus: "verified",
-  measurement: {
-    measured: exampleFinding.measured,
-    required: exampleFinding.required,
-    fixed: exampleFinding.fixed,
-    fromHex: exampleFinding.fromHex,
-    toHex: exampleFinding.toHex,
-    prop: "color",
-  },
+  guidance: null,
+  measurement: demoMeasurement,
+  preview: buildContrastPreview(demoMeasurement, demoVerdict.kind, exampleFinding.elements),
+  verdict: demoVerdict,
+  affectedSelectors: [exampleFinding.selector],
   selectors: [exampleFinding.selector],
   markers: [
     { n: 1, severity: "serious", label: exampleFinding.title, left: 8, top: 46, width: 14, height: 7 },
   ],
+  located: true,
+  noMarkerReason: "",
 };
 
 /**

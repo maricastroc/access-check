@@ -4,6 +4,7 @@ import { buildFindings, type FindingView } from "./findings";
 import { scoreBreakdown } from "./score";
 import { buildWcagReading } from "./wcag";
 import { severityLabel } from "./severity";
+import { verdictLabel, verdictMessage } from "./verdict";
 
 /**
  * Presentation-layer Markdown export, in the Régua vocabulary. The engine's own
@@ -20,12 +21,6 @@ function host(url: string): string {
   }
 }
 
-const STATUS_LINE: Record<FindingView["fixStatus"], string> = {
-  verified: "✓ Verified in a sandbox copy — the rule stopped flagging the element.",
-  "needs-review": "? Needs review — the suggestion alone doesn't clear it.",
-  unchecked: "· Not re-audited (complementary pass).",
-};
-
 function findingBlock(f: FindingView, out: string[]) {
   out.push(`#### ${f.title}`);
   out.push("");
@@ -35,8 +30,12 @@ function findingBlock(f: FindingView, out: string[]) {
     out.push(`- **Best practice** (not a WCAG success criterion)`);
   }
   if (f.passLabel && f.kind !== "best-practice") out.push(`- **Pass:** ${f.passLabel}`);
-  if (f.selectors.length > 0) out.push(`- **Selector:** \`${f.selectors[0]}\``);
-  out.push(`- **Elements:** ${f.elements}${f.elements > 1 ? " (one fix resolves all)" : ""}`);
+  if (f.affectedSelectors.length > 0) {
+    const shown = f.affectedSelectors.slice(0, 5).map((s) => `\`${s}\``).join(", ");
+    const extra = f.affectedSelectors.length - 5;
+    out.push(`- **Affected:** ${shown}${extra > 0 ? ` (+${extra} more)` : ""}`);
+  }
+  out.push(`- **Elements:** ${f.elements}`);
   if (f.measurement) {
     const m = f.measurement;
     out.push(
@@ -45,15 +44,14 @@ function findingBlock(f: FindingView, out: string[]) {
     );
   }
   out.push("");
-  if (f.desc) {
-    out.push(f.desc);
-    out.push("");
-  }
+  out.push(`**Impact:** ${f.impact}`);
+  out.push("");
   out.push("**Suggested fix:**");
   out.push("");
-  out.push(f.measurement?.toHex ? `Set ${f.measurement.prop ?? "color"} to ${f.measurement.toHex.toUpperCase()}.` : f.fixText);
+  out.push(f.measurement?.toHex ? `Set \`${f.measurement.prop ?? "color"}\` to ${f.measurement.toHex.toUpperCase()}.` : f.fixText);
   if (f.fixCode) out.push("", "```", f.fixCode, "```");
-  out.push("", `_${STATUS_LINE[f.fixStatus]}_`);
+  else if (f.guidance?.example) out.push("", "```" + f.guidance.example.lang, f.guidance.example.code, "```");
+  out.push("", `_${verdictLabel(f.verdict)} — ${verdictMessage(f.verdict, f.measurement)}_`);
   out.push("");
 }
 

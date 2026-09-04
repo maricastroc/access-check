@@ -1,14 +1,16 @@
-import type {
-  FixGroup,
-  FixVerification,
-  ScanMarker,
-  ScanResult,
-  ScanViolation,
-  Severity,
-} from "@/lib/scan/types";
+import type { FixGroup, ScanMarker, ScanResult, ScanViolation, Severity } from "@/lib/scan/types";
 import type { ContextIssue } from "@/lib/scan/contexts";
-import { SEVERITY_META, SEVERITY_ORDER, toFixStatus, type FixStatus } from "./severity";
+import { SEVERITY_ORDER } from "./severity";
 import { parseContrastFix, type ContrastMeasurement } from "./contrast";
+import { buildVerdict, type Verdict } from "./verdict";
+import { buildContrastPreview, type ContrastPreview } from "./preview";
+import {
+  fixGuidance,
+  humanImpact,
+  isDocLevelCategory,
+  markerReason,
+  type Guidance,
+} from "./guidance";
 
 export type FindingKind =
   | "wcag"
@@ -19,7 +21,6 @@ export type FindingKind =
   | "context"
   | "best-practice";
 
-/** A pass that runs alongside axe. `null` = a plain axe WCAG rule. */
 const PASS_LABEL: Partial<Record<FindingKind, string>> = {
   keyboard: "Keyboard",
   "target-size": "Target size",
@@ -41,45 +42,48 @@ export type FindingView = {
   criterionName: string | null;
   elements: number; // affected node count
   ruleId: string;
-  desc: string; // engine description (what it is)
-  who: string; // fixed human-impact line for the severity
+  desc: string; // engine description (kept for reference)
+  impact: string; // concrete human consequence for the "Impact on users" block
   fixText: string;
   fixCode: string | null;
   fixGroups: FixGroup[] | null;
-  fixStatus: FixStatus;
+  guidance: Guidance | null; // actionable guidance when the engine text is generic
   measurement: ContrastMeasurement | null;
-  selectors: string[];
-  markers: ScanMarker[]; // capture occurrences linked to this finding
+  preview: ContrastPreview | null; // contrast "Original | Simulated fix" model
+  verdict: Verdict; // single source of truth for the verification state
+  affectedSelectors: string[]; // distinct affected element selectors
+  selectors: string[]; // legacy alias of affectedSelectors
+  markers: ScanMarker[]; // capture markers (the engine emits at most one per finding)
+  located: boolean; // whether the located element has a capture marker
+  noMarkerReason: string; // why there is no marker, when there isn't one
 };
 
-/** verified only when everything checked passed; needs-review if anything still flags. */
-function statusFromOutcomes(outcomes: FixVerification[]): FixStatus {
-  const checked = outcomes.filter((o) => o === "verified" || o === "failed");
-  if (checked.length === 0) return "unchecked";
-  return checked.every((o) => o === "verified") ? "verified" : "needs-review";
+function distinct(list: string[]): string[] {
+  return [...new Set(list.filter(Boolean))];
 }
 
-function violationStatus(v: ScanViolation): FixStatus {
-  if (v.fixGroups && v.fixGroups.length > 0) {
-    return statusFromOutcomes(v.fixGroups.map((g) => g.verification));
-  }
-  return toFixStatus(v.verification);
+function affectedFrom(v: ScanViolation): string[] {
+  const fromGroups = (v.fixGroups ?? []).flatMap((g) => g.selectors);
+  const all = distinct([...fromGroups, v.where].filter((s) => s && s !== "—"));
+  return all;
 }
 
-/** Markers carry the axe help text as their label; a violation's title is that same help text. */
-function linkMarkers(v: ScanViolation, markers: ScanMarker[]): ScanMarker[] {
-  return markers.filter((m) => m.severity === v.severity && m.label === v.title);
-}
-
-function splitCriterion(criterion: string): { sc: string | null; name: string | null } {
-  const m = criterion.match(/(\d+\.\d+\.\d+)/);
-  const sc = m ? m[1] : null;
-  const name = criterion.split(" · ")[1]?.trim() ?? null;
-  return { sc, name };
-}
-
-function wcagFinding(v: ScanViolation, markers: ScanMarker[]): Omit<FindingView, "n"> {
+function wcagFinding(v: ScanViolation, markers: ScanMarker[], verifySkipped: boolean): Omit<FindingView, "n"> {
   const { sc, name } = splitCriterion(v.criterion);
+  const measurement = parseContrastFix(v.fix, v.fixCode);
+  const fixGroups = v.fixGroups && v.fixGroups.length > 0 ? v.fixGroups : null;
+  const hasAutoFix = Boolean(v.fixCode);
+  const verdict = buildVerdict({
+    kind: "wcag",
+    isWcag: true,
+    elements: v.nodes,
+    fixGroups,
+    fixVerification: v.verification,
+    hasAutoFix,
+    verifySkipped,
+  });
+  const linked = linkMarkers(v, markers);
+  const affected = affectedFrom(v);
   return {
     id: `wcag:${v.id}`,
     kind: "wcag",
@@ -92,14 +96,19 @@ function wcagFinding(v: ScanViolation, markers: ScanMarker[]): Omit<FindingView,
     elements: v.nodes,
     ruleId: v.id,
     desc: v.desc,
-    who: SEVERITY_META[v.severity].who,
+    impact: humanImpact(v.id),
     fixText: v.fix,
     fixCode: v.fixCode ?? null,
-    fixGroups: v.fixGroups && v.fixGroups.length > 0 ? v.fixGroups : null,
-    fixStatus: violationStatus(v),
-    measurement: parseContrastFix(v.fix, v.fixCode),
-    selectors: v.where && v.where !== "—" ? [v.where] : [],
-    markers: linkMarkers(v, markers),
+    fixGroups,
+    guidance: v.fixCode || measurement ? null : fixGuidance(v.id),
+    measurement,
+    preview: buildContrastPreview(measurement, verdict.kind, v.nodes),
+    verdict,
+    affectedSelectors: affected,
+    selectors: affected,
+    markers: linked,
+    located: linked.length > 0,
+    noMarkerReason: linked.length > 0 ? "" : markerReason(v.id, "wcag", isDocLevelCategory(v.id)),
   };
 }
 
@@ -116,10 +125,19 @@ type PassFinding = {
 
 function complementaryFinding(f: PassFinding, kind: FindingKind): Omit<FindingView, "n"> {
   const { sc, name } = splitCriterion(f.criterion);
+  const verdict = buildVerdict({
+    kind,
+    isWcag: true,
+    elements: f.count,
+    fixGroups: null,
+    hasAutoFix: false,
+    verifySkipped: false,
+  });
+  const affected = distinct(f.selectors);
   return {
     id: `${kind}:${f.id}`,
     kind,
-    isWcag: true, // complementary passes still map to named WCAG criteria
+    isWcag: true,
     severity: f.severity,
     passLabel: PASS_LABEL[kind] ?? null,
     title: f.title,
@@ -128,20 +146,33 @@ function complementaryFinding(f: PassFinding, kind: FindingKind): Omit<FindingVi
     elements: f.count,
     ruleId: f.id,
     desc: f.desc,
-    who: SEVERITY_META[f.severity].who,
+    impact: humanImpact(f.id, kind),
     fixText: f.fix,
     fixCode: null,
     fixGroups: null,
-    fixStatus: "unchecked", // complementary passes are not sandbox re-audited
+    guidance: fixGuidance(f.id, kind),
     measurement: null,
-    selectors: f.selectors,
+    preview: null,
+    verdict,
+    affectedSelectors: affected,
+    selectors: affected,
     markers: [],
+    located: false,
+    noMarkerReason: markerReason(f.id, kind, false),
   };
 }
 
-/** Context issues (mobile / opened states) carry no engine fix or description. */
 function contextFinding(issue: ContextIssue, where: string): Omit<FindingView, "n"> {
   const { sc, name } = splitCriterion(issue.criterion);
+  const verdict = buildVerdict({
+    kind: "context",
+    isWcag: true,
+    elements: issue.nodes,
+    fixGroups: null,
+    hasAutoFix: false,
+    verifySkipped: false,
+  });
+  const affected = distinct(issue.selectors);
   return {
     id: `context:${where}:${issue.id}`,
     kind: "context",
@@ -154,51 +185,84 @@ function contextFinding(issue: ContextIssue, where: string): Omit<FindingView, "
     elements: issue.nodes,
     ruleId: issue.id,
     desc: `Surfaced only in this context (${where}) — it does not fail on the initial desktop load.`,
-    who: SEVERITY_META[issue.severity].who,
+    impact: humanImpact(issue.id, "context"),
     fixText: "Re-check this element in the affected context; the engine did not sandbox a fix here.",
     fixCode: null,
     fixGroups: null,
-    fixStatus: "unchecked",
+    guidance: fixGuidance(issue.id, "context"),
     measurement: null,
-    selectors: issue.selectors,
+    preview: null,
+    verdict,
+    affectedSelectors: affected,
+    selectors: affected,
     markers: [],
+    located: false,
+    noMarkerReason: markerReason(issue.id, "context", false),
   };
 }
 
 function bestPracticeFindings(result: ScanResult): Omit<FindingView, "n">[] {
-  return result.bestPractice.map((bp) => ({
-    id: `best-practice:${bp.id}`,
-    kind: "best-practice" as const,
-    isWcag: false,
-    severity: null,
-    passLabel: PASS_LABEL["best-practice"] ?? "Best practice",
-    title: bp.title,
-    criterionSc: null,
-    criterionName: null,
-    elements: bp.nodes,
-    ruleId: bp.id,
-    desc: bp.desc,
-    who: "Best practice (not a WCAG success criterion).",
-    fixText: bp.desc,
-    fixCode: null,
-    fixGroups: null,
-    fixStatus: "unchecked" as const,
-    measurement: null,
-    selectors: bp.selectors,
-    markers: [],
-  }));
+  return result.bestPractice.map((bp) => {
+    const affected = distinct(bp.selectors);
+    return {
+      id: `best-practice:${bp.id}`,
+      kind: "best-practice" as const,
+      isWcag: false,
+      severity: null,
+      passLabel: PASS_LABEL["best-practice"] ?? "Best practice",
+      title: bp.title,
+      criterionSc: null,
+      criterionName: null,
+      elements: bp.nodes,
+      ruleId: bp.id,
+      desc: bp.desc,
+      impact: humanImpact(bp.id, "best-practice"),
+      fixText: bp.desc,
+      fixCode: null,
+      fixGroups: null,
+      guidance: fixGuidance(bp.id, "best-practice"),
+      measurement: null,
+      preview: null,
+      verdict: buildVerdict({
+        kind: "best-practice",
+        isWcag: false,
+        elements: bp.nodes,
+        fixGroups: null,
+        hasAutoFix: false,
+        verifySkipped: false,
+      }),
+      affectedSelectors: affected,
+      selectors: affected,
+      markers: [],
+      located: false,
+      noMarkerReason: markerReason(bp.id, "best-practice", false),
+    };
+  });
+}
+
+/** Markers carry the axe help text as their label; a violation's title is that same help text. */
+function linkMarkers(v: ScanViolation, markers: ScanMarker[]): ScanMarker[] {
+  return markers.filter((m) => m.severity === v.severity && m.label === v.title);
+}
+
+function splitCriterion(criterion: string): { sc: string | null; name: string | null } {
+  const m = criterion.match(/(\d+\.\d+\.\d+)/);
+  const sc = m ? m[1] : null;
+  const name = criterion.split(" · ")[1]?.trim() ?? null;
+  return { sc, name };
 }
 
 /**
  * Ordered findings for the report margin: WCAG axe violations + complementary
  * passes (keyboard / audits / contexts) sorted by severity, then best-practice
- * items (no WCAG severity). Every field comes straight from ScanResult — nothing
- * is recomputed or invented.
+ * items. Every field is derived once here — the single source of truth for the
+ * finding, its selectors, marker, contrast values, suggestion and verdict.
  */
 export function buildFindings(result: ScanResult): FindingView[] {
+  const verifySkipped = (result.warnings ?? []).some((w) => w.code === "verification-skipped");
   const withSeverity: Omit<FindingView, "n">[] = [];
 
-  for (const v of result.violations) withSeverity.push(wcagFinding(v, result.markers));
+  for (const v of result.violations) withSeverity.push(wcagFinding(v, result.markers, verifySkipped));
 
   for (const f of result.keyboard?.findings ?? [])
     withSeverity.push(complementaryFinding(f, "keyboard"));

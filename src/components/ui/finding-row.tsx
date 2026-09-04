@@ -1,4 +1,5 @@
 import type { FindingView } from "@/lib/report/findings";
+import type { Verdict } from "@/lib/report/verdict";
 import { severityColorVar, severityLabel } from "@/lib/report/severity";
 import { SC_LEVEL } from "@/lib/report/wcag";
 import { cn } from "@/lib/cn";
@@ -6,6 +7,15 @@ import { cn } from "@/lib/cn";
 function railColor(f: FindingView): string {
   if (f.severity) return severityColorVar[f.severity];
   return "var(--color-steel)"; // best-practice
+}
+
+/** Evidence-based micro-cue in the row — only shown when there's a re-audit result to report. */
+function VerdictCue({ kind }: { kind: Verdict["kind"] }) {
+  if (kind === "verified")
+    return <span className="text-verified">· verified in sandbox</span>;
+  if (kind === "partial") return <span className="text-moderate-text">· partly verified</span>;
+  if (kind === "failed") return <span className="text-moderate-text">· needs review</span>;
+  return null;
 }
 
 function TopTag({ f }: { f: FindingView }) {
@@ -84,13 +94,13 @@ export function FindingRow({
 
       <h3 className="mt-2 text-[15.5px] leading-snug font-semibold text-ink">{finding.title}</h3>
 
-      <p className="mt-1.5 text-[12.5px] leading-normal text-muted">
-        {finding.elements} element{finding.elements === 1 ? "" : "s"}
-        {" · "}
+      <p className="mt-1.5 flex flex-wrap items-center gap-x-1.5 text-[12.5px] leading-normal text-muted">
+        <span>
+          {finding.elements} element{finding.elements === 1 ? "" : "s"}
+        </span>
+        <span aria-hidden>·</span>
         <span className="font-mono text-[11.5px]">{finding.ruleId}</span>
-        {finding.elements > 1 && finding.fixStatus !== "unchecked"
-          ? ` · one fix resolves all ${finding.elements}`
-          : ""}
+        <VerdictCue kind={finding.verdict.kind} />
       </p>
 
       {noMarker && (

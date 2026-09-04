@@ -4,15 +4,7 @@ import type { ScanResult } from "@/lib/scan/types";
 import type { FindingView } from "@/lib/report/findings";
 import type { ScoreBreakdown } from "@/lib/report/score";
 import type { WcagReadingModel } from "@/lib/report/wcag";
-import {
-  Button,
-  FindingDetail,
-  FindingRow,
-  OccurrenceStepper,
-  Ruler,
-  SectionKicker,
-  WcagChips,
-} from "@/components/ui";
+import { Button, FindingDetail, FindingRow, Ruler, SectionKicker, WcagChips } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { modeList, type SimKey } from "./data";
 import { CaptureStage, type FocusPoint } from "./evidence-frame";
@@ -32,9 +24,6 @@ export function MobileReport({
   selectedFinding,
   selectedId,
   onSelect,
-  occurrenceIndex,
-  onPrev,
-  onNext,
   markerViews,
   focusPoints,
   onSelectMarker,
@@ -53,9 +42,6 @@ export function MobileReport({
   selectedFinding: FindingView | null;
   selectedId: string | null;
   onSelect: (id: string) => void;
-  occurrenceIndex: number;
-  onPrev: () => void;
-  onNext: () => void;
   markerViews: MarkerView[];
   focusPoints: FocusPoint[];
   onSelectMarker: (markerN: number) => void;
@@ -141,17 +127,10 @@ export function MobileReport({
           {selectedFinding ? (
             <div className="mt-4">
               <div className="flex items-center justify-between gap-3">
-                {selectedFinding.markers.length > 0 ? (
-                  <OccurrenceStepper
-                    index={Math.min(occurrenceIndex, selectedFinding.markers.length - 1)}
-                    total={selectedFinding.markers.length}
-                    onPrev={onPrev}
-                    onNext={onNext}
-                    size="lg"
-                  />
-                ) : (
-                  <span className="text-[12.5px] text-muted">no marker · outside the capture</span>
-                )}
+                <span className="text-[12.5px] text-muted">
+                  {selectedFinding.elements} element{selectedFinding.elements === 1 ? "" : "s"} ·{" "}
+                  {selectedFinding.markers.length} located
+                </span>
                 <Button variant="primary" size="md" onClick={() => setTab("findings")}>
                   View finding
                 </Button>
@@ -159,7 +138,7 @@ export function MobileReport({
               <div className="mt-3 border border-border bg-surface p-3">
                 <p className="text-[15px] font-semibold text-ink">{selectedFinding.title}</p>
                 <p className="mt-1 font-mono text-[12px] text-steel">
-                  {selectedFinding.selectors[0] ?? selectedFinding.ruleId}
+                  {selectedFinding.affectedSelectors[0] ?? selectedFinding.ruleId}
                 </p>
               </div>
             </div>

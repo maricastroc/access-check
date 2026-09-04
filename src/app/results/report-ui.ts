@@ -36,36 +36,29 @@ export type MarkerView = {
   dimmed: boolean;
   label?: string;
   findingId: string | null;
-  occurrence: number; // -1 if not the active occurrence
 };
 
 /**
- * Decide each capture marker's visual state from the selection:
+ * Decide each capture marker's visual state from the selection. The engine emits
+ * at most one marker per finding, so there is no occurrence index:
  * - no finding selected → every marker idle, none dimmed;
- * - a finding selected → its active occurrence is `selected` (with label), its
- *   sibling occurrences stay idle-and-undimmed, all other markers are dimmed.
+ * - a finding selected → its marker is `selected` (with the measured label), all
+ *   other findings' markers are dimmed.
  */
-export function buildMarkerViews(
-  markers: ScanMarker[],
-  selected: FindingView | null,
-  occurrenceIndex: number,
-): MarkerView[] {
-  const selectedMarkerNs = new Set((selected?.markers ?? []).map((m) => m.n));
-  const activeMarker = selected?.markers[occurrenceIndex];
+export function buildMarkerViews(markers: ScanMarker[], selected: FindingView | null): MarkerView[] {
+  const selectedNs = new Set((selected?.markers ?? []).map((m) => m.n));
 
   return markers.map((marker) => {
-    const belongs = selectedMarkerNs.has(marker.n);
-    const isActive = activeMarker?.n === marker.n;
     if (!selected) {
-      return { marker, state: "idle" as MarkerState, dimmed: false, findingId: null, occurrence: -1 };
+      return { marker, state: "idle" as MarkerState, dimmed: false, findingId: null };
     }
+    const belongs = selectedNs.has(marker.n);
     return {
       marker,
-      state: isActive ? ("selected" as MarkerState) : ("idle" as MarkerState),
+      state: belongs ? ("selected" as MarkerState) : ("idle" as MarkerState),
       dimmed: !belongs,
-      label: isActive ? markerLabel(selected) : undefined,
+      label: belongs ? markerLabel(selected) : undefined,
       findingId: belongs ? selected.id : null,
-      occurrence: belongs ? selected.markers.findIndex((m) => m.n === marker.n) : -1,
     };
   });
 }

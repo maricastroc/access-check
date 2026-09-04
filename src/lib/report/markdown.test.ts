@@ -50,7 +50,8 @@ describe("buildReportMarkdown", () => {
   });
 
   it("keeps sandbox language and the real measurement", () => {
-    expect(md).toContain("Verified in a sandbox copy");
+    expect(md).toContain("Verified fix");
+    expect(md).toContain("Applied in a sandbox copy and re-audited");
     expect(md).toContain("the audited site is not altered");
     expect(md).toMatch(/2\.10:1 · minimum AA 4\.5:1 · fix reaches 4\.62:1/);
   });

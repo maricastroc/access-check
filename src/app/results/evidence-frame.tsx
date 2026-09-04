@@ -3,16 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ScanResult, Severity } from "@/lib/scan/types";
 import type { FindingView } from "@/lib/report/findings";
-import {
-  Button,
-  CodeBlock,
-  ColorSwatch,
-  Marker,
-  OccurrenceStepper,
-  ProvenancePanel,
-  SectionKicker,
-  StatusSeal,
-} from "@/components/ui";
+import { Button, CodeBlock, Marker, ProvenancePanel, SectionKicker } from "@/components/ui";
 import { modeDesc, previewFilters, type SimKey } from "./data";
 import { clamp } from "./shared";
 import { type Layer, type MarkerView } from "./report-ui";
@@ -222,9 +213,6 @@ export function EvidenceFrame({
   markerViews,
   focusPoints,
   selectedFinding,
-  occurrenceIndex,
-  onPrev,
-  onNext,
   onSelectMarker,
 }: {
   result: ScanResult;
@@ -236,9 +224,6 @@ export function EvidenceFrame({
   markerViews: MarkerView[];
   focusPoints: FocusPoint[];
   selectedFinding: FindingView | null;
-  occurrenceIndex: number;
-  onPrev: () => void;
-  onNext: () => void;
   onSelectMarker: (markerN: number) => void;
 }) {
   const [scalePct, setScalePct] = useState(60);
@@ -283,80 +268,40 @@ export function EvidenceFrame({
       {/* technical drawer */}
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="border-b border-ink p-4 lg:border-r lg:border-b-0">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <SectionKicker>Element and code</SectionKicker>
-            {selectedFinding && selectedFinding.markers.length > 0 && (
-              <OccurrenceStepper
-                index={Math.min(occurrenceIndex, selectedFinding.markers.length - 1)}
-                total={selectedFinding.markers.length}
-                onPrev={onPrev}
-                onNext={onNext}
-              />
-            )}
-          </div>
-
+          <SectionKicker>Element and code</SectionKicker>
           {selectedFinding ? (
-            <div className="mt-3 space-y-3">
+            <div className="mt-3 space-y-2.5">
               <code className="block font-mono text-[13px] text-steel">
-                {selectedFinding.selectors[0] ?? selectedFinding.ruleId}
+                {selectedFinding.affectedSelectors[0] ?? selectedFinding.ruleId}
               </code>
-
+              <p className="text-[12.5px] text-muted">
+                <span className="font-medium text-ink tabular-nums">{selectedFinding.elements}</span>{" "}
+                element{selectedFinding.elements === 1 ? "" : "s"} · {selectedFinding.markers.length}{" "}
+                located on the capture
+              </p>
               {selectedFinding.markers.length === 0 && (
-                <p className="flex items-center gap-2 text-[12.5px] text-muted">
-                  <span aria-hidden className="inline-block h-3 w-3 border border-dashed border-border" />
-                  This finding&apos;s element is outside the captured area — no marker was placed.
+                <p className="flex items-start gap-2 text-[12px] text-muted">
+                  <span aria-hidden className="mt-0.5 inline-block h-3 w-3 shrink-0 border border-dashed border-border" />
+                  {selectedFinding.noMarkerReason}
                 </p>
               )}
-              {selectedFinding.markers.length > 0 &&
-                selectedFinding.markers.length < selectedFinding.elements && (
-                  <p className="text-[12px] text-muted">
-                    {selectedFinding.markers.length} of {selectedFinding.elements} located on the capture.
-                  </p>
-                )}
-
               {selectedFinding.fixCode && (
                 <CodeBlock
                   lines={[
                     {
                       text: selectedFinding.fixCode,
-                      tone: selectedFinding.fixStatus === "verified" ? "added" : "default",
+                      tone: selectedFinding.verdict.kind === "verified" ? "added" : "default",
                     },
                   ]}
                 />
               )}
-
-              {selectedFinding.measurement?.toHex && (
-                <div className="flex flex-wrap items-center gap-2 text-[13px]">
-                  {selectedFinding.measurement.fromHex && (
-                    <>
-                      <ColorSwatch hex={selectedFinding.measurement.fromHex} size={16} />
-                      <span className="font-mono text-[12px] text-muted">
-                        {selectedFinding.measurement.fromHex.toUpperCase()}
-                      </span>
-                      <span aria-hidden className="text-muted">
-                        →
-                      </span>
-                    </>
-                  )}
-                  <ColorSwatch hex={selectedFinding.measurement.toHex} size={16} />
-                  <span className="font-mono text-[12px] text-ink">
-                    {selectedFinding.measurement.toHex.toUpperCase()}
-                  </span>
-                </div>
-              )}
-
-              <StatusSeal status={selectedFinding.fixStatus}>
-                {selectedFinding.fixStatus === "verified"
-                  ? "Re-audited in a sandbox copy"
-                  : undefined}
-              </StatusSeal>
               <p className="text-[12px] text-muted">
-                Fixes are applied and reverted in a copy. {host} was not altered.
+                Full impact, fix preview and verification are in the findings panel.
               </p>
             </div>
           ) : (
             <p className="mt-3 text-[13px] text-muted">
-              Select a finding to inspect its element, code and sandbox re-audit.
+              Select a finding to inspect its element and code.
             </p>
           )}
         </div>

@@ -53,7 +53,6 @@ export function ResultsView({
 
   // presentation state
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [occurrenceIndex, setOccurrenceIndex] = useState(0);
   const [sim, setSim] = useState<SimKey>("normal");
   const [layer, setLayer] = useState<Layer>("markers");
   const [collapsed, setCollapsed] = useState(false);
@@ -131,37 +130,22 @@ export function ResultsView({
   const effectiveLayer: Layer = result?.screenshot ? layer : "none";
 
   const markerViews = useMemo(
-    () => (result ? buildMarkerViews(orderedMarkers(result), selectedFinding, occurrenceIndex) : []),
-    [result, selectedFinding, occurrenceIndex],
+    () => (result ? buildMarkerViews(orderedMarkers(result), selectedFinding) : []),
+    [result, selectedFinding],
   );
 
   const host = result ? safeHost(result.finalUrl) : safeHost(url);
 
   const selectFinding = useCallback((id: string) => {
     setSelectedId(id);
-    setOccurrenceIndex(0);
   }, []);
 
   const selectMarker = useCallback(
     (markerN: number) => {
       const ownerId = markerOwner.get(markerN);
-      if (!ownerId) return;
-      setSelectedId(ownerId);
-      const owner = findings.find((f) => f.id === ownerId);
-      const idx = owner ? owner.markers.findIndex((m) => m.n === markerN) : 0;
-      setOccurrenceIndex(idx < 0 ? 0 : idx);
+      if (ownerId) setSelectedId(ownerId);
     },
-    [findings, markerOwner],
-  );
-
-  const step = useCallback(
-    (dir: 1 | -1) => {
-      if (!selectedFinding) return;
-      const total = selectedFinding.markers.length;
-      if (total <= 1) return;
-      setOccurrenceIndex((i) => clamp(i + dir, 0, total - 1));
-    },
-    [selectedFinding],
+    [markerOwner],
   );
 
   // scroll the margin to the selected finding
@@ -243,13 +227,7 @@ export function ResultsView({
             {desktop ? (
               <>
                 <SummaryBand result={result} breakdown={breakdown} wcag={wcag} />
-                <div
-                  className="mx-auto grid w-full max-w-[1560px] grid-cols-[60px_minmax(0,1fr)_420px] items-start"
-                  onKeyDown={(e) => {
-                    if (e.key === "ArrowLeft") step(-1);
-                    if (e.key === "ArrowRight") step(1);
-                  }}
-                >
+                <div className="mx-auto grid w-full max-w-[1560px] grid-cols-[60px_minmax(0,1fr)_420px] items-start">
                   <div className="sticky top-[62px] self-start">
                     <VisionRail
                       sim={sim}
@@ -272,9 +250,6 @@ export function ResultsView({
                       markerViews={markerViews}
                       focusPoints={focusPoints}
                       selectedFinding={selectedFinding}
-                      occurrenceIndex={occurrenceIndex}
-                      onPrev={() => step(-1)}
-                      onNext={() => step(1)}
                       onSelectMarker={selectMarker}
                     />
                   </div>
@@ -302,9 +277,6 @@ export function ResultsView({
                 selectedFinding={selectedFinding}
                 selectedId={selectedId}
                 onSelect={selectFinding}
-                occurrenceIndex={occurrenceIndex}
-                onPrev={() => step(-1)}
-                onNext={() => step(1)}
                 markerViews={markerViews}
                 focusPoints={focusPoints}
                 onSelectMarker={selectMarker}

@@ -14,10 +14,11 @@
 
 export type ContrastMeasurement = {
   measured: number; // ratio found on the page
-  required: number; // AA minimum for this element
+  required: number; // AA minimum for this element (already normal/large-text aware)
   fixed: number | null; // ratio the suggested fix reaches, if a fix was found
-  fromHex: string | null; // original color the fix replaces
+  fromHex: string | null; // original text color
   toHex: string | null; // color the fix suggests
+  bgHex: string | null; // background the ratios were computed against
   prop: "color" | "background" | null; // which property the fix changes
 };
 
@@ -61,12 +62,18 @@ export function parseContrastFix(fix: string, fixCode?: string): ContrastMeasure
   // The original color is always introduced as "text color #<hex>".
   const fromHex = text.match(/text color\s+(#[0-9a-fA-F]{6})/i)?.[1].toLowerCase() ?? null;
 
+  // The background the ratios were computed against: "against #hex" (fg fix) or "on #hex".
+  const bgHex =
+    (text.match(/against\s+(#[0-9a-fA-F]{6})/i) ?? text.match(/\bon\s+(#[0-9a-fA-F]{6})/i))?.[1].toLowerCase() ??
+    null;
+
   return {
     measured,
     required,
     fixed: fixed !== null && Number.isFinite(fixed) ? fixed : null,
     fromHex,
     toHex,
+    bgHex,
     prop,
   };
 }
