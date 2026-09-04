@@ -16,15 +16,6 @@ export type PageAudit = {
   scan: (target: string) => void;
 };
 
-/**
- * Owns one page's audit lifecycle: the streaming request, phase/error state and
- * the initial load. It is the single home for the async flow, shared by the
- * interactive report (incremental) and the printable report (final only), so the
- * flow lives in one place instead of being re-implemented per view.
- *
- * `incremental` shows the core result as soon as it streams in; `fallbackError`
- * is the message used when the failure isn't a recognized ScanStreamError.
- */
 export function usePageAudit({
   initialUrl,
   initialResult = null,

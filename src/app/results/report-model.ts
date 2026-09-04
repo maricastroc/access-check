@@ -4,10 +4,8 @@ import { scoreBreakdown, type ScoreBreakdown } from "../../lib/report/score";
 import { buildWcagReading, type WcagReadingModel } from "../../lib/report/wcag";
 import { clamp, safeHost } from "./shared";
 
-/** A keyboard focus stop projected onto the screenshot (percent coordinates). */
 export type FocusPoint = { n: number; cx: number; cy: number; visible: boolean; label: string };
 
-/** Everything the results view derives from a ScanResult, in one place. */
 export type ReportView = {
   findings: FindingView[];
   breakdown: ScoreBreakdown;
@@ -16,7 +14,6 @@ export type ReportView = {
   host: string;
 };
 
-/** Pure derivation: ScanResult -> the results view-model. No React, no state. */
 export function buildReportView(result: ScanResult): ReportView {
   const focusPoints: FocusPoint[] = (result.keyboard?.focusPath ?? [])
     .filter((s) => s.left !== null && s.top !== null)

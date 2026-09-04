@@ -10,18 +10,9 @@ export type FindingSelection = {
   selectMarker: (markerN: number) => void;
 };
 
-/**
- * Which finding is selected, and how selection connects to the capture markers.
- * Also owns the two selection-driven UX effects (scroll the selected finding into
- * view; Escape clears it). A new audit yields a new `findings` array, which drops
- * any stale selection.
- */
 export function useFindingSelection(findings: FindingView[]): FindingSelection {
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  // A fresh audit replaces the findings array; forget any previous selection.
-  // Adjusting state during render (React's recommended pattern) rather than in an
-  // effect keeps the reset synchronous and avoids a cascading re-render.
   const [prevFindings, setPrevFindings] = useState(findings);
   if (findings !== prevFindings) {
     setPrevFindings(findings);

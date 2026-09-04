@@ -78,14 +78,13 @@ describe("buildReportView", () => {
       result({
         keyboard: keyboard([
           stop({ n: 1, left: 50, top: 40, width: 10, height: 6, focusVisible: true, label: "Skip link" }),
-          stop({ n: 2, left: null, top: null }), // unpositioned -> skipped
+          stop({ n: 2, left: null, top: null }),
           stop({ n: 3, left: 99, top: 0, width: 4, height: 4, focusVisible: false, label: "Cart" }),
         ]),
       }),
     );
     expect(v.focusPoints.map((p) => p.n)).toEqual([1, 3]);
     expect(v.focusPoints[0]).toMatchObject({ cx: 55, cy: 43, visible: true, label: "Skip link" });
-    // n=3 centre would be (101, 2); x clamps to 98, y clamps up to 2.
     expect(v.focusPoints[1]).toMatchObject({ cx: 98, cy: 2, visible: false });
   });
 

@@ -53,10 +53,8 @@ export function ResultsView({
   });
   const { status, result, phase, url, error, errorHint, scan } = audit;
 
-  // The retry field in the error state is its own input, separate from the audited url.
   const [input, setInput] = useState(start);
 
-  // Capture display controls (view-local).
   const [sim, setSim] = useState<SimKey>("normal");
   const [layer, setLayer] = useState<Layer>("markers");
   const [collapsed, setCollapsed] = useState(false);
