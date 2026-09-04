@@ -1,90 +1,85 @@
 "use client";
 
 import Link from "next/link";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeft, faArrowRotateRight, faPlus } from "@fortawesome/free-solid-svg-icons";
-import { Logo } from "@/components/ui";
-import { UserMenu } from "@/components/home/user-menu";
+import { faArrowRotateRight } from "@fortawesome/free-solid-svg-icons";
+import type { ScanResult } from "@/lib/scan/types";
+import { Button, Logo } from "@/components/ui";
 
-type HeaderUser = { name?: string | null; email?: string | null; image?: string | null };
+function formatWhen(): string {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date());
+}
 
 export function TopBar({
+  result,
+  viewport,
   onRerun,
+  onMarkdown,
   busy,
-  siteId,
-  rerunLabel = "Re-run analysis",
-  user,
-  signOutAction,
 }: {
+  result: ScanResult | null;
+  viewport: string;
   onRerun: () => void;
+  onMarkdown: () => void;
   busy: boolean;
-  siteId: string | null;
-  rerunLabel?: string;
-  user: HeaderUser | null;
-  signOutAction: () => Promise<void>;
 }) {
-  const btn =
-    "flex h-8.5 items-center gap-2 rounded-[9px] border border-line-strong bg-card px-2.5 text-[13px] font-medium text-ink-soft transition-colors hover:bg-[#f6f7f9] hover:text-ink sm:px-3.5";
-
-  const account = user ? (
-    <UserMenu user={user} signOutAction={signOutAction} />
-  ) : (
-    <Link
-      href="/login"
-      className="flex h-8.5 items-center rounded-[9px] px-2.5 text-[13px] font-medium text-ink-soft transition-colors hover:bg-[#f6f7f9] hover:text-ink"
-    >
-      Sign in
-    </Link>
-  );
-
   return (
-    <header className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 sm:py-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
-        <div className="flex items-center justify-between gap-2 sm:justify-start">
-          <Logo />
-          <div className="sm:hidden">{account}</div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3.5">
-          {siteId && (
-            <Link
-              href={`/site/${siteId}`}
-              aria-label="Back to site audit"
-              aria-disabled={busy}
-              tabIndex={busy ? -1 : undefined}
-              onClick={busy ? (e) => e.preventDefault() : undefined}
-              className={`${btn} ${busy ? "pointer-events-none opacity-50" : ""}`}
-            >
-              <FontAwesomeIcon icon={faArrowLeft} className="text-xs" />
-              Site audit
-            </Link>
-          )}
-          <Link
-            href="/"
-            aria-label="New scan"
-            aria-disabled={busy}
-            tabIndex={busy ? -1 : undefined}
-            onClick={busy ? (e) => e.preventDefault() : undefined}
-            className={`${btn} ${busy ? "pointer-events-none opacity-50" : ""}`}
-          >
-            <FontAwesomeIcon icon={faPlus} className="text-xs" />
-            New scan
-          </Link>
-          <button
+    <header className="sticky top-0 z-30 border-b border-border bg-surface">
+      <div className="mx-auto flex h-[62px] w-full max-w-[1560px] items-center gap-4 px-4 sm:px-6">
+        <Logo />
+        {result && (
+          <div className="hidden min-w-0 items-center gap-3 text-[13px] text-muted lg:flex">
+            <span className="truncate font-mono text-ink">{result.finalUrl}</span>
+            <span aria-hidden className="text-border">
+              ·
+            </span>
+            <span className="whitespace-nowrap">{formatWhen()}</span>
+            <span aria-hidden className="text-border">
+              ·
+            </span>
+            <span className="whitespace-nowrap tabular-nums">
+              {(result.durationMs / 1000).toFixed(1)}s
+            </span>
+            <span aria-hidden className="text-border">
+              ·
+            </span>
+            <span className="whitespace-nowrap tabular-nums">{viewport}</span>
+          </div>
+        )}
+        <div className="ml-auto flex items-center gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            icon={faArrowRotateRight}
             onClick={onRerun}
             disabled={busy}
-            aria-label={rerunLabel}
-            className={`${btn} cursor-pointer disabled:opacity-50`}
           >
-            <FontAwesomeIcon
-              icon={faArrowRotateRight}
-              className={`text-xs ${busy ? "animate-spin" : ""}`}
-            />
-            {rerunLabel}
-          </button>
-
-          <span className="hidden h-5 w-px bg-line-strong sm:block" />
-          <div className="hidden sm:block">{account}</div>
+            <span className="hidden sm:inline">Re-audit</span>
+          </Button>
+          <Button variant="secondary" size="sm" onClick={onMarkdown} disabled={!result}>
+            Export Markdown
+          </Button>
+          {result ? (
+            <Button
+              href={`/report?url=${encodeURIComponent(result.finalUrl)}`}
+              variant="primary"
+              size="sm"
+            >
+              Export PDF
+            </Button>
+          ) : (
+            <Link
+              href="/"
+              className="inline-flex h-9 items-center justify-center bg-ink px-4 text-[13.5px] font-semibold text-surface hover:bg-ink-2"
+            >
+              New audit
+            </Link>
+          )}
         </div>
       </div>
     </header>

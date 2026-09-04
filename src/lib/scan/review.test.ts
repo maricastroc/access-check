@@ -8,7 +8,7 @@ describe("reviewGuidance", () => {
     expect(cc.steps.length).toBeGreaterThan(0);
 
     const link = reviewGuidance("link-in-text-block");
-    expect(link.how.toLowerCase()).toContain("colour");
+    expect(link.how.toLowerCase()).toContain("color");
   });
 
   it("falls back to a useful generic for unmapped rules", () => {

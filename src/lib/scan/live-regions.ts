@@ -72,16 +72,16 @@ export function analyzeLiveRegions(raw: RawLiveRegions): LiveRegionsReport {
       "The region is removed from the accessibility tree (display:none, visibility:hidden or " +
         "aria-hidden), so updates written into it are never announced. Note this is different " +
         "from the valid visually-hidden pattern, which keeps the node in the tree.",
-      "Keep the live region in the tree — use a clip/sr-only pattern instead of display:none, " +
-        "and drop aria-hidden from it.",
+      "Keep the live region in the accessibility tree: use a clip or screen-reader-only pattern " +
+        "instead of display:none, and remove aria-hidden from it.",
     ),
     group(
       "live-region-muted",
       "moderate",
       muted,
       (n) => `${n} ${n === 1 ? "alert is" : "alerts are"} muted with aria-live="off"`,
-      'An element with role="alert" is meant to interrupt, but aria-live="off" silences it — ' +
-        "the two contradict each other and nothing is announced.",
+      'An element with role="alert" is meant to interrupt, but aria-live="off" silences it. ' +
+        "The two contradict each other, so nothing is announced.",
       'Remove aria-live="off" from the alert (role="alert" is assertive by default).',
     ),
   ].filter((f): f is AuditFinding => f !== null);

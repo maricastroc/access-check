@@ -40,6 +40,20 @@
 
 <br/>
 
+## 🩺 We run AccessCheck on AccessCheck
+
+A tool that measures contrast shouldn't have questionable contrast of its own, so the landing page is audited with the same engine on every change.
+
+<p align="center">
+  <img src="docs/self-audit.png" alt="AccessCheck's own capture of its landing page during a self-audit" width="800" />
+</p>
+
+- **The product interface passes: 0 automated contrast failures.** Every eyebrow, label, form field, section heading and button in the real UI clears WCAG AA (4.5:1, or 3:1 for large text), checked with axe-core.
+- The single contrast finding the audit reports lives inside the **demo mock-up**: the illustrated `aurora-coffee.com` sample page, whose low-contrast "Order now" button is exactly the barrier AccessCheck is built to detect.
+- Fixes that came straight out of this self-audit: darker `muted` and `serious` text tokens (AA on every background), a readable input placeholder, a solid hero background so text is never measured over a gradient, and light text on the dark call-to-action.
+
+<br/>
+
 ## ♿ Features
 
 |                           |                                                                                                                                                  |

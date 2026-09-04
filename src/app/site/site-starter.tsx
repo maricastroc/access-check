@@ -30,10 +30,10 @@ export function SiteStarter({ initialUrl }: { initialUrl: string }) {
           body: JSON.stringify({ url: initialUrl }),
         });
         const json = await res.json();
-        if (!res.ok) throw new Error(json.error || "Could not start the site scan.");
+        if (!res.ok) throw new Error(json.error || "We couldn't start the site audit. Please try again.");
         router.replace(`/site/${json.id}`);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Could not start the site scan.");
+        setError(e instanceof Error ? e.message : "We couldn't start the site audit. Please try again.");
       }
     })();
   }, [initialUrl, router]);
@@ -64,11 +64,11 @@ export function SiteStarter({ initialUrl }: { initialUrl: string }) {
             <FontAwesomeIcon icon={faSpinner} aria-hidden className="animate-spin text-xl" />
           </span>
           <div>
-            <p className="text-lg font-semibold">Discovering pages…</p>
+            <p className="text-lg font-semibold">Finding pages…</p>
             <p className="mt-1.5 text-sm text-muted">
-              Reading the sitemap and links on{" "}
+              Reading the site map and links on{" "}
               <span className="font-medium text-ink">{crawlHost(initialUrl) || "the site"}</span> to
-              build the crawl.
+              build the list of pages to audit.
             </p>
           </div>
         </div>

@@ -14,7 +14,7 @@ export function CrawlShell({ children }: { children: ReactNode }) {
           className="flex h-8.5 items-center gap-2 rounded-[9px] px-2.5 text-[13px] font-medium text-ink-soft transition-colors hover:bg-[#f6f7f9] hover:text-ink"
         >
           <FontAwesomeIcon icon={faArrowLeft} className="text-xs" />
-          <span className="hidden sm:inline">New scan</span>
+          <span className="hidden sm:inline">New audit</span>
         </Link>
       </header>
       <main id="main" className="mx-auto w-full max-w-5xl px-4 pb-16 sm:px-6">

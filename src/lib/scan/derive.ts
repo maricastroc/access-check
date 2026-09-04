@@ -54,13 +54,14 @@ export function buildSummary(counts: {
 }): string {
   if (counts.critical > 0) {
     const n = counts.critical;
-    return `Strong foundation, but ${n} critical issue${n > 1 ? "s" : ""} block${n > 1 ? "" : "s"} full AA compliance — resolve ${n > 1 ? "them" : "it"} first.`;
+    return `Strong foundation, but ${n} critical finding${n > 1 ? "s" : ""} block${n > 1 ? "" : "s"} WCAG level AA. Fix ${n > 1 ? "them" : "it"} first.`;
   }
   if (counts.serious > 0) {
-    return `No critical blockers, but ${counts.serious} serious issue${counts.serious > 1 ? "s" : ""} still hurt${counts.serious > 1 ? "" : "s"} the experience for assistive tech.`;
+    const n = counts.serious;
+    return `No critical blockers, but ${n} serious finding${n > 1 ? "s" : ""} still ${n > 1 ? "make" : "makes"} the page harder to use for people who rely on assistive technology.`;
   }
   if (counts.moderate > 0) {
-    return `Solid result — only moderate refinements left to polish accessibility.`;
+    return `Solid result. Only moderate findings are left to polish.`;
   }
-  return `Excellent — no automated violations detected on this page.`;
+  return `Excellent. No automated findings on this page.`;
 }

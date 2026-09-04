@@ -25,12 +25,12 @@ export default async function LoginPage() {
         </div>
 
         <div className="mt-8 flex flex-col gap-3">
-          <ProviderButton provider="github" icon={faGithub} label="Continue with GitHub" />
-          <ProviderButton provider="google" icon={faGoogle} label="Continue with Google" />
+          <ProviderButton provider="github" icon={faGithub} label="Sign in with GitHub" />
+          <ProviderButton provider="google" icon={faGoogle} label="Sign in with Google" />
         </div>
 
         <p className="mt-6 text-center text-xs leading-relaxed text-faint">
-          No passwords — we only use GitHub or Google to identify you. The scanner stays free
+          No passwords. We use GitHub or Google only to confirm who you are. AccessCheck stays free
           without an account.
         </p>
 

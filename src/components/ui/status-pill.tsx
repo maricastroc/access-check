@@ -1,48 +1,51 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
-export type StatusTone = "success" | "warning" | "critical" | "serious" | "moderate" | "brand";
+export type StatusTone =
+  | "verified"
+  | "serious"
+  | "moderate"
+  | "critical"
+  | "steel"
+  | "muted"
+  | "success"
+  | "warning"
+  | "brand";
 
 const toneText: Record<StatusTone, string> = {
-  success: "text-success",
-  warning: "text-warning",
-  critical: "text-critical",
+  verified: "text-verified",
+  success: "text-verified",
   serious: "text-serious",
-  moderate: "text-moderate",
-  brand: "text-brand-600",
+  moderate: "text-moderate-text",
+  warning: "text-moderate-text",
+  critical: "text-critical",
+  steel: "text-steel",
+  brand: "text-steel",
+  muted: "text-muted",
 };
 
-const toneDot: Record<StatusTone, string> = {
-  success: "bg-success",
-  warning: "bg-warning",
+const toneSquare: Record<StatusTone, string> = {
+  verified: "bg-verified",
+  success: "bg-verified",
+  serious: "hatch-serious",
+  moderate: "hatch-moderate",
+  warning: "hatch-moderate",
   critical: "bg-critical",
-  serious: "bg-serious",
-  moderate: "bg-moderate",
-  brand: "bg-brand-500",
+  steel: "bg-steel",
+  brand: "bg-steel",
+  muted: "bg-muted",
 };
 
 type StatusPillProps = {
   children: ReactNode;
   tone: StatusTone;
-  dotClassName?: string;
   className?: string;
 };
 
-export function StatusPill({
-  children,
-  tone,
-  dotClassName = "size-1.5",
-  className,
-}: StatusPillProps) {
+export function StatusPill({ children, tone, className }: StatusPillProps) {
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5 text-sm font-medium",
-        toneText[tone],
-        className,
-      )}
-    >
-      <span className={cn("rounded-full", toneDot[tone], dotClassName)} />
+    <span className={cn("inline-flex items-center gap-2 text-[13px] font-medium", toneText[tone], className)}>
+      <span aria-hidden className={cn("size-2.5 shrink-0", toneSquare[tone])} />
       {children}
     </span>
   );

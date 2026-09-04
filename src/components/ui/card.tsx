@@ -9,8 +9,8 @@ export function Card({ elevated, className, ...rest }: CardProps) {
   return (
     <div
       className={cn(
-        "rounded-card border border-line bg-card",
-        elevated ? "shadow-card" : "shadow-soft",
+        "border border-border bg-surface",
+        elevated && "shadow-(--shadow-selected)",
         className,
       )}
       {...rest}

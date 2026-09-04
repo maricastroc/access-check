@@ -14,11 +14,11 @@ import { ProgressPage } from "./progress-page";
 const PAGE_WIDTH = 816;
 
 const PHASE_DETAIL: Record<ScanPhase, string> = {
-  preparing: "Starting a browser and preparing the page.",
-  loading: "Fetching and rendering the full DOM.",
-  auditing: "Running the WCAG audit against the rendered page.",
-  processing: "Grouping findings and mapping success criteria.",
-  finalizing: "Scoring and assembling the report.",
+  preparing: "Starting a browser and getting the page ready.",
+  loading: "Opening the page and letting it finish loading.",
+  auditing: "Running the WCAG checks on the loaded page.",
+  processing: "Grouping findings and matching them to WCAG checkpoints.",
+  finalizing: "Scoring and putting the report together.",
 };
 
 function FitToWidth({ children }: { children: React.ReactNode }) {
@@ -72,7 +72,7 @@ export function ReportView({ initialUrl }: { initialUrl: string }) {
       setUrl(scanned.finalUrl || value);
       setStatus("done");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Scan failed.");
+      setError(e instanceof Error ? e.message : "We couldn't build the report. Please try again.");
       setStatus("error");
     }
   }, []);
@@ -107,9 +107,9 @@ export function ReportView({ initialUrl }: { initialUrl: string }) {
             action={
               <Link
                 href="/"
-                className="mt-2 rounded-[10px] bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-700"
+                className="mt-2 bg-ink px-4 py-2 text-sm font-semibold text-surface transition-colors hover:bg-ink-2"
               >
-                New scan
+                New audit
               </Link>
             }
           />

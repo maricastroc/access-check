@@ -39,6 +39,7 @@ export function ScanCard({ scan, delta }: { scan: ScanListItem; delta: number | 
             className="absolute top-3 right-3 flex size-11 items-center justify-center rounded-full text-sm font-bold text-white shadow-card"
             style={{ background: scoreColor(scan.score) }}
           >
+            <span className="sr-only">Score </span>
             {scan.score}
           </span>
         </div>
@@ -52,7 +53,12 @@ export function ScanCard({ scan, delta }: { scan: ScanListItem; delta: number | 
                   className="shrink-0 text-[11px] font-bold"
                   style={{ color: delta > 0 ? "#16764f" : "#c62a2f" }}
                 >
-                  {delta > 0 ? `▲ +${delta}` : `▼ ${delta}`}
+                  <span aria-hidden>{delta > 0 ? `▲ +${delta}` : `▼ ${delta}`}</span>
+                  <span className="sr-only">
+                    {delta > 0
+                      ? `up ${delta} points since the previous audit`
+                      : `down ${Math.abs(delta)} points since the previous audit`}
+                  </span>
                 </span>
               )}
             </div>

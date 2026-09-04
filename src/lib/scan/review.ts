@@ -4,28 +4,28 @@ export type ReviewGuidance = {
 };
 
 const GENERIC: ReviewGuidance = {
-  how: "Automated testing couldn't decide this one — it needs a person to confirm.",
+  how: "Automated testing couldn't decide this one, so it needs a person to confirm.",
   steps: [
-    "Inspect each affected element in DevTools",
-    "Check it against the listed WCAG success criterion",
+    "Inspect each affected element in your browser's developer tools",
+    "Check it against the WCAG success criterion listed here",
     "Confirm the intent holds for screen-reader and keyboard users",
   ],
 };
 
 const GUIDANCE: Record<string, ReviewGuidance> = {
   "color-contrast": {
-    how: "axe couldn't read what's behind this text — usually a background image, gradient, semi-transparent layer, or an overlapping element.",
+    how: "The checker couldn't read what's behind this text. It's usually a background image, a gradient, a see-through layer, or an element sitting on top.",
     steps: [
       "Look at the text over its real, rendered background",
-      "Sample the text and background colours with a colour picker",
-      "Confirm at least 4.5:1 (3:1 for large text — ≥24px, or ≥18.66px bold)",
+      "Sample the text and background colors with a color picker",
+      "Confirm at least 4.5:1 (3:1 for large text, meaning 24px or larger, or 18.66px bold or larger)",
     ],
   },
   "link-in-text-block": {
-    how: "Links sitting inside a block of text must be tellable apart without relying on colour alone.",
+    how: "Links inside a block of text must be tellable apart without relying on color alone.",
     steps: [
-      "Give the link a non-colour cue — an underline is the safest",
-      "If it's colour-only, confirm ≥3:1 contrast against the surrounding text",
+      "Give the link a cue that isn't color, such as an underline (the safest option)",
+      "If it's color-only, confirm at least 3:1 contrast against the surrounding text",
       "Confirm a visible change on hover and on keyboard focus",
     ],
   },
@@ -49,7 +49,7 @@ const GUIDANCE: Record<string, ReviewGuidance> = {
     how: "This page embeds an <iframe> axe can't see into.",
     steps: [
       "Give the <iframe> a short, descriptive title attribute",
-      "Audit the framed document separately — it has its own accessibility",
+      "Audit the framed page separately. It has its own accessibility",
     ],
   },
   "th-has-data-cells": {
@@ -77,7 +77,7 @@ const GUIDANCE: Record<string, ReviewGuidance> = {
     how: "A paragraph is styled to look like a heading (bold or large).",
     steps: [
       "If it introduces a section, make it a real <h1>–<h6>",
-      "If it's just emphasised text, this one is safe to dismiss",
+      "If it's just emphasized text, this one is safe to dismiss",
     ],
   },
   "nested-interactive": {

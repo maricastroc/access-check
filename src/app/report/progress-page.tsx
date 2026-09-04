@@ -1,8 +1,6 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowRightLong, faCheck } from "@fortawesome/free-solid-svg-icons";
 import { computeScore } from "@/lib/scan/derive";
 import type { ScanResult, Severity } from "@/lib/scan/types";
-import { safeHost, sevHex, sevTint } from "./shared";
+import { safeHost, sevHex } from "./shared";
 import { MiniHeader, PageShell, SectionKicker, SectionKickerMuted } from "./primitives";
 
 export function ProgressPage({ result }: { result: ScanResult }) {
@@ -16,44 +14,29 @@ export function ProgressPage({ result }: { result: ScanResult }) {
   const delta = estimated - result.score;
 
   const deltas = [
-    {
-      label: "Critical",
-      from: result.counts.critical,
-      to: 0,
-      sev: "critical" as Severity,
-    },
-    {
-      label: "Serious",
-      from: result.counts.serious,
-      to: 0,
-      sev: "serious" as Severity,
-    },
-    {
-      label: "Moderate",
-      from: result.counts.moderate,
-      to: result.counts.moderate,
-      sev: "moderate" as Severity,
-    },
+    { label: "Critical", from: result.counts.critical, to: 0, sev: "critical" as Severity },
+    { label: "Serious", from: result.counts.serious, to: 0, sev: "serious" as Severity },
+    { label: "Moderate", from: result.counts.moderate, to: result.counts.moderate, sev: "moderate" as Severity },
   ];
 
   const recs = [
     {
       color: sevHex.critical,
       term: "Immediate · 0–1 week",
-      title: "Resolve all critical issues",
-      body: `Clear the ${result.counts.critical} critical blocker${result.counts.critical === 1 ? "" : "s"} to unlock Level AA conformance.`,
+      title: "Resolve critical findings",
+      body: `Clear the ${result.counts.critical} critical finding${result.counts.critical === 1 ? "" : "s"} first. They weigh the most in the score.`,
     },
     {
       color: sevHex.serious,
       term: "Short term · 2–4 weeks",
-      title: "Address serious issues",
+      title: "Address serious findings",
       body: `Work through the ${result.counts.serious} serious finding${result.counts.serious === 1 ? "" : "s"} across templates and shared components.`,
     },
     {
-      color: "var(--color-brand-600)",
+      color: "var(--color-steel)",
       term: "Long term · 1–3 months",
-      title: "Refine & re-audit",
-      body: "Clear remaining moderate items, add manual screen-reader testing, and schedule a follow-up audit.",
+      title: "Refine and re-audit",
+      body: "Clear remaining moderate items, do the manual-review checks, and run the audit again.",
     },
   ];
 
@@ -62,16 +45,12 @@ export function ProgressPage({ result }: { result: ScanResult }) {
       <MiniHeader host={host} />
 
       <div className="mt-5 grid grid-cols-2 gap-4">
-        <div className="overflow-hidden rounded-2xl border border-line">
-          <div className="flex items-center gap-2.5 border-b border-line px-4 py-3">
-            <span className="size-2.5 rounded-[3px] bg-moderate" />
+        <div className="border border-hairline">
+          <div className="flex items-center gap-2.5 border-b border-hairline px-4 py-3">
+            <span aria-hidden className="size-2.5 hatch-moderate" />
             <span className="text-[13px] font-semibold text-ink">Moderate</span>
-            <span
-              className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
-              style={{ color: sevHex.moderate, background: sevTint.moderate }}
-            >
-              {result.counts.moderate} issue
-              {result.counts.moderate === 1 ? "" : "s"}
+            <span className="font-cond text-[11px] tracking-[0.06em] text-moderate-text uppercase tabular-nums">
+              {result.counts.moderate} finding{result.counts.moderate === 1 ? "" : "s"}
             </span>
           </div>
           <div className="px-4 pt-1 pb-2">
@@ -79,7 +58,7 @@ export function ProgressPage({ result }: { result: ScanResult }) {
               <div
                 key={`${v.id}-${i}`}
                 className={`flex items-center justify-between py-2 ${
-                  i < Math.min(moderate.length, 4) - 1 ? "border-b border-line" : ""
+                  i < Math.min(moderate.length, 4) - 1 ? "border-b border-hairline" : ""
                 }`}
               >
                 <div className="min-w-0 pr-2">
@@ -88,41 +67,36 @@ export function ProgressPage({ result }: { result: ScanResult }) {
                     {v.criterion.split(" · ")[1] ?? v.criterion}
                   </div>
                 </div>
-                <span className="shrink-0 rounded bg-canvas px-1.5 py-1 font-mono text-[9px] font-semibold text-ink-soft">
+                <span className="shrink-0 border border-border bg-canvas px-1.5 py-1 font-mono text-[9px] text-steel">
                   {v.criterion.replace(/^WCAG\s/, "").split(" · ")[0]}
                 </span>
               </div>
             ))}
             {moderate.length > 4 && (
               <div className="py-2 text-[10px] text-muted">
-                + {moderate.length - 4} more moderate item
-                {moderate.length - 4 > 1 ? "s" : ""} in the full log
+                + {moderate.length - 4} more moderate finding{moderate.length - 4 > 1 ? "s" : ""}
               </div>
             )}
             {moderate.length === 0 && (
-              <div className="py-3 text-[11px] text-muted">No moderate issues found.</div>
+              <div className="py-3 text-[11px] text-muted">No moderate findings.</div>
             )}
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-2xl border border-[#cfe3dc] bg-[#f3f8f5]">
-          <div className="flex items-center gap-2.5 border-b border-success-border px-4 py-3">
-            <span className="size-2.5 rounded-[3px] bg-success" />
-            <span className="text-[13px] font-semibold text-ink">Passed Checks</span>
-            <span className="rounded-full bg-[#e3efe8] px-2 py-0.5 text-[10px] font-semibold text-success">
-              {result.counts.passed} conformant
+        <div className="border border-hairline">
+          <div className="flex items-center gap-2.5 border-b border-hairline px-4 py-3">
+            <span aria-hidden className="size-2.5 bg-verified" />
+            <span className="text-[13px] font-semibold text-ink">Passed checks</span>
+            <span className="font-cond text-[11px] tracking-[0.06em] text-verified uppercase tabular-nums">
+              {result.counts.passed}
             </span>
           </div>
           <div className="grid grid-cols-2 gap-x-3 gap-y-2 p-4">
             {result.passed.slice(0, 10).map((p, i) => (
-              <span
-                key={`${p}-${i}`}
-                className="flex items-start gap-1.5 text-[11px] font-medium text-ink-soft"
-              >
-                <FontAwesomeIcon
-                  icon={faCheck}
-                  className="mt-0.75 shrink-0 text-[10px] text-success"
-                />
+              <span key={`${p}-${i}`} className="flex items-start gap-1.5 text-[11px] text-body">
+                <span aria-hidden className="mt-0.5 shrink-0 font-cond text-[10px] text-verified">
+                  ✓
+                </span>
                 <span className="leading-snug wrap-break-word">{p}</span>
               </span>
             ))}
@@ -130,40 +104,28 @@ export function ProgressPage({ result }: { result: ScanResult }) {
         </div>
       </div>
 
-      <div className="mt-5 rounded-2xl border border-[#cfe3dc] bg-linear-to-br from-brand-50 to-[#eaf2ee] p-5">
-        <div className="flex items-end justify-between">
-          <div>
-            <SectionKicker>Projected Outcome</SectionKicker>
-            <h2 className="mt-1.5 text-[24px] font-bold tracking-tight text-ink">
-              Accessibility Progress
-            </h2>
-          </div>
-          <span className="max-w-[2.6in] pb-0.5 text-right text-[10.5px] text-ink-soft">
-            After resolving critical &amp; serious issues
-          </span>
+      <div className="mt-5 border border-border p-5">
+        <div className="border-b border-hairline pb-2">
+          <SectionKicker>Priority projection</SectionKicker>
+          <h2 className="mt-1 text-[22px] font-semibold tracking-[-0.015em] text-ink">
+            Where the score could go
+          </h2>
         </div>
 
         <div className="mt-4 grid grid-cols-[2.9in_1fr] items-center gap-6">
-          <div className="flex items-center justify-between rounded-xl border border-line bg-card px-4 py-3.5">
+          <div className="flex items-center justify-between border border-hairline px-4 py-3.5">
             <div className="text-center">
-              <div className="text-[8.5px] font-semibold tracking-[0.12em] text-muted uppercase">
-                Current
-              </div>
-              <div className="mt-1 text-[38px] leading-none font-bold text-muted">
+              <SectionKickerMuted>Current</SectionKickerMuted>
+              <div className="mt-1 font-cond text-[38px] leading-none tabular-nums text-muted">
                 {result.score}
               </div>
             </div>
-            <div className="flex flex-col items-center gap-1">
-              <FontAwesomeIcon icon={faArrowRightLong} className="text-brand-500" />
-              <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-bold text-brand-600">
-                +{delta} pts
-              </span>
-            </div>
+            <span className="font-cond text-[12px] font-medium text-verified tabular-nums">
+              +{delta}
+            </span>
             <div className="text-center">
-              <div className="text-[8.5px] font-semibold tracking-[0.12em] text-brand-600 uppercase">
-                Estimated
-              </div>
-              <div className="mt-1 text-[38px] leading-none font-bold text-brand-600">
+              <SectionKicker>Estimated</SectionKicker>
+              <div className="mt-1 font-cond text-[38px] leading-none tabular-nums text-ink">
                 {estimated}
               </div>
             </div>
@@ -177,77 +139,58 @@ export function ProgressPage({ result }: { result: ScanResult }) {
                   <span className="w-18.5 shrink-0 text-[11px] font-semibold text-ink">
                     {d.label}
                   </span>
-                  <div className="flex h-2 flex-1 overflow-hidden rounded-full border border-black/5 bg-line">
+                  <div className="flex h-2.5 flex-1 overflow-hidden border border-hairline bg-surface">
                     {d.from > 0 && (
                       <>
+                        <span style={{ width: `${(resolved / d.from) * 100}%`, background: "var(--color-verified)" }} />
                         <span
-                          style={{
-                            width: `${(resolved / d.from) * 100}%`,
-                            background: "var(--color-success)",
-                          }}
-                        />
-                        <span
-                          style={{
-                            width: `${(d.to / d.from) * 100}%`,
-                            background: sevHex[d.sev],
-                          }}
+                          className={d.sev === "moderate" ? "hatch-moderate" : d.sev === "serious" ? "hatch-serious" : "hatch-critical"}
+                          style={{ width: `${(d.to / d.from) * 100}%` }}
                         />
                       </>
                     )}
                   </div>
-                  <span className="shrink-0 font-mono text-[11px] text-ink-soft">
-                    <b style={{ color: sevHex[d.sev] }}>{d.from}</b> →{" "}
-                    <b className="text-success">{d.to}</b>
+                  <span className="shrink-0 font-mono text-[11px] text-body tabular-nums">
+                    {d.from} → {d.to}
                   </span>
                 </div>
               );
             })}
-            <div className="mt-0.5 flex items-center gap-4 pl-21.5 text-[10px] text-muted">
-              <span className="flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-success" />
-                Resolved
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-moderate" />
-                Still open
-              </span>
-            </div>
           </div>
         </div>
 
-        <div className="mt-3.5 border-t border-[#cfe3dc] pt-3 text-[11px] leading-normal text-ink-soft">
-          Resolving the critical and serious findings is projected to raise the score to an
-          estimated <b className="text-brand-600">{estimated} / 100</b>, clearing every
-          Level&nbsp;AA blocker.
-        </div>
+        <p className="mt-3.5 border-t border-hairline pt-3 text-[11px] leading-normal text-body">
+          If the critical and serious findings were resolved, the internal priority score would rise
+          to an estimated <b className="text-ink">{estimated} / 100</b>. This is only a projection of
+          the score, not a pass for WCAG. Meeting WCAG also depends on the moderate items and on
+          manual review.
+        </p>
       </div>
 
       <div className="mt-5">
-        <SectionKickerMuted>Action Plan</SectionKickerMuted>
-        <h2 className="mt-1.5 text-[24px] font-bold tracking-tight text-ink">
-          Final Recommendations
+        <SectionKickerMuted>Action plan</SectionKickerMuted>
+        <h2 className="mt-1 text-[22px] font-semibold tracking-[-0.015em] text-ink">
+          Recommendations
         </h2>
         <div className="mt-3.5 grid grid-cols-3 gap-3">
           {recs.map((r) => (
-            <div key={r.term} className="rounded-2xl border border-line bg-card p-4">
-              <span className="inline-block h-1 w-6 rounded-full" style={{ background: r.color }} />
-              <div
-                className="mt-2.5 text-[9px] font-semibold tracking-[0.14em] uppercase"
-                style={{ color: r.color }}
-              >
+            <div key={r.term} className="border border-hairline p-4">
+              <span aria-hidden className="inline-block h-1 w-6" style={{ background: r.color }} />
+              <div className="mt-2.5 font-cond text-[9.5px] font-medium tracking-[0.12em] uppercase" style={{ color: r.color }}>
                 {r.term}
               </div>
               <div className="mt-1.5 text-[14px] font-semibold text-ink">{r.title}</div>
-              <p className="mt-1.5 text-[11.5px] leading-[1.55] text-ink-soft">{r.body}</p>
+              <p className="mt-1.5 text-[11.5px] leading-[1.55] text-body">{r.body}</p>
             </div>
           ))}
         </div>
       </div>
 
       <p className="mt-4 max-w-[6.8in] text-[9.5px] leading-normal text-muted">
-        This report reflects an automated scan against WCAG 2.2 Level&nbsp;AA. Automated testing
-        covers roughly 40–57% of success criteria; manual review with assistive technology is
-        recommended for full conformance certification.
+        AccessCheck runs axe-core against WCAG levels A and AA (2.0, 2.1 and 2.2). Automated testing
+        covers only part of the WCAG checkpoints. The rest need a person to review, often with a
+        screen reader or other assistive technology. Level AAA is not checked, and this report is not
+        a statement of conformance.
       </p>
     </PageShell>
   );

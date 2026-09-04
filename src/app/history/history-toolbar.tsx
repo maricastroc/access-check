@@ -21,7 +21,7 @@ export function HistoryToolbar({
     <div className="mt-5 flex flex-col gap-3 lg:flex-row lg:items-center">
       <div className="flex flex-1 items-center gap-2">
         <label htmlFor="history-search" className="sr-only">
-          Search scans by domain
+          Search audits by domain
         </label>
         <div className="flex h-9 w-full items-center gap-2.5 rounded-[10px] border border-line-strong bg-card px-3 focus-within:border-brand-400">
           <FontAwesomeIcon icon={faMagnifyingGlass} aria-hidden className="text-xs text-muted" />
@@ -68,7 +68,7 @@ export function HistoryToolbar({
         </div>
 
         <label htmlFor="history-sort" className="sr-only">
-          Sort scans
+          Sort audits
         </label>
         <select
           id="history-sort"

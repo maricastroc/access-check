@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faLock } from "@fortawesome/free-solid-svg-icons";
 import { cn } from "@/lib/cn";
+import { SectionKicker } from "./section-kicker";
 
 type BrowserFrameProps = {
-  url: string;
+  label?: ReactNode;
+  url?: string;
   secure?: boolean;
   trailing?: ReactNode;
   children: ReactNode;
@@ -12,34 +12,16 @@ type BrowserFrameProps = {
   chromeClassName?: string;
 };
 
-export function BrowserFrame({
-  url,
-  secure = true,
-  trailing,
-  children,
-  className,
-  chromeClassName,
-}: BrowserFrameProps) {
+export function BrowserFrame({ label, url, trailing, children, className }: BrowserFrameProps) {
   return (
-    <div
-      className={cn(
-        "overflow-hidden rounded-card border border-line bg-card shadow-card",
-        className,
-      )}
-    >
-      <div
-        className={cn("flex items-center gap-3 border-b border-line px-5 py-3.5", chromeClassName)}
-      >
-        <div className="flex gap-1.5">
-          <span className="size-3 rounded-full bg-line" />
-          <span className="size-3 rounded-full bg-line" />
-          <span className="size-3 rounded-full bg-line" />
-        </div>
-        <div className="flex flex-1 items-center gap-2 rounded-lg bg-canvas px-3 py-1.5 text-sm text-muted">
-          {secure && <FontAwesomeIcon icon={faLock} className="text-xs" />}
-          {url}
-        </div>
-        {trailing && <span className="text-sm font-medium text-muted">{trailing}</span>}
+    <div className={cn("border border-ink bg-surface", className)}>
+      <div className="flex items-center justify-between gap-3 border-b border-ink px-3 py-2.5">
+        {url !== undefined ? (
+          <span className="truncate font-mono text-[12px] text-muted">{url}</span>
+        ) : (
+          <SectionKicker tone="muted">{label}</SectionKicker>
+        )}
+        {trailing}
       </div>
       {children}
     </div>
