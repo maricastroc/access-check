@@ -126,19 +126,20 @@ function FocusLayer({ points }: { points: FocusPoint[] }) {
   );
 }
 
-function useCaptureScale() {
+/** Reports the live display scale (image width / native width) straight from the
+ *  ResizeObserver, so the legend can't get stuck on the initial value. */
+function useCaptureScale(report?: (pct: number) => void) {
   const ref = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
-    const update = () => setScale(el.clientWidth / CAPTURE_WIDTH);
+    if (!el || !report) return;
+    const update = () => report(Math.round((el.clientWidth / CAPTURE_WIDTH) * 100));
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
-  return { ref, scale };
+  }, [report]);
+  return ref;
 }
 
 /**
@@ -169,10 +170,7 @@ export function CaptureStage({
   height: number;
   onScale?: (pct: number) => void;
 }) {
-  const { ref, scale } = useCaptureScale();
-  useEffect(() => {
-    onScale?.(Math.round(scale * 100));
-  }, [scale, onScale]);
+  const ref = useCaptureScale(onScale);
 
   if (!result.screenshot) {
     return (
@@ -189,7 +187,10 @@ export function CaptureStage({
   }
 
   return (
-    <div className="relative overflow-hidden" style={{ height, background: "#FBFAF7" }}>
+    // Height follows the capture's true 1200×800 ratio so the whole viewport
+    // shows and the marker overlay stays aligned at any column width — a fixed
+    // height would clip the bottom of the capture on wide screens.
+    <div className="relative overflow-hidden" style={{ background: "#FBFAF7" }}>
       <div ref={ref} className="relative w-full">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
