@@ -1,11 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { faSpinner, faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
-import type { ScanPhase, ScanResult } from "@/lib/scan/types";
-import { streamScan } from "@/lib/scan/stream";
-import { DEFAULT_URL, type Status } from "./shared";
+import type { ScanPhase } from "@/lib/scan/types";
+import { usePageAudit } from "@/hooks/use-page-audit";
+import { DEFAULT_URL } from "./shared";
 import { CenterState, PrintStyles, Toolbar } from "./chrome";
 import { SummaryPage } from "./summary-page";
 import { FindingsPage } from "./findings-page";
@@ -52,35 +52,10 @@ function FitToWidth({ children }: { children: React.ReactNode }) {
 }
 
 export function ReportView({ initialUrl }: { initialUrl: string }) {
-  const start = initialUrl || DEFAULT_URL;
-  const [url, setUrl] = useState(start);
-  const [status, setStatus] = useState<Status>("loading");
-  const [result, setResult] = useState<ScanResult | null>(null);
-  const [phase, setPhase] = useState<ScanPhase>("preparing");
-  const [error, setError] = useState("");
-
-  const scan = useCallback(async (target: string) => {
-    const value = target.trim();
-    if (!value) return;
-    setStatus("loading");
-    setPhase("preparing");
-    setError("");
-    setUrl(value);
-    try {
-      const scanned = await streamScan(value, { onPhase: setPhase });
-      setResult(scanned);
-      setUrl(scanned.finalUrl || value);
-      setStatus("done");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "We couldn't build the report. Please try again.");
-      setStatus("error");
-    }
-  }, []);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    scan(initialUrl || DEFAULT_URL);
-  }, [initialUrl, scan]);
+  const { status, result, phase, url, error } = usePageAudit({
+    initialUrl: initialUrl || DEFAULT_URL,
+    fallbackError: "We couldn't build the report. Please try again.",
+  });
 
   return (
     <div className="ac-canvas min-h-screen bg-canvas font-sans text-ink">
