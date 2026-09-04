@@ -120,7 +120,7 @@ export function ResultsView({
                   </p>
                   <button
                     onClick={() => scan(url)}
-                    className="shrink-0 bg-ink px-3.5 py-1.5 text-[13px] font-semibold text-surface hover:bg-ink-2"
+                    className="shrink-0 cursor-pointer bg-ink px-3.5 py-1.5 text-[13px] font-semibold text-surface hover:bg-ink-2"
                   >
                     Run full audit
                   </button>

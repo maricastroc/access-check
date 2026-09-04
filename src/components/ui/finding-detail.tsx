@@ -127,7 +127,7 @@ function ContrastFixPreview({ preview }: { preview: ContrastPreview }) {
             aria-pressed={view === v}
             onClick={() => setView(v)}
             className={cn(
-              "px-3 py-1.5 font-medium capitalize",
+              "cursor-pointer px-3 py-1.5 font-medium capitalize",
               i > 0 && "border-l border-border",
               view === v ? "bg-ink text-surface" : "bg-surface text-ink hover:bg-band",
             )}

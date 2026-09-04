@@ -92,7 +92,7 @@ export function UrlForm({ accent = false, examples }: { accent?: boolean; exampl
                     aria-selected={scope === s}
                     onClick={() => setScope(s)}
                     className={cn(
-                      "px-3 text-[13px] font-medium",
+                      "cursor-pointer px-3 text-[13px] font-medium",
                       scope === s ? "bg-ink text-surface" : "bg-surface text-muted hover:bg-band",
                       s === "site" && "border-l border-border",
                     )}
@@ -108,7 +108,7 @@ export function UrlForm({ accent = false, examples }: { accent?: boolean; exampl
           type="button"
           onClick={() => go(value, scope)}
           className={cn(
-            "inline-flex h-16.5 shrink-0 items-center justify-center gap-3 px-8 text-[16.5px] font-semibold text-surface transition-colors",
+            "inline-flex h-16.5 shrink-0 cursor-pointer items-center justify-center gap-3 px-8 text-[16.5px] font-semibold text-surface transition-colors",
             accent ? "bg-serious hover:brightness-110" : "bg-ink hover:bg-ink-2",
           )}
         >

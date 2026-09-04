@@ -91,7 +91,7 @@ export function MobileReport({
             aria-selected={tab === t}
             onClick={() => setTab(t)}
             className={cn(
-              "flex h-12.5 items-center justify-center text-[15px] font-semibold",
+              "flex h-12.5 cursor-pointer items-center justify-center text-[15px] font-semibold",
               tab === t ? "bg-ink text-surface" : "bg-surface text-ink",
             )}
           >
@@ -110,7 +110,7 @@ export function MobileReport({
                 aria-selected={sim === m}
                 onClick={() => setSim(m)}
                 className={cn(
-                  "flex h-10 items-center px-4 text-[13px] font-medium",
+                  "flex h-10 cursor-pointer items-center px-4 text-[13px] font-medium",
                   i > 0 && "border-l border-border",
                   sim === m ? "bg-ink text-surface" : "bg-surface text-ink",
                 )}

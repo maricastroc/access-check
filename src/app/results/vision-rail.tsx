@@ -28,11 +28,11 @@ function RailButton({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "flex h-9 w-full items-center border px-2.5 text-left text-[13px] font-medium transition-colors",
+        "flex h-9 w-full cursor-pointer items-center border px-2.5 text-left text-[13px] font-medium transition-colors disabled:cursor-default",
         active
           ? "border-ink bg-ink text-surface"
           : "border-border bg-surface text-ink hover:bg-band",
-        disabled && "cursor-default text-disabled hover:bg-surface",
+        disabled && "text-disabled hover:bg-surface",
       )}
     >
       {children}
