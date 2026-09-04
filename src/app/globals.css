@@ -1,36 +1,26 @@
 @import "tailwindcss";
 
-/* AccessCheck — Direção "Régua" v2
- * Marfim + preto-tinta, cantos retos, hairlines. Cores de severidade têm papel fixo.
- * Fonts (Barlow / Barlow Condensed) are wired through next/font in src/app/layout.tsx.
- */
-
 @theme {
-  /* — tipografia — */
   --font-sans: var(--font-barlow), ui-sans-serif, system-ui, sans-serif;
   --font-cond: var(--font-barlow-condensed), var(--font-barlow), system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* — fundos e superfícies — */
   --color-canvas: #f6f4ef;
   --color-surface: #fcfbf8;
   --color-band: #efece4;
   --color-code: #f0ede5;
 
-  /* — tinta e texto — */
   --color-ink: #17181a;
   --color-ink-2: #2f3134;
   --color-body: #4a4b4e;
-  --color-muted: #616266; /* AA (≥4.5:1) as small text on canvas, band and code backgrounds */
+  --color-muted: #616266;
   --color-disabled: #a3a099;
 
-  /* — linhas — */
   --color-hairline: #e2dfd6;
   --color-border: #cfcbbf;
 
-  /* — severidade e status (papel fixo, não decorativo) — */
   --color-critical: #b3261e;
-  --color-serious: #985104; /* AA (≥4.5:1) as small text on canvas, band and surface */
+  --color-serious: #985104;
   --color-serious-hatch: #cf9553;
   --color-moderate: #8a6a00;
   --color-moderate-text: #7a6100;
@@ -38,17 +28,14 @@
   --color-verified: #16764f;
   --color-steel: #3c5c7a;
 
-  /* — geometria — */
   --radius-none: 0px;
   --radius-sm: 2px;
 
-  /* — sombra: usada com parcimônia, só em elemento selecionado — */
   --shadow-selected: 0 2px 12px rgba(23, 24, 26, 0.14);
   --shadow-marker: 0 4px 12px rgba(23, 24, 26, 0.4);
   --shadow-board: 0 14px 40px rgba(23, 24, 26, 0.18);
 }
 
-/* — tramas de severidade (usar como background completo) — */
 .hatch-serious {
   background: repeating-linear-gradient(135deg, #a85a06 0 3px, #cf9553 3px 6px);
 }
@@ -65,7 +52,6 @@
   background: repeating-linear-gradient(135deg, rgba(107, 108, 112, 0.12) 0 4px, transparent 4px 8px);
 }
 
-/* progresso em curso: a mesma trama, deslizando */
 .hatch-progress-live {
   background: repeating-linear-gradient(90deg, #17181a 0 2px, transparent 2px 4px);
   background-size: 8px 100%;
@@ -90,13 +76,11 @@ body {
   font-family: var(--font-sans);
 }
 
-/* — foco: um único anel em toda a interface — */
 :focus-visible {
   outline: 2px solid var(--color-ink);
   outline-offset: 2px;
 }
 
-/* margens roláveis discretas */
 .scroll-slim {
   scrollbar-width: thin;
   scrollbar-color: transparent transparent;
@@ -125,12 +109,10 @@ details[open] .ac-chev {
   transform: rotate(90deg);
 }
 
-/* rolagem suave ≤200ms até marcador/achado; vira salto com reduced-motion */
 .ac-scroll-smooth {
   scroll-behavior: smooth;
 }
 
-/* — reduced motion: a direção não depende de animação — */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

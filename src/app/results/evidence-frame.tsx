@@ -117,8 +117,6 @@ function FocusLayer({ points }: { points: FocusPoint[] }) {
   );
 }
 
-/** Reports the live display scale (image width / native width) straight from the
- *  ResizeObserver, so the legend can't get stuck on the initial value. */
 function useCaptureScale(report?: (pct: number) => void) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -133,11 +131,6 @@ function useCaptureScale(report?: (pct: number) => void) {
   return ref;
 }
 
-/**
- * The capture palco: the real screenshot scaled to the container width, with the
- * marker or focus overlay sized exactly to the image (so both stay aligned at any
- * scale). `onScale` reports the current display scale for the legend.
- */
 export function CaptureStage({
   result,
   host,
@@ -177,9 +170,6 @@ export function CaptureStage({
   }
 
   return (
-    // Height follows the capture's true 1200×800 ratio so the whole viewport
-    // shows and the marker overlay stays aligned at any column width — a fixed
-    // height would clip the bottom of the capture on wide screens.
     <div className="relative overflow-hidden" style={{ background: "#FBFAF7" }}>
       <div ref={ref} className="relative w-full">
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -235,7 +225,6 @@ export function EvidenceFrame({
 
   return (
     <div className="border border-ink bg-surface">
-      {/* legend bar */}
       <div className="flex items-center justify-between gap-3 border-b border-ink px-3 py-2.5">
         <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
           <SectionKicker>{legend}</SectionKicker>
@@ -246,7 +235,6 @@ export function EvidenceFrame({
         </Button>
       </div>
 
-      {/* capture palco */}
       {!collapsed && (
         <div className="border-b border-ink">
           <CaptureStage
@@ -264,7 +252,6 @@ export function EvidenceFrame({
         </div>
       )}
 
-      {/* technical drawer */}
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="border-b border-ink p-4 lg:border-r lg:border-b-0">
           <SectionKicker>Element and code</SectionKicker>

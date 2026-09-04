@@ -4,7 +4,6 @@ export type Status = "loading" | "done" | "error";
 
 export const DEFAULT_URL = "example.com";
 
-/** Régua severity roles (fixed). minor reads as muted; no dedicated hue. */
 export const sevHex: Record<Severity, string> = {
   critical: "#b3261e",
   serious: "#a85a06",

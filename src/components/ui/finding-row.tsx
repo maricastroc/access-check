@@ -6,10 +6,9 @@ import { cn } from "@/lib/cn";
 
 function railColor(f: FindingView): string {
   if (f.severity) return severityColorVar[f.severity];
-  return "var(--color-steel)"; // best-practice
+  return "var(--color-steel)";
 }
 
-/** Evidence-based micro-cue in the row — only shown when there's a re-audit result to report. */
 function VerdictCue({ kind }: { kind: Verdict["kind"] }) {
   if (kind === "verified")
     return <span className="text-verified">· verified in sandbox</span>;
@@ -22,7 +21,7 @@ function VerdictCue({ kind }: { kind: Verdict["kind"] }) {
 function TopTag({ f }: { f: FindingView }) {
   if (f.kind === "best-practice") {
     return (
-      <span className="font-cond text-[11px] tracking-[0.1em] text-muted uppercase">
+      <span className="font-cond text-[11px] tracking-widest text-muted uppercase">
         Best practice
       </span>
     );
@@ -60,7 +59,7 @@ export function FindingRow({
         "block w-full border p-3 text-left transition-colors",
         interactive ? "cursor-pointer" : "cursor-default",
         selected
-          ? "border-ink bg-surface shadow-[var(--shadow-selected)]"
+          ? "border-ink bg-surface shadow-(--shadow-selected)"
           : "border-hairline bg-transparent",
         interactive && !selected && "hover:bg-surface",
       )}
@@ -73,7 +72,7 @@ export function FindingRow({
         <span
           aria-hidden
           className={cn(
-            "inline-flex size-[22px] shrink-0 items-center justify-center font-cond text-[13px] font-semibold tabular-nums",
+            "inline-flex size-5.5 shrink-0 items-center justify-center font-cond text-[13px] font-semibold tabular-nums",
             selected ? "bg-ink text-surface" : "bg-transparent",
           )}
           style={selected ? undefined : { border: `1px solid ${railColor(finding)}`, color: railColor(finding) }}
@@ -81,7 +80,7 @@ export function FindingRow({
           {finding.n}
         </span>
         <span
-          className="font-cond text-[11px] tracking-[0.1em] uppercase"
+          className="font-cond text-[11px] tracking-widest uppercase"
           style={{ color: finding.severity ? severityColorVar[finding.severity] : "var(--color-steel)" }}
         >
           {finding.passLabel && finding.kind !== "best-practice"

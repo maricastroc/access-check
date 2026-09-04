@@ -4,15 +4,12 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { cn } from "@/lib/cn";
 
-// `dark`/`ghost` are legacy aliases kept so out-of-scope pages keep compiling.
 export type ButtonVariant = "primary" | "accent" | "secondary" | "tertiary" | "dark" | "ghost";
 export type ButtonSize = "sm" | "md" | "lg";
 
 const variantClasses: Record<ButtonVariant, string> = {
-  // straight corners everywhere; ink is the primary action
   primary: "bg-ink text-surface hover:bg-ink-2 disabled:bg-canvas disabled:text-disabled disabled:border disabled:border-hairline",
   dark: "bg-ink text-surface hover:bg-ink-2 disabled:bg-canvas disabled:text-disabled",
-  // serious only on a dark CTA
   accent: "bg-serious text-surface hover:brightness-110 disabled:bg-canvas disabled:text-disabled",
   secondary:
     "border border-border bg-surface text-ink hover:bg-band disabled:border-hairline disabled:bg-canvas disabled:text-disabled",

@@ -7,7 +7,6 @@ export function ProgressPage({ result }: { result: ScanResult }) {
   const host = safeHost(result.finalUrl);
   const moderate = result.violations.filter((v) => v.severity === "moderate");
 
-  // A priority what-if: the internal score if the critical + serious findings were cleared.
   const remaining = result.violations.filter(
     (v) => v.severity !== "critical" && v.severity !== "serious",
   );
@@ -137,7 +136,7 @@ export function ProgressPage({ result }: { result: ScanResult }) {
               const resolved = d.from - d.to;
               return (
                 <div key={d.label} className="flex items-center gap-3">
-                  <span className="w-[74px] shrink-0 text-[11px] font-semibold text-ink">
+                  <span className="w-18.5 shrink-0 text-[11px] font-semibold text-ink">
                     {d.label}
                   </span>
                   <div className="flex h-2.5 flex-1 overflow-hidden border border-hairline bg-surface">

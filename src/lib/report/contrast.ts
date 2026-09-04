@@ -1,25 +1,11 @@
-/**
- * The engine does not expose per-finding contrast ratios or before/after colors
- * as structured fields — it embeds them in the human-readable fix text/code that
- * src/lib/scan/remediate.ts (`fixContrast`) produces, e.g.:
- *
- *   "Replace text color #8fb8a8 with #2f6b57 → 4.62:1 against #ffffff
- *    (was 2.10:1, needs 4.5:1). Same hue — only the lightness changes."
- *
- * This parser extracts that real measurement so the "MEDIÇÃO" ratio ruler and
- * the before/after swatches only ever render true, engine-produced numbers.
- * When the text is not a contrast fix (no measured ratio), it returns null and
- * the caller omits the ratio block — the ruler never shows an invented measure.
- */
-
 export type ContrastMeasurement = {
-  measured: number; // ratio found on the page
-  required: number; // AA minimum for this element (already normal/large-text aware)
-  fixed: number | null; // ratio the suggested fix reaches, if a fix was found
-  fromHex: string | null; // original text color
-  toHex: string | null; // color the fix suggests
-  bgHex: string | null; // background the ratios were computed against
-  prop: "color" | "background" | null; // which property the fix changes
+  measured: number;
+  required: number;
+  fixed: number | null;
+  fromHex: string | null;
+  toHex: string | null;
+  bgHex: string | null;
+  prop: "color" | "background" | null;
 };
 
 export function parseContrastFix(fix: string, fixCode?: string): ContrastMeasurement | null {
@@ -37,7 +23,6 @@ export function parseContrastFix(fix: string, fixCode?: string): ContrastMeasure
   const fixedM = text.match(/→\s*([\d.]+):1/);
   const fixed = fixedM ? Number(fixedM[1]) : null;
 
-  // Prefer the structured fix code for the target color + property.
   let toHex: string | null = null;
   let prop: "color" | "background" | null = null;
   if (fixCode) {
@@ -59,10 +44,8 @@ export function parseContrastFix(fix: string, fixCode?: string): ContrastMeasure
     }
   }
 
-  // The original color is always introduced as "text color #<hex>".
   const fromHex = text.match(/text color\s+(#[0-9a-fA-F]{6})/i)?.[1].toLowerCase() ?? null;
 
-  // The background the ratios were computed against: "against #hex" (fg fix) or "on #hex".
   const bgHex =
     (text.match(/against\s+(#[0-9a-fA-F]{6})/i) ?? text.match(/\bon\s+(#[0-9a-fA-F]{6})/i))?.[1].toLowerCase() ??
     null;
@@ -78,7 +61,6 @@ export function parseContrastFix(fix: string, fixCode?: string): ContrastMeasure
   };
 }
 
-/** Linear position of a contrast ratio on a 1:1–7:1 scale, as a percentage. */
 export function ratioPosition(ratio: number, min = 1, max = 7): number {
   const clamped = Math.max(min, Math.min(max, ratio));
   return ((clamped - min) / (max - min)) * 100;

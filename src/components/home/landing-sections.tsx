@@ -10,7 +10,6 @@ import {
 import { UrlForm } from "./url-form";
 import { CapturePreview } from "./evidence-preview";
 
-/** Section header with a short steel rule — the landing's one brand accent. */
 function SectionHead({
   kicker,
   title,
@@ -22,7 +21,7 @@ function SectionHead({
 }) {
   return (
     <div className={className}>
-      <span aria-hidden className="mb-2.5 block h-[3px] w-10 bg-steel" />
+      <span aria-hidden className="mb-2.5 block h-0.75 w-10 bg-steel" />
       <SectionKicker>{kicker}</SectionKicker>
       <h2 className="mt-1.5 max-w-[18ch] text-[30px] leading-[1.08] font-semibold tracking-[-0.02em] text-ink">
         {title}
@@ -30,8 +29,6 @@ function SectionHead({
     </div>
   );
 }
-
-/* ───────────────────────── How it works ───────────────────────── */
 
 const STAGE_LABEL = ["Open", "Locate", "Verify"];
 
@@ -52,7 +49,7 @@ function StageArtifact({ i }: { i: number }) {
   }
   if (i === 1) {
     return (
-      <div className="relative h-[70px] overflow-hidden border border-hairline" style={{ background: "#FBFAF7" }}>
+      <div className="relative h-17.5 overflow-hidden border border-hairline" style={{ background: "#FBFAF7" }}>
         <div className="px-3 pt-3">
           <div className="h-2 w-16 bg-ink/70" />
           <span className="relative mt-3 inline-block">
@@ -93,7 +90,7 @@ function StageArtifact({ i }: { i: number }) {
 export function HowItWorks() {
   return (
     <section id="how" className="bg-band">
-      <div className="mx-auto w-full max-w-[1200px] px-6 py-12">
+      <div className="mx-auto w-full max-w-300 px-6 py-12">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <SectionHead kicker="How it works" title="One page, opened, located and verified" />
           <p className="font-cond text-[15px] tracking-[0.04em] text-muted">
@@ -103,10 +100,9 @@ export function HowItWorks() {
         </div>
 
         <div className="relative mt-9">
-          {/* the path connecting the three stages, visible in the gutters */}
           <div
             aria-hidden
-            className="absolute top-[42px] left-[16.6%] right-[16.6%] hidden h-px bg-serious/50 md:block"
+            className="absolute top-10.5 left-[16.6%] right-[16.6%] hidden h-px bg-serious/50 md:block"
           />
           <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
             {steps.map((s, i) => {
@@ -117,13 +113,13 @@ export function HowItWorks() {
                     <>
                       <span
                         aria-hidden
-                        className="absolute top-[32px] -left-[13px] hidden font-cond text-[17px] leading-none text-serious md:block"
+                        className="absolute top-8 -left-3.25 hidden font-cond text-[17px] leading-none text-serious md:block"
                       >
                         →
                       </span>
                       <span
                         aria-hidden
-                        className="absolute -top-[15px] left-1/2 -translate-x-1/2 font-cond text-[17px] leading-none text-serious md:hidden"
+                        className="absolute -top-3.75 left-1/2 -translate-x-1/2 font-cond text-[17px] leading-none text-serious md:hidden"
                       >
                         ↓
                       </span>
@@ -138,7 +134,7 @@ export function HowItWorks() {
                     </span>
                     <SectionKicker tone="ink">{STAGE_LABEL[i]}</SectionKicker>
                   </div>
-                  <div className="mt-4 min-h-[92px]">
+                  <div className="mt-4 min-h-23">
                     <StageArtifact i={i} />
                   </div>
                   <h3 className="mt-4 text-[16.5px] font-semibold text-ink">{s.title}</h3>
@@ -153,19 +149,16 @@ export function HowItWorks() {
   );
 }
 
-/* ───────────────────────── Checks included ───────────────────────── */
-
 export function ChecksIncluded() {
   return (
     <section id="checks" className="bg-canvas">
-      <div className="mx-auto w-full max-w-[1200px] px-6 py-12">
+      <div className="mx-auto w-full max-w-300 px-6 py-12">
         <SectionHead
           kicker="Checks included"
           title="Every automated check, plus the passes a tool can't run on its own"
         />
 
         <div className="mt-9 grid grid-cols-1 md:grid-cols-2">
-          {/* axe-core rules — objective */}
           <div className="border border-ink bg-surface">
             <div className="flex items-baseline justify-between border-b border-ink px-5 py-3">
               <SectionKicker tone="steel">axe-core rules</SectionKicker>
@@ -191,7 +184,6 @@ export function ChecksIncluded() {
             </ul>
           </div>
 
-          {/* complementary passes — judgment */}
           <div className="border border-ink bg-band md:border-l-0">
             <div className="flex items-baseline justify-between border-b border-ink px-5 py-3">
               <SectionKicker tone="steel">complementary passes</SectionKicker>
@@ -210,7 +202,7 @@ export function ChecksIncluded() {
             <ul className="grid grid-cols-1 gap-y-2.5 px-5 py-5">
               {complementaryPasses.map((p) => (
                 <li key={p.label} className="grid grid-cols-[86px_1fr] items-baseline gap-3">
-                  <span className="font-cond text-[11px] tracking-[0.1em] text-steel uppercase">
+                  <span className="font-cond text-[11px] tracking-widest text-steel uppercase">
                     {p.label}
                   </span>
                   <span className="text-[13.5px] text-body">{p.desc}</span>
@@ -224,15 +216,13 @@ export function ChecksIncluded() {
   );
 }
 
-/* ───────────────────────── Evidence Lens (peak) ───────────────────────── */
-
 export function EvidenceLensSection() {
   return (
     <section id="evidence" className="bg-band">
-      <div className="mx-auto w-full max-w-[1200px] px-6 py-16">
+      <div className="mx-auto w-full max-w-300 px-6 py-16">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-end">
           <div>
-            <span aria-hidden className="mb-3 block h-[3px] w-10 bg-steel" />
+            <span aria-hidden className="mb-3 block h-0.75 w-10 bg-steel" />
             <h2 className="text-[34px] leading-[1.08] font-semibold tracking-[-0.02em] text-ink">
               See the barrier on the element that caused it
             </h2>
@@ -244,7 +234,6 @@ export function EvidenceLensSection() {
           </p>
         </div>
 
-        {/* the instrument — only the capture is framed; the diagnosis escapes it */}
         <div className="mt-8 grid grid-cols-1 gap-0 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
           <div className="border border-ink bg-surface">
             <div className="flex items-center justify-between gap-3 border-b border-ink px-4 py-2.5">
@@ -258,9 +247,7 @@ export function EvidenceLensSection() {
             <CapturePreview height={340} />
           </div>
 
-          {/* diagnosis — un-boxed, chained across the boundary to the marker */}
           <div className="relative pt-8 lg:pt-2 lg:pl-8">
-            {/* leader: crosses from the capture (left) into the diagnosis */}
             <div className="flex items-center gap-2">
               <span
                 aria-hidden
@@ -268,7 +255,7 @@ export function EvidenceLensSection() {
               />
               <span
                 aria-hidden
-                className="flex size-[20px] shrink-0 items-center justify-center bg-ink font-cond text-[12px] font-semibold text-surface"
+                className="flex size-5 shrink-0 items-center justify-center bg-ink font-cond text-[12px] font-semibold text-surface"
               >
                 1
               </span>
@@ -277,7 +264,7 @@ export function EvidenceLensSection() {
             </div>
 
               <div className="mt-3 flex items-center gap-2">
-                <span className="font-cond text-[11px] tracking-[0.1em] text-serious uppercase">Serious</span>
+                <span className="font-cond text-[11px] tracking-widest text-serious uppercase">Serious</span>
                 <span className="ml-auto font-mono text-[12px] text-steel">1.4.3 AA</span>
               </div>
               <h3 className="mt-1.5 text-[16px] font-semibold text-ink">{exampleFinding.title}</h3>
@@ -333,8 +320,6 @@ export function EvidenceLensSection() {
   );
 }
 
-/* ───────────────────────── Sandbox (before → verified) ───────────────────────── */
-
 function BeatButton({ hex, ratio, tone }: { hex: string; ratio: string; tone: "serious" | "verified" }) {
   return (
     <div>
@@ -362,7 +347,7 @@ function BeatButton({ hex, ratio, tone }: { hex: string; ratio: string; tone: "s
 export function SandboxSection() {
   return (
     <section className="bg-canvas">
-      <div className="mx-auto w-full max-w-[1200px] px-6 py-16">
+      <div className="mx-auto w-full max-w-300 px-6 py-16">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] lg:items-end">
           <SectionHead
             kicker="Sandbox verification"
@@ -374,8 +359,7 @@ export function SandboxSection() {
             touches your real site.
           </p>
         </div>
-
-        {/* the measurement instrument */}
+        
         <div className="mt-8 border border-ink bg-surface">
           <div className="flex items-center justify-between border-b border-ink px-4 py-2.5">
             <SectionKicker>Contrast measurement · 1.4.3 AA</SectionKicker>
@@ -393,7 +377,6 @@ export function SandboxSection() {
               <Ruler variant="ratio" found={exampleFinding.measured} required={exampleFinding.required} fixed={exampleFinding.fixed} height={22} />
             </div>
 
-            {/* three beats aligned under the ruler */}
             <div className="mt-9 grid grid-cols-1 items-center gap-5 sm:grid-cols-[1fr_auto_1fr]">
               <div>
                 <SectionKicker tone="steel">Before</SectionKicker>
@@ -409,7 +392,7 @@ export function SandboxSection() {
               </div>
               <div>
                 <div className="flex items-center justify-between">
-                  <SectionKicker tone="steel" className="!text-verified">After</SectionKicker>
+                  <SectionKicker tone="steel" className="text-verified!">After</SectionKicker>
                   <StatusSeal status="verified">Verified</StatusSeal>
                 </div>
                 <div className="mt-2">
@@ -423,8 +406,6 @@ export function SandboxSection() {
     </section>
   );
 }
-
-/* ───────────────────────── Export (two artifacts) ───────────────────────── */
 
 function MiniPdf() {
   return (
@@ -473,22 +454,21 @@ function MiniPdf() {
 export function ExportSection() {
   return (
     <section className="bg-band">
-      <div className="mx-auto w-full max-w-[1200px] px-6 py-12">
+      <div className="mx-auto w-full max-w-300 px-6 py-12">
         <SectionHead
           kicker="Export"
           title="Two exports for two readers: the person who decides and the person who fixes"
         />
 
         <div className="mt-9 grid grid-cols-1 gap-6 md:grid-cols-2">
-          {/* PDF — for whoever decides */}
           <div className="grid grid-cols-[180px_1fr] gap-5">
             <MiniPdf />
             <div>
               <div className="flex items-center gap-2">
-                <span className="border border-border bg-surface px-1.5 py-0.5 font-cond text-[10px] tracking-[0.1em] text-ink uppercase">
+                <span className="border border-border bg-surface px-1.5 py-0.5 font-cond text-[10px] tracking-widest text-ink uppercase">
                   PDF
                 </span>
-                <span className="font-cond text-[11px] tracking-[0.1em] text-muted uppercase">
+                <span className="font-cond text-[11px] tracking-widest text-muted uppercase">
                   for the person who decides
                 </span>
               </div>
@@ -500,7 +480,6 @@ export function ExportSection() {
             </div>
           </div>
 
-          {/* Markdown — for whoever fixes */}
           <div className="grid grid-cols-[1fr] gap-5 sm:grid-cols-[1fr_180px] sm:[&>*:first-child]:order-2">
             <div className="border border-ink bg-surface">
               <div className="flex items-center gap-2 border-b border-hairline px-3 py-1.5">
@@ -526,10 +505,10 @@ export function ExportSection() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="border border-border bg-surface px-1.5 py-0.5 font-cond text-[10px] tracking-[0.1em] text-ink uppercase">
+                <span className="border border-border bg-surface px-1.5 py-0.5 font-cond text-[10px] tracking-widest text-ink uppercase">
                   MD
                 </span>
-                <span className="font-cond text-[11px] tracking-[0.1em] text-muted uppercase">
+                <span className="font-cond text-[11px] tracking-widest text-muted uppercase">
                   for the person who fixes
                 </span>
               </div>
@@ -546,13 +525,10 @@ export function ExportSection() {
   );
 }
 
-/* ───────────────────────── Final CTA (finale) ───────────────────────── */
-
 export function FinalCta() {
   return (
     <section className="bg-ink text-surface">
-      <div className="mx-auto w-full max-w-[1200px] px-6 py-16">
-        {/* a signature line recovering the page's motifs */}
+      <div className="mx-auto w-full max-w-300 px-6 py-16">
         <div className="flex flex-wrap items-center gap-x-8 gap-y-2 border-b border-ink-2 pb-6 font-cond text-[13px] tracking-[0.06em] text-band uppercase">
           <span className="flex items-center gap-2">
             <span aria-hidden className="hatch-serious size-2.5" /> Measured
@@ -588,7 +564,7 @@ export function FinalCta() {
       </div>
 
       <div className="border-t border-ink-2">
-        <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-2 px-6 py-6 text-[13px] text-disabled sm:flex-row sm:items-center sm:justify-between">
+        <div className="mx-auto flex w-full max-w-300 flex-col gap-2 px-6 py-6 text-[13px] text-disabled sm:flex-row sm:items-center sm:justify-between">
           <span>AccessCheck · axe-core · Playwright · WCAG 2.0 / 2.1 / 2.2 levels A and AA</span>
           <span>Internal priority score · not a conformance statement</span>
         </div>

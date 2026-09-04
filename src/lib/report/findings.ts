@@ -32,30 +32,30 @@ const PASS_LABEL: Partial<Record<FindingKind, string>> = {
 
 export type FindingView = {
   id: string;
-  n: number; // 1-based priority index
+  n: number;
   kind: FindingKind;
   isWcag: boolean;
-  severity: Severity | null; // null only for best-practice
-  passLabel: string | null; // set for complementary + best-practice findings
+  severity: Severity | null;
+  passLabel: string | null;
   title: string;
   criterionSc: string | null;
   criterionName: string | null;
-  elements: number; // affected node count
+  elements: number;
   ruleId: string;
-  desc: string; // engine description (kept for reference)
-  impact: string; // concrete human consequence for the "Impact on users" block
+  desc: string;
+  impact: string;
   fixText: string;
   fixCode: string | null;
   fixGroups: FixGroup[] | null;
-  guidance: Guidance | null; // actionable guidance when the engine text is generic
+  guidance: Guidance | null;
   measurement: ContrastMeasurement | null;
-  preview: ContrastPreview | null; // contrast "Original | Suggested" color preview
-  verdict: Verdict; // single source of truth for the verification state
-  affectedSelectors: string[]; // distinct affected element selectors
-  selectors: string[]; // legacy alias of affectedSelectors
-  markers: ScanMarker[]; // capture markers (the engine emits at most one per finding)
-  located: boolean; // whether the located element has a capture marker
-  noMarkerReason: string; // why there is no marker, when there isn't one
+  preview: ContrastPreview | null;
+  verdict: Verdict;
+  affectedSelectors: string[];
+  selectors: string[];
+  markers: ScanMarker[];
+  located: boolean;
+  noMarkerReason: string;
 };
 
 function distinct(list: string[]): string[] {
@@ -102,8 +102,6 @@ function wcagFinding(v: ScanViolation, markers: ScanMarker[], verifySkipped: boo
     fixGroups,
     guidance: v.fixCode || measurement ? null : fixGuidance(v.id),
     measurement,
-    // The preview shows the located element's own color pair, so its confidence
-    // is graded from that element's re-audit (v.verification), not the aggregate.
     preview: buildContrastPreview(measurement, v.verification, v.nodes),
     verdict,
     affectedSelectors: affected,
@@ -242,7 +240,6 @@ function bestPracticeFindings(result: ScanResult): Omit<FindingView, "n">[] {
   });
 }
 
-/** Markers carry the axe help text as their label; a violation's title is that same help text. */
 function linkMarkers(v: ScanViolation, markers: ScanMarker[]): ScanMarker[] {
   return markers.filter((m) => m.severity === v.severity && m.label === v.title);
 }
@@ -254,12 +251,6 @@ function splitCriterion(criterion: string): { sc: string | null; name: string | 
   return { sc, name };
 }
 
-/**
- * Ordered findings for the report margin: WCAG axe violations + complementary
- * passes (keyboard / audits / contexts) sorted by severity, then best-practice
- * items. Every field is derived once here — the single source of truth for the
- * finding, its selectors, marker, contrast values, suggestion and verdict.
- */
 export function buildFindings(result: ScanResult): FindingView[] {
   const verifySkipped = (result.warnings ?? []).some((w) => w.code === "verification-skipped");
   const withSeverity: Omit<FindingView, "n">[] = [];
@@ -295,7 +286,6 @@ export function buildFindings(result: ScanResult): FindingView[] {
   return ordered.map((f, i) => ({ ...f, n: i + 1 }));
 }
 
-/** All capture markers in reading order (n ascending) — the Evidence Lens layer. */
 export function orderedMarkers(result: ScanResult): ScanMarker[] {
   return [...result.markers].sort((a, b) => a.n - b.n);
 }

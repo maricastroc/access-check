@@ -5,7 +5,6 @@ import type { SimKey } from "./data";
 
 export type Layer = "markers" | "focus" | "none";
 
-/** Vision modes surfaced on the desktop control rail (all filters the engine supports). */
 export const VISION_RAIL: { key: SimKey; label: string; title: string }[] = [
   { key: "normal", label: "Normal", title: "Normal, no vision filter" },
   { key: "deuteranopia", label: "Deuteranopia", title: "Deuteranopia (red-green color blindness)" },
@@ -21,7 +20,6 @@ export const LAYER_RAIL: { key: Layer; label: string; title: string }[] = [
   { key: "none", label: "No overlay", title: "Hide the overlay" },
 ];
 
-/** Short label shown on a selected marker — the measured ratio when we have one, else the criterion. */
 export function markerLabel(finding: FindingView): string | undefined {
   if (finding.measurement) {
     return `${finding.measurement.measured.toFixed(1)}:1 · needs ${finding.measurement.required.toFixed(1)}:1`;
@@ -38,13 +36,6 @@ export type MarkerView = {
   findingId: string | null;
 };
 
-/**
- * Decide each capture marker's visual state from the selection. The engine emits
- * at most one marker per finding, so there is no occurrence index:
- * - no finding selected → every marker idle, none dimmed;
- * - a finding selected → its marker is `selected` (with the measured label), all
- *   other findings' markers are dimmed.
- */
 export function buildMarkerViews(markers: ScanMarker[], selected: FindingView | null): MarkerView[] {
   const selectedNs = new Set((selected?.markers ?? []).map((m) => m.n));
 

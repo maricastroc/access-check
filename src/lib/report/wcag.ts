@@ -1,12 +1,3 @@
-/**
- * WCAG reading, separate from the internal score.
- *
- * The engine runs axe with tags wcag2a/2aa, wcag21a/21aa, wcag22a/22aa (see
- * src/lib/scan/scan.ts) — levels A and AA only. AAA is never evaluated. The
- * level of a success criterion is a fixed WCAG fact, mapped here for the
- * criteria the engine can report (src/lib/scan/wcag.ts `scNames`).
- */
-
 export type WcagLevel = "A" | "AA" | "AAA";
 
 export const SC_LEVEL: Record<string, WcagLevel> = {
@@ -31,7 +22,6 @@ export const SC_LEVEL: Record<string, WcagLevel> = {
 
 export type ParsedCriterion = { sc: string | null; name: string | null; raw: string };
 
-/** "WCAG 1.4.3 · Contrast (Minimum)" → { sc: "1.4.3", name: "Contrast (Minimum)" } */
 export function parseCriterion(criterion: string): ParsedCriterion {
   const raw = criterion.trim();
   const m = raw.match(/(\d+\.\d+\.\d+)/);
@@ -49,19 +39,13 @@ export type WcagReadingModel = {
   aaa: { evaluated: false };
 };
 
-/**
- * Build the A / AA / AAA reading from the automated WCAG violations
- * (result.violations — best-practice is excluded upstream by the engine).
- * A criterion whose level is unknown is bucketed under AA (the stricter of the
- * two automated levels the engine runs), never invented as AAA.
- */
 export function buildWcagReading(violations: { criterion: string }[]): WcagReadingModel {
   const aSet = new Map<string, WcagCriterionRef>();
   const aaSet = new Map<string, WcagCriterionRef>();
 
   for (const v of violations) {
     const { sc, name } = parseCriterion(v.criterion);
-    if (!sc) continue; // no WCAG success-criterion tag → not attributable to a level
+    if (!sc) continue;
     const level = SC_LEVEL[sc] ?? "AA";
     const bucket = level === "A" ? aSet : aaSet;
     if (!bucket.has(sc)) bucket.set(sc, { sc, name });

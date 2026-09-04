@@ -1,13 +1,5 @@
 import type { FixVerification, Severity } from "@/lib/scan/types";
 
-/**
- * Presentation-layer semantics for the "Régua" report UI.
- *
- * This module is NOT part of the scan engine (src/lib/scan/**). It never
- * recomputes the score, severity or verification the engine produced — it only
- * maps the engine's output onto the fixed visual roles of the design system.
- */
-
 export type FixStatus = "verified" | "needs-review" | "unchecked";
 
 export const SEVERITY_ORDER: Severity[] = ["critical", "serious", "moderate", "minor"];
@@ -19,7 +11,6 @@ export const severityLabel: Record<Severity, string> = {
   minor: "Minor",
 };
 
-/** Fixed-role fill color per severity. `minor` has no dedicated hue — it reads as muted. */
 export const severityColorVar: Record<Severity, string> = {
   critical: "var(--color-critical)",
   serious: "var(--color-serious)",
@@ -27,7 +18,6 @@ export const severityColorVar: Record<Severity, string> = {
   minor: "var(--color-muted)",
 };
 
-/** Small-text color (moderate uses the darker `moderate-text` to hold AA). */
 export const severityTextVar: Record<Severity, string> = {
   critical: "var(--color-critical)",
   serious: "var(--color-serious)",
@@ -35,7 +25,6 @@ export const severityTextVar: Record<Severity, string> = {
   minor: "var(--color-muted)",
 };
 
-/** Severity hatch utility (defined in globals.css). Severity is never color-only. */
 export const severityHatchClass: Record<Severity, string> = {
   critical: "hatch-critical",
   serious: "hatch-serious",
@@ -77,7 +66,6 @@ export const SEVERITY_META: Record<Severity, SeverityMeta> = {
   },
 };
 
-/** Map the engine's FixVerification onto the design system's status vocabulary. */
 export function toFixStatus(v: FixVerification | undefined): FixStatus {
   if (v === "verified") return "verified";
   if (v === "failed") return "needs-review";

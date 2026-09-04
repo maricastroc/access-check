@@ -3,11 +3,6 @@ import { ratioPosition } from "@/lib/report/contrast";
 import { severityHatchClass } from "@/lib/report/severity";
 import { cn } from "@/lib/cn";
 
-/**
- * The signature of the direction: a horizontal ruler that ONLY ever renders a
- * true measurement on a declared scale. Three variants, three scales — never a
- * decorative bar, never two grandezas mixed on one track.
- */
 export type RulerProps =
   | {
       variant: "score";
@@ -81,31 +76,29 @@ function ScoreRuler({
 
 function ScoreTicks({ value }: { value: number }) {
   return (
-    <div aria-hidden className="relative mt-1 h-[15px] w-full">
-      {/* baseline marks */}
-      <span className="absolute top-0 left-0 h-[6px] w-px bg-ink" />
-      <span className="absolute top-0 left-1/4 h-[4px] w-px bg-border" />
-      <span className="absolute top-0 left-1/2 h-[6px] w-px -translate-x-1/2 bg-ink" />
-      <span className="absolute top-0 left-3/4 h-[4px] w-px bg-border" />
-      <span className="absolute top-0 right-0 h-[6px] w-px bg-ink" />
-      {/* the score's own mark — omit near the ends so it doesn't sit on 0/100 */}
+    <div aria-hidden className="relative mt-1 h-3.75 w-full">
+      <span className="absolute top-0 left-0 h-1.5 w-px bg-ink" />
+      <span className="absolute top-0 left-1/4 h-1 w-px bg-border" />
+      <span className="absolute top-0 left-1/2 h-1.5 w-px -translate-x-1/2 bg-ink" />
+      <span className="absolute top-0 left-3/4 h-1 w-px bg-border" />
+      <span className="absolute top-0 right-0 h-1.5 w-px bg-ink" />
       {value > 4 && value < 96 && (
         <span
-          className="absolute top-0 h-[10px] w-px -translate-x-1/2 bg-ink"
+          className="absolute top-0 h-2.5 w-px -translate-x-1/2 bg-ink"
           style={{ left: `${value}%` }}
         />
       )}
-      {/* labels: 0 and 100 always; the value only when it won't collide with them */}
-      <span className="absolute top-[6px] left-0 font-cond text-[11px] text-muted">0</span>
+
+      <span className="absolute top-1.5 left-0 font-cond text-[11px] text-muted">0</span>
       {value > 8 && value < 92 && (
         <span
-          className="absolute top-[6px] -translate-x-1/2 font-cond text-[11px] font-medium text-ink tabular-nums"
+          className="absolute top-1.5 -translate-x-1/2 font-cond text-[11px] font-medium text-ink tabular-nums"
           style={{ left: `${value}%` }}
         >
           {Math.round(value)}
         </span>
       )}
-      <span className="absolute top-[6px] right-0 font-cond text-[11px] text-muted">100</span>
+      <span className="absolute top-1.5 right-0 font-cond text-[11px] text-muted">100</span>
     </div>
   );
 }
@@ -133,28 +126,25 @@ function RatioRuler({
         className="relative w-full overflow-hidden border border-ink bg-surface"
         style={{ height }}
       >
-        {/* deficient region: from 1:1 up to the measured ratio */}
         <span
           aria-hidden
           className="hatch-serious absolute top-0 left-0 h-full"
           style={{ width: `${foundPos}%` }}
         />
-        {/* AA minimum mark */}
         <span
           aria-hidden
-          className="absolute top-0 h-full w-[2px] -translate-x-1/2 bg-ink"
+          className="absolute top-0 h-full w-0.5 -translate-x-1/2 bg-ink"
           style={{ left: `${requiredPos}%` }}
         />
-        {/* corrected ratio mark */}
         {fixedPos != null && (
           <span
             aria-hidden
-            className="absolute top-0 h-full w-[2px] -translate-x-1/2 bg-verified"
+            className="absolute top-0 h-full w-0.5 -translate-x-1/2 bg-verified"
             style={{ left: `${fixedPos}%` }}
           />
         )}
       </div>
-      <div aria-hidden className="relative mt-1 h-[26px] w-full font-cond text-[10.5px]">
+      <div aria-hidden className="relative mt-1 h-6.5 w-full font-cond text-[10.5px]">
         <span className="absolute top-0 left-0 text-muted">1:1</span>
         <span className="absolute top-0 right-0 text-muted">7:1</span>
         <span
@@ -165,7 +155,7 @@ function RatioRuler({
         </span>
         {fixedPos != null && fixed != null && (
           <span
-            className="absolute top-[13px] -translate-x-1/2 font-medium text-verified tabular-nums"
+            className="absolute top-3.25 -translate-x-1/2 font-medium text-verified tabular-nums"
             style={{ left: `${fixedPos}%` }}
           >
             {fixed.toFixed(2)} fixed
@@ -195,7 +185,7 @@ function ProgressRuler({
       aria-valuemax={budgetMs}
       aria-valuenow={elapsedMs}
       aria-label={label ?? `Audit progress: ${secs}s of up to ${budgetSecs}s`}
-      className="flex h-[14px] w-full overflow-hidden border border-ink bg-surface"
+      className="flex h-3.5 w-full overflow-hidden border border-ink bg-surface"
     >
       <span aria-hidden className="h-full bg-ink" style={{ width: `${donePct}%` }} />
       <span aria-hidden className="hatch-progress-live h-full" style={{ width: `${runningPct}%` }} />

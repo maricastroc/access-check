@@ -20,7 +20,6 @@ const CLS: Record<FixStatus, string> = {
   unchecked: "border border-dashed border-border text-muted",
 };
 
-/** The status of a sandbox re-audit. Always carries text — never glyph-only. */
 export function StatusSeal({ status, children }: { status: FixStatus; children?: ReactNode }) {
   return (
     <span

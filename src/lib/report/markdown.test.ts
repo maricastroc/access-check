@@ -50,7 +50,6 @@ describe("buildReportMarkdown", () => {
   });
 
   it("keeps sandbox language, the real measurement, and never extrapolates the sample", () => {
-    // 7 nodes, one verification value → the export must say only one example was checked.
     expect(md).toContain("One example checked");
     expect(md).toContain("sandbox copy");
     expect(md).toContain("not individually verified");

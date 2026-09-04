@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
-// `success`/`warning`/`brand` are legacy aliases kept so out-of-scope pages keep compiling.
 export type StatusTone =
   | "verified"
   | "serious"
@@ -43,7 +42,6 @@ type StatusPillProps = {
   className?: string;
 };
 
-/** Inline status: a small square swatch (never color-only) + colored label. */
 export function StatusPill({ children, tone, className }: StatusPillProps) {
   return (
     <span className={cn("inline-flex items-center gap-2 text-[13px] font-medium", toneText[tone], className)}>

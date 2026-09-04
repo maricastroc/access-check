@@ -14,7 +14,6 @@ const toneClass = {
   ink: "text-ink",
 } as const;
 
-/** Condensed, uppercase, tracked section label — the only place caps + tracking are used. */
 export function SectionKicker({ children, tone = "muted", as: Tag = "span", className }: SectionKickerProps) {
   return (
     <Tag

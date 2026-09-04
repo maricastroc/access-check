@@ -12,11 +12,6 @@ const toneClass: Record<CodeTone, string> = {
   muted: "text-muted",
 };
 
-/**
- * A flat technical block: ivory `code` ground, hairline border, mono 12.5/1.7.
- * `truncate` renders a single ellipsized line (mobile). Selectors read in steel,
- * an added line in verified — the only place either color touches code.
- */
 export function CodeBlock({
   lines,
   truncate = false,

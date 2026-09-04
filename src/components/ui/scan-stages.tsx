@@ -1,7 +1,6 @@
 import type { ScanPhase } from "@/lib/scan/types";
 import { cn } from "@/lib/cn";
 
-/** The real engine stages, in the order they run. */
 const STAGES = [
   "Opening the page and waiting for it to settle",
   "Running the WCAG A and AA checks (axe-core)",
@@ -10,7 +9,6 @@ const STAGES = [
   "Keyboard and mobile checks",
 ] as const;
 
-/** Coarse phase → stage index (the engine reports 5 phases across these stages). */
 const PHASE_STAGE: Record<ScanPhase, number> = {
   preparing: 0,
   loading: 0,

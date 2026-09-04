@@ -6,9 +6,9 @@ export type MarkerState = "idle" | "selected" | "unavailable";
 type MarkerProps = {
   n: number;
   state: MarkerState;
-  dimmed?: boolean; // belongs to a finding other than the selected one
-  label?: string; // only shown when selected, e.g. "2.1:1 · needs 4.5:1"
-  size?: number; // 28 desktop, 30 mobile
+  dimmed?: boolean;
+  label?: string;
+  size?: number;
   ariaLabel: string;
   ariaPressed?: boolean;
   onSelect?: () => void;

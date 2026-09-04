@@ -6,13 +6,6 @@ import { buildWcagReading } from "./wcag";
 import { severityLabel } from "./severity";
 import { verdictLabel, verdictMessage } from "./verdict";
 
-/**
- * Presentation-layer Markdown export, in the Régua vocabulary. The engine's own
- * serializer (src/lib/scan/markdown.ts) is left untouched; this one keeps the
- * internal-score / WCAG-reading / sandbox distinctions and never says
- * "compliant", "certified" or "100% accessible".
- */
-
 function host(url: string): string {
   try {
     return new URL(url).host;

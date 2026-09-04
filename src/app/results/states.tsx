@@ -9,7 +9,6 @@ import { UrlField } from "@/components/home/url-form";
 
 const BUDGET_MS = 25_000;
 
-/** Plain words for each scan phase, for the screen-reader status line. */
 const PHASE_LABEL: Record<ScanPhase, string> = {
   preparing: "getting ready",
   loading: "opening the page",
@@ -30,7 +29,7 @@ export function ScanningState({ url, phase }: { url: string; phase: ScanPhase })
   const budget = Math.round(BUDGET_MS / 1000);
 
   return (
-    <div className="mx-auto w-full max-w-[640px] px-4 py-16">
+    <div className="mx-auto w-full max-w-160 px-4 py-16">
       <div className="border border-border bg-surface p-6">
         <div className="flex items-baseline gap-2">
           <span className="font-cond text-[28px] leading-none tabular-nums text-ink">{secs}s</span>
@@ -68,7 +67,7 @@ export function ErrorState({
   onRetry: () => void;
 }) {
   return (
-    <div className="mx-auto w-full max-w-[560px] px-4 py-16">
+    <div className="mx-auto w-full max-w-140 px-4 py-16">
       <div role="alert" className="border border-critical bg-surface p-6">
         <div className="flex items-center gap-2.5">
           <span

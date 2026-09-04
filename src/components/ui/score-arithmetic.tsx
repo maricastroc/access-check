@@ -2,13 +2,6 @@ import type { ScoreBreakdown } from "@/lib/report/score";
 import { severityHatchClass, severityLabel } from "@/lib/report/severity";
 import { cn } from "@/lib/cn";
 
-/**
- * The internal priority score, explained in terms of what fixing each severity
- * would actually recover. The score is non-linear (see score.ts), so we never
- * show it as a running subtraction. Each severity line reports the score the page
- * would reach if that severity were fixed on its own; manual-review items are
- * shown as coverage, explicitly outside the score.
- */
 export function ScoreArithmetic({
   breakdown,
   passed,
@@ -32,7 +25,7 @@ export function ScoreArithmetic({
 
       {deductions.length > 0 && (
         <div className="mt-2.5 border-t border-hairline pt-2.5">
-          <p className="font-cond text-[11px] tracking-[0.1em] text-muted uppercase">
+          <p className="font-cond text-[11px] tracking-widest text-muted uppercase">
             If you fix these, the score rises to
           </p>
           <div className="mt-2 space-y-1.5">

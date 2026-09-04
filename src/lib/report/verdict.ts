@@ -1,53 +1,34 @@
 import type { FixGroup, ScanViolation } from "@/lib/scan/types";
 import type { ContrastMeasurement } from "./contrast";
 
-/**
- * The verification verdict, derived ONLY from evidence the engine produced —
- * and never extrapolated beyond it.
- *
- * How the engine actually re-audits (src/lib/scan/scan.ts):
- *   - It groups a violation's nodes into fix-clusters by identical suggested fix
- *     (clusterFixes in group.ts). `count` is the cluster SIZE.
- *   - For each cluster it applies the fix to ONE representative element
- *     (cluster.selectors[0]) and re-runs the rule scoped to that single element.
- *     The pass/fail is written to the whole cluster's `verification`.
- *   - The other members of a cluster are neither modified nor re-audited.
- *
- * So a cluster's outcome is the outcome of exactly ONE element. We must not turn
- * a cluster's `count` into a count of individually-verified elements. We only
- * claim "verified" / "cleared N" when every occurrence was its own re-audited
- * cluster (count === 1); otherwise we report what was actually sampled and say
- * plainly that the rest were not individually verified.
- */
-
 export type VerdictKind =
-  | "verified" // every occurrence was individually re-audited and cleared
-  | "partial" // every occurrence was individually re-audited; some cleared, some flag
-  | "sampled" // a representative was re-audited & cleared, but not every occurrence
-  | "failed" // the sampled element still flags after the change
-  | "unverifiable" // an automatic fix exists but nothing was re-audited
-  | "no-auto-fix" // no automatic correction; needs a human
-  | "best-practice" // not a WCAG success criterion
-  | "complementary"; // keyboard / audit / context pass — not sandbox-verified
+  | "verified"
+  | "partial"
+  | "sampled"
+  | "failed"
+  | "unverifiable"
+  | "no-auto-fix"
+  | "best-practice"
+  | "complementary";
 
 export type Verdict = {
   kind: VerdictKind;
-  totalElements: number; // all flagged occurrences
-  sampledCleared: number; // representatives re-audited that PASSED (one per fix cluster)
-  sampledFailed: number; // representatives re-audited that FAILED
-  reaudited: number; // sampledCleared + sampledFailed — elements actually re-tested
-  fullyCovered: boolean; // every occurrence was individually re-audited
-  shared: boolean; // totalElements > 1
+  totalElements: number;
+  sampledCleared: number;
+  sampledFailed: number;
+  reaudited: number;
+  fullyCovered: boolean;
+  shared: boolean;
 };
 
 export type VerdictInput = {
-  kind: string; // FindingView.kind
+  kind: string;
   isWcag: boolean;
   elements: number;
   fixGroups: FixGroup[] | null;
   fixVerification?: ScanViolation["verification"];
-  hasAutoFix: boolean; // a concrete, applicable fix exists (fixCode / measurement)
-  verifySkipped: boolean; // the engine emitted "verification-skipped"
+  hasAutoFix: boolean;
+  verifySkipped: boolean;
 };
 
 const COMPLEMENTARY = new Set([
@@ -75,7 +56,6 @@ export function buildVerdict(input: VerdictInput): Verdict {
   if (input.kind === "best-practice") return seal("best-practice");
   if (COMPLEMENTARY.has(input.kind)) return seal("complementary");
 
-  // One re-audit outcome per fix cluster (a single representative element each).
   const groups =
     input.fixGroups && input.fixGroups.length > 0
       ? input.fixGroups.map((g) => ({ count: g.count, verification: g.verification }))
@@ -89,9 +69,6 @@ export function buildVerdict(input: VerdictInput): Verdict {
     return input.hasAutoFix || input.verifySkipped ? seal("unverifiable") : seal("no-auto-fix");
   }
 
-  // Full individual coverage only when every occurrence is its own re-audited
-  // cluster: each cluster holds exactly one element, none were skipped, and the
-  // clusters account for every flagged occurrence.
   const sumCounts = groups.reduce((n, g) => n + g.count, 0);
   const everyGroupSingle = groups.every((g) => g.count === 1);
   const allReaudited = groups.every(
@@ -106,12 +83,11 @@ export function buildVerdict(input: VerdictInput): Verdict {
     if (sampledCleared === 0) return { kind: "failed", ...base };
     return { kind: "partial", ...base };
   }
-  // Incomplete coverage: we can only speak to the representatives we sampled.
+
   if (sampledCleared === 0) return { kind: "failed", ...base };
   return { kind: "sampled", ...base };
 }
 
-/** The one-line status label used on the seal (kept short; the detail carries the reason). */
 export function verdictLabel(v: Verdict): string {
   switch (v.kind) {
     case "verified":
@@ -133,7 +109,6 @@ export function verdictLabel(v: Verdict): string {
   }
 }
 
-/** The evidence-based sentence shown under the fix. `measurement` sharpens contrast reasons. */
 export function verdictMessage(v: Verdict, measurement?: ContrastMeasurement | null): string {
   const n = v.totalElements;
   const notChecked = n - v.reaudited;

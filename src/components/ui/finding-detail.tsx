@@ -11,7 +11,6 @@ import { SectionKicker } from "./section-kicker";
 import { CodeBlock } from "./code-block";
 import { cn } from "@/lib/cn";
 
-/* ── verdict seal ── */
 const SEAL: Record<Verdict["kind"], { cls: string; glyph: string }> = {
   verified: { cls: "border-solid border-verified bg-verified/[0.08] text-verified", glyph: "✓" },
   partial: { cls: "border-dashed border-moderate text-moderate-text", glyph: "◑" },
@@ -35,7 +34,6 @@ function VerdictSeal({ verdict }: { verdict: Verdict }) {
   );
 }
 
-/* ── contrast / color preview (detected colors only — not the real element) ── */
 function RatioBar({
   found,
   required,
@@ -50,10 +48,10 @@ function RatioBar({
   return (
     <div className="relative h-3 w-full overflow-hidden border border-ink bg-surface">
       <span className="hatch-serious absolute inset-y-0 left-0" style={{ width: `${ratioPosition(found)}%` }} />
-      <span className="absolute inset-y-0 w-[2px] -translate-x-1/2 bg-ink" style={{ left: `${ratioPosition(required)}%` }} />
+      <span className="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-ink" style={{ left: `${ratioPosition(required)}%` }} />
       {fixed != null && (
         <span
-          className="absolute inset-y-0 w-[2px] -translate-x-1/2"
+          className="absolute inset-y-0 w-0.5 -translate-x-1/2"
           style={{ left: `${ratioPosition(fixed)}%`, background: fixedColor ?? "var(--color-ink)" }}
         />
       )}
@@ -104,7 +102,6 @@ function ContrastFixPreview({ preview }: { preview: ContrastPreview }) {
   return (
     <div className="mt-2">
       <p className="font-cond text-[11px] tracking-[0.08em] text-muted uppercase">Contrast preview</p>
-      {/* toggle — the detected color pair, before and with the suggested value */}
       <div role="group" aria-label="Contrast preview" className="mt-1.5 inline-flex border border-border text-[12.5px]">
         {(["original", "suggested"] as const).map((v, i) => (
           <button
@@ -123,7 +120,6 @@ function ContrastFixPreview({ preview }: { preview: ContrastPreview }) {
         ))}
       </div>
 
-      {/* the isolated reproduction on the detected color pair */}
       <div className="mt-2 border border-border">
         <Chip fg={shown.fg} bg={shown.bg} large={large} />
         <div className="flex items-center justify-between border-t border-hairline px-3 py-1.5">
@@ -149,7 +145,6 @@ function ContrastFixPreview({ preview }: { preview: ContrastPreview }) {
         />
       </div>
 
-      {/* objective values */}
       <dl className="mt-2.5 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[12.5px]">
         <dt className="text-muted">Property</dt>
         <dd className="font-mono text-ink">{preview.prop}</dd>
@@ -171,7 +166,6 @@ function ContrastFixPreview({ preview }: { preview: ContrastPreview }) {
   );
 }
 
-/* ── the four-block detail ── */
 export function FindingDetail({ finding, host }: { finding: FindingView; host: string }) {
   const located = finding.markers.length;
   const affectedShown = finding.affectedSelectors.slice(0, 6);
@@ -180,13 +174,11 @@ export function FindingDetail({ finding, host }: { finding: FindingView; host: s
 
   return (
     <div className="-mt-px border border-t-0 border-ink bg-surface" style={{ borderLeft: `4px solid ${railColor}` }}>
-      {/* 1 — impact on users */}
       <section className="p-3.5">
         <SectionKicker>Impact on users</SectionKicker>
         <p className="mt-2 text-[14px] leading-normal text-ink-2">{finding.impact}</p>
       </section>
 
-      {/* 2 — affected element */}
       <section className="border-t border-hairline p-3.5">
         <SectionKicker>Affected element</SectionKicker>
         {finding.affectedSelectors.length > 0 ? (
@@ -195,7 +187,7 @@ export function FindingDetail({ finding, host }: { finding: FindingView; host: s
               {located > 0 && (
                 <span
                   aria-hidden
-                  className="inline-flex size-[18px] shrink-0 items-center justify-center bg-ink font-cond text-[11px] font-semibold text-surface"
+                  className="inline-flex size-4.5 shrink-0 items-center justify-center bg-ink font-cond text-[11px] font-semibold text-surface"
                 >
                   1
                 </span>
@@ -231,7 +223,6 @@ export function FindingDetail({ finding, host }: { finding: FindingView; host: s
         )}
       </section>
 
-      {/* 3 — how to fix */}
       <section className="border-t border-hairline p-3.5">
         <SectionKicker>How to fix</SectionKicker>
         {finding.preview ? (
@@ -265,7 +256,6 @@ export function FindingDetail({ finding, host }: { finding: FindingView; host: s
         )}
       </section>
 
-      {/* 4 — verification result */}
       <section className="border-t border-hairline p-3.5">
         <SectionKicker>Verification result</SectionKicker>
         <div className="mt-2">

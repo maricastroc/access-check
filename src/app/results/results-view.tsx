@@ -51,7 +51,6 @@ export function ResultsView({
   const [error, setError] = useState("");
   const [errorHint, setErrorHint] = useState("");
 
-  // presentation state
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sim, setSim] = useState<SimKey>("normal");
   const [layer, setLayer] = useState<Layer>("markers");
@@ -96,7 +95,6 @@ export function ResultsView({
     void runFetch(initialUrl || DEFAULT_URL);
   }, [initialUrl, initialResult, runFetch]);
 
-  // derived view-models
   const findings = useMemo(() => (result ? buildFindings(result) : []), [result]);
   const breakdown = useMemo(
     () => (result ? scoreBreakdown(result.violations, result.score) : null),
@@ -148,7 +146,6 @@ export function ResultsView({
     [markerOwner],
   );
 
-  // scroll the margin to the selected finding
   useEffect(() => {
     if (!selectedId) return;
     const id = window.setTimeout(() => {
@@ -157,7 +154,6 @@ export function ResultsView({
     return () => window.clearTimeout(id);
   }, [selectedId]);
 
-  // Esc clears selection
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setSelectedId(null);
@@ -228,7 +224,7 @@ export function ResultsView({
               <>
                 <SummaryBand result={result} breakdown={breakdown} wcag={wcag} />
                 <div className="mx-auto grid w-full max-w-[1560px] grid-cols-[164px_minmax(0,1fr)_420px] items-start">
-                  <div className="sticky top-[62px] self-start">
+                  <div className="sticky top-15.5 self-start">
                     <VisionRail
                       sim={sim}
                       setSim={setSim}
@@ -253,7 +249,7 @@ export function ResultsView({
                       onSelectMarker={selectMarker}
                     />
                   </div>
-                  <div className="scroll-slim sticky top-[62px] max-h-[calc(100vh-62px)] self-start overflow-y-auto">
+                  <div className="scroll-slim sticky top-15.5 max-h-[calc(100vh-62px)] self-start overflow-y-auto">
                     <FindingsMargin
                       findings={findings}
                       result={result}

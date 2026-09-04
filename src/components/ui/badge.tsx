@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
-// `brand`/`success` are legacy aliases kept so out-of-scope pages keep compiling.
 export type BadgeTone = "neutral" | "steel" | "verified" | "serious" | "moderate" | "brand" | "success";
 
 const toneClasses: Record<BadgeTone, string> = {
@@ -31,7 +30,6 @@ type BadgeProps = {
   className?: string;
 };
 
-/** A small, straight-corner tag. Severity/status tones use their fixed colors. */
 export function Badge({ children, tone = "neutral", dot = false, className }: BadgeProps) {
   return (
     <span

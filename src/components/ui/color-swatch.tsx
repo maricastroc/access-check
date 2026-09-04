@@ -8,7 +8,6 @@ function relativeLuminance(hex: string): number {
   return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
 }
 
-/** A flat color chip. Light colors get a hairline border so they read on ivory. */
 export function ColorSwatch({
   hex,
   size = 18,

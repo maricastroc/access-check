@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { cn } from "@/lib/cn";
 
-/** The URL input control: mono https:// prefix, straight corners, 1.5px ink border. */
 export function UrlField({
   value,
   onChange,
@@ -59,7 +58,6 @@ export function UrlField({
 
 type Scope = "page" | "site";
 
-/** Landing hero form: URL + scope (single page / entire site) + audit action. */
 export function UrlForm({ accent = false, examples }: { accent?: boolean; examples?: string[] }) {
   const router = useRouter();
   const [value, setValue] = useState("");
@@ -106,7 +104,7 @@ export function UrlForm({ accent = false, examples }: { accent?: boolean; exampl
           type="button"
           onClick={() => go(value, scope)}
           className={cn(
-            "inline-flex h-[66px] shrink-0 items-center justify-center gap-3 px-8 text-[16.5px] font-semibold text-surface transition-colors",
+            "inline-flex h-16.5 shrink-0 items-center justify-center gap-3 px-8 text-[16.5px] font-semibold text-surface transition-colors",
             accent ? "bg-serious hover:brightness-110" : "bg-ink hover:bg-ink-2",
           )}
         >

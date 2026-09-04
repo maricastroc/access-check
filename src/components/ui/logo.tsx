@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { cn } from "@/lib/cn";
 
-/** The lockup symbol (arc + chevron), drawn inline from the brand asset, recolored to ink/steel. */
 export function BrandMark({
   size = 23,
   tone = "ink",

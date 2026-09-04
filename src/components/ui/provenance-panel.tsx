@@ -1,9 +1,5 @@
 import { SectionKicker } from "./section-kicker";
 
-/**
- * Where the analysis came from — and the standing guarantee that the audited
- * site is never modified (fixes are applied and reverted in a sandbox copy).
- */
 export function ProvenancePanel({
   viewport,
   durationMs,

@@ -51,8 +51,7 @@ export function MobileReport({
 }) {
   return (
     <div className="pb-20">
-      {/* fixed score header */}
-      <div className="sticky top-[62px] z-20 border-b border-border bg-surface px-4 py-3">
+      <div className="sticky top-15.5 z-20 border-b border-border bg-surface px-4 py-3">
         <div className="flex items-center justify-between gap-2">
           <span className="truncate font-mono text-[12.5px] text-muted">{host}</span>
           <span className="shrink-0 text-[12px] text-muted tabular-nums">
@@ -72,7 +71,6 @@ export function MobileReport({
         </div>
       </div>
 
-      {/* tabs */}
       <div role="tablist" aria-label="Report view" className="grid grid-cols-2 border-b border-ink">
         {(["capture", "findings"] as const).map((t) => (
           <button
@@ -81,7 +79,7 @@ export function MobileReport({
             aria-selected={tab === t}
             onClick={() => setTab(t)}
             className={cn(
-              "flex h-[50px] items-center justify-center text-[15px] font-semibold",
+              "flex h-12.5 items-center justify-center text-[15px] font-semibold",
               tab === t ? "bg-ink text-surface" : "bg-surface text-ink",
             )}
           >
@@ -182,7 +180,6 @@ export function MobileReport({
         </div>
       )}
 
-      {/* fixed export footer */}
       <div className="fixed inset-x-0 bottom-0 z-30 flex gap-2 border-t border-border bg-surface px-4 py-2.5">
         <Button variant="secondary" size="md" onClick={onMarkdown} className="flex-1">
           Export Markdown

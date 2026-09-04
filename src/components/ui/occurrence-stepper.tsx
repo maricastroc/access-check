@@ -1,6 +1,5 @@
 import { cn } from "@/lib/cn";
 
-/** ← [k of N] → across a finding's occurrences. Large targets on mobile. */
 export function OccurrenceStepper({
   index,
   total,
@@ -9,7 +8,7 @@ export function OccurrenceStepper({
   size = "sm",
   className,
 }: {
-  index: number; // 0-based
+  index: number;
   total: number;
   onPrev: () => void;
   onNext: () => void;

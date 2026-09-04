@@ -1,24 +1,6 @@
 import type { FixVerification } from "@/lib/scan/types";
 import type { ContrastMeasurement } from "./contrast";
 
-/**
- * The contrast/color preview model for text-contrast findings.
- *
- * It only ever uses colors the engine actually resolved (original text color,
- * sampled background, and the engine's minimal hue-preserving suggestion that
- * reaches this element's own threshold) — it reproduces the color pair, not the
- * real element (no typography, no page context). It never claims a fix is
- * applied to the site.
- *
- * Confidence is graded from the LOCATED element's own re-audit (not the whole
- * finding's aggregate verdict), because the preview shows exactly that one
- * element's color pair:
- *   verified     → the located element itself was re-audited and stopped flagging;
- *   calculated   → the known values reach the minimum, but it wasn't re-audited;
- *   inconclusive → the located element's live re-audit still flags (background is
- *                  likely an image/gradient/overlay) or no color change clears it.
- */
-
 export type PreviewConfidence = "verified" | "calculated" | "inconclusive";
 
 export type ContrastPreview = {

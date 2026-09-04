@@ -62,7 +62,6 @@ export function SummaryPage({ result }: { result: ScanResult }) {
       </div>
 
       <div className="mt-4 grid grid-cols-[2.5in_1fr] gap-4">
-        {/* score panel */}
         <div className="border border-border p-4">
           <SectionKickerMuted>Internal priority score</SectionKickerMuted>
           <div className="mt-1 flex items-end gap-1.5">
@@ -79,7 +78,6 @@ export function SummaryPage({ result }: { result: ScanResult }) {
           </div>
         </div>
 
-        {/* counts + arithmetic */}
         <div className="flex flex-col gap-3">
           <div className="grid grid-cols-6 border border-hairline">
             {counts.map((c, i) => (

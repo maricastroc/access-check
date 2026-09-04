@@ -17,10 +17,9 @@ const base: VerdictInput = {
 
 describe("buildVerdict — never extrapolates one representative to a whole cluster", () => {
   it("sampled — a multi-element cluster whose single representative cleared is NOT 'all cleared'", () => {
-    // The engine re-audited ONE element of a 7-element cluster. We must not claim 7 cleared.
     const v = buildVerdict({ ...base, elements: 7, fixGroups: [group(7, "verified")] });
     expect(v.kind).toBe("sampled");
-    expect(v.reaudited).toBe(1); // one representative, not seven
+    expect(v.reaudited).toBe(1);
     expect(v.sampledCleared).toBe(1);
     expect(v.fullyCovered).toBe(false);
     const msg = verdictMessage(v);
@@ -31,14 +30,13 @@ describe("buildVerdict — never extrapolates one representative to a whole clus
   });
 
   it("sampled — multiple clusters count reps, not cluster sizes (the real '4 of 7' shape)", () => {
-    // userinyerface: 4 clusters (3,2,1,1). Say two reps passed, two failed.
     const v = buildVerdict({
       ...base,
       elements: 7,
       fixGroups: [group(3, "verified"), group(2, "failed"), group(1, "verified"), group(1, "failed")],
     });
     expect(v.kind).toBe("sampled");
-    expect(v.reaudited).toBe(4); // one representative per cluster
+    expect(v.reaudited).toBe(4);
     expect(v.sampledCleared).toBe(2);
     expect(v.sampledFailed).toBe(2);
     const msg = verdictMessage(v);

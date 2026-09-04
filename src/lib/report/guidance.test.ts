@@ -28,7 +28,6 @@ describe("fixGuidance", () => {
   });
 
   it("returns null for categories with no generic-rule gap (engine text is concrete)", () => {
-    // contrast/alt/label already carry a concrete engine fix — no override needed
     expect(fixGuidance("color-contrast")).toBeNull();
   });
 });

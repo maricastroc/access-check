@@ -96,7 +96,6 @@ describe("shared window (Redis configured)", () => {
     const limiter = new RateLimiter({ tokens: 2, windowSeconds: 60 }, "test");
     sharedLimit.mockRejectedValue(new Error("getaddrinfo ENOTFOUND dead.upstash.io"));
 
-    // Serves the request rather than failing it, and still enforces a ceiling.
     expect(await limiter.check("1.2.3.4")).toBe("allowed");
     expect(await limiter.check("1.2.3.4")).toBe("allowed");
     expect(await limiter.check("1.2.3.4")).toBe("limited");

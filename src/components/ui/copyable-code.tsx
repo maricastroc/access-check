@@ -5,7 +5,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faCopy } from "@fortawesome/free-solid-svg-icons";
 import { cn } from "@/lib/cn";
 
-/** A flat, copyable technical line — ivory code ground, hairline border, straight corners. */
 export function CopyableCode({ code, className }: { code: string; className?: string }) {
   const [copied, setCopied] = useState(false);
 

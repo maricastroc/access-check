@@ -1,12 +1,5 @@
 import type { Severity } from "@/lib/scan/types";
 
-/**
- * Illustrative landing content. The example figures below are a fixed demo (the
- * "aurora-coffee.com" page shown in the design), not a live scan — in production
- * every number comes from the real ScanResult. The vocabulary is kept honest:
- * internal priority score, WCAG A/AA (AAA not evaluated), sandbox re-audit.
- */
-
 export type AxeRule = { sc: string; label: string };
 
 export const axeRules: AxeRule[] = [
@@ -54,7 +47,6 @@ export const steps: Step[] = [
   },
 ];
 
-/** The fixed example finding used across the Evidence Lens and sandbox sections. */
 export const exampleFinding = {
   severity: "serious" as Severity,
   sc: "1.4.3",
@@ -70,12 +62,6 @@ export const exampleFinding = {
   toHex: "#2f6b57",
 };
 
-/**
- * The demo score, computed with the engine's real (non-linear) formula:
- * penalty = 5·min(7,5) + 2·(1+1) = 29 → score = round(100·e^(-29/45)) = 53.
- * `ifFixed` is the score the page would reach if that severity were fixed on its
- * own (serious → 91, moderate → 57), the same projection the live report shows.
- */
 export const exampleScore = {
   score: 53,
   passed: 39,
@@ -86,7 +72,6 @@ export const exampleScore = {
   ],
 };
 
-/** Plain-language read of the demo result, the same one-liner the report shows. */
 export const exampleSummary =
   "No critical blockers, but 1 serious finding still makes the page harder to use for people who rely on assistive technology.";
 

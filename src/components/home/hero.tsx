@@ -21,8 +21,7 @@ const wcag: WcagReadingModel = {
 export function Hero() {
   return (
     <section className="border-b border-hairline bg-canvas">
-      <div className="mx-auto w-full max-w-[1200px] px-6">
-        {/* first fold: message + form (left), live inspector (right) */}
+      <div className="mx-auto w-full max-w-300 px-6">
         <div className="grid grid-cols-1 gap-x-14 gap-y-10 pt-14 lg:grid-cols-[minmax(0,1fr)_520px] lg:gap-x-20 lg:items-start">
           <div>
             <div className="flex flex-wrap items-center gap-3">
@@ -32,10 +31,10 @@ export function Hero() {
               <span aria-hidden className="h-4 w-px bg-hairline" />
               <span className="text-[13px] text-muted">+ keyboard, viewport and vision passes</span>
             </div>
-            <h1 className="mt-5 font-sans text-[42px] leading-[1.05] font-semibold tracking-[-0.025em] text-ink">
+            <h1 className="mt-5 font-sans text-[42px] leading-[1.05] font-semibold tracking-tight text-ink">
               Every barrier measured, located on the element, and tested before it&apos;s suggested.
             </h1>
-            <p className="mt-4 max-w-[52ch] text-[17px] leading-[1.5] text-body">
+            <p className="mt-4 max-w-[52ch] text-[17px] leading-normal text-body">
               This is not another report. It is a visual inspector: paste a web address and every
               finding comes tied to the element that caused it, with the contrast ratio, the selector
               and a fix we test on a copy of the page.
@@ -43,7 +42,7 @@ export function Hero() {
             <div className="mt-6">
               <UrlForm examples={["wikipedia.org", "stripe.com", "github.com"]} />
             </div>
-            <p className="mt-4 flex items-start gap-2.5 border-l-[3px] border-steel bg-steel/[0.06] px-3 py-2 text-[13px] text-body">
+            <p className="mt-4 flex items-start gap-2.5 border-l-[3px] border-steel bg-steel/6 px-3 py-2 text-[13px] text-body">
               <SectionKicker tone="steel" className="mt-px shrink-0">
                 Not
               </SectionKicker>
@@ -61,10 +60,9 @@ export function Hero() {
           </div>
         </div>
 
-        {/* ruler band — last public audit */}
         <div className="mt-12 grid grid-cols-1 gap-12 border border-border bg-surface p-6 lg:grid-cols-[minmax(0,1fr)_420px]">
           <div>
-            <span aria-hidden className="mb-2.5 block h-[3px] w-10 bg-steel" />
+            <span aria-hidden className="mb-2.5 block h-0.75 w-10 bg-steel" />
             <SectionKicker>Most recent public audit · internal priority score</SectionKicker>
             <div className="mt-1 flex items-end gap-2">
               <span className="font-cond text-[64px] leading-[0.85] tabular-nums text-ink">
@@ -75,10 +73,10 @@ export function Hero() {
             <p className="mt-2.5 max-w-[48ch] text-[14px] leading-normal text-body">
               {exampleSummary}
             </p>
-            <div className="mt-3 max-w-[520px]">
+            <div className="mt-3 max-w-130">
               <Ruler variant="score" score={exampleScore.score} deductions={breakdown.deductions} height={30} ticks />
             </div>
-            <div className="mt-5 max-w-[460px]">
+            <div className="mt-5 max-w-115">
               <ScoreArithmetic
                 breakdown={breakdown}
                 passed={exampleScore.passed}

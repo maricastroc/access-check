@@ -1,14 +1,3 @@
-/**
- * Presentation guidance: the concrete human impact and an actionable fix per
- * finding category. The engine already produces concrete fixes for contrast,
- * alt, labels, names, lang, title and viewport (remediate.ts) — those are shown
- * verbatim. This module fills the gap for structural rules whose engine text
- * only restates the rule, and rewrites impact copy from "what the rule requires"
- * into "what happens to people".
- *
- * Nothing here invents page-specific selectors, elements or values.
- */
-
 export type FixExample = { lang: "html" | "css"; code: string };
 
 export type Guidance = {
@@ -85,7 +74,6 @@ const RULE_CATEGORY: Record<string, Category> = {
   "duplicate-id-active": "duplicate-id",
   "duplicate-id-aria": "duplicate-id",
   "frame-title": "frame",
-  // keyboard pass ids
   "focus-not-visible": "focus-visible",
   "focus-order": "focus-order",
   "keyboard-trap": "keyboard-trap",
@@ -225,17 +213,14 @@ const GUIDANCE: Partial<Record<Category, Guidance>> = {
   },
 };
 
-/** Concrete consequence for the "Impact on users" block. */
 export function humanImpact(ruleId: string, kind?: string): string {
   return IMPACT[categoryOf(ruleId, kind)];
 }
 
-/** Actionable guidance for the "How to fix" block, when the engine text is generic. */
 export function fixGuidance(ruleId: string, kind?: string): Guidance | null {
   return GUIDANCE[categoryOf(ruleId, kind)] ?? null;
 }
 
-/** Why the finding has no marker on the capture — mapped from its category/kind. */
 export function markerReason(ruleId: string, kind: string, isDocLevel: boolean): string {
   if (kind === "best-practice") {
     return "Best practice, reported as coverage. It is not tied to one positioned element.";

@@ -1,11 +1,6 @@
 import type { WcagReadingModel } from "@/lib/report/wcag";
 import { cn } from "@/lib/cn";
 
-/**
- * The WCAG reading, deliberately separate from the internal score. Levels A and
- * AA are the only ones the engine evaluates; AAA is always "not evaluated".
- */
-
 type Fill = "clean" | "fails" | "hollow";
 
 function LevelSquare({ level, fill, size = 20 }: { level: string; fill: Fill; size?: number }) {
@@ -81,7 +76,6 @@ export function WcagReading({ model }: { model: WcagReadingModel }) {
   );
 }
 
-/** Compact one-row variant for report headers and the mobile summary. */
 export function WcagChips({ model, className }: { model: WcagReadingModel; className?: string }) {
   const chip = (level: string, fill: Fill, text: string) => (
     <span className="inline-flex items-center gap-2 border border-border bg-surface px-2.5 py-1.5">
