@@ -112,7 +112,6 @@ describe("shared window (Redis configured)", () => {
     const verdict = await limiter.check("1.2.3.4");
 
     expect(verdict).toBe("allowed");
-    // The caller is told nothing; the log carries the cause and the limiter name.
     const entry = JSON.parse(logged.mock.calls[0][0] as string);
     expect(entry.event).toBe("ratelimit.degraded");
     expect(entry.limiter).toBe("scan");

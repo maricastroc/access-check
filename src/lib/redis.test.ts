@@ -40,7 +40,6 @@ describe("cacheGet", () => {
     get.mockRejectedValue(new Error("getaddrinfo ENOTFOUND dead.upstash.io"));
 
     expect(await cacheGet("scan:x")).toBeNull();
-    // One JSON line, searchable by event name — not free text a human has to grep.
     const entry = JSON.parse(logged.mock.calls[0][0] as string);
     expect(entry.event).toBe("cache.read.failed");
     expect(entry.level).toBe("warn");

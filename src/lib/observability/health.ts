@@ -16,18 +16,20 @@ export interface HealthReport {
   dependencies: DependencyReport[];
 }
 
-const PROBE_TIMEOUT_MS = 2_000;
+const PROBE_TIMEOUT_MS: Record<string, number> = {
+  cache: 2_000,
+  database: 8_000,
+  queue: 2_000,
+};
+const DEFAULT_PROBE_TIMEOUT_MS = 2_000;
 
-async function bounded<T>(work: Promise<T>): Promise<T> {
+async function bounded<T>(work: Promise<T>, capMs: number): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     return await Promise.race([
       work,
       new Promise<never>((_, reject) => {
-        timer = setTimeout(
-          () => reject(new Error(`probe exceeded ${PROBE_TIMEOUT_MS}ms`)),
-          PROBE_TIMEOUT_MS,
-        );
+        timer = setTimeout(() => reject(new Error(`probe exceeded ${capMs}ms`)), capMs);
       }),
     ]);
   } finally {
@@ -45,7 +47,7 @@ async function timed(
   }
   const started = Date.now();
   try {
-    await bounded(probe());
+    await bounded(probe(), PROBE_TIMEOUT_MS[name] ?? DEFAULT_PROBE_TIMEOUT_MS);
     return { name, status: "ok", latencyMs: Date.now() - started };
   } catch (error) {
     return {
