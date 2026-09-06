@@ -327,6 +327,23 @@ function isBrowserGone(err: unknown): boolean {
   return BROWSER_GONE.test(err instanceof Error ? err.message : String(err));
 }
 
+async function sessionIsGone(page: Page): Promise<boolean> {
+  const CAP_MS = 2_000;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      page.evaluate(() => 1).then(() => false),
+      new Promise<boolean>((resolve) => {
+        timer = setTimeout(() => resolve(false), CAP_MS);
+      }),
+    ]);
+  } catch (probeErr) {
+    return isBrowserGone(probeErr);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<ScanResult> {
   const budgetMs = opts.budgetMs ?? DEFAULT_SCAN_BUDGET_MS;
   const budget = new Budget(
@@ -455,15 +472,18 @@ async function runScanAttempt(
 
     const navTimeout = Math.max(STAGES.navigation.minMs, policy.allowance("navigation"));
     const response = await track("navigation", () =>
-      page.goto(url, { waitUntil: "domcontentloaded", timeout: navTimeout }).catch((err) => {
+      page.goto(url, { waitUntil: "domcontentloaded", timeout: navTimeout }).catch(async (err) => {
         if (isBrowserGone(err)) throw err;
         const message = err instanceof Error ? err.message : String(err);
+        // Timeout is decided before the liveness probe: the page is still loading,
+        // so evaluating on it would block on an execution context that never settles.
         if (/timeout/i.test(message)) {
           throw new ScanFailure(
             `The page took longer than ${Math.round(navTimeout / 1000)}s to respond.`,
             "navigation-timeout",
           );
         }
+        if (await sessionIsGone(page)) throw err;
         throw new ScanFailure("The page could not be reached.", "navigation-failed");
       }),
     );

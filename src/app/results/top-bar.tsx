@@ -30,8 +30,7 @@ export function TopBar({
 }) {
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-surface">
-      <div className="mx-auto flex h-[62px] w-full max-w-[1560px] items-center gap-4 px-4 sm:px-6">
-        {/* Logo wordmark and the URL meta share a baseline (see items-baseline). */}
+      <div className="mx-auto flex h-15.5 w-full max-w-[1560px] items-center gap-4 px-4 sm:px-6">
         <div className="flex min-w-0 items-baseline gap-4">
           <Link href="/" className="flex shrink-0 items-baseline gap-2.5 text-ink">
             <BrandMark size={23} className="self-center" />
