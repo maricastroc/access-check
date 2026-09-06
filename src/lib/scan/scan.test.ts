@@ -411,6 +411,40 @@ describe("runScan (budget, degradation and resilience)", () => {
     }
   }, 60_000);
 
+  it("reports an unavailable browser when it dies during navigation", async () => {
+    await closeSharedBrowser();
+    const real = getBrowserExecutor();
+    let opened: Browser | null = null;
+
+    setBrowserExecutor({
+      async launch() {
+        opened = await real.launch();
+        return opened;
+      },
+    });
+
+    try {
+      const err = await runScan(`${base}/slow`, {
+        screenshot: false,
+        keyboard: false,
+        contexts: false,
+        audits: false,
+        verifyFixes: false,
+        onPhase: (p) => {
+          if (p === "loading") {
+            setTimeout(() => void opened?.close().catch(() => undefined), SLOW_DELAY_MS / 4);
+          }
+        },
+      }).catch((e: unknown) => e);
+
+      expect(err).toBeInstanceOf(ScanFailure);
+      expect((err as ScanFailure).code).toBe("browser-unavailable");
+    } finally {
+      setBrowserExecutor(real);
+      await closeSharedBrowser();
+    }
+  }, 60_000);
+
   it("keeps the stylesheet-dependent rules working under the resource policy", async () => {
     const result = await runScan(`${base}/broken`, {
       screenshot: false,

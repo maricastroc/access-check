@@ -323,7 +323,15 @@ class SessionOpenError extends Error {
   }
 }
 
+class BrowserGoneError extends Error {
+  constructor(readonly cause: unknown) {
+    super(cause instanceof Error ? cause.message : String(cause));
+    this.name = "BrowserGoneError";
+  }
+}
+
 function isBrowserGone(err: unknown): boolean {
+  if (err instanceof BrowserGoneError) return true;
   return BROWSER_GONE.test(err instanceof Error ? err.message : String(err));
 }
 
@@ -475,14 +483,14 @@ async function runScanAttempt(
       page.goto(url, { waitUntil: "domcontentloaded", timeout: navTimeout }).catch(async (err) => {
         if (isBrowserGone(err)) throw err;
         const message = err instanceof Error ? err.message : String(err);
-        
+
         if (/timeout/i.test(message)) {
           throw new ScanFailure(
             `The page took longer than ${Math.round(navTimeout / 1000)}s to respond.`,
             "navigation-timeout",
           );
         }
-        if (await sessionIsGone(page)) throw err;
+        if (await sessionIsGone(page)) throw new BrowserGoneError(err);
         throw new ScanFailure("The page could not be reached.", "navigation-failed");
       }),
     );
