@@ -34,10 +34,6 @@
   🔗 <strong>Live demo:</strong> <a href="https://access-check.marianacastro.dev">access-check.marianacastro.dev</a>
 </p>
 
-<p align="center">
-  <img src="docs/home-desktop.png" alt="AccessCheck" width="800" />
-</p>
-
 <br/>
 
 ## 🩺 We run AccessCheck on AccessCheck
