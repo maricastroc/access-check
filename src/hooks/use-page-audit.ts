@@ -3,8 +3,13 @@
 import { useCallback, useEffect, useState } from "react";
 import type { ScanPhase, ScanResult } from "@/lib/scan/types";
 import { streamScan, ScanStreamError, SCAN_ERROR_HINT } from "@/lib/scan/stream";
+import { recallScan, rememberScan } from "@/lib/scan/result-cache";
 
 export type AuditStatus = "loading" | "done" | "error";
+
+export type AuditOptions = {
+  force?: boolean;
+};
 
 export type PageAudit = {
   status: AuditStatus;
@@ -13,7 +18,7 @@ export type PageAudit = {
   url: string;
   error: string;
   errorHint: string;
-  scan: (target: string) => void;
+  scan: (target: string, options?: AuditOptions) => void;
 };
 
 export function usePageAudit({
@@ -35,14 +40,9 @@ export function usePageAudit({
   const [errorHint, setErrorHint] = useState("");
 
   const scan = useCallback(
-    (target: string) => {
+    (target: string, { force = false }: AuditOptions = {}) => {
       const value = target.trim();
       if (!value) return;
-      setStatus("loading");
-      setPhase("preparing");
-      setError("");
-      setErrorHint("");
-      setUrl(value);
 
       const apply = (r: ScanResult) => {
         setResult(r);
@@ -50,11 +50,29 @@ export function usePageAudit({
         setStatus("done");
       };
 
+      const cached = force ? null : recallScan(value);
+      if (cached) {
+        setError("");
+        setErrorHint("");
+        apply(cached);
+        return;
+      }
+
+      setStatus("loading");
+      setPhase("preparing");
+      setError("");
+      setErrorHint("");
+      setUrl(value);
+
       void (async () => {
         try {
-          apply(
-            await streamScan(value, { onPhase: setPhase, onCore: incremental ? apply : undefined }),
+          const fresh = await streamScan(
+            value,
+            { onPhase: setPhase, onCore: incremental ? apply : undefined },
+            { force },
           );
+          rememberScan(fresh, value);
+          apply(fresh);
         } catch (e) {
           setError(e instanceof Error ? e.message : fallbackError);
           setErrorHint(e instanceof ScanStreamError ? SCAN_ERROR_HINT[e.code] : "");

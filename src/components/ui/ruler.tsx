@@ -26,6 +26,13 @@ export type RulerProps =
       budgetMs: number;
       runningShare?: number;
       label?: string;
+    }
+  | {
+      variant: "steps";
+      done: number;
+      total: number;
+      runningShare?: number;
+      label: string;
     };
 
 function hatchFor(severity: Severity): string {
@@ -35,6 +42,7 @@ function hatchFor(severity: Severity): string {
 export function Ruler(props: RulerProps) {
   if (props.variant === "score") return <ScoreRuler {...props} />;
   if (props.variant === "ratio") return <RatioRuler {...props} />;
+  if (props.variant === "steps") return <StepsRuler {...props} />;
   return <ProgressRuler {...props} />;
 }
 
@@ -163,25 +171,27 @@ function RatioRuler({
   );
 }
 
-function ProgressRuler({
-  elapsedMs,
-  budgetMs,
-  runningShare = 0.06,
-  label,
-}: Extract<RulerProps, { variant: "progress" }>) {
-  const done = budgetMs > 0 ? Math.max(0, Math.min(1, elapsedMs / budgetMs)) : 0;
-  const donePct = done * 100;
+function ProgressBar({
+  value,
+  max,
+  runningShare,
+  ariaLabel,
+}: {
+  value: number;
+  max: number;
+  runningShare: number;
+  ariaLabel: string;
+}) {
+  const donePct = max > 0 ? Math.max(0, Math.min(1, value / max)) * 100 : 0;
   const runningPct = Math.min(100 - donePct, runningShare * 100);
-  const secs = (elapsedMs / 1000).toFixed(1);
-  const budgetSecs = Math.round(budgetMs / 1000);
 
   return (
     <div
       role="progressbar"
       aria-valuemin={0}
-      aria-valuemax={budgetMs}
-      aria-valuenow={elapsedMs}
-      aria-label={label ?? `Audit progress: ${secs}s of up to ${budgetSecs}s`}
+      aria-valuemax={max}
+      aria-valuenow={value}
+      aria-label={ariaLabel}
       className="flex h-3.5 w-full overflow-hidden border border-ink bg-surface"
     >
       <span aria-hidden className="h-full bg-ink" style={{ width: `${donePct}%` }} />
@@ -192,4 +202,32 @@ function ProgressRuler({
       />
     </div>
   );
+}
+
+function ProgressRuler({
+  elapsedMs,
+  budgetMs,
+  runningShare = 0.06,
+  label,
+}: Extract<RulerProps, { variant: "progress" }>) {
+  const secs = (elapsedMs / 1000).toFixed(1);
+  const budgetSecs = Math.round(budgetMs / 1000);
+
+  return (
+    <ProgressBar
+      value={elapsedMs}
+      max={budgetMs}
+      runningShare={runningShare}
+      ariaLabel={label ?? `Audit progress: ${secs}s of up to ${budgetSecs}s`}
+    />
+  );
+}
+
+function StepsRuler({
+  done,
+  total,
+  runningShare = 0,
+  label,
+}: Extract<RulerProps, { variant: "steps" }>) {
+  return <ProgressBar value={done} max={total} runningShare={runningShare} ariaLabel={label} />;
 }

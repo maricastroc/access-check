@@ -91,6 +91,7 @@ export type ScanResult = {
   title: string;
   scannedElements: number;
   durationMs: number;
+  scannedAt?: string;
   screenshot: string | null;
   score: number;
   counts: {

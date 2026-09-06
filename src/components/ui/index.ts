@@ -19,7 +19,7 @@ export { OccurrenceStepper } from "./occurrence-stepper";
 export { ProvenancePanel } from "./provenance-panel";
 export { Ruler } from "./ruler";
 export type { RulerProps } from "./ruler";
-export { ScanStages } from "./scan-stages";
+export { ScanStages, StageList } from "./scan-stages";
 export { ScoreArithmetic } from "./score-arithmetic";
 export { ScoreRing } from "./score-ring";
 export { SectionKicker } from "./section-kicker";

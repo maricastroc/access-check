@@ -37,6 +37,8 @@ export function MobileReport({
   tab,
   setTab,
   onMarkdown,
+  quickFromSite = false,
+  onRunFull,
 }: {
   result: ScanResult;
   host: string;
@@ -55,6 +57,8 @@ export function MobileReport({
   tab: "capture" | "findings";
   setTab: (t: "capture" | "findings") => void;
   onMarkdown: () => void;
+  quickFromSite?: boolean;
+  onRunFull?: () => void;
 }) {
   return (
     <div className="pb-20">
@@ -131,6 +135,8 @@ export function MobileReport({
               selectedFinding={selectedFinding}
               onSelectMarker={onSelectMarker}
               height={300}
+              quickFromSite={quickFromSite}
+              onRunFull={onRunFull}
             />
           </div>
 

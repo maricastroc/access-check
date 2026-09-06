@@ -72,6 +72,8 @@ export function ResultsView({
   );
   const host = view?.host ?? safeHost(url);
 
+  const quickFromSite = Boolean(siteId) && result !== null && result === initialResult;
+
   const exportMarkdown = useCallback(() => {
     if (!result) return;
     const blob = new Blob([buildReportMarkdown(result)], { type: "text/markdown;charset=utf-8" });
@@ -89,7 +91,8 @@ export function ResultsView({
       <TopBar
         result={status === "done" ? result : null}
         viewport={VIEWPORT_LABEL}
-        onRerun={() => scan(url)}
+        siteId={siteId}
+        onRerun={() => scan(url, { force: true })}
         onMarkdown={exportMarkdown}
         busy={status === "loading"}
       />
@@ -109,7 +112,7 @@ export function ResultsView({
 
         {status === "done" && result && view && (
           <>
-            {siteId && initialResult && (
+            {quickFromSite && (
               <div className="mx-auto w-full max-w-[1560px] px-4 pt-4 sm:px-6">
                 <div className="flex flex-col items-start gap-2 border border-border bg-surface px-4 py-3 text-[13px] sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-body">
@@ -119,7 +122,7 @@ export function ResultsView({
                     Run the full audit to add the screenshot, keyboard checks and fix testing.
                   </p>
                   <button
-                    onClick={() => scan(url)}
+                    onClick={() => scan(url, { force: true })}
                     className="shrink-0 cursor-pointer bg-ink px-3.5 py-1.5 text-[13px] font-semibold text-surface hover:bg-ink-2"
                   >
                     Run full audit
@@ -129,7 +132,10 @@ export function ResultsView({
             )}
 
             {(result.partial || (result.warnings?.length ?? 0) > 0) && (
-              <PartialNotice warnings={result.warnings ?? []} onRerun={() => scan(url)} />
+              <PartialNotice
+                warnings={result.warnings ?? []}
+                onRerun={() => scan(url, { force: true })}
+              />
             )}
 
             {desktop ? (
@@ -159,6 +165,8 @@ export function ResultsView({
                       focusPoints={view.focusPoints}
                       selectedFinding={selection.selectedFinding}
                       onSelectMarker={selection.selectMarker}
+                      quickFromSite={quickFromSite}
+                      onRunFull={() => scan(url, { force: true })}
                     />
                   </div>
                   <div className="scroll-slim sticky top-15.5 max-h-[calc(100vh-62px)] self-start overflow-y-auto">
@@ -191,6 +199,8 @@ export function ResultsView({
                 tab={mobileTab}
                 setTab={setMobileTab}
                 onMarkdown={exportMarkdown}
+                quickFromSite={quickFromSite}
+                onRunFull={() => scan(url, { force: true })}
               />
             )}
           </>

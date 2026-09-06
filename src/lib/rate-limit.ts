@@ -1,5 +1,5 @@
 import { Ratelimit } from "@upstash/ratelimit";
-import { redis } from "./redis";
+import { namespaced, redis } from "./redis";
 import { logError } from "./observability/log";
 
 export type RateLimitVerdict = "allowed" | "limited";
@@ -51,7 +51,7 @@ export class RateLimiter {
       ? new Ratelimit({
           redis,
           limiter: Ratelimit.slidingWindow(rule.tokens, `${rule.windowSeconds} s`),
-          prefix,
+          prefix: namespaced(prefix),
           analytics: false,
         })
       : null;

@@ -16,7 +16,10 @@ export function ProvenancePanel({
         <p>
           Headless Chromium · axe-core with WCAG A &amp; AA rules
           {viewport ? ` · screenshot taken at ${viewport}` : ""}
-          {typeof durationMs === "number" ? ` in ${(durationMs / 1000).toFixed(1)}s` : ""}.
+          {typeof durationMs === "number"
+            ? `${viewport ? "" : " · finished"} in ${(durationMs / 1000).toFixed(1)}s`
+            : ""}
+          .
         </p>
         <p>
           {passes ??

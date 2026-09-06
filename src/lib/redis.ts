@@ -12,10 +12,16 @@ const token =
 
 export const redis = url && token ? new Redis({ url, token }) : null;
 
+export const KEY_NAMESPACE = "access-check";
+
+export function namespaced(key: string): string {
+  return `${KEY_NAMESPACE}:${key}`;
+}
+
 export async function cacheGet<T>(key: string): Promise<T | null> {
   if (!redis) return null;
   try {
-    return await redis.get<T>(key);
+    return await redis.get<T>(namespaced(key));
   } catch (e) {
     logWarn("cache.read.failed", e, { key });
     return null;
@@ -25,7 +31,7 @@ export async function cacheGet<T>(key: string): Promise<T | null> {
 export async function cacheSet(key: string, value: unknown, ttlSeconds: number): Promise<void> {
   if (!redis) return;
   try {
-    await redis.set(key, value, { ex: ttlSeconds });
+    await redis.set(namespaced(key), value, { ex: ttlSeconds });
   } catch (e) {
     logWarn("cache.write.failed", e, { key, ttlSeconds });
   }

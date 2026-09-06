@@ -804,6 +804,7 @@ async function runScanAttempt(
       title,
       scannedElements: axe.passes.length + axe.violations.length + axe.incomplete.length,
       durationMs: Date.now() - startedAt,
+      scannedAt: new Date(startedAt).toISOString(),
       screenshot: null,
       score: computeScore(violations),
       counts,

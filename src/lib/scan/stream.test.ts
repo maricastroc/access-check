@@ -39,6 +39,44 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+describe("request body", () => {
+  function captureFetch() {
+    const fetch = vi.fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>(
+      async () => {
+        const encoder = new TextEncoder();
+        return new Response(
+          new ReadableStream<Uint8Array>({
+            start(controller) {
+              const done: ScanStreamEvent = { type: "result", result: result(100) };
+              controller.enqueue(encoder.encode(`${JSON.stringify(done)}\n`));
+              controller.close();
+            },
+          }),
+          { status: 200 },
+        );
+      },
+    );
+    vi.stubGlobal("fetch", fetch);
+    return fetch;
+  }
+
+  function bodyOf(fetch: ReturnType<typeof captureFetch>) {
+    return JSON.parse(String(fetch.mock.calls[0][1]?.body)) as { url: string; force?: boolean };
+  }
+
+  it("asks the server to skip its own caches on a forced re-audit", async () => {
+    const fetch = captureFetch();
+    await streamScan("https://example.com", {}, { force: true });
+    expect(bodyOf(fetch)).toEqual({ url: "https://example.com", force: true });
+  });
+
+  it("says nothing about forcing on an ordinary audit", async () => {
+    const fetch = captureFetch();
+    await streamScan("https://example.com");
+    expect(bodyOf(fetch)).toEqual({ url: "https://example.com" });
+  });
+});
+
 describe("streamScan", () => {
   it("returns the final result from a multi-event stream", async () => {
     const phases: ScanPhase[] = [];

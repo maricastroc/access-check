@@ -19,11 +19,10 @@ const PHASE_STAGE: Record<ScanPhase, number> = {
 
 type StageState = "done" | "active" | "pending";
 
-export function ScanStages({ phase }: { phase: ScanPhase }) {
-  const current = PHASE_STAGE[phase];
+export function StageList({ stages, current }: { stages: readonly string[]; current: number }) {
   return (
     <ul className="w-full">
-      {STAGES.map((label, i) => {
+      {stages.map((label, i) => {
         const state: StageState = i < current ? "done" : i === current ? "active" : "pending";
         return (
           <li
@@ -54,4 +53,8 @@ export function ScanStages({ phase }: { phase: ScanPhase }) {
       })}
     </ul>
   );
+}
+
+export function ScanStages({ phase }: { phase: ScanPhase }) {
+  return <StageList stages={STAGES} current={PHASE_STAGE[phase]} />;
 }

@@ -50,7 +50,7 @@ export function SiteCrawlView({ initial }: { initial: CrawlSnapshot }) {
       </ul>
 
       {snap.status === "running" && pending > 0 && (
-        <p className="mt-4 text-center text-xs text-muted" aria-live="polite">
+        <p className="mt-4 text-[12.5px] text-muted" aria-live="polite">
           {pending} page{pending > 1 ? "s" : ""} still in the queue…
         </p>
       )}

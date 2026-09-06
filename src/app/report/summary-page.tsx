@@ -9,11 +9,12 @@ export function SummaryPage({ result }: { result: ScanResult }) {
   const host = safeHost(result.finalUrl);
   const breakdown = scoreBreakdown(result.violations, result.score);
   const wcag = buildWcagReading(result.violations);
+  const at = result.scannedAt ? new Date(result.scannedAt) : new Date();
   const date = new Intl.DateTimeFormat("en-US", {
     month: "long",
     day: "numeric",
     year: "numeric",
-  }).format(new Date());
+  }).format(at);
 
   const meta = [
     { label: "Audit date", value: date },
@@ -41,7 +42,7 @@ export function SummaryPage({ result }: { result: ScanResult }) {
       <div className="flex items-start justify-between">
         <SectionKicker>Exported accessibility report</SectionKicker>
         <span className="font-mono text-[11px] text-muted">
-          #AC-{new Date().getFullYear()}-{shortId(result.finalUrl)}
+          #AC-{at.getFullYear()}-{shortId(result.finalUrl)}
         </span>
       </div>
 

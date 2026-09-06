@@ -143,6 +143,8 @@ export function CaptureStage({
   onSelectMarker,
   height,
   onScale,
+  quickFromSite = false,
+  onRunFull,
 }: {
   result: ScanResult;
   host: string;
@@ -154,19 +156,36 @@ export function CaptureStage({
   onSelectMarker: (markerN: number) => void;
   height: number;
   onScale?: (pct: number) => void;
+  quickFromSite?: boolean;
+  onRunFull?: () => void;
 }) {
   const ref = useCaptureScale(onScale);
 
   if (!result.screenshot) {
     return (
       <div
-        className="flex items-center justify-center overflow-hidden"
+        className="hatch-outside flex items-center justify-center overflow-hidden px-6"
         style={{ height, background: "#FBFAF7" }}
       >
-        <div className="hatch-outside flex items-center gap-3 border border-dashed border-border px-6 py-8">
-          <span className="text-[13px] text-muted">
-            The screenshot could not be taken this time.
-          </span>
+        <div className="w-full max-w-[420px] border border-border bg-surface p-5">
+          <SectionKicker>{quickFromSite ? "Not captured yet" : "Not available"}</SectionKicker>
+          <p className="mt-2 text-[14px] leading-normal text-ink">
+            {quickFromSite
+              ? "The site audit reads every page without stopping to photograph them."
+              : "The screenshot could not be taken this time."}
+          </p>
+          <p className="mt-1.5 text-[12.5px] leading-normal text-muted">
+            {quickFromSite
+              ? "The findings for this page are complete. Run the full audit to add the screenshot, the issue markers and the focus path."
+              : "The findings for this page are unaffected — only the capture is missing."}
+          </p>
+          {onRunFull && (
+            <div className="mt-4">
+              <Button variant="primary" size="sm" onClick={onRunFull}>
+                {quickFromSite ? "Run full audit" : "Try again"}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -206,6 +225,8 @@ export function EvidenceFrame({
   focusPoints,
   selectedFinding,
   onSelectMarker,
+  quickFromSite = false,
+  onRunFull,
 }: {
   result: ScanResult;
   host: string;
@@ -217,12 +238,16 @@ export function EvidenceFrame({
   focusPoints: FocusPoint[];
   selectedFinding: FindingView | null;
   onSelectMarker: (markerN: number) => void;
+  quickFromSite?: boolean;
+  onRunFull?: () => void;
 }) {
   const [scalePct, setScalePct] = useState(60);
 
   const legend = collapsed
     ? "Screenshot collapsed"
-    : `Screenshot · ${CAPTURE_WIDTH} × ${CAPTURE_HEIGHT} · scale ${scalePct}%`;
+    : result.screenshot
+      ? `Screenshot · ${CAPTURE_WIDTH} × ${CAPTURE_HEIGHT} · scale ${scalePct}%`
+      : "Screenshot";
   const visionNote =
     sim === "normal"
       ? "default render · no vision filter"
@@ -253,6 +278,8 @@ export function EvidenceFrame({
             onSelectMarker={onSelectMarker}
             height={540}
             onScale={setScalePct}
+            quickFromSite={quickFromSite}
+            onRunFull={onRunFull}
           />
         </div>
       )}
@@ -304,8 +331,13 @@ export function EvidenceFrame({
 
         <div className="bg-band">
           <ProvenancePanel
-            viewport={`${CAPTURE_WIDTH} × ${CAPTURE_HEIGHT}`}
+            viewport={result.screenshot ? `${CAPTURE_WIDTH} × ${CAPTURE_HEIGHT}` : undefined}
             durationMs={result.durationMs}
+            passes={
+              quickFromSite
+                ? "Site-audit pass: axe rules and this project's own detections. Keyboard, expanded UI and fix verification run in the full audit."
+                : undefined
+            }
           />
         </div>
       </div>

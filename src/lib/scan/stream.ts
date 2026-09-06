@@ -85,12 +85,12 @@ type StreamHandlers = {
 export async function streamScan(
   url: string,
   handlers: StreamHandlers = {},
-  options: { signal?: AbortSignal } = {},
+  options: { signal?: AbortSignal; force?: boolean } = {},
 ): Promise<ScanResult> {
   const res = await fetch("/api/scan", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ url }),
+    body: JSON.stringify(options.force ? { url, force: true } : { url }),
     signal: options.signal,
   });
 

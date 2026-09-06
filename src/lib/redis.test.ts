@@ -61,7 +61,19 @@ describe("cacheSet", () => {
     set.mockResolvedValue("OK");
 
     await cacheSet("scan:x", { score: 42 }, 300);
-    expect(set).toHaveBeenCalledWith("scan:x", { score: 42 }, { ex: 300 });
+    expect(set).toHaveBeenCalledWith("access-check:scan:x", { score: 42 }, { ex: 300 });
+  });
+
+  it("namespaces the key so a shared database can't cross projects", async () => {
+    const { cacheGet, cacheSet, namespaced } = await importConfigured();
+    set.mockResolvedValue("OK");
+    get.mockResolvedValue(null);
+
+    expect(namespaced("scan:x")).toBe("access-check:scan:x");
+    await cacheSet("scan:x", { score: 42 }, 300);
+    await cacheGet("scan:x");
+    expect(set.mock.calls[0][0]).toBe("access-check:scan:x");
+    expect(get.mock.calls[0][0]).toBe("access-check:scan:x");
   });
 
   it("swallows an outage so a finished scan still resolves", async () => {

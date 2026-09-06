@@ -183,8 +183,9 @@ export async function getSiteScanPageResult(
 ): Promise<ScanResult | null> {
   const page = await prisma.siteScanPage.findFirst({
     where: { siteScanId, url, status: "done" },
-    select: { result: true },
+    select: { result: true, updatedAt: true },
   });
   if (!page?.result) return null;
-  return page.result as unknown as ScanResult;
+  const result = page.result as unknown as ScanResult;
+  return { ...result, scannedAt: result.scannedAt ?? page.updatedAt.toISOString() };
 }

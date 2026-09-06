@@ -3,8 +3,9 @@ import { runScan, normalizeUrl, ScanFailure } from "@/lib/scan/scan";
 import type { ScanErrorCode, ScanResult } from "@/lib/scan/types";
 import type { ScanStreamEvent } from "@/lib/scan/stream";
 import { auth } from "@/auth";
-import { saveScan } from "@/lib/scans";
+import { findRecentScan, saveScan } from "@/lib/scans";
 import { cacheGet, cacheSet } from "@/lib/redis";
+import { SCAN_FRESH_MS, SCAN_FRESH_SECONDS, trimForCache } from "@/lib/scan/cache-policy";
 import { clientKey, scanRateLimit } from "@/lib/rate-limit";
 import { assertPublicUrl, BlockedUrlError } from "@/lib/scan/ssrf";
 import { logError } from "@/lib/observability/log";
@@ -12,11 +13,8 @@ import { logError } from "@/lib/observability/log";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const CACHE_TTL_SECONDS = 5 * 60;
 const SCAN_BUDGET_MS = 40_000;
 const HARD_DEADLINE_MS = 46_000;
-
-type CachedScan = Omit<ScanResult, "screenshot">;
 
 function fail(error: string, code: ScanErrorCode, status: number) {
   return NextResponse.json({ error, code }, { status });
@@ -58,7 +56,7 @@ function streamResponse(
 }
 
 export async function POST(req: Request) {
-  let body: { url?: string };
+  let body: { url?: string; force?: boolean };
   try {
     body = await req.json();
   } catch {
@@ -100,11 +98,24 @@ export async function POST(req: Request) {
 
   const userId = (await auth())?.user?.id;
 
-  if (!userId) {
-    const cached = await cacheGet<CachedScan>(`scan:${url}`);
-    if (cached) {
+  if (body.force !== true) {
+    const reused = userId
+      ? await findRecentScan(userId, url, SCAN_FRESH_MS)
+      : await cacheGet<ScanResult>(`scan:${url}`);
+
+    if (reused) {
+      const at = reused.scannedAt ? Date.parse(reused.scannedAt) : NaN;
+      console.log(
+        JSON.stringify({
+          event: "scan",
+          url,
+          status: "reused",
+          from: userId ? "history" : "cache",
+          ageMs: Number.isNaN(at) ? null : Date.now() - at,
+        }),
+      );
       return streamResponse((send) => {
-        send({ type: "result", result: cached });
+        send({ type: "result", result: reused });
       });
     }
   }
@@ -152,8 +163,6 @@ export async function POST(req: Request) {
       const outcome = await Promise.race([scan, deadline]);
 
       if (outcome.kind === "done") {
-        const { screenshot: _screenshot, ...light } = outcome.result;
-        void _screenshot;
         send({ type: "result", result: outcome.result });
         log(outcome.result.partial ? "partial" : "ok", {
           score: outcome.result.score,
@@ -166,8 +175,8 @@ export async function POST(req: Request) {
           } catch (e) {
             logError("scan.history.failed", e);
           }
-        } else {
-          await cacheSet(`scan:${url}`, light, CACHE_TTL_SECONDS);
+        } else if (!outcome.result.partial) {
+          await cacheSet(`scan:${url}`, trimForCache(outcome.result), SCAN_FRESH_SECONDS);
         }
         return;
       }

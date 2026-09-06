@@ -2,88 +2,59 @@
 
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faArrowRight,
-  faCircleCheck,
-  faClock,
-  faSpinner,
-  faTriangleExclamation,
-} from "@fortawesome/free-solid-svg-icons";
-import { ScoreRing } from "@/components/ui";
+import { faArrowRight, faSpinner, faXmark } from "@fortawesome/free-solid-svg-icons";
+import type { Severity } from "@/lib/scan/types";
+import { SEVERITY_ORDER, severityColorVar, severityLabel } from "@/lib/report/severity";
+import { Ruler, SectionKicker, StatusPill } from "@/components/ui";
+import { cn } from "@/lib/cn";
 import { crawlHost, pagePath, type CrawlPage, type CrawlSnapshot } from "../shared";
 
-const SEV = [
-  { key: "critical", label: "Critical", color: "#c62a2f" },
-  { key: "serious", label: "Serious", color: "#a85a06" },
-  { key: "moderate", label: "Moderate", color: "#8a6a00" },
-  { key: "minor", label: "Minor", color: "#6b7079" },
-] as const;
-
-function scoreColor(score: number): string {
-  if (score >= 90) return "#16764f";
-  if (score >= 70) return "#8a6a00";
-  return "#c62a2f";
+function scoreTone(score: number): string {
+  if (score >= 90) return "bg-verified";
+  if (score >= 70) return "bg-moderate";
+  return "bg-critical";
 }
 
 export function ProgressHeader({ snap }: { snap: CrawlSnapshot }) {
   const running = snap.status === "running";
   const settled = snap.scannedPages + snap.failedPages;
-  const pct = snap.totalPages > 0 ? Math.round((settled / snap.totalPages) * 100) : 0;
 
   return (
-    <section className="mt-2">
-      <div className="flex flex-wrap items-end justify-between gap-2">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl">
+    <section className="border-b border-border pb-5">
+      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+        <div className="min-w-0">
+          <SectionKicker as="div">Full-site accessibility audit</SectionKicker>
+          <h1 className="mt-1 truncate font-cond text-[38px] leading-none text-ink sm:text-[46px]">
             {crawlHost(snap.rootUrl)}
           </h1>
-          <p className="mt-1 text-sm text-muted">Full-site accessibility audit</p>
         </div>
-        <span
-          className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[13px] font-semibold ${
-            running
-              ? "border-brand-500/25 bg-brand-50 text-brand-700"
-              : snap.status === "failed"
-                ? "border-critical/25 bg-[#fdecec] text-critical"
-                : "border-success/20 text-success bg-[#e7f5ef]"
-          }`}
-        >
+        <p className="flex items-center gap-2 text-[13px] font-medium text-ink">
           {running && <FontAwesomeIcon icon={faSpinner} aria-hidden className="animate-spin" />}
-          {running
-            ? `Auditing ${settled} / ${snap.totalPages}`
-            : snap.status === "failed"
-              ? "Audit failed"
-              : `Done · ${snap.totalPages} pages`}
-        </span>
+          <span className="tabular-nums">
+            {running
+              ? `Auditing ${settled} of ${snap.totalPages}`
+              : snap.status === "failed"
+                ? "Audit failed"
+                : `Done · ${snap.totalPages} page${snap.totalPages === 1 ? "" : "s"}`}
+          </span>
+        </p>
       </div>
 
-      <div
-        className="bg-line mt-4 h-2 w-full overflow-hidden rounded-full"
-        role="progressbar"
-        aria-valuenow={pct}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label="Site audit progress"
-      >
-        <div
-          className={`h-full rounded-full transition-all duration-500 ${
-            running ? "bg-brand-500" : snap.status === "failed" ? "bg-critical" : "bg-success"
-          }`}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
+      {running && (
+        <div className="mt-4">
+          <Ruler
+            variant="steps"
+            done={settled}
+            total={snap.totalPages}
+            runningShare={0.06}
+            label={`Site audit progress: ${settled} of ${snap.totalPages} pages audited`}
+          />
+        </div>
+      )}
 
       {snap.status === "failed" && snap.error && (
-        <div
-          role="alert"
-          className="border-line bg-card shadow-soft mt-4 flex items-start gap-3 rounded-xl border px-4 py-3 text-sm"
-        >
-          <FontAwesomeIcon
-            icon={faTriangleExclamation}
-            aria-hidden
-            className="mt-0.5 shrink-0 text-critical"
-          />
-          <p className="text-ink-soft">{snap.error}</p>
+        <div role="alert" className="mt-4 border border-critical bg-surface p-4">
+          <p className="text-[13.5px] leading-normal text-body">{snap.error}</p>
         </div>
       )}
     </section>
@@ -92,66 +63,92 @@ export function ProgressHeader({ snap }: { snap: CrawlSnapshot }) {
 
 export function SiteSummary({ snap, score }: { snap: CrawlSnapshot; score: number | null }) {
   const done = snap.pages.filter((p) => p.status === "done");
-  const totals = SEV.map((s) => ({
-    ...s,
-    value: done.reduce((sum, p) => sum + p.counts[s.key], 0),
-  }));
+  const found = SEVERITY_ORDER.map((severity) => ({
+    severity,
+    value: done.reduce((sum, p) => sum + p.counts[severity], 0),
+  })).filter((t) => t.value > 0);
 
   return (
-    <section className="border-line bg-card shadow-soft mt-6 grid grid-cols-1 gap-4 rounded-2xl border p-5 sm:grid-cols-[auto_1fr] sm:gap-6 sm:p-6">
-      <div className="flex items-center gap-4">
-        {score !== null ? (
-          <ScoreRing value={score} />
-        ) : (
-          <div className="border-line flex size-24 items-center justify-center rounded-full border-8 text-sm text-muted">
-            …
-          </div>
-        )}
-        <div className="sm:hidden">
-          <p className="text-sm font-semibold text-ink">Site score</p>
-          <p className="text-xs text-muted">
-            {snap.status === "running" ? "average so far" : "average across pages"}
-          </p>
-        </div>
+    <section className="mt-6 border border-border bg-surface p-5 sm:p-6">
+      <SectionKicker>Site score</SectionKicker>
+      <div className="mt-1 flex items-end gap-2">
+        <span className="font-cond text-[56px] leading-[0.85] text-ink tabular-nums">
+          {score ?? "—"}
+        </span>
+        <span className="pb-1.5 font-cond text-[18px] text-muted">/100</span>
+      </div>
+      <p className="mt-1.5 text-[13px] text-muted">
+        {snap.status === "running"
+          ? "running average across audited pages"
+          : "average across all audited pages"}
+      </p>
+
+      <div className="mt-3 max-w-[560px]">
+        <Ruler
+          variant="score"
+          score={score ?? 0}
+          deductions={[]}
+          height={26}
+          ticks
+          label={`Site score ${score ?? 0} out of 100`}
+        />
       </div>
 
-      <div className="flex flex-col justify-center gap-4">
-        <div className="hidden sm:block">
-          <p className="text-sm font-semibold text-ink">Site score</p>
-          <p className="text-xs text-muted">
-            {snap.status === "running"
-              ? "running average across audited pages"
-              : "average across all audited pages"}
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-          {totals.map((t) => (
-            <span key={t.key} className="flex items-center gap-2 text-sm">
-              <span className="size-2.5 rounded-full" style={{ background: t.color }} />
-              <span className="font-semibold text-ink">{t.value}</span>
-              <span className="text-muted">{t.label}</span>
+      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] text-body">
+        <span>
+          <span className="font-semibold text-ink tabular-nums">{done.length}</span> page
+          {done.length === 1 ? "" : "s"} audited
+        </span>
+        {found.length === 0 && done.length > 0 && (
+          <span className="flex items-center gap-1.5">
+            <span aria-hidden className="text-border">
+              ·
             </span>
-          ))}
-          {snap.failedPages > 0 && (
-            <span className="flex items-center gap-2 text-sm text-critical">
-              <FontAwesomeIcon icon={faTriangleExclamation} aria-hidden className="text-xs" />
-              {snap.failedPages} page{snap.failedPages > 1 ? "s" : ""} failed
+            <StatusPill tone="verified">No automated findings</StatusPill>
+          </span>
+        )}
+        {found.map((t) => (
+          <span key={t.severity} className="flex items-center gap-1.5">
+            <span aria-hidden className="text-border">
+              ·
             </span>
-          )}
-        </div>
+            <span
+              aria-hidden
+              className={cn("size-2.5 shrink-0", t.severity === "minor" && "bg-muted")}
+              style={
+                t.severity === "minor" ? undefined : { background: severityColorVar[t.severity] }
+              }
+            />
+            <span className="tabular-nums">
+              <span className="font-semibold text-ink">{t.value}</span>{" "}
+              {severityLabel[t.severity].toLowerCase()}
+            </span>
+          </span>
+        ))}
+        {snap.failedPages > 0 && (
+          <span className="flex items-center gap-1.5">
+            <span aria-hidden className="text-border">
+              ·
+            </span>
+            <StatusPill tone="critical">
+              {snap.failedPages} page{snap.failedPages === 1 ? "" : "s"} failed
+            </StatusPill>
+          </span>
+        )}
       </div>
     </section>
   );
 }
 
-function PageStatusBadge({ page }: { page: CrawlPage }) {
+function StatusSquare({ page }: { page: CrawlPage }) {
   if (page.status === "done" && page.score !== null) {
     return (
       <span
-        className="flex size-9 shrink-0 items-center justify-center rounded-full text-[13px] font-bold text-white"
-        style={{ background: scoreColor(page.score) }}
-        aria-label={`Score ${page.score}`}
+        className={cn(
+          "flex size-9 shrink-0 items-center justify-center font-cond text-[16px] font-semibold text-surface tabular-nums",
+          scoreTone(page.score),
+        )}
+        aria-label={`Score ${page.score} out of 100`}
       >
         {page.score}
       </span>
@@ -159,66 +156,98 @@ function PageStatusBadge({ page }: { page: CrawlPage }) {
   }
   if (page.status === "failed") {
     return (
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#fdecec] text-critical">
-        <FontAwesomeIcon icon={faTriangleExclamation} aria-hidden />
+      <span
+        aria-hidden
+        className="flex size-9 shrink-0 items-center justify-center bg-critical text-surface"
+      >
+        <FontAwesomeIcon icon={faXmark} className="text-xs" />
       </span>
     );
   }
   if (page.status === "running") {
     return (
-      <span className="bg-brand-50 text-brand-500 flex size-9 shrink-0 items-center justify-center rounded-full">
-        <FontAwesomeIcon icon={faSpinner} aria-hidden className="animate-spin" />
+      <span
+        aria-hidden
+        className="flex size-9 shrink-0 items-center justify-center border border-border bg-surface text-ink"
+      >
+        <FontAwesomeIcon icon={faSpinner} className="animate-spin text-xs" />
       </span>
     );
   }
   return (
-    <span className="text-faint flex size-9 shrink-0 items-center justify-center rounded-full bg-canvas">
-      <FontAwesomeIcon icon={faClock} aria-hidden />
+    <span
+      aria-hidden
+      className="flex size-9 shrink-0 items-center justify-center border border-hairline bg-surface font-cond text-disabled"
+    >
+      ·
+    </span>
+  );
+}
+
+function SeverityCounts({ counts }: { counts: Record<Severity, number> }) {
+  const total = SEVERITY_ORDER.reduce((sum, s) => sum + counts[s], 0);
+
+  if (total === 0) return <StatusPill tone="verified">No findings</StatusPill>;
+
+  return (
+    <span className="flex items-center gap-3 text-[13px] text-body">
+      {SEVERITY_ORDER.filter((s) => counts[s] > 0).map((s) => (
+        <span key={s} className="flex items-center gap-1.5" title={severityLabel[s]}>
+          <span
+            aria-hidden
+            className={cn("size-2.5 shrink-0", s === "minor" && "bg-muted")}
+            style={s === "minor" ? undefined : { background: severityColorVar[s] }}
+          />
+          <span className="tabular-nums">{counts[s]}</span>
+          <span className="sr-only">{severityLabel[s]}</span>
+        </span>
+      ))}
     </span>
   );
 }
 
 export function PageRow({ page, siteId }: { page: CrawlPage; siteId: string }) {
   const done = page.status === "done";
-  const total =
-    page.counts.critical + page.counts.serious + page.counts.moderate + page.counts.minor;
+
+  const secondary =
+    page.status === "failed"
+      ? page.error || "This page could not be audited."
+      : page.status === "pending"
+        ? "Waiting…"
+        : page.status === "running"
+          ? "Auditing…"
+          : page.title || page.url;
 
   const inner = (
-    <div className="border-line bg-card shadow-soft group-hover:shadow-card flex items-center gap-3.5 rounded-xl border px-4 py-3 transition-shadow">
-      <PageStatusBadge page={page} />
+    <div
+      className={cn(
+        "flex items-center gap-3.5 border px-4 py-3 transition-colors",
+        done
+          ? "border-border bg-surface group-hover:bg-band"
+          : page.status === "failed"
+            ? "border-border bg-surface"
+            : "border-hairline bg-surface",
+      )}
+    >
+      <StatusSquare page={page} />
 
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="truncate font-mono text-[13px] font-medium text-ink">
-            {pagePath(page.url)}
-          </span>
-        </div>
-        <div className="mt-0.5 truncate text-xs text-muted">
-          {page.status === "failed"
-            ? page.error || "This page could not be audited."
-            : page.status === "pending"
-              ? "Waiting…"
-              : page.status === "running"
-                ? "Auditing…"
-                : page.title || page.url}
-        </div>
+        <span className="block truncate font-mono text-[13px] font-medium text-ink">
+          {pagePath(page.url)}
+        </span>
+        <span
+          className={cn(
+            "mt-0.5 block truncate text-[12.5px]",
+            page.status === "failed" ? "text-critical" : "text-muted",
+          )}
+        >
+          {secondary}
+        </span>
       </div>
 
       {done && (
-        <div className="hidden items-center gap-3 text-xs text-muted sm:flex">
-          {total === 0 ? (
-            <span className="text-success flex items-center gap-1.5">
-              <FontAwesomeIcon icon={faCircleCheck} aria-hidden />
-              No findings
-            </span>
-          ) : (
-            SEV.map((s) => (
-              <span key={s.key} className="flex items-center gap-1.5" title={s.label}>
-                <span className="size-2 rounded-full" style={{ background: s.color }} />
-                {page.counts[s.key]}
-              </span>
-            ))
-          )}
+        <div className="shrink-0">
+          <SeverityCounts counts={page.counts} />
         </div>
       )}
 
@@ -226,21 +255,19 @@ export function PageRow({ page, siteId }: { page: CrawlPage; siteId: string }) {
         <FontAwesomeIcon
           icon={faArrowRight}
           aria-hidden
-          className="text-faint group-hover:text-brand-600 text-xs transition-colors"
+          className="shrink-0 text-xs text-muted transition-colors group-hover:text-ink"
         />
       )}
     </div>
   );
 
-  if (!done) {
-    return <li className="group">{inner}</li>;
-  }
+  if (!done) return <li>{inner}</li>;
 
   return (
     <li className="group">
       <Link
         href={`/results?url=${encodeURIComponent(page.url)}&site=${siteId}`}
-        aria-label={`Open report for ${page.url}`}
+        aria-label={`Open report for ${pagePath(page.url)}`}
       >
         {inner}
       </Link>

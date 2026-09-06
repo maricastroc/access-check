@@ -83,11 +83,12 @@ export async function getUserScans(userId: string): Promise<ScanListItem[]> {
   }));
 }
 
-function hydrate(id: string, result: unknown): ScanResult {
+function hydrate(id: string, result: unknown, at: Date): ScanResult {
   const r = result as ScanResult;
   return {
     ...r,
     screenshot: `/api/scan/${id}/screenshot`,
+    scannedAt: r.scannedAt ?? at.toISOString(),
     incomplete: r.incomplete ?? [],
     bestPractice: r.bestPractice ?? [],
     counts: {
@@ -96,6 +97,22 @@ function hydrate(id: string, result: unknown): ScanResult {
       manualReview: r.counts.manualReview ?? 0,
     },
   };
+}
+
+export async function findRecentScan(
+  userId: string,
+  url: string,
+  maxAgeMs: number,
+): Promise<ScanResult | null> {
+  const scan = await prisma.scan.findFirst({
+    where: { userId, url, createdAt: { gte: new Date(Date.now() - maxAgeMs) } },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, result: true, createdAt: true },
+  });
+  if (!scan) return null;
+
+  const result = hydrate(scan.id, scan.result, scan.createdAt);
+  return result.partial ? null : result;
 }
 
 export type SavedReport = {
@@ -117,7 +134,9 @@ export async function getSavedReport(id: string, userId: string): Promise<SavedR
   });
 
   return {
-    result: hydrate(scan.id, scan.result),
-    previous: prev ? { result: hydrate(prev.id, prev.result), at: prev.createdAt } : null,
+    result: hydrate(scan.id, scan.result, scan.createdAt),
+    previous: prev
+      ? { result: hydrate(prev.id, prev.result, prev.createdAt), at: prev.createdAt }
+      : null,
   };
 }
