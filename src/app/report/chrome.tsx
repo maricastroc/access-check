@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeft, faPrint, faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft, faPrint } from "@fortawesome/free-solid-svg-icons";
+import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { Logo } from "@/components/ui";
 import type { Status } from "./shared";
 
@@ -35,19 +36,15 @@ export function Toolbar({ url, status }: { url: string; status: Status }) {
 
 export function CenterState({
   icon,
-  spin,
   tone = "steel",
   title,
   subtitle,
-  progress,
   action,
 }: {
-  icon: typeof faSpinner;
-  spin?: boolean;
+  icon: IconDefinition;
   tone?: "steel" | "critical";
   title: string;
   subtitle: string;
-  progress?: boolean;
   action?: React.ReactNode;
 }) {
   return (
@@ -63,25 +60,12 @@ export function CenterState({
             : "border border-border bg-surface text-steel"
         }`}
       >
-        <FontAwesomeIcon
-          icon={icon}
-          aria-hidden
-          className={`text-lg ${spin ? "animate-spin" : ""}`}
-        />
+        <FontAwesomeIcon icon={icon} aria-hidden className="text-lg" />
       </span>
       <div className="max-w-md">
         <p className="text-[17px] font-semibold text-ink">{title}</p>
         <p className="mt-1.5 text-[14px] text-muted">{subtitle}</p>
       </div>
-      {progress && (
-        <div
-          role="progressbar"
-          aria-label="Building report"
-          className="relative mt-1 h-2 w-full max-w-64 overflow-hidden border border-ink bg-surface"
-        >
-          <span className="hatch-progress-live absolute inset-y-0 left-0 w-2/5" />
-        </div>
-      )}
       {action}
     </div>
   );

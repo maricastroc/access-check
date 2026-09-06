@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { cn } from "@/lib/cn";
 
 export function UrlField({
@@ -24,6 +24,8 @@ export function UrlField({
   autoFocus?: boolean;
 }) {
   const height = size === "lg" ? "h-[66px]" : size === "sm" ? "h-[52px]" : "h-[56px]";
+  const errorId = useId();
+
   return (
     <div>
       <div
@@ -45,13 +47,19 @@ export function UrlField({
             }
           }}
           aria-label="Website address to audit"
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
           placeholder={placeholder}
           autoFocus={autoFocus}
           className="min-w-0 flex-1 bg-transparent font-mono text-[16px] text-ink placeholder:text-muted focus:outline-none"
         />
         {trailing}
       </div>
-      {error && <p className="mt-1.5 text-[12.5px] text-critical">{error}</p>}
+      {error && (
+        <p id={errorId} role="alert" className="mt-1.5 text-[12.5px] text-critical">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
@@ -62,11 +70,15 @@ export function UrlForm({ accent = false, examples }: { accent?: boolean; exampl
   const router = useRouter();
   const [value, setValue] = useState("");
   const [scope, setScope] = useState<Scope>("page");
+  const [error, setError] = useState("");
 
   const go = (target: string, s: Scope) => {
     const v = target.trim();
-    const base = s === "site" ? "/site" : "/results";
-    router.push(v ? `${base}?url=${encodeURIComponent(v)}` : base);
+    if (!v) {
+      setError("Enter a web address to audit, like example.com.");
+      return;
+    }
+    router.push(`${s === "site" ? "/site" : "/results"}?url=${encodeURIComponent(v)}`);
   };
 
   return (
@@ -75,8 +87,12 @@ export function UrlForm({ accent = false, examples }: { accent?: boolean; exampl
         <div className="min-w-0 flex-1">
           <UrlField
             value={value}
-            onChange={setValue}
+            onChange={(v) => {
+              setValue(v);
+              setError("");
+            }}
             onSubmit={() => go(value, scope)}
+            error={error}
             size="lg"
             trailing={
               <div
@@ -135,7 +151,10 @@ export function UrlForm({ accent = false, examples }: { accent?: boolean; exampl
               )}
               <button
                 type="button"
-                onClick={() => setValue(ex)}
+                onClick={() => {
+                  setValue(ex);
+                  setError("");
+                }}
                 className={cn(
                   "cursor-pointer font-mono text-[12.5px] hover:underline",
                   accent ? "text-band" : "text-steel",

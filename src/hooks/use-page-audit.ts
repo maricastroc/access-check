@@ -13,6 +13,7 @@ export type AuditOptions = {
 
 export type PageAudit = {
   status: AuditStatus;
+  streaming: boolean;
   result: ScanResult | null;
   phase: ScanPhase;
   url: string;
@@ -34,6 +35,7 @@ export function usePageAudit({
 }): PageAudit {
   const [url, setUrl] = useState(initialUrl);
   const [status, setStatus] = useState<AuditStatus>(initialResult ? "done" : "loading");
+  const [streaming, setStreaming] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(initialResult);
   const [phase, setPhase] = useState<ScanPhase>("preparing");
   const [error, setError] = useState("");
@@ -54,11 +56,13 @@ export function usePageAudit({
       if (cached) {
         setError("");
         setErrorHint("");
+        setStreaming(false);
         apply(cached);
         return;
       }
 
       setStatus("loading");
+      setStreaming(false);
       setPhase("preparing");
       setError("");
       setErrorHint("");
@@ -68,14 +72,24 @@ export function usePageAudit({
         try {
           const fresh = await streamScan(
             value,
-            { onPhase: setPhase, onCore: incremental ? apply : undefined },
+            {
+              onPhase: setPhase,
+              onCore: incremental
+                ? (core) => {
+                    setStreaming(true);
+                    apply(core);
+                  }
+                : undefined,
+            },
             { force },
           );
           rememberScan(fresh, value);
+          setStreaming(false);
           apply(fresh);
         } catch (e) {
           setError(e instanceof Error ? e.message : fallbackError);
           setErrorHint(e instanceof ScanStreamError ? SCAN_ERROR_HINT[e.code] : "");
+          setStreaming(false);
           setStatus("error");
         }
       })();
@@ -89,5 +103,5 @@ export function usePageAudit({
     scan(initialUrl);
   }, [initialUrl, initialResult, scan]);
 
-  return { status, result, phase, url, error, errorHint, scan };
+  return { status, streaming, result, phase, url, error, errorHint, scan };
 }

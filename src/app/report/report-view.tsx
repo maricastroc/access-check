@@ -2,10 +2,11 @@
 
 import { useEffect, useRef } from "react";
 import Link from "next/link";
-import { faSpinner, faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
+import { faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
 import type { ScanPhase } from "@/lib/scan/types";
+import { TYPICAL_SCAN_MS } from "@/lib/scan/policy";
 import { usePageAudit } from "@/hooks/use-page-audit";
-import { DEFAULT_URL } from "./shared";
+import { ProgressCard, ScanStages, useElapsed } from "@/components/ui";
 import { CenterState, PrintStyles, Toolbar } from "./chrome";
 import { SummaryPage } from "./summary-page";
 import { FindingsPage } from "./findings-page";
@@ -51,9 +52,27 @@ function FitToWidth({ children }: { children: React.ReactNode }) {
   );
 }
 
+function BuildingReport({ url, phase }: { url: string; phase: ScanPhase }) {
+  const elapsed = useElapsed();
+
+  return (
+    <div className="px-4 py-16">
+      <ProgressCard
+        target={url}
+        elapsedMs={elapsed}
+        budgetMs={TYPICAL_SCAN_MS}
+        note="The report is built from a fresh audit of this page, run right now."
+        status={`Building the report for ${url}. ${PHASE_DETAIL[phase]}`}
+      >
+        <ScanStages phase={phase} />
+      </ProgressCard>
+    </div>
+  );
+}
+
 export function ReportView({ initialUrl }: { initialUrl: string }) {
   const { status, result, phase, url, error } = usePageAudit({
-    initialUrl: initialUrl || DEFAULT_URL,
+    initialUrl,
     fallbackError: "We couldn't build the report. Please try again.",
   });
 
@@ -63,15 +82,7 @@ export function ReportView({ initialUrl }: { initialUrl: string }) {
       <Toolbar url={url} status={status} />
 
       <main id="main">
-        {status === "loading" && (
-          <CenterState
-            icon={faSpinner}
-            spin
-            progress
-            title="Building report…"
-            subtitle={PHASE_DETAIL[phase]}
-          />
-        )}
+        {status === "loading" && <BuildingReport url={url} phase={phase} />}
 
         {status === "error" && (
           <CenterState

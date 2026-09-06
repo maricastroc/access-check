@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { ReportView } from "./report-view";
 
 export default async function ReportPage({
@@ -6,5 +7,7 @@ export default async function ReportPage({
   searchParams: Promise<{ url?: string }>;
 }) {
   const { url } = await searchParams;
-  return <ReportView initialUrl={url ?? ""} />;
+  if (!url?.trim()) redirect("/");
+
+  return <ReportView initialUrl={url} />;
 }

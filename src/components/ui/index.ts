@@ -16,6 +16,7 @@ export { Logo, BrandMark } from "./logo";
 export { Marker } from "./marker";
 export type { MarkerState } from "./marker";
 export { OccurrenceStepper } from "./occurrence-stepper";
+export { ProgressCard, useElapsed } from "./progress-card";
 export { ProvenancePanel } from "./provenance-panel";
 export { Ruler } from "./ruler";
 export type { RulerProps } from "./ruler";

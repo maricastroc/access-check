@@ -2,8 +2,6 @@ import type { Severity } from "@/lib/scan/types";
 
 export type Status = "loading" | "done" | "error";
 
-export const DEFAULT_URL = "example.com";
-
 export const sevHex: Record<Severity, string> = {
   critical: "#b3261e",
   serious: "#a85a06",

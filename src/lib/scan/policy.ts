@@ -1,4 +1,6 @@
 import { Budget, withBudget } from "./budget";
+
+export const TYPICAL_SCAN_MS = 25_000;
 import type { ScanWarning, ScanWarningCode } from "./types";
 
 export type StageId =

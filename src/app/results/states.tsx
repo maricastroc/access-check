@@ -1,13 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import type { ScanPhase, ScanWarning } from "@/lib/scan/types";
-import { Button, Ruler, ScanStages, WarningList } from "@/components/ui";
+import { Button, ProgressCard, ScanStages, useElapsed, WarningList } from "@/components/ui";
 import { UrlField } from "@/components/home/url-form";
-
-const BUDGET_MS = 25_000;
+import { TYPICAL_SCAN_MS } from "@/lib/scan/policy";
 
 const PHASE_LABEL: Record<ScanPhase, string> = {
   preparing: "getting ready",
@@ -18,37 +16,19 @@ const PHASE_LABEL: Record<ScanPhase, string> = {
 };
 
 export function ScanningState({ url, phase }: { url: string; phase: ScanPhase }) {
-  const [elapsed, setElapsed] = useState(0);
-  useEffect(() => {
-    const started = Date.now();
-    const id = setInterval(() => setElapsed(Date.now() - started), 100);
-    return () => clearInterval(id);
-  }, []);
-
-  const secs = (elapsed / 1000).toFixed(1);
-  const budget = Math.round(BUDGET_MS / 1000);
+  const elapsed = useElapsed();
 
   return (
-    <div className="mx-auto w-full max-w-160 px-4 py-16">
-      <div className="border border-border bg-surface p-6">
-        <div className="flex items-baseline gap-2">
-          <span className="font-cond text-[28px] leading-none text-ink tabular-nums">{secs}s</span>
-          <span className="text-[13px] text-muted">of up to {budget}s</span>
-          <span className="ml-auto truncate font-mono text-[12.5px] text-muted">{url}</span>
-        </div>
-        <div className="mt-3">
-          <Ruler variant="progress" elapsedMs={elapsed} budgetMs={BUDGET_MS} />
-        </div>
-        <div className="mt-4">
-          <ScanStages phase={phase} />
-        </div>
-        <p className="mt-3 text-[12.5px] text-muted">
-          These are the real steps AccessCheck runs, in the order they happen.
-        </p>
-        <p className="sr-only" role="status" aria-live="polite">
-          Auditing {url}. Currently {PHASE_LABEL[phase]}.
-        </p>
-      </div>
+    <div className="px-4 py-16">
+      <ProgressCard
+        target={url}
+        elapsedMs={elapsed}
+        budgetMs={TYPICAL_SCAN_MS}
+        note="These are the real steps AccessCheck runs, in the order they happen."
+        status={`Auditing ${url}. Currently ${PHASE_LABEL[phase]}.`}
+      >
+        <ScanStages phase={phase} />
+      </ProgressCard>
     </div>
   );
 }

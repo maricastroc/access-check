@@ -39,6 +39,7 @@ export function MobileReport({
   onMarkdown,
   quickFromSite = false,
   onRunFull,
+  pending = false,
 }: {
   result: ScanResult;
   host: string;
@@ -59,6 +60,7 @@ export function MobileReport({
   onMarkdown: () => void;
   quickFromSite?: boolean;
   onRunFull?: () => void;
+  pending?: boolean;
 }) {
   return (
     <div className="pb-20">
@@ -137,6 +139,7 @@ export function MobileReport({
               height={300}
               quickFromSite={quickFromSite}
               onRunFull={onRunFull}
+              pending={pending}
             />
           </div>
 

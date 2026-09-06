@@ -132,6 +132,38 @@ function useCaptureScale(report?: (pct: number) => void) {
   return ref;
 }
 
+function CaptureSkeleton({ height }: { height: number }) {
+  return (
+    <div
+      className="flex items-center justify-center overflow-hidden px-6"
+      style={{ height, background: "#FBFAF7" }}
+    >
+      <div
+        aria-hidden
+        className="w-full max-w-160 border border-hairline bg-surface motion-safe:animate-pulse"
+      >
+        <div className="flex items-center gap-3 border-b border-hairline px-3 py-2.5">
+          <span className="block h-2 w-14 bg-hairline" />
+          <span className="ml-auto block h-2 w-28 bg-band" />
+        </div>
+        <div className="p-4">
+          <span className="block h-3.5 w-2/5 bg-hairline" />
+          <span className="mt-2.5 block h-2 w-3/5 bg-band" />
+          <span className="mt-5 block h-24 w-full bg-band" />
+          <div className="mt-4 grid grid-cols-3 gap-3">
+            <span className="block h-11 bg-band" />
+            <span className="block h-11 bg-band" />
+            <span className="block h-11 bg-band" />
+          </div>
+        </div>
+      </div>
+      <p className="sr-only" role="status" aria-live="polite">
+        Taking the screenshot of the page.
+      </p>
+    </div>
+  );
+}
+
 export function CaptureStage({
   result,
   host,
@@ -145,6 +177,7 @@ export function CaptureStage({
   onScale,
   quickFromSite = false,
   onRunFull,
+  pending = false,
 }: {
   result: ScanResult;
   host: string;
@@ -158,8 +191,11 @@ export function CaptureStage({
   onScale?: (pct: number) => void;
   quickFromSite?: boolean;
   onRunFull?: () => void;
+  pending?: boolean;
 }) {
   const ref = useCaptureScale(onScale);
+
+  if (!result.screenshot && pending) return <CaptureSkeleton height={height} />;
 
   if (!result.screenshot) {
     return (
@@ -167,7 +203,7 @@ export function CaptureStage({
         className="hatch-outside flex items-center justify-center overflow-hidden px-6"
         style={{ height, background: "#FBFAF7" }}
       >
-        <div className="w-full max-w-[420px] border border-border bg-surface p-5">
+        <div className="w-full max-w-105 border border-border bg-surface p-5">
           <SectionKicker>{quickFromSite ? "Not captured yet" : "Not available"}</SectionKicker>
           <p className="mt-2 text-[14px] leading-normal text-ink">
             {quickFromSite
@@ -227,6 +263,7 @@ export function EvidenceFrame({
   onSelectMarker,
   quickFromSite = false,
   onRunFull,
+  pending = false,
 }: {
   result: ScanResult;
   host: string;
@@ -240,6 +277,7 @@ export function EvidenceFrame({
   onSelectMarker: (markerN: number) => void;
   quickFromSite?: boolean;
   onRunFull?: () => void;
+  pending?: boolean;
 }) {
   const [scalePct, setScalePct] = useState(60);
 
@@ -247,7 +285,9 @@ export function EvidenceFrame({
     ? "Screenshot collapsed"
     : result.screenshot
       ? `Screenshot · ${CAPTURE_WIDTH} × ${CAPTURE_HEIGHT} · scale ${scalePct}%`
-      : "Screenshot";
+      : pending
+        ? "Screenshot · being taken"
+        : "Screenshot";
   const visionNote =
     sim === "normal"
       ? "default render · no vision filter"
@@ -280,6 +320,7 @@ export function EvidenceFrame({
             onScale={setScalePct}
             quickFromSite={quickFromSite}
             onRunFull={onRunFull}
+            pending={pending}
           />
         </div>
       )}

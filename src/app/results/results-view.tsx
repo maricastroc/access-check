@@ -7,7 +7,7 @@ import { orderedMarkers } from "@/lib/report/findings";
 import { buildReportMarkdown, reportMarkdownFilename } from "@/lib/report/markdown";
 import { usePageAudit } from "@/hooks/use-page-audit";
 import { ColorBlindFilters } from "./color-blind-filters";
-import { DEFAULT_URL, safeHost } from "./shared";
+import { safeHost } from "./shared";
 import { type SimKey } from "./data";
 import { buildMarkerViews, type Layer } from "./report-ui";
 import { buildReportView } from "./report-model";
@@ -44,16 +44,15 @@ export function ResultsView({
   siteId: string | null;
   initialResult: ScanResult | null;
 }) {
-  const start = initialUrl || DEFAULT_URL;
   const audit = usePageAudit({
-    initialUrl: start,
+    initialUrl,
     initialResult,
     incremental: true,
     fallbackError: "The audit stopped before it could finish. Please try again.",
   });
-  const { status, result, phase, url, error, errorHint, scan } = audit;
+  const { status, streaming, result, phase, url, error, errorHint, scan } = audit;
 
-  const [input, setInput] = useState(start);
+  const [input, setInput] = useState(initialUrl);
 
   const [sim, setSim] = useState<SimKey>("normal");
   const [layer, setLayer] = useState<Layer>("markers");
@@ -167,6 +166,7 @@ export function ResultsView({
                       onSelectMarker={selection.selectMarker}
                       quickFromSite={quickFromSite}
                       onRunFull={() => scan(url, { force: true })}
+                      pending={streaming}
                     />
                   </div>
                   <div className="scroll-slim sticky top-15.5 max-h-[calc(100vh-62px)] self-start overflow-y-auto">
@@ -201,6 +201,7 @@ export function ResultsView({
                 onMarkdown={exportMarkdown}
                 quickFromSite={quickFromSite}
                 onRunFull={() => scan(url, { force: true })}
+                pending={streaming}
               />
             )}
           </>
