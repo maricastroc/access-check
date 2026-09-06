@@ -112,8 +112,12 @@ describe("shared window (Redis configured)", () => {
     const verdict = await limiter.check("1.2.3.4");
 
     expect(verdict).toBe("allowed");
-    expect(logged.mock.calls[0][0]).toContain('Rate limit "scan"');
-    expect(logged.mock.calls[0][1]).toBe(cause);
+    // The caller is told nothing; the log carries the cause and the limiter name.
+    const entry = JSON.parse(logged.mock.calls[0][0] as string);
+    expect(entry.event).toBe("ratelimit.degraded");
+    expect(entry.limiter).toBe("scan");
+    expect(entry.fallback).toBe("in-memory");
+    expect(entry.errorMessage).toBe(cause.message);
   });
 });
 

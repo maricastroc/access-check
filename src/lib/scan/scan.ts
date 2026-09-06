@@ -475,8 +475,7 @@ async function runScanAttempt(
       page.goto(url, { waitUntil: "domcontentloaded", timeout: navTimeout }).catch(async (err) => {
         if (isBrowserGone(err)) throw err;
         const message = err instanceof Error ? err.message : String(err);
-        // Timeout is decided before the liveness probe: the page is still loading,
-        // so evaluating on it would block on an execution context that never settles.
+        
         if (/timeout/i.test(message)) {
           throw new ScanFailure(
             `The page took longer than ${Math.round(navTimeout / 1000)}s to respond.`,

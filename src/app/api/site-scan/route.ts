@@ -5,6 +5,7 @@ import { discoverUrls, normalizeRoot } from "@/lib/scan/discover";
 import { assertPublicUrl, BlockedUrlError } from "@/lib/scan/ssrf";
 import { createSiteScan, failSiteScan } from "@/lib/site-scans";
 import { canFanOut, enqueuePageScans } from "@/lib/qstash";
+import { log, logError } from "@/lib/observability/log";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -62,7 +63,7 @@ export async function POST(req: Request) {
     try {
       await enqueuePageScans(jobs);
     } catch (e) {
-      console.error("QStash fan-out failed:", e);
+      logError("queue.dispatch.failed", e);
       if (onServerless) {
         await failSiteScan(
           id,
@@ -73,7 +74,7 @@ export async function POST(req: Request) {
       }
     }
   } else if (onServerless) {
-    console.error("Site scan unavailable: QStash env vars are not configured.");
+    log("error", "queue.unconfigured");
     await failSiteScan(
       id,
       "Site audits aren't available right now. Please audit a single page instead.",

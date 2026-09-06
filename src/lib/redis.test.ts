@@ -36,11 +36,16 @@ describe("cacheGet", () => {
 
   it("degrades to a miss when Redis is unreachable", async () => {
     const { cacheGet } = await importConfigured();
-    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    const logged = vi.spyOn(console, "warn").mockImplementation(() => {});
     get.mockRejectedValue(new Error("getaddrinfo ENOTFOUND dead.upstash.io"));
 
     expect(await cacheGet("scan:x")).toBeNull();
-    expect(logged).toHaveBeenCalled();
+    // One JSON line, searchable by event name — not free text a human has to grep.
+    const entry = JSON.parse(logged.mock.calls[0][0] as string);
+    expect(entry.event).toBe("cache.read.failed");
+    expect(entry.level).toBe("warn");
+    expect(entry.key).toBe("scan:x");
+    expect(entry.errorMessage).toContain("ENOTFOUND");
   });
 
   it("returns a miss when Redis is not configured at all", async () => {
@@ -62,7 +67,7 @@ describe("cacheSet", () => {
 
   it("swallows an outage so a finished scan still resolves", async () => {
     const { cacheSet } = await importConfigured();
-    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    const logged = vi.spyOn(console, "warn").mockImplementation(() => {});
     set.mockRejectedValue(new Error("getaddrinfo ENOTFOUND dead.upstash.io"));
 
     await expect(cacheSet("scan:x", { score: 42 }, 300)).resolves.toBeUndefined();

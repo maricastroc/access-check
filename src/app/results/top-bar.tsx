@@ -66,25 +66,27 @@ export function TopBar({
           >
             <span className="hidden sm:inline">Re-audit</span>
           </Button>
-          <Button variant="secondary" size="sm" onClick={onMarkdown} disabled={!result}>
-            Export Markdown
-          </Button>
-          {result ? (
-            <Button
-              href={`/report?url=${encodeURIComponent(result.finalUrl)}`}
-              variant="primary"
-              size="sm"
-            >
-              Export PDF
+          <div className="hidden items-center gap-2 lg:flex">
+            <Button variant="secondary" size="sm" onClick={onMarkdown} disabled={!result}>
+              Export Markdown
             </Button>
-          ) : (
-            <Link
-              href="/"
-              className="inline-flex h-9 items-center justify-center bg-ink px-4 text-[13.5px] font-semibold text-surface hover:bg-ink-2"
-            >
-              New audit
-            </Link>
-          )}
+            {result ? (
+              <Button
+                href={`/report?url=${encodeURIComponent(result.finalUrl)}`}
+                variant="primary"
+                size="sm"
+              >
+                Export PDF
+              </Button>
+            ) : (
+              <Link
+                href="/"
+                className="inline-flex h-9 items-center justify-center bg-ink px-4 text-[13.5px] font-semibold text-surface hover:bg-ink-2"
+              >
+                New audit
+              </Link>
+            )}
+          </div>
         </div>
       </div>
     </header>

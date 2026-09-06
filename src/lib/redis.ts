@@ -1,4 +1,5 @@
 import { Redis } from "@upstash/redis";
+import { logWarn } from "./observability/log";
 
 const url =
   process.env.KV_REST_API_URL ??
@@ -16,7 +17,7 @@ export async function cacheGet<T>(key: string): Promise<T | null> {
   try {
     return await redis.get<T>(key);
   } catch (e) {
-    console.error("Cache read failed:", e);
+    logWarn("cache.read.failed", e, { key });
     return null;
   }
 }
@@ -26,6 +27,6 @@ export async function cacheSet(key: string, value: unknown, ttlSeconds: number):
   try {
     await redis.set(key, value, { ex: ttlSeconds });
   } catch (e) {
-    console.error("Cache write failed:", e);
+    logWarn("cache.write.failed", e, { key, ttlSeconds });
   }
 }

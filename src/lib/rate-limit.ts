@@ -1,5 +1,6 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { redis } from "./redis";
+import { logError } from "./observability/log";
 
 export type RateLimitVerdict = "allowed" | "limited";
 
@@ -62,10 +63,7 @@ export class RateLimiter {
         const { success } = await this.shared.limit(key);
         return success ? "allowed" : "limited";
       } catch (e) {
-        console.error(
-          `Rate limit "${this.prefix}" fell back to in-memory counts — Redis is unreachable:`,
-          e,
-        );
+        logError("ratelimit.degraded", e, { limiter: this.prefix, fallback: "in-memory" });
       }
     }
     return this.memory.limit(key);

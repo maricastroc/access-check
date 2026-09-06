@@ -7,6 +7,7 @@ import { saveScan } from "@/lib/scans";
 import { cacheGet, cacheSet } from "@/lib/redis";
 import { clientKey, scanRateLimit } from "@/lib/rate-limit";
 import { assertPublicUrl, BlockedUrlError } from "@/lib/scan/ssrf";
+import { logError } from "@/lib/observability/log";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -163,7 +164,7 @@ export async function POST(req: Request) {
           try {
             await saveScan(userId, outcome.result);
           } catch (e) {
-            console.error("Failed to save scan to history:", e);
+            logError("scan.history.failed", e);
           }
         } else {
           await cacheSet(`scan:${url}`, light, CACHE_TTL_SECONDS);
