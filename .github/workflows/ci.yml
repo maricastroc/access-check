@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Lint · typecheck · tests · build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # postinstall runs `prisma generate`, so the client exists before typecheck.
+      - run: npm ci
+
+      # The scan suite drives a real headless Chromium — it is an integration test,
+      # not a mock. Without this step 20 tests fail with "Executable doesn't exist".
+      # --with-deps pulls the system libraries the runner image does not ship.
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      # 268 tests. No secret is needed: the suite serves its own fixtures over a
+      # local HTTP server and never reaches the database, the queue or the rate
+      # limiter — those are only wired up in the API routes.
+      - name: Unit tests
+        run: npm run test
+
+      # `prisma generate && next build`. Nothing queries the database at build time,
+      # so DATABASE_URL is not required here.
+      - name: Production build
+        run: npm run build
