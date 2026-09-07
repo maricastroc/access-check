@@ -1,7 +1,10 @@
-import { copyFileSync, mkdirSync, rmSync } from "node:fs";
+import { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
+import postcss from "postcss";
+import tailwind from "@tailwindcss/postcss";
+import { buildDomEngine, ENGINE_FILE } from "../scripts/build-dom-engine.mjs";
 
 const root = dirname(fileURLToPath(import.meta.url));
 const dist = join(root, "dist");
@@ -10,23 +13,37 @@ const repo = join(root, "..");
 rmSync(dist, { recursive: true, force: true });
 mkdirSync(join(dist, "vendor"), { recursive: true });
 
+// The extension loads the very artifact the hosted scanner injects, never a
+// second compilation of the same source.
+const engine = await buildDomEngine();
+
 await build({
   alias: { "@": join(repo, "src") },
   entryPoints: {
     audit: join(root, "src/audit.ts"),
     background: join(root, "src/background.ts"),
-    report: join(root, "src/report.ts"),
+    panel: join(root, "src/panel.tsx"),
   },
+  jsx: "automatic",
   outdir: dist,
   bundle: true,
   format: "iife",
   target: "chrome110",
   legalComments: "none",
+  minify: true,
+  define: { "process.env.NODE_ENV": '"production"' },
 });
 
 copyFileSync(join(repo, "node_modules/axe-core/axe.min.js"), join(dist, "vendor/axe.min.js"));
+copyFileSync(ENGINE_FILE, join(dist, "dom-engine.js"));
 copyFileSync(join(root, "manifest.json"), join(dist, "manifest.json"));
-copyFileSync(join(root, "src/report.html"), join(dist, "report.html"));
-copyFileSync(join(root, "src/report.css"), join(dist, "report.css"));
+copyFileSync(join(root, "src/panel.html"), join(dist, "panel.html"));
 
-console.log("extension built at extension/dist");
+const cssEntry = join(root, "src/panel.css");
+const css = await postcss([tailwind]).process(readFileSync(cssEntry, "utf8"), {
+  from: cssEntry,
+  to: join(dist, "panel.css"),
+});
+writeFileSync(join(dist, "panel.css"), css.css);
+
+console.log(`extension built at extension/dist (dom engine sha256 ${engine.hash})`);

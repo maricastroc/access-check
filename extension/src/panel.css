@@ -1,0 +1,9 @@
+@import "../../src/app/globals.css";
+
+@source "../../src/components/ui";
+@source "../../src/lib/report";
+@source "./panel.tsx";
+
+body {
+  background: var(--color-canvas);
+}

@@ -47,28 +47,54 @@ export function buildFixFirst(violations: ScanViolation[]) {
   }));
 }
 
+function remaining(bestPractice: number, manualReview: number): string {
+  const parts: string[] = [];
+  if (bestPractice > 0) {
+    parts.push(`${bestPractice} best-practice recommendation${bestPractice === 1 ? "" : "s"}`);
+  }
+  if (manualReview > 0) {
+    parts.push(`${manualReview} manual-review item${manualReview === 1 ? "" : "s"}`);
+  }
+  if (parts.length === 0) return "";
+
+  const single = parts.length === 1 && (bestPractice === 1 || manualReview === 1);
+  return ` ${parts.join(" and ")} ${single ? "remains" : "remain"}, outside the score.`;
+}
+
 export function buildSummary(
-  counts: { critical: number; serious: number; moderate: number },
+  counts: {
+    critical: number;
+    serious: number;
+    moderate: number;
+    bestPractice?: number;
+    manualReview?: number;
+  },
   options: { partial?: boolean } = {},
 ): string {
   const scope = options.partial ? " among the checks that ran" : "";
+  const tail = remaining(counts.bestPractice ?? 0, counts.manualReview ?? 0);
 
   if (counts.critical > 0) {
     const n = counts.critical;
-    return `Strong foundation, but ${n} critical finding${n > 1 ? "s" : ""} block${n > 1 ? "" : "s"} WCAG level AA. Fix ${n > 1 ? "them" : "it"} first.`;
+    return `Strong foundation, but ${n} critical finding${n > 1 ? "s" : ""} block${n > 1 ? "" : "s"} WCAG level AA. Fix ${n > 1 ? "them" : "it"} first.${tail}`;
   }
   if (counts.serious > 0) {
     const n = counts.serious;
-    return `No critical blockers${scope}, but ${n} serious finding${n > 1 ? "s" : ""} still ${n > 1 ? "make" : "makes"} the page harder to use for people who rely on assistive technology.`;
+    return `No critical blockers${scope}, but ${n} serious finding${n > 1 ? "s" : ""} still ${n > 1 ? "make" : "makes"} the page harder to use for people who rely on assistive technology.${tail}`;
   }
   if (counts.moderate > 0) {
     return options.partial
-      ? `Only moderate findings among the checks that ran.`
-      : `Solid result. Only moderate findings are left to polish.`;
+      ? `Only moderate findings among the checks that ran.${tail}`
+      : `Solid result. Only moderate findings are left to polish.${tail}`;
   }
-  return options.partial
-    ? `No failures in the checks that ran. Some checks did not run here, so this is not a clean bill of health.`
-    : `Excellent. No automated findings on this page.`;
+
+  const clean = options.partial
+    ? `No scored WCAG failures in the checks that ran. Some checks did not run here, so this is not a clean bill of health.`
+    : tail
+      ? `No scored WCAG failures were found.`
+      : `Excellent. No automated findings on this page.`;
+
+  return `${clean}${tail}`;
 }
 
 export function buildCounts(

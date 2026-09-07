@@ -81,7 +81,6 @@ function contextViolations(result: Pick<ScanResult, "contexts">): ScanViolation[
 export function scoredViolations(
   result: Pick<ScanResult, "violations" | "keyboard" | "audits" | "contexts">,
 ): ScanViolation[] {
-
   const charged = new Set(result.violations.map((v) => v.id));
   const take = (violations: ScanViolation[]) =>
     violations.filter((v) => {

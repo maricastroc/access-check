@@ -1,8 +1,3 @@
-import { AXE_TAGS, runAxeInPage } from "../../src/lib/scan/dom/axe";
-import { collectElementInfo } from "../../src/lib/scan/dom/element-info";
-import { collectRects, readViewport } from "../../src/lib/scan/dom/rects";
-import { collectLiveRegionsRaw } from "../../src/lib/scan/dom/live-regions";
-import { collectTargetSizeRaw } from "../../src/lib/scan/dom/target-size";
 import { analyzeLiveRegions } from "../../src/lib/scan/live-regions";
 import { analyzeTargetSize, INTERACTIVE } from "../../src/lib/scan/target-size";
 import {
@@ -22,36 +17,44 @@ import {
 } from "../../src/lib/scan/derive";
 import { buildMarkers, markerTargets } from "../../src/lib/scan/markers";
 import { SCORING_VERSION, scoredViolations } from "../../src/lib/scan/scored";
-import type { ScanResult, ScanWarning } from "../../src/lib/scan/types";
+import type { ScanResult } from "../../src/lib/scan/types";
+import { DOM_ENGINE_VERSION } from "../../src/lib/scan/dom/engine-api";
+import { UNAVAILABLE, crossOriginWarning } from "./coverage";
 
-export const UNAVAILABLE: ScanWarning[] = [
-  {
-    code: "keyboard-skipped",
-    message: "The focus path needs real Tab presses, which this prototype does not do.",
-  },
-  {
-    code: "contexts-skipped",
-    message: "The mobile-viewport pass needs viewport emulation, not available in this prototype.",
-  },
-  {
-    code: "audits-skipped",
-    message: "The reduced-motion check needs media emulation, not available in this prototype.",
-  },
-  {
-    code: "verification-skipped",
-    message: "Fixes are not tested here: this prototype never writes to the audited page.",
-  },
-];
+export class EngineMissingError extends Error {}
+
+function engine() {
+  const dom = window.__accessCheckDom;
+  if (!dom) {
+    throw new EngineMissingError(
+      "The AccessCheck audit engine was not injected into this page. Reload the extension and try again.",
+    );
+  }
+  if (dom.version !== DOM_ENGINE_VERSION) {
+    throw new EngineMissingError(
+      `The audit engine in the page reports version ${dom.version}, this build needs ${DOM_ENGINE_VERSION}.`,
+    );
+  }
+  return dom;
+}
 
 export async function auditActiveDocument(): Promise<ScanResult> {
   const startedAt = Date.now();
+  const dom = engine();
 
-  const axe = (await runAxeInPage(AXE_TAGS)) as unknown as AxeResults;
+  // This build may only touch the tab the reader clicked on, so it cannot fetch
+  // a stylesheet or a media file from another origin. Asking axe to preload
+  // them would spend a request that is certain to be refused; the checks that
+  // depend on them land in manual review either way.
+  const assets = dom.crossOriginAssets();
+  const preload = assets.styleSheets === 0 && assets.media === 0;
+
+  const axe = (await dom.runAxe(dom.AXE_TAGS, { preload })) as unknown as AxeResults;
 
   const wcagViolations = axe.violations.filter((v) => !v.tags.includes("best-practice"));
   const bpViolations = axe.violations.filter((v) => v.tags.includes("best-practice"));
 
-  const elementInfos = collectElementInfo(elementSelectorsFor(wcagViolations));
+  const elementInfos = dom.collectElementInfo(elementSelectorsFor(wcagViolations));
   const enriched = enrichViolations(wcagViolations, elementInfos);
   attachFixGroups(enriched);
 
@@ -62,13 +65,13 @@ export async function auditActiveDocument(): Promise<ScanResult> {
   const targets = markerTargets(wcagViolations);
   const markers = buildMarkers(
     targets,
-    collectRects(targets.map((t) => t.selector)),
-    readViewport(),
+    dom.collectRects(targets.map((t) => t.selector)),
+    dom.readViewport(),
   );
 
   const audits = {
-    targetSize: analyzeTargetSize(collectTargetSizeRaw(INTERACTIVE)),
-    liveRegions: analyzeLiveRegions(collectLiveRegionsRaw()),
+    targetSize: analyzeTargetSize(dom.collectTargetSizeRaw(INTERACTIVE)),
+    liveRegions: analyzeLiveRegions(dom.collectLiveRegionsRaw()),
   };
 
   const scored = scoredViolations({ violations, audits });
@@ -98,25 +101,14 @@ export async function auditActiveDocument(): Promise<ScanResult> {
     audits,
     fixFirst: buildFixFirst(scored),
     partial: true,
-    warnings: UNAVAILABLE,
+    warnings: preload ? UNAVAILABLE : [...UNAVAILABLE, crossOriginWarning(assets)],
   };
 }
-
-export const engine = {
-  collectElementInfo,
-  collectRects,
-  collectLiveRegionsRaw,
-  collectTargetSizeRaw,
-  readViewport,
-  INTERACTIVE,
-};
 
 declare global {
   interface Window {
     __accessCheckAudit?: () => Promise<ScanResult>;
-    __accessCheckEngine?: typeof engine;
   }
 }
 
 window.__accessCheckAudit = auditActiveDocument;
-window.__accessCheckEngine = engine;

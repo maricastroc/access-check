@@ -13,9 +13,9 @@ import { buildCounts, buildFixFirst, buildSummary, computeScore, severityOrder }
 import { Budget } from "./budget";
 import { OPTIONAL_ORDER, ScanPolicy, STAGES, type StageId } from "./policy";
 import { CONTENT_SIGNATURE, waitForContentReady } from "./page-ready";
-import { AXE_TAGS, runAxeInPage } from "./dom/axe";
-import { collectElementInfo } from "./dom/element-info";
-import { collectRects, type DomRect } from "./dom/rects";
+import { AXE_TAGS } from "./dom/axe";
+import type { DomRect } from "./dom/rects";
+import { DOM_ENGINE_VERSION } from "./dom/engine-api";
 import { buildMarkers, markerTargets } from "./markers";
 import { SCORING_VERSION, scoredViolations } from "./scored";
 import {
@@ -58,6 +58,26 @@ const RETRY_FLOOR_MS = 12_000;
 const EXPIRED = Symbol("expired");
 
 const AXE_PATH = path.join(process.cwd(), "node_modules/axe-core/axe.min.js");
+const DOM_ENGINE_PATH = path.join(process.cwd(), "dom-engine/dom-engine.js");
+
+async function injectDomEngine(page: Page): Promise<void> {
+  try {
+    await page.addScriptTag({ path: DOM_ENGINE_PATH });
+  } catch (err) {
+    throw new ScanFailure(
+      `The audit engine could not be loaded into the page (${DOM_ENGINE_PATH}). Build it with \`npm run build:engine\`. ${err instanceof Error ? err.message : String(err)}`,
+      "internal",
+    );
+  }
+
+  const version = await page.evaluate(() => window.__accessCheckDom?.version ?? null);
+  if (version !== DOM_ENGINE_VERSION) {
+    throw new ScanFailure(
+      `The audit engine in the page reports version ${version}, this driver needs ${DOM_ENGINE_VERSION}. Rebuild it with \`npm run build:engine\`.`,
+      "internal",
+    );
+  }
+}
 
 export class ScanFailure extends Error {
   constructor(
@@ -79,6 +99,7 @@ const WARNING_TEXT: Record<ScanWarningCode, string> = {
   "keyboard-skipped": "The keyboard and focus-order check was skipped.",
   "contexts-skipped": "The mobile and dynamic-state check was skipped.",
   "stream-interrupted": "The audit was cut short before every check finished.",
+  "cross-origin-assets": "Some styles and media came from another origin and could not be read.",
 };
 
 export function normalizeUrl(input: string): string {
@@ -398,6 +419,8 @@ async function runScanAttempt(
 
     await track("prime", () => policy.run("prime", () => primeLazyContent(page), undefined));
 
+    await track("engine", () => injectDomEngine(page));
+
     const readiness = await track("contentReady", () =>
       policy.run(
         "content-ready",
@@ -419,7 +442,7 @@ async function runScanAttempt(
 
     const runAxe = async (): Promise<AxeResults> => {
       await page.addScriptTag({ path: AXE_PATH });
-      return page.evaluate(runAxeInPage, AXE_TAGS);
+      return page.evaluate((tags) => window.__accessCheckDom!.runAxe(tags), AXE_TAGS);
     };
 
     const axe = await track("axe", async (): Promise<AxeResults | null> => {
@@ -454,7 +477,11 @@ async function runScanAttempt(
         : (
             await policy.run<Record<string, ElementInfo>>(
               "element-info",
-              () => page.evaluate(collectElementInfo, elementSelectors),
+              () =>
+                page.evaluate(
+                  (selectors) => window.__accessCheckDom!.collectElementInfo(selectors),
+                  elementSelectors,
+                ),
               {},
             )
           ).value;
@@ -509,7 +536,7 @@ async function runScanAttempt(
         "markers",
         () =>
           page.evaluate(
-            collectRects,
+            (selectors) => window.__accessCheckDom!.collectRects(selectors),
             targets.map((t) => t.selector),
           ),
         targets.map(() => null),

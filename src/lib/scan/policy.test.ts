@@ -13,6 +13,7 @@ const TEXT = {
   "keyboard-skipped": "no keyboard pass",
   "contexts-skipped": "no contexts pass",
   "stream-interrupted": "cut short",
+  "cross-origin-assets": "cross-origin assets",
 } satisfies Record<ScanWarningCode, string>;
 
 function clock(start = 0) {

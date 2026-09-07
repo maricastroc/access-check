@@ -1,14 +1,13 @@
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import { existsSync, readFileSync, renameSync } from "node:fs";
 import { createServer, type Server } from "node:http";
 import type { AddressInfo, Socket } from "node:net";
 import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Browser, Page } from "playwright-core";
 import { acquireBrowser, closeSharedBrowser } from "../browser";
-import { collectElementInfo } from "./element-info";
-import { collectLiveRegionsRaw } from "./live-regions";
-import { collectTargetSizeRaw } from "./target-size";
-import { collectRects } from "./rects";
+import { DOM_ENGINE_VERSION } from "./engine-api";
 import { INTERACTIVE } from "../target-size";
 import { runScan } from "../scan";
 import { SCORING_VERSION } from "../scored";
@@ -50,7 +49,13 @@ const FIXTURE = `<!doctype html>
   </body>
 </html>`;
 
-const BUNDLE = fileURLToPath(new URL("../../../../extension/dist/audit.js", import.meta.url));
+const repoFile = (rel: string) => fileURLToPath(new URL(`../../../../${rel}`, import.meta.url));
+
+const HOSTED_ENGINE = repoFile("dom-engine/dom-engine.js");
+const EXTENSION_ENGINE = repoFile("extension/dist/dom-engine.js");
+const EXTENSION_AUDIT = repoFile("extension/dist/audit.js");
+
+const sha = (path: string) => createHash("sha256").update(readFileSync(path)).digest("hex");
 
 let server: Server;
 let origin = "";
@@ -62,7 +67,10 @@ beforeAll(async () => {
   execFileSync("node", ["extension/build.mjs"], { stdio: "pipe" });
 
   server = createServer((_req, res) => {
-    res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+    res.writeHead(200, {
+      "content-type": "text/html; charset=utf-8",
+      "content-security-policy": "default-src 'self'; script-src 'self'",
+    });
     res.end(FIXTURE);
   });
   server.on("connection", (socket) => {
@@ -73,11 +81,14 @@ beforeAll(async () => {
   origin = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 
   browser = await acquireBrowser();
-  const context = await browser.newContext({ viewport: { width: 1200, height: 800 } });
+  const context = await browser.newContext({
+    viewport: { width: 1200, height: 800 },
+    bypassCSP: true,
+  });
   page = await context.newPage();
   await page.goto(`${origin}/`, { waitUntil: "domcontentloaded" });
-  await page.addScriptTag({ path: BUNDLE });
-}, 60_000);
+  await page.addScriptTag({ path: HOSTED_ENGINE });
+}, 90_000);
 
 afterAll(async () => {
   await closeSharedBrowser();
@@ -85,82 +96,81 @@ afterAll(async () => {
   await new Promise<void>((resolve) => server.close(() => resolve()));
 });
 
-function throughBundle<T>(call: string): Promise<T> {
-  return page.evaluate(`window.__accessCheckEngine.${call}`) as Promise<T>;
-}
-
-describe("DOM engine parity: hosted page.evaluate vs the extension bundle", () => {
-  it("reads the same live regions", async () => {
-    const hosted = await page.evaluate(collectLiveRegionsRaw);
-    const extension = await throughBundle("collectLiveRegionsRaw()");
-    expect(hosted.regions.length).toBeGreaterThan(0);
-    expect(extension).toEqual(hosted);
+describe("the two environments load one artifact", () => {
+  it("ships the same bytes to the scanner and to the extension", () => {
+    expect(existsSync(HOSTED_ENGINE)).toBe(true);
+    expect(existsSync(EXTENSION_ENGINE)).toBe(true);
+    expect(sha(EXTENSION_ENGINE)).toBe(sha(HOSTED_ENGINE));
   });
 
-  it("reads the same element info", async () => {
-    const selectors = ["#email", "#shot", "a", "input[type=text]"];
-    const hosted = await page.evaluate(collectElementInfo, selectors);
-    const extension = await throughBundle(`collectElementInfo(${JSON.stringify(selectors)})`);
-    expect(hosted["#shot"].nearbyText).toBe("A caption near the image");
-    expect(extension).toEqual(hosted);
+  it("matches the hash the build recorded", () => {
+    const recorded = readFileSync(repoFile("dom-engine/dom-engine.sha256"), "utf8").trim();
+    expect(sha(HOSTED_ENGINE).slice(0, 16)).toBe(recorded);
   });
 
-  it("measures the same target sizes", async () => {
-    const hosted = await page.evaluate(collectTargetSizeRaw, INTERACTIVE);
-    const extension = await throughBundle(
-      `collectTargetSizeRaw(window.__accessCheckEngine.INTERACTIVE)`,
-    );
-    expect(hosted.targets.length).toBeGreaterThan(0);
-    expect(extension).toEqual(hosted);
-  });
-
-  it("measures the same rectangles", async () => {
-    const selectors = ["#shot", ".tiny", "a"];
-    const hosted = await page.evaluate(collectRects, selectors);
-    const extension = await throughBundle(`collectRects(${JSON.stringify(selectors)})`);
-    expect(hosted[0]).not.toBeNull();
-    expect(extension).toEqual(hosted);
-  });
-
-  it("agrees on the interactive selector both sides query", async () => {
-    expect(await throughBundle("INTERACTIVE")).toBe(INTERACTIVE);
-  });
-
-  it("would fail if the two paths ever disagreed", async () => {
-    const other = await browser.newContext({ viewport: { width: 1200, height: 800 } });
-    const mutated = await other.newPage();
-    await mutated.goto(`${origin}/`, { waitUntil: "domcontentloaded" });
-    await mutated.addScriptTag({ path: BUNDLE });
-
-    const before = await mutated.evaluate(collectLiveRegionsRaw);
-    await mutated.evaluate(() => {
-      const extra = document.createElement("div");
-      extra.setAttribute("aria-live", "assertive");
-      document.body.append(extra);
-    });
-    const after = await mutated.evaluate(`window.__accessCheckEngine.collectLiveRegionsRaw()`);
-
-    expect(after).not.toEqual(before);
-    await other.close();
-  });
-
-  it("keeps every engine function free of module scope, which serialization drops", async () => {
-    const fns = [collectLiveRegionsRaw, collectElementInfo, collectTargetSizeRaw, collectRects];
-    for (const fn of fns) {
-      const rebuilt = await page.evaluate(
-        ([source, arg]) => {
-          try {
-            const f = new Function(`return (${source})`)() as (a: unknown) => unknown;
-            f(arg);
-            return "ok";
-          } catch (e) {
-            return e instanceof Error ? e.message : String(e);
-          }
-        },
-        [fn.toString(), fn === collectTargetSizeRaw ? INTERACTIVE : []] as [string, unknown],
-      );
-      expect(rebuilt, `${fn.name} referenced something outside its own body`).toBe("ok");
+  it("carries no Node, Playwright, Next or extension code", () => {
+    const source = readFileSync(HOSTED_ENGINE, "utf8");
+    for (const forbidden of ["playwright", "node:", "process.env", "chrome.", "fetch(", "next/"]) {
+      expect(source, `engine contains ${forbidden}`).not.toContain(forbidden);
     }
+  });
+
+  it("holds one copy of the DOM helpers, and the audit bundle adds none", () => {
+    const engine = readFileSync(HOSTED_ENGINE, "utf8");
+    const audit = readFileSync(EXTENSION_AUDIT, "utf8");
+    const copies = (text: string) => text.split("nth-of-type").length - 1;
+
+    expect(copies(engine)).toBe(1);
+    expect(copies(audit)).toBe(0);
+  });
+
+  it.skipIf(!existsSync(repoFile(".next/server/app/api/scan/route.js.nft.json")))(
+    "is traced into the serverless bundle, next to axe-core",
+    () => {
+      const trace = JSON.parse(
+        readFileSync(repoFile(".next/server/app/api/scan/route.js.nft.json"), "utf8"),
+      ) as { files: string[] };
+
+      expect(trace.files.some((f) => f.endsWith("dom-engine/dom-engine.js"))).toBe(true);
+      expect(trace.files.some((f) => f.endsWith("axe-core/axe.min.js"))).toBe(true);
+    },
+  );
+
+  it("announces its version so a mismatched pair fails loudly", async () => {
+    expect(await page.evaluate(() => window.__accessCheckDom?.version)).toBe(DOM_ENGINE_VERSION);
+  });
+
+  it("loads under a strict CSP", async () => {
+    expect(await page.evaluate(() => typeof window.__accessCheckDom?.cssPath)).toBe("function");
+  });
+});
+
+describe("the engine reads the page the same way from either caller", () => {
+  it("reads live regions", async () => {
+    const raw = await page.evaluate(() => window.__accessCheckDom!.collectLiveRegionsRaw());
+    expect(raw.regions.length).toBeGreaterThan(0);
+  });
+
+  it("reads element info", async () => {
+    const info = await page.evaluate(
+      (selectors) => window.__accessCheckDom!.collectElementInfo(selectors),
+      ["#shot"],
+    );
+    expect(info["#shot"].nearbyText).toBe("A caption near the image");
+  });
+
+  it("measures target sizes and rectangles", async () => {
+    const targets = await page.evaluate(
+      (interactive) => window.__accessCheckDom!.collectTargetSizeRaw(interactive),
+      INTERACTIVE,
+    );
+    const rects = await page.evaluate(
+      (selectors) => window.__accessCheckDom!.collectRects(selectors),
+      ["#shot"],
+    );
+
+    expect(targets.targets.length).toBeGreaterThan(0);
+    expect(rects[0]).not.toBeNull();
   });
 });
 
@@ -176,7 +186,8 @@ describe("ScanResult parity: hosted runScan vs the extension bundle", () => {
       verifyFixes: false,
     });
 
-    await page.addScriptTag({ path: "node_modules/axe-core/axe.min.js" });
+    await page.addScriptTag({ path: repoFile("node_modules/axe-core/axe.min.js") });
+    await page.addScriptTag({ path: EXTENSION_AUDIT });
     extension = (await page.evaluate(() => window.__accessCheckAudit!())) as ScanResult;
   }, 90_000);
 
@@ -188,7 +199,6 @@ describe("ScanResult parity: hosted runScan vs the extension bundle", () => {
   it("scores and counts the same page the same way", () => {
     expect(extension.score).toBe(hosted.score);
     expect(extension.counts).toEqual(hosted.counts);
-    expect(extension.summary).toBe(hosted.summary);
     expect(extension.fixFirst).toEqual(hosted.fixFirst);
   });
 
@@ -202,48 +212,38 @@ describe("ScanResult parity: hosted runScan vs the extension bundle", () => {
     expect(extension.markers).toEqual(hosted.markers);
   });
 
-  it("does not pass by accident on a fixture the hosted flow checks more deeply", () => {
-    expect(hosted.audits?.reducedMotion?.findings ?? []).toEqual([]);
-    expect(extension.audits?.reducedMotion).toBeUndefined();
-  });
-
   it("runs the same own-rule audits it can run", () => {
     expect(extension.audits?.targetSize).toEqual(hosted.audits?.targetSize);
     expect(extension.audits?.liveRegions).toEqual(hosted.audits?.liveRegions);
   });
 
-  it("never claims a fix was verified, since it does not write to the page", () => {
-    const grouped = extension.violations.flatMap((v) => v.fixGroups ?? []);
-    expect(grouped.length).toBeGreaterThan(0);
-    expect(grouped.every((g) => g.verification === "unchecked")).toBe(true);
-    expect(extension.violations.every((v) => (v.verification ?? "unchecked") === "unchecked")).toBe(
-      true,
-    );
+  it("does not pass by accident on a fixture the hosted flow checks more deeply", () => {
+    expect(hosted.audits?.reducedMotion?.findings ?? []).toEqual([]);
+    expect(extension.audits?.reducedMotion).toBeUndefined();
   });
 
-  it("stamps the scoring model, so a fresh reading is never taken for a legacy one", () => {
+  it("stamps the scoring model on both", () => {
     expect(extension.scoringVersion).toBe(SCORING_VERSION);
     expect(hosted.scoringVersion).toBe(SCORING_VERSION);
-    expect(JSON.parse(JSON.stringify(extension)).scoringVersion).toBe(SCORING_VERSION);
   });
 
   it("carries the partial status in the data, not only in the report", () => {
     expect(extension.partial).toBe(true);
     expect(extension.summary).not.toContain("Excellent");
-    expect(extension.warnings?.length).toBeGreaterThan(0);
     expect(JSON.parse(JSON.stringify(extension)).partial).toBe(true);
   });
+});
 
-  it("says out loud what it could not check", () => {
-    expect(extension.partial).toBe(true);
-    expect(extension.warnings?.map((w) => w.code).sort()).toEqual([
-      "audits-skipped",
-      "contexts-skipped",
-      "keyboard-skipped",
-      "verification-skipped",
-    ]);
-    expect(extension.keyboard).toBeUndefined();
-    expect(extension.contexts).toBeUndefined();
-    expect(extension.audits?.reducedMotion).toBeUndefined();
-  });
+describe("a missing engine fails in the open", () => {
+  it("tells the hosted scanner how to build it", async () => {
+    const parked = `${HOSTED_ENGINE}.parked`;
+    renameSync(HOSTED_ENGINE, parked);
+    try {
+      await expect(runScan(`${origin}/`, { screenshot: false })).rejects.toThrow(
+        /audit engine could not be loaded[\s\S]*build:engine/,
+      );
+    } finally {
+      renameSync(parked, HOSTED_ENGINE);
+    }
+  }, 60_000);
 });

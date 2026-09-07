@@ -92,26 +92,6 @@ export async function collectContexts(
 
   try {
     const triggers = await page.evaluate((max) => {
-      const cssPath = (el: Element | null): string => {
-        if (!el || el.nodeType !== 1) return "";
-        const parts: string[] = [];
-        let node: Element | null = el;
-        while (node && node.nodeType === 1 && parts.length < 5) {
-          if (node.id) {
-            parts.unshift(`#${CSS.escape(node.id)}`);
-            break;
-          }
-          let s = node.tagName.toLowerCase();
-          const p: Element | null = node.parentElement;
-          if (p) {
-            const same = Array.from(p.children).filter((c) => c.tagName === node!.tagName);
-            if (same.length > 1) s += `:nth-of-type(${same.indexOf(node) + 1})`;
-          }
-          parts.unshift(s);
-          node = p;
-        }
-        return parts.join(" > ");
-      };
       const nameOf = (el: Element): string => {
         const a = el.getAttribute("aria-label");
         if (a && a.trim()) return a.trim().slice(0, 40);
@@ -131,7 +111,7 @@ export async function collectContexts(
       const seen = new Set<string>();
       const add = (el: Element, kind: "details" | "aria", controls: string | null) => {
         if (out.length >= max) return;
-        const sel = cssPath(el);
+        const sel = window.__accessCheckDom!.cssPath(el);
         if (!sel || seen.has(sel)) return;
         seen.add(sel);
         out.push({

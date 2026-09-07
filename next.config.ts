@@ -5,11 +5,13 @@ const nextConfig: NextConfig = {
 
   outputFileTracingIncludes: {
     "/api/scan": [
+      "./dom-engine/**",
       "./node_modules/axe-core/axe.min.js",
       "./node_modules/playwright-core/**",
       "./node_modules/@sparticuz/chromium/**",
     ],
     "/api/site-scan/page": [
+      "./dom-engine/**",
       "./node_modules/axe-core/axe.min.js",
       "./node_modules/playwright-core/**",
       "./node_modules/@sparticuz/chromium/**",

@@ -5,8 +5,8 @@
   "author": "Mariana Castro <marianacastrorc@gmail.com> (https://github.com/maricastroc)",
   "license": "MIT",
   "scripts": {
-    "dev": "next dev",
-    "build": "prisma generate && next build",
+    "dev": "npm run build:engine && next dev",
+    "build": "prisma generate && npm run build:engine && next build",
     "start": "next start",
     "postinstall": "prisma generate",
     "lint": "eslint",
@@ -19,7 +19,8 @@
     "format:check": "prettier --check .",
     "fix": "eslint --fix && prettier --write .",
     "build:extension": "node extension/build.mjs",
-    "check:extension": "node scripts/check-extension.mjs"
+    "check:extension": "node scripts/check-extension.mjs",
+    "build:engine": "node scripts/build-dom-engine.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",

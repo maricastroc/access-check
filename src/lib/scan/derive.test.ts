@@ -80,3 +80,55 @@ describe("buildSummary", () => {
     expect(buildSummary({ critical: 0, serious: 0, moderate: 0 })).toMatch(/Excellent/i);
   });
 });
+
+describe("buildSummary tells the four kinds apart", () => {
+  const none = { critical: 0, serious: 0, moderate: 0 };
+
+  it("says a clean page is clean when nothing at all is left", () => {
+    expect(buildSummary(none)).toBe("Excellent. No automated findings on this page.");
+  });
+
+  it("does not call a page clean while a best practice is listed", () => {
+    const text = buildSummary({ ...none, bestPractice: 1 });
+
+    expect(text).not.toContain("Excellent");
+    expect(text).toContain("No scored WCAG failures were found.");
+    expect(text).toContain("1 best-practice recommendation remains, outside the score.");
+  });
+
+  it("names manual-review items left behind", () => {
+    const text = buildSummary({ ...none, manualReview: 2 });
+
+    expect(text).toContain("No scored WCAG failures were found.");
+    expect(text).toContain("2 manual-review items remain, outside the score.");
+  });
+
+  it("names both when both are there", () => {
+    expect(buildSummary({ ...none, bestPractice: 1, manualReview: 2 })).toBe(
+      "No scored WCAG failures were found. 1 best-practice recommendation and 2 manual-review items remain, outside the score.",
+    );
+  });
+
+  it("keeps the failure sentence first when something did fail", () => {
+    const text = buildSummary({ critical: 1, serious: 0, moderate: 0, bestPractice: 1 });
+
+    expect(text).toMatch(/^Strong foundation, but 1 critical finding blocks/);
+    expect(text).toContain("1 best-practice recommendation remains");
+  });
+
+  it("keeps the partial caveat in every one of those states", () => {
+    expect(buildSummary(none, { partial: true })).toContain("not a clean bill of health");
+    expect(buildSummary({ ...none, bestPractice: 1 }, { partial: true })).toContain(
+      "not a clean bill of health",
+    );
+    expect(buildSummary({ ...none, manualReview: 2 }, { partial: true })).toContain(
+      "2 manual-review items remain",
+    );
+    expect(buildSummary({ critical: 1, serious: 0, moderate: 0 }, { partial: true })).toContain(
+      "critical finding blocks",
+    );
+    expect(buildSummary({ critical: 0, serious: 2, moderate: 0 }, { partial: true })).toContain(
+      "No critical blockers among the checks that ran",
+    );
+  });
+});

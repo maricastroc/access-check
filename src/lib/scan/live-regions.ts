@@ -1,5 +1,4 @@
 import type { Page } from "playwright-core";
-import { collectLiveRegionsRaw } from "./dom/live-regions";
 import type { AuditFinding } from "./audits";
 import { MAX_AUDIT_SELECTORS, sortFindings } from "./audits";
 
@@ -90,6 +89,8 @@ export function analyzeLiveRegions(raw: RawLiveRegions): LiveRegionsReport {
 }
 
 export async function collectLiveRegions(page: Page): Promise<LiveRegionsReport> {
-  const raw = (await page.evaluate(collectLiveRegionsRaw)) as RawLiveRegions;
+  const raw = (await page.evaluate(() =>
+    window.__accessCheckDom!.collectLiveRegionsRaw(),
+  )) as RawLiveRegions;
   return analyzeLiveRegions(raw);
 }

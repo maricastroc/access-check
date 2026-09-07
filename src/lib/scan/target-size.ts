@@ -1,5 +1,4 @@
 import type { Page } from "playwright-core";
-import { collectTargetSizeRaw } from "./dom/target-size";
 import type { AuditFinding } from "./audits";
 import { MAX_AUDIT_SELECTORS } from "./audits";
 
@@ -86,6 +85,9 @@ export const INTERACTIVE =
   '[role="tab"], [role="menuitem"], [role="switch"], [contenteditable="true"], [onclick]';
 
 export async function collectTargetSize(page: Page): Promise<TargetSizeReport> {
-  const raw = (await page.evaluate(collectTargetSizeRaw, INTERACTIVE)) as RawTargetSize;
+  const raw = (await page.evaluate(
+    (interactive) => window.__accessCheckDom!.collectTargetSizeRaw(interactive),
+    INTERACTIVE,
+  )) as RawTargetSize;
   return analyzeTargetSize(raw);
 }

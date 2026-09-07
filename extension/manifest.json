@@ -3,7 +3,8 @@
   "name": "AccessCheck (prototype)",
   "version": "0.1.0",
   "description": "Audit the page you are on with the AccessCheck engine. Nothing leaves your browser.",
-  "permissions": ["activeTab", "scripting"],
+  "permissions": ["activeTab", "scripting", "sidePanel"],
   "action": { "default_title": "Audit this page with AccessCheck" },
+  "side_panel": { "default_path": "panel.html" },
   "background": { "service_worker": "background.js" }
 }

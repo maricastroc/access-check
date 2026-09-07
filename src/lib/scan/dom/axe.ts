@@ -16,6 +16,35 @@ export const AXE_TAGS = [
   "best-practice",
 ];
 
-export async function runAxeInPage(tags: string[]): Promise<AxeResults> {
-  return await window.axe.run(document, { runOnly: { type: "tag", values: tags } });
+export async function runAxeInPage(
+  tags: string[],
+  options: { preload?: boolean } = {},
+): Promise<AxeResults> {
+  return await window.axe.run(document, {
+    runOnly: { type: "tag", values: tags },
+    ...(options.preload === undefined ? {} : { preload: options.preload }),
+  });
+}
+
+export function crossOriginAssets(): { styleSheets: number; media: number } {
+  let styleSheets = 0;
+  for (const sheet of Array.from(document.styleSheets)) {
+    try {
+      void sheet.cssRules;
+    } catch {
+      styleSheets += 1;
+    }
+  }
+
+  const media = Array.from(document.querySelectorAll("audio, video, source")).filter((el) => {
+    const src = el.getAttribute("src");
+    if (!src) return false;
+    try {
+      return new URL(src, document.baseURI).origin !== location.origin;
+    } catch {
+      return false;
+    }
+  }).length;
+
+  return { styleSheets, media };
 }

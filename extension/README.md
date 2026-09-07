@@ -4,9 +4,9 @@ Audits the page you are already on — including pages behind a login, on localh
 or on staging, which the hosted scanner cannot reach. Nothing leaves the browser:
 no network calls, no storage, no account.
 
-It runs the same engine as the hosted scanner. `src/audit.ts` imports the audit
-code from `src/lib/scan/` and only decides the order of the calls; there is no
-second copy of any rule.
+It runs the same engine as the hosted scanner: `dom-engine.js` here is the same
+file `npm run build:engine` produces for the server to inject, byte for byte.
+The panel renders the product's own report model and components.
 
 ## Build and load
 
@@ -21,7 +21,7 @@ Then in Chrome:
 3. **Load unpacked** → pick the `extension/dist` folder
 4. open any page, click the AccessCheck icon in the toolbar
 
-The report opens in a new tab. The click is what grants access to that one tab
+The report opens in the Chrome side panel, beside the page you audited. The click is what grants access to that one tab
 (`activeTab`), so the extension never has standing permission to any site — the
 install prompt asks for no host access at all.
 

@@ -15,7 +15,8 @@ export type ScanWarningCode =
   | "audits-skipped"
   | "keyboard-skipped"
   | "contexts-skipped"
-  | "stream-interrupted";
+  | "stream-interrupted"
+  | "cross-origin-assets";
 
 export type ScanWarning = { code: ScanWarningCode; message: string };
 
