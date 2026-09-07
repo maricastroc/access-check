@@ -61,6 +61,7 @@ export const demoFinding: FindingView = {
     },
   ],
   located: true,
+  contexts: [],
   noMarkerReason: "",
 };
 

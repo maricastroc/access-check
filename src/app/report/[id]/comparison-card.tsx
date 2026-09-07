@@ -39,16 +39,22 @@ export function ComparisonCard({ diff, previousAt }: { diff: ScanDiff; previousA
           <span className="text-2xl font-bold text-muted">{diff.scoreFrom}</span>
           <FontAwesomeIcon icon={faMinus} className="text-line-strong rotate-0 text-xs" />
           <span className="text-2xl font-bold text-ink">{diff.scoreTo}</span>
-          <span
-            className="flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-bold"
-            style={{ color: deltaColor, background: `${deltaColor}1a` }}
-          >
-            <FontAwesomeIcon
-              icon={up ? faArrowUp : down ? faArrowDown : faMinus}
-              className="text-[10px]"
-            />
-            {diff.scoreDelta > 0 ? `+${diff.scoreDelta}` : diff.scoreDelta}
-          </span>
+          {diff.comparable ? (
+            <span
+              className="flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-bold"
+              style={{ color: deltaColor, background: `${deltaColor}1a` }}
+            >
+              <FontAwesomeIcon
+                icon={up ? faArrowUp : down ? faArrowDown : faMinus}
+                className="text-[10px]"
+              />
+              {diff.scoreDelta > 0 ? `+${diff.scoreDelta}` : diff.scoreDelta}
+            </span>
+          ) : (
+            <span className="rounded-full bg-canvas px-2.5 py-1 text-sm font-semibold text-muted">
+              Scoring model updated
+            </span>
+          )}
         </div>
       </div>
 
@@ -65,7 +71,7 @@ export function ComparisonCard({ diff, previousAt }: { diff: ScanDiff; previousA
                 <span className="text-sm text-muted">{c.from}</span>
                 <span className="text-line-strong text-[10px]">→</span>
                 <span className="text-sm font-semibold text-ink">{c.to}</span>
-                {c.delta !== 0 && (
+                {diff.comparable && c.delta !== 0 && (
                   <span
                     className="ml-auto text-[11px] font-bold"
                     style={{ color: c.delta < 0 ? "#16764f" : "#c62a2f" }}
@@ -78,6 +84,14 @@ export function ComparisonCard({ diff, previousAt }: { diff: ScanDiff; previousA
           );
         })}
       </div>
+
+      {!diff.comparable && (
+        <p className="mt-3 text-[12.5px] text-muted">
+          These two audits were scored by different models (v{diff.scoringFrom} and v
+          {diff.scoringTo}), so the numbers above are not a rise or a fall. Which rules were fixed
+          and which regressed is unaffected.
+        </p>
+      )}
 
       <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <DiffList

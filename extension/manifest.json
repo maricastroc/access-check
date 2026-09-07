@@ -1,0 +1,9 @@
+{
+  "manifest_version": 3,
+  "name": "AccessCheck (prototype)",
+  "version": "0.1.0",
+  "description": "Audit the page you are on with the AccessCheck engine. Nothing leaves your browser.",
+  "permissions": ["activeTab", "scripting"],
+  "action": { "default_title": "Audit this page with AccessCheck" },
+  "background": { "service_worker": "background.js" }
+}

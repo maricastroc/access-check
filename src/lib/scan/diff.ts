@@ -1,10 +1,14 @@
 import type { ScanResult, ScanViolation, Severity } from "./types";
+import { scoringVersionOf } from "./scored";
 
 export type ViolationRef = { id: string; title: string; severity: Severity };
 
 export type CountKey = Severity | "passed";
 
 export type ScanDiff = {
+  comparable: boolean;
+  scoringFrom: number;
+  scoringTo: number;
   scoreFrom: number;
   scoreTo: number;
   scoreDelta: number;
@@ -45,7 +49,13 @@ export function diffScans(prev: ScanResult, curr: ScanResult): ScanDiff {
     }),
   ) as Record<CountKey, { from: number; to: number; delta: number }>;
 
+  const scoringFrom = scoringVersionOf(prev);
+  const scoringTo = scoringVersionOf(curr);
+
   return {
+    comparable: scoringFrom === scoringTo,
+    scoringFrom,
+    scoringTo,
     scoreFrom: prev.score,
     scoreTo: curr.score,
     scoreDelta: curr.score - prev.score,

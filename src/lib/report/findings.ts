@@ -56,6 +56,7 @@ export type FindingView = {
   markers: ScanMarker[];
   located: boolean;
   noMarkerReason: string;
+  contexts: string[];
 };
 
 function distinct(list: string[]): string[] {
@@ -112,6 +113,7 @@ function wcagFinding(
     selectors: affected,
     markers: linked,
     located: linked.length > 0,
+    contexts: v.contexts ?? [],
     noMarkerReason: linked.length > 0 ? "" : markerReason(v.id, "wcag", isDocLevelCategory(v.id)),
   };
 }
@@ -162,6 +164,7 @@ function complementaryFinding(f: PassFinding, kind: FindingKind): Omit<FindingVi
     selectors: affected,
     markers: [],
     located: false,
+    contexts: [],
     noMarkerReason: markerReason(f.id, kind, false),
   };
 }
@@ -202,6 +205,7 @@ function contextFinding(issue: ContextIssue, where: string): Omit<FindingView, "
     selectors: affected,
     markers: [],
     located: false,
+    contexts: [where],
     noMarkerReason: markerReason(issue.id, "context", false),
   };
 }
@@ -240,6 +244,7 @@ function bestPracticeFindings(result: ScanResult): Omit<FindingView, "n">[] {
       selectors: affected,
       markers: [],
       located: false,
+      contexts: [],
       noMarkerReason: markerReason(bp.id, "best-practice", false),
     };
   });
@@ -260,25 +265,34 @@ export function buildFindings(result: ScanResult): FindingView[] {
   const verifySkipped = (result.warnings ?? []).some((w) => w.code === "verification-skipped");
   const withSeverity: Omit<FindingView, "n">[] = [];
 
-  for (const v of result.violations)
-    withSeverity.push(wcagFinding(v, result.markers, verifySkipped));
+  const listed = new Map<string, Omit<FindingView, "n">>();
+  const add = (finding: Omit<FindingView, "n">, context?: string) => {
+    const seen = listed.get(finding.ruleId);
+    if (seen) {
+      if (context && !seen.contexts.includes(context)) seen.contexts.push(context);
+      return;
+    }
+    listed.set(finding.ruleId, finding);
+    withSeverity.push(finding);
+  };
 
-  for (const f of result.keyboard?.findings ?? [])
-    withSeverity.push(complementaryFinding(f, "keyboard"));
+  for (const v of result.violations) add(wcagFinding(v, result.markers, verifySkipped));
+
+  for (const f of result.keyboard?.findings ?? []) add(complementaryFinding(f, "keyboard"));
 
   for (const f of result.audits?.targetSize?.findings ?? [])
-    withSeverity.push(complementaryFinding(f, "target-size"));
+    add(complementaryFinding(f, "target-size"));
   for (const f of result.audits?.reducedMotion?.findings ?? [])
-    withSeverity.push(complementaryFinding(f, "reduced-motion"));
+    add(complementaryFinding(f, "reduced-motion"));
   for (const f of result.audits?.liveRegions?.findings ?? [])
-    withSeverity.push(complementaryFinding(f, "live-regions"));
+    add(complementaryFinding(f, "live-regions"));
 
   const ctx = result.contexts;
   if (ctx) {
-    for (const issue of ctx.mobile.onlyOnMobile)
-      withSeverity.push(contextFinding(issue, `${ctx.mobile.width}px viewport`));
+    const mobile = `${ctx.mobile.width}px viewport`;
+    for (const issue of ctx.mobile.onlyOnMobile) add(contextFinding(issue, mobile), mobile);
     for (const state of ctx.dynamic.states)
-      for (const issue of state.newIssues) withSeverity.push(contextFinding(issue, state.label));
+      for (const issue of state.newIssues) add(contextFinding(issue, state.label), state.label);
   }
 
   withSeverity.sort((a, b) => {
@@ -288,7 +302,9 @@ export function buildFindings(result: ScanResult): FindingView[] {
     return b.elements - a.elements;
   });
 
-  const ordered = [...withSeverity, ...bestPracticeFindings(result)];
+  const bestPractice = bestPracticeFindings(result).filter((f) => !listed.has(f.ruleId));
+
+  const ordered = [...withSeverity, ...bestPractice];
   return ordered.map((f, i) => ({ ...f, n: i + 1 }));
 }
 

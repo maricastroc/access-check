@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ScanResult } from "@/lib/scan/types";
 import { SCAN_FRESH_MS, SCAN_FRESH_SECONDS } from "@/lib/scan/cache-policy";
+import { SCORING_VERSION } from "@/lib/scan/scored";
 
 const auth = vi.fn();
 const runScan = vi.fn();
@@ -43,6 +44,7 @@ function result(overrides: Partial<ScanResult> = {}): ScanResult {
     scannedElements: 16,
     durationMs: 2_100,
     scannedAt: new Date().toISOString(),
+    scoringVersion: SCORING_VERSION,
     screenshot: SHOT,
     score: 100,
     counts: {
@@ -107,7 +109,7 @@ describe("POST /api/scan", () => {
     const events = await eventsOf(await post({ url: "example.com" }));
 
     expect(runScan).not.toHaveBeenCalled();
-    expect(cacheGet).toHaveBeenCalledWith("scan:https://example.com");
+    expect(cacheGet).toHaveBeenCalledWith(`scan:v${SCORING_VERSION}:https://example.com`);
     expect(events).toEqual([
       {
         type: "result",
@@ -142,7 +144,7 @@ describe("POST /api/scan", () => {
     await eventsOf(await post({ url: "example.com" }));
 
     expect(cacheSet).toHaveBeenCalledWith(
-      "scan:https://example.com",
+      `scan:v${SCORING_VERSION}:https://example.com`,
       expect.objectContaining({ screenshot: SHOT }),
       SCAN_FRESH_SECONDS,
     );
@@ -154,7 +156,7 @@ describe("POST /api/scan", () => {
     await eventsOf(await post({ url: "example.com" }));
 
     expect(cacheSet).toHaveBeenCalledWith(
-      "scan:https://example.com",
+      `scan:v${SCORING_VERSION}:https://example.com`,
       expect.objectContaining({ screenshot: null }),
       SCAN_FRESH_SECONDS,
     );

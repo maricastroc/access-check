@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import type { ScanResult } from "./types";
 import { clearScanCache, recallScan, rememberScan } from "./result-cache";
 import { SCAN_FRESH_MS } from "./cache-policy";
+import { SCORING_VERSION } from "./scored";
 
 function result(overrides: Partial<ScanResult> = {}): ScanResult {
   return {
@@ -11,6 +12,7 @@ function result(overrides: Partial<ScanResult> = {}): ScanResult {
     scannedElements: 120,
     durationMs: 12_000,
     scannedAt: new Date().toISOString(),
+    scoringVersion: SCORING_VERSION,
     screenshot: null,
     score: 82,
     counts: {
@@ -45,6 +47,11 @@ describe("scan result cache", () => {
     for (const spelling of ["stripe.com", "STRIPE.com/", " https://stripe.com ", "stripe.com/"]) {
       expect(recallScan(spelling)).toBe(scan);
     }
+  });
+
+  it("will not answer with a reading an older scoring model produced", () => {
+    rememberScan(result({ scoringVersion: 1 }), "stripe.com");
+    expect(recallScan("stripe.com")).toBeNull();
   });
 
   it("misses on a page it never measured", () => {

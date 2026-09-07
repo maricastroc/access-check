@@ -25,7 +25,9 @@ export function HistoryList({ scans }: { scans: ScanListItem[] }) {
     const map = new Map<string, number>();
     scans.forEach((scan, i) => {
       const prev = scans.slice(i + 1).find((o) => o.url === scan.url);
-      if (prev) map.set(scan.id, scan.score - prev.score);
+      if (prev && prev.scoringVersion === scan.scoringVersion) {
+        map.set(scan.id, scan.score - prev.score);
+      }
     });
     return map;
   }, [scans]);

@@ -1,44 +1,40 @@
 import path from "path";
 import type { BrowserContext, Page } from "playwright-core";
 import { acquireBrowser, closeSharedBrowser } from "./browser";
-import { criterionFromTags } from "./wcag";
-import {
-  fixAriaAllowedAttr,
-  fixAriaName,
-  fixAriaRequiredAttr,
-  fixContrast,
-  fixDocumentTitle,
-  fixHtmlLang,
-  fixImageAlt,
-  fixLabel,
-  fixMetaViewport,
-  type ElementInfo,
-  type FixApply,
-  type FixResult,
-} from "./remediate";
-import { clusterFixes, type FixCluster } from "./group";
+import { type ElementInfo, type FixApply } from "./remediate";
+import type { FixCluster } from "./group";
 import { collectKeyboard, type KeyboardReport } from "./keyboard";
 import { collectContexts, type ContextReport } from "./contexts";
 import { collectTargetSize } from "./target-size";
 import { collectReducedMotion } from "./reduced-motion";
 import { collectLiveRegions } from "./live-regions";
 import type { AuditsReport } from "./audits";
-import { buildFixFirst, buildSummary, computeScore, severityOrder } from "./derive";
+import { buildCounts, buildFixFirst, buildSummary, computeScore, severityOrder } from "./derive";
 import { Budget } from "./budget";
 import { OPTIONAL_ORDER, ScanPolicy, STAGES, type StageId } from "./policy";
 import { CONTENT_SIGNATURE, waitForContentReady } from "./page-ready";
+import { AXE_TAGS, runAxeInPage } from "./dom/axe";
+import { collectElementInfo } from "./dom/element-info";
+import { collectRects, type DomRect } from "./dom/rects";
+import { buildMarkers, markerTargets } from "./markers";
+import { SCORING_VERSION, scoredViolations } from "./scored";
+import {
+  attachFixGroups,
+  buildBestPractice,
+  buildIncomplete,
+  elementSelectorsFor,
+  enrichViolations,
+  type AxeResults,
+} from "./violations";
 import { captureScreenshot, SCREENSHOT_QUALITY } from "./screenshot";
 import { installNetworkGuard } from "./ssrf";
 import type {
-  FixGroup,
   FixVerification,
   ScanErrorCode,
-  ScanMarker,
   ScanPhase,
   ScanResult,
   ScanViolation,
   ScanWarningCode,
-  Severity,
 } from "./types";
 
 const VIEWPORT = { width: 1200, height: 800 };
@@ -51,7 +47,6 @@ const CONTEXT_OPTIONS = {
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " +
     "(KHTML, like Gecko) Chrome/124.0 Safari/537.36 AccessCheckBot/2.1",
 } as const;
-const MAX_MARKERS = 6;
 const MAX_VERIFY_OPS = 40;
 
 export const DEFAULT_SCAN_BUDGET_MS = 40_000;
@@ -86,42 +81,6 @@ const WARNING_TEXT: Record<ScanWarningCode, string> = {
   "stream-interrupted": "The audit was cut short before every check finished.",
 };
 
-type AxeCheck = { id: string; data?: unknown };
-type AxeNode = {
-  target: unknown;
-  failureSummary?: string;
-  any?: AxeCheck[];
-  all?: AxeCheck[];
-  none?: AxeCheck[];
-};
-
-function checkData(node: AxeNode, id: string): unknown {
-  for (const list of [node.any, node.all, node.none]) {
-    const found = list?.find((c) => c.id === id);
-    if (found) return found.data;
-  }
-  return undefined;
-}
-
-function asStringArray(data: unknown): string[] {
-  if (Array.isArray(data)) return data.filter((x) => typeof x === "string");
-  if (typeof data === "string") return [data];
-  return [];
-}
-type AxeRule = {
-  id: string;
-  impact?: string | null;
-  help: string;
-  description: string;
-  tags: string[];
-  nodes: AxeNode[];
-};
-type AxeResults = {
-  violations: AxeRule[];
-  passes: AxeRule[];
-  incomplete: AxeRule[];
-};
-
 export function normalizeUrl(input: string): string {
   const trimmed = input.trim();
   if (!/^https?:\/\//i.test(trimmed)) return `https://${trimmed}`;
@@ -151,75 +110,9 @@ async function primeLazyContent(page: Page): Promise<void> {
     .catch(() => {});
 }
 
-const ARIA_NAME_RULES = new Set([
-  "button-name",
-  "link-name",
-  "input-button-name",
-  "aria-command-name",
-  "aria-input-field-name",
-  "aria-toggle-field-name",
-]);
-
-const ELEMENT_RULES = new Set(["label", "image-alt", ...ARIA_NAME_RULES]);
-
-function concreteFix(
-  ruleId: string,
-  node: AxeNode | undefined,
-  elInfo?: ElementInfo,
-): FixResult | null {
-  if (!node) return null;
-  if (ruleId === "html-has-lang" || ruleId === "html-lang-valid") return fixHtmlLang();
-  if (ruleId === "document-title") return fixDocumentTitle();
-  if (ruleId === "meta-viewport" || ruleId === "meta-viewport-large") return fixMetaViewport();
-  if (ruleId === "label" && elInfo) return fixLabel(elInfo);
-  if (ruleId === "image-alt" && elInfo) return fixImageAlt(elInfo);
-  if (ARIA_NAME_RULES.has(ruleId) && elInfo) return fixAriaName(elInfo);
-  if (ruleId === "aria-required-attr")
-    return fixAriaRequiredAttr(asStringArray(checkData(node, "aria-required-attr")));
-  if (ruleId === "aria-allowed-attr")
-    return fixAriaAllowedAttr(asStringArray(checkData(node, "aria-allowed-attr")));
-  if (ruleId === "color-contrast") {
-    const check = node.any?.find((c) => c.id === "color-contrast");
-
-    const d = check?.data as
-      | {
-          fgColor?: string;
-          bgColor?: string;
-          contrastRatio?: number;
-          expectedContrastRatio?: string | number;
-        }
-      | undefined;
-    if (
-      d &&
-      typeof d.fgColor === "string" &&
-      typeof d.bgColor === "string" &&
-      typeof d.contrastRatio === "number"
-    ) {
-      const expected =
-        typeof d.expectedContrastRatio === "string"
-          ? parseFloat(d.expectedContrastRatio)
-          : (d.expectedContrastRatio ?? 4.5);
-      return fixContrast({
-        fgColor: d.fgColor,
-        bgColor: d.bgColor,
-        contrastRatio: d.contrastRatio,
-        expectedContrastRatio: Number.isFinite(expected) ? expected : 4.5,
-      });
-    }
-  }
-  return null;
-}
-
-function firstTarget(target: unknown): string | null {
-  if (Array.isArray(target) && typeof target[0] === "string") return target[0];
-  if (typeof target === "string") return target;
-  return null;
-}
-
 type VerifyOp = { ruleId: string; selector: string | null; apply: FixApply };
 
 const VERIFY_IN_PAGE = async (ops: VerifyOp[]): Promise<FixVerification[]> => {
-  // @ts-expect-error axe
   const axe = window.axe;
 
   const runRule = async (context: Element | Document, ruleId: string): Promise<boolean> => {
@@ -526,23 +419,7 @@ async function runScanAttempt(
 
     const runAxe = async (): Promise<AxeResults> => {
       await page.addScriptTag({ path: AXE_PATH });
-      return page.evaluate(async () => {
-        // @ts-expect-error axe
-        return await window.axe.run(document, {
-          runOnly: {
-            type: "tag",
-            values: [
-              "wcag2a",
-              "wcag2aa",
-              "wcag21a",
-              "wcag21aa",
-              "wcag22a",
-              "wcag22aa",
-              "best-practice",
-            ],
-          },
-        });
-      });
+      return page.evaluate(runAxeInPage, AXE_TAGS);
     };
 
     const axe = await track("axe", async (): Promise<AxeResults | null> => {
@@ -569,14 +446,7 @@ async function runScanAttempt(
     const wcagViolations = axe.violations.filter((v) => !v.tags.includes("best-practice"));
     const bpViolations = axe.violations.filter((v) => v.tags.includes("best-practice"));
 
-    const elementSelectors = [
-      ...new Set(
-        wcagViolations
-          .filter((v) => ELEMENT_RULES.has(v.id))
-          .flatMap((v) => v.nodes.map((n) => firstTarget(n.target)))
-          .filter((s): s is string => Boolean(s)),
-      ),
-    ];
+    const elementSelectors = elementSelectorsFor(wcagViolations);
 
     const elementInfos: Record<string, ElementInfo> =
       elementSelectors.length === 0
@@ -584,97 +454,14 @@ async function runScanAttempt(
         : (
             await policy.run<Record<string, ElementInfo>>(
               "element-info",
-              () =>
-                page.evaluate((selectors) => {
-                  const out: Record<string, ElementInfo> = {};
-                  for (const sel of selectors) {
-                    try {
-                      const el = document.querySelector(sel);
-                      if (!el) continue;
-                      out[sel] = {
-                        tag: el.tagName.toLowerCase(),
-                        type: el.getAttribute("type") ?? undefined,
-                        id: el.id || undefined,
-                        name: el.getAttribute("name") ?? undefined,
-                        placeholder: el.getAttribute("placeholder") ?? undefined,
-                        ariaLabel: el.getAttribute("aria-label") ?? undefined,
-                        src: el.getAttribute("src") ?? undefined,
-                        role: el.getAttribute("role") ?? undefined,
-                        text: (el.textContent ?? "").replace(/\s+/g, " ").trim() || undefined,
-                        title: el.getAttribute("title") ?? undefined,
-                        nearbyText:
-                          (() => {
-                            const fig = el.closest("figure");
-                            const cap = fig?.querySelector("figcaption")?.textContent;
-                            if (cap && cap.trim()) return cap.replace(/\s+/g, " ").trim();
-                            const link = el.closest("a");
-                            const lt = link?.textContent;
-                            if (lt && lt.trim()) return lt.replace(/\s+/g, " ").trim();
-                            return undefined;
-                          })() ?? undefined,
-                      };
-                    } catch {
-                      continue;
-                    }
-                  }
-                  return out;
-                }, elementSelectors),
+              () => page.evaluate(collectElementInfo, elementSelectors),
               {},
             )
           ).value;
 
-    type Enriched = { v: ScanViolation; clusters: FixCluster[] };
-    const enriched: Enriched[] = wcagViolations.map((v) => {
-      const severity = (v.impact ?? "minor") as Severity;
-      const firstNode = v.nodes[0];
-      const where = firstNode ? (firstTarget(firstNode.target) ?? "—") : "—";
+    const enriched = enrichViolations(wcagViolations, elementInfos);
 
-      const perNode = v.nodes.map((n) => {
-        const sel = firstTarget(n.target);
-        const elInfo = sel && sel in elementInfos ? elementInfos[sel] : undefined;
-        return { selector: sel, result: concreteFix(v.id, n, elInfo) };
-      });
-      const clusters = clusterFixes(perNode);
-
-      const firstElInfo = where in elementInfos ? elementInfos[where] : undefined;
-      const result = concreteFix(v.id, firstNode, firstElInfo);
-      const fix =
-        result?.text || firstNode?.failureSummary?.replace(/^Fix [^:]+:\s*/i, "").trim() || v.help;
-
-      return {
-        clusters,
-        v: {
-          id: v.id,
-          severity,
-          title: v.help,
-          criterion: criterionFromTags(v.tags) ?? v.id,
-          where,
-          desc: v.description,
-          fix,
-          fixCode: result?.code,
-          nodes: v.nodes.length,
-        } satisfies ScanViolation,
-      };
-    });
-
-    const applyFixGroups = () => {
-      for (const e of enriched) {
-        if (e.clusters.length > 0) {
-          e.v.fixGroups = e.clusters.map(
-            (c) =>
-              ({
-                text: c.text,
-                code: c.code,
-                count: c.count,
-                selectors: c.selectors,
-                verification: c.verification ?? "unchecked",
-              }) satisfies FixGroup,
-          );
-          const main = e.clusters.find((c) => c.selectors.includes(e.v.where)) ?? e.clusters[0];
-          e.v.verification = main.verification ?? "unchecked";
-        }
-      }
-    };
+    const applyFixGroups = () => attachFixGroups(enriched);
 
     const verifyFixes = async () => {
       if (!doVerify) return;
@@ -715,87 +502,32 @@ async function runScanAttempt(
       .map((e) => e.v)
       .sort((a, b) => severityOrder.indexOf(a.severity) - severityOrder.indexOf(b.severity));
 
-    const targets: { selector: string; severity: Severity; label: string }[] = [];
-    for (const v of wcagViolations) {
-      const severity = (v.impact ?? "minor") as Severity;
-      const sel = firstTarget(v.nodes[0]?.target);
-      if (sel) targets.push({ selector: sel, severity, label: v.help });
-    }
+    const targets = markerTargets(wcagViolations);
 
     const rects = (
-      await policy.run<({ x: number; y: number; w: number; h: number } | null)[]>(
+      await policy.run<(DomRect | null)[]>(
         "markers",
         () =>
-          page.evaluate((items) => {
-            return items.map((it) => {
-              try {
-                const el = document.querySelector(it.selector);
-                if (!el) return null;
-                const r = el.getBoundingClientRect();
-                return { x: r.left, y: r.top, w: r.width, h: r.height };
-              } catch {
-                return null;
-              }
-            });
-          }, targets),
+          page.evaluate(
+            collectRects,
+            targets.map((t) => t.selector),
+          ),
         targets.map(() => null),
       )
     ).value;
 
-    const markers: ScanMarker[] = [];
-    targets.forEach((t, i) => {
-      const r = rects[i];
-      if (!r || r.w === 0 || r.h === 0) return;
-      if (r.y < 0 || r.y > VIEWPORT.height || r.x > VIEWPORT.width) return;
-      if (r.w >= VIEWPORT.width * 0.9 && r.h >= VIEWPORT.height * 0.9) return;
-      if (markers.length >= MAX_MARKERS) return;
-      markers.push({
-        n: markers.length + 1,
-        severity: t.severity,
-        label: t.label,
-        left: (r.x / VIEWPORT.width) * 100,
-        top: (r.y / VIEWPORT.height) * 100,
-        width: (r.w / VIEWPORT.width) * 100,
-        height: (r.h / VIEWPORT.height) * 100,
-      });
-    });
+    const markers = buildMarkers(targets, rects, VIEWPORT);
 
-    const counts = {
-      critical: violations.filter((v) => v.severity === "critical").length,
-      serious: violations.filter((v) => v.severity === "serious").length,
-      moderate: violations.filter((v) => v.severity === "moderate").length,
-      minor: violations.filter((v) => v.severity === "minor").length,
+    const counts = buildCounts(violations, {
       passed: axe.passes.length,
       bestPractice: bpViolations.length,
       manualReview: axe.incomplete.length,
-    };
+    });
 
     const passed = axe.passes.map((p) => p.help);
 
-    const MAX_SELECTORS = 5;
-
-    const bestPractice = bpViolations.map((v) => ({
-      id: v.id,
-      title: v.help,
-      desc: v.description,
-      nodes: v.nodes.length,
-      selectors: v.nodes
-        .map((n) => firstTarget(n.target))
-        .filter((s): s is string => Boolean(s))
-        .slice(0, MAX_SELECTORS),
-    }));
-
-    const incomplete = axe.incomplete.map((v) => ({
-      id: v.id,
-      title: v.help,
-      desc: v.description,
-      nodes: v.nodes.length,
-      criterion: criterionFromTags(v.tags) ?? v.id,
-      selectors: v.nodes
-        .map((n) => firstTarget(n.target))
-        .filter((s): s is string => Boolean(s))
-        .slice(0, MAX_SELECTORS),
-    }));
+    const bestPractice = buildBestPractice(bpViolations);
+    const incomplete = buildIncomplete(axe.incomplete);
 
     phase("finalizing");
     const core: ScanResult = {
@@ -805,6 +537,7 @@ async function runScanAttempt(
       scannedElements: axe.passes.length + axe.violations.length + axe.incomplete.length,
       durationMs: Date.now() - startedAt,
       scannedAt: new Date(startedAt).toISOString(),
+      scoringVersion: SCORING_VERSION,
       screenshot: null,
       score: computeScore(violations),
       counts,
@@ -930,6 +663,13 @@ async function runScanAttempt(
       await runOptional[stage]();
     }
 
+    const scored = scoredViolations({ violations, keyboard, audits, contexts });
+    const finalCounts = buildCounts(scored, {
+      passed: axe.passes.length,
+      bestPractice: bpViolations.length,
+      manualReview: axe.incomplete.length,
+    });
+
     return {
       ...core,
       durationMs: Date.now() - startedAt,
@@ -937,6 +677,10 @@ async function runScanAttempt(
       keyboard,
       contexts,
       audits,
+      score: computeScore(scored),
+      counts: finalCounts,
+      summary: buildSummary(finalCounts, { partial: policy.partial }),
+      fixFirst: buildFixFirst(scored),
       partial: policy.partial,
       warnings: policy.warnings().length > 0 ? policy.warnings() : undefined,
     };

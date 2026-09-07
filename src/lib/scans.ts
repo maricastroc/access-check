@@ -1,6 +1,7 @@
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { ScanResult } from "@/lib/scan/types";
+import { SCORING_VERSION, scoringVersionOf } from "@/lib/scan/scored";
 
 function parseDataUrl(dataUrl: string): { mimeType: string; data: Uint8Array<ArrayBuffer> } | null {
   const m = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
@@ -28,6 +29,7 @@ export async function saveScan(userId: string, result: ScanResult): Promise<stri
       minor: result.counts.minor,
       passed: result.counts.passed,
       durationMs: result.durationMs,
+      scoringVersion: scoringVersionOf(result),
       result: storedResult as unknown as Prisma.InputJsonValue,
       ...(img && { screenshot: { create: { data: img.data, mimeType: img.mimeType } } }),
     },
@@ -39,6 +41,7 @@ export async function saveScan(userId: string, result: ScanResult): Promise<stri
 
 export type ScanListItem = {
   id: string;
+  scoringVersion: number;
   url: string;
   finalUrl: string;
   title: string;
@@ -53,6 +56,7 @@ export async function getUserScans(userId: string): Promise<ScanListItem[]> {
     orderBy: { createdAt: "desc" },
     select: {
       id: true,
+      scoringVersion: true,
       url: true,
       finalUrl: true,
       title: true,
@@ -68,6 +72,7 @@ export async function getUserScans(userId: string): Promise<ScanListItem[]> {
 
   return scans.map((s) => ({
     id: s.id,
+    scoringVersion: s.scoringVersion,
     url: s.url,
     finalUrl: s.finalUrl,
     title: s.title,
@@ -112,7 +117,9 @@ export async function findRecentScan(
   if (!scan) return null;
 
   const result = hydrate(scan.id, scan.result, scan.createdAt);
-  return result.partial ? null : result;
+  if (result.partial) return null;
+  if (scoringVersionOf(result) !== SCORING_VERSION) return null;
+  return result;
 }
 
 export type SavedReport = {

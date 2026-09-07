@@ -132,3 +132,165 @@ describe("buildFindings", () => {
     expect(f.guidance?.action).toContain("focus");
   });
 });
+
+describe("buildFindings: one row per rule, whatever found it", () => {
+  const targetSize = {
+    id: "target-size",
+    severity: "serious" as const,
+    criterion: "WCAG 2.5.8 · Target Size (Minimum)",
+    title: "144 touch targets are smaller than 24×24px",
+    desc: "d",
+    fix: "Grow each control to at least 24×24px.",
+    count: 144,
+    selectors: [".tiny"],
+  };
+
+  it("lists an own-rule failure on a page axe found nothing on", () => {
+    const findings = buildFindings(
+      baseResult({
+        violations: [],
+        audits: { targetSize: { measured: 200, findings: [targetSize] } },
+      }),
+    );
+
+    expect(findings).toHaveLength(1);
+    expect(findings[0].severity).toBe("serious");
+    expect(findings[0].passLabel).toBe("Target size");
+  });
+
+  it("names the source of every row, so one list can hold both origins", () => {
+    const findings = buildFindings(
+      baseResult({
+        violations: [contrast],
+        audits: { targetSize: { measured: 200, findings: [targetSize] } },
+      }),
+    );
+
+    expect(findings.map((f) => f.passLabel)).toEqual(["Target size", null]);
+    expect(findings.map((f) => f.kind)).toEqual(["target-size", "wcag"]);
+  });
+
+  it("shows target-size once when axe and this project both report it", () => {
+    const axeTargetSize: ScanViolation = {
+      id: "target-size",
+      severity: "serious",
+      title: "All touch targets must be 24px large, or leave sufficient space",
+      criterion: "WCAG 2.5.8 · Target Size (Minimum)",
+      where: ".tiny",
+      desc: "d",
+      fix: "f",
+      nodes: 4,
+    };
+
+    const findings = buildFindings(
+      baseResult({
+        violations: [axeTargetSize],
+        audits: { targetSize: { measured: 200, findings: [targetSize] } },
+      }),
+    );
+
+    expect(findings.filter((f) => f.ruleId === "target-size")).toHaveLength(1);
+    expect(findings[0].kind).toBe("wcag");
+  });
+
+  it("keeps a rule off the list when another context already reported it", () => {
+    const findings = buildFindings(
+      baseResult({
+        violations: [],
+        audits: { targetSize: { measured: 200, findings: [targetSize] } },
+        contexts: {
+          mobile: {
+            width: 375,
+            ran: true,
+            onlyOnMobile: [
+              {
+                id: "target-size",
+                severity: "serious",
+                title: "All touch targets must be 24px large",
+                criterion: "WCAG 2.5.8 · Target Size (Minimum)",
+                nodes: 9,
+                selectors: [".tiny"],
+              },
+            ],
+          },
+          dynamic: { ran: true, opened: 0, states: [] },
+        },
+      }),
+    );
+
+    expect(findings.filter((f) => f.ruleId === "target-size")).toHaveLength(1);
+    expect(findings[0].kind).toBe("target-size");
+  });
+
+  it("names the context on a rule that only failed there", () => {
+    const findings = buildFindings(
+      baseResult({
+        violations: [],
+        contexts: {
+          mobile: {
+            width: 375,
+            ran: true,
+            onlyOnMobile: [
+              {
+                id: "label",
+                severity: "critical",
+                title: "Form elements must have labels",
+                criterion: "WCAG 4.1.2 · Name, Role, Value",
+                nodes: 1,
+                selectors: ["input"],
+              },
+            ],
+          },
+          dynamic: { ran: true, opened: 0, states: [] },
+        },
+      }),
+    );
+
+    expect(findings).toHaveLength(1);
+    expect(findings[0].contexts).toEqual(["375px viewport"]);
+  });
+
+  it("folds the context into the surviving row instead of dropping it", () => {
+    const findings = buildFindings(
+      baseResult({
+        violations: [contrast],
+        contexts: {
+          mobile: {
+            width: 375,
+            ran: true,
+            onlyOnMobile: [
+              {
+                id: "color-contrast",
+                severity: "serious",
+                title: "Elements must meet minimum color contrast ratio thresholds",
+                criterion: "WCAG 1.4.3 · Contrast (Minimum)",
+                nodes: 3,
+                selectors: [".cta"],
+              },
+            ],
+          },
+          dynamic: { ran: true, opened: 0, states: [] },
+        },
+      }),
+    );
+
+    expect(findings).toHaveLength(1);
+    expect(findings[0].kind).toBe("wcag");
+    expect(findings[0].contexts).toEqual(["375px viewport"]);
+  });
+
+  it("carries the contexts of a rule that only failed there", () => {
+    const findings = buildFindings(
+      baseResult({
+        violations: [
+          {
+            ...contrast,
+            contexts: ["375px viewport"],
+          },
+        ],
+      }),
+    );
+
+    expect(findings[0].contexts).toEqual(["375px viewport"]);
+  });
+});

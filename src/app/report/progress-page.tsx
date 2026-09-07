@@ -1,15 +1,15 @@
 import { computeScore } from "@/lib/scan/derive";
+import { violationsBehindScore } from "@/lib/scan/scored";
 import type { ScanResult, Severity } from "@/lib/scan/types";
 import { safeHost, sevHex } from "./shared";
 import { MiniHeader, PageShell, SectionKicker, SectionKickerMuted } from "./primitives";
 
 export function ProgressPage({ result }: { result: ScanResult }) {
   const host = safeHost(result.finalUrl);
-  const moderate = result.violations.filter((v) => v.severity === "moderate");
+  const scored = violationsBehindScore(result);
+  const moderate = scored.filter((v) => v.severity === "moderate");
 
-  const remaining = result.violations.filter(
-    (v) => v.severity !== "critical" && v.severity !== "serious",
-  );
+  const remaining = scored.filter((v) => v.severity !== "critical" && v.severity !== "serious");
   const estimated = Math.max(result.score, computeScore(remaining));
   const delta = estimated - result.score;
 

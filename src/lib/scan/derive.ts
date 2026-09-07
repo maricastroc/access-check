@@ -1,4 +1,4 @@
-import type { Effort, Severity, ScanViolation } from "./types";
+import type { Effort, ScanResult, Severity, ScanViolation } from "./types";
 
 const severityWeight: Record<Severity, number> = {
   critical: 10,
@@ -47,21 +47,41 @@ export function buildFixFirst(violations: ScanViolation[]) {
   }));
 }
 
-export function buildSummary(counts: {
-  critical: number;
-  serious: number;
-  moderate: number;
-}): string {
+export function buildSummary(
+  counts: { critical: number; serious: number; moderate: number },
+  options: { partial?: boolean } = {},
+): string {
+  const scope = options.partial ? " among the checks that ran" : "";
+
   if (counts.critical > 0) {
     const n = counts.critical;
     return `Strong foundation, but ${n} critical finding${n > 1 ? "s" : ""} block${n > 1 ? "" : "s"} WCAG level AA. Fix ${n > 1 ? "them" : "it"} first.`;
   }
   if (counts.serious > 0) {
     const n = counts.serious;
-    return `No critical blockers, but ${n} serious finding${n > 1 ? "s" : ""} still ${n > 1 ? "make" : "makes"} the page harder to use for people who rely on assistive technology.`;
+    return `No critical blockers${scope}, but ${n} serious finding${n > 1 ? "s" : ""} still ${n > 1 ? "make" : "makes"} the page harder to use for people who rely on assistive technology.`;
   }
   if (counts.moderate > 0) {
-    return `Solid result. Only moderate findings are left to polish.`;
+    return options.partial
+      ? `Only moderate findings among the checks that ran.`
+      : `Solid result. Only moderate findings are left to polish.`;
   }
-  return `Excellent. No automated findings on this page.`;
+  return options.partial
+    ? `No failures in the checks that ran. Some checks did not run here, so this is not a clean bill of health.`
+    : `Excellent. No automated findings on this page.`;
+}
+
+export function buildCounts(
+  violations: ScanViolation[],
+  totals: { passed: number; bestPractice: number; manualReview: number },
+): ScanResult["counts"] {
+  return {
+    critical: violations.filter((v) => v.severity === "critical").length,
+    serious: violations.filter((v) => v.severity === "serious").length,
+    moderate: violations.filter((v) => v.severity === "moderate").length,
+    minor: violations.filter((v) => v.severity === "minor").length,
+    passed: totals.passed,
+    bestPractice: totals.bestPractice,
+    manualReview: totals.manualReview,
+  };
 }

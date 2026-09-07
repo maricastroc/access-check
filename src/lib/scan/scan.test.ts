@@ -2,6 +2,7 @@ import { createServer, type Server } from "http";
 import type { AddressInfo, Socket } from "net";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { runScan, ScanFailure } from "./scan";
+import { scoredViolations } from "./scored";
 import { closeSharedBrowser, getBrowserExecutor, setBrowserExecutor } from "./browser";
 import type { Browser, BrowserContext } from "playwright-core";
 
@@ -69,6 +70,28 @@ const PAGES: Record<string, { status?: number; html: string }> = {
         ><button class="tiny" aria-label="two">2</button>
       </div>
       <div role="status" aria-live="polite" style="display:none">hidden status</div>
+    </main>
+  </body>
+</html>`,
+  },
+  "/own-rules-only": {
+    html: `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Own rules only</title>
+    <style>
+      body { color: #111827; background: #ffffff; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Nothing here fails axe</h1>
+      <p>High contrast copy, a title, a lang attribute and a labelled image.</p>
+      <img src="/logo.png" alt="Company logo" />
+      <div role="status" aria-live="polite" style="display:none">Saved</div>
+      <div role="log" aria-live="polite" aria-hidden="true">History</div>
     </main>
   </body>
 </html>`,
@@ -624,4 +647,56 @@ describe("runScan (budget, degradation and resilience)", () => {
       expect(timings[stage]).toBeGreaterThanOrEqual(0);
     }
   }, 60_000);
+});
+
+describe("score and counts cover this project's own rules", () => {
+  const audit = () =>
+    runScan(`${base}/own-rules-only`, {
+      screenshot: false,
+      keyboard: false,
+      contexts: false,
+      verifyFixes: false,
+    });
+
+  it("never reports a clean page when an own rule failed", async () => {
+    const result = await audit();
+
+    expect(result.violations).toEqual([]);
+
+    const own = result.audits?.liveRegions?.findings ?? [];
+    expect(own).toHaveLength(1);
+    expect(own[0].severity).toBe("serious");
+
+    expect(result.counts.serious).toBe(1);
+    expect(result.score).toBeLessThan(100);
+    expect(result.summary).not.toContain("Excellent");
+  });
+
+  it("counts one violated rule while naming every element it hit", async () => {
+    const result = await audit();
+
+    expect(result.counts.serious).toBe(1);
+    expect(result.audits!.liveRegions!.findings[0].count).toBe(2);
+  });
+
+  it("does not call a complete hosted reading partial", async () => {
+    const result = await runScan(`${base}/clean`);
+
+    expect(result.partial).toBeFalsy();
+    expect(result.warnings ?? []).toEqual([]);
+    expect(result.summary).not.toContain("checks that ran");
+  });
+
+  it("charges a rule once when axe reports it too", async () => {
+    const result = await runScan(`${base}/audits`, {
+      screenshot: false,
+      keyboard: false,
+      contexts: false,
+      verifyFixes: false,
+    });
+
+    const scored = scoredViolations(result);
+    const ids = scored.map((v) => v.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
 });

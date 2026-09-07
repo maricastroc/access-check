@@ -1,5 +1,6 @@
 import type { ScanResult } from "./types";
 import { SCAN_FRESH_MS } from "./cache-policy";
+import { SCORING_VERSION, scoringVersionOf } from "./scored";
 
 const MAX_KEYS = 24;
 
@@ -33,6 +34,7 @@ function store(key: string, entry: Entry): void {
 
 export function rememberScan(result: ScanResult, typed?: string): void {
   if (result.partial) return;
+  if (scoringVersionOf(result) !== SCORING_VERSION) return;
   const entry: Entry = { result, storedAt: Date.now() };
   for (const spelling of [typed, result.url, result.finalUrl]) {
     if (spelling) store(keyFor(spelling), entry);
@@ -42,6 +44,7 @@ export function rememberScan(result: ScanResult, typed?: string): void {
 export function recallScan(url: string): ScanResult | null {
   const entry = entries.get(keyFor(url));
   if (!entry) return null;
+  if (scoringVersionOf(entry.result) !== SCORING_VERSION) return null;
   if (ageOf(entry) > SCAN_FRESH_MS) {
     entries.delete(keyFor(url));
     return null;

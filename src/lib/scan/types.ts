@@ -56,6 +56,7 @@ export type ScanViolation = {
   nodes: number;
   fixGroups?: FixGroup[];
   verification?: FixVerification;
+  contexts?: string[];
 };
 
 export type ScanMarker = {
@@ -120,6 +121,7 @@ export type ScanResult = {
   }[];
   partial?: boolean;
   warnings?: ScanWarning[];
+  scoringVersion?: number;
 };
 
 export type ScanError = { error: string; code?: ScanErrorCode };

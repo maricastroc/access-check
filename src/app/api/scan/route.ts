@@ -6,12 +6,17 @@ import { auth } from "@/auth";
 import { findRecentScan, saveScan } from "@/lib/scans";
 import { cacheGet, cacheSet } from "@/lib/redis";
 import { SCAN_FRESH_MS, SCAN_FRESH_SECONDS, trimForCache } from "@/lib/scan/cache-policy";
+import { SCORING_VERSION } from "@/lib/scan/scored";
 import { clientKey, scanRateLimit } from "@/lib/rate-limit";
 import { assertPublicUrl, BlockedUrlError } from "@/lib/scan/ssrf";
 import { logError } from "@/lib/observability/log";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
+
+function scanCacheKey(url: string): string {
+  return `scan:v${SCORING_VERSION}:${url}`;
+}
 
 const SCAN_BUDGET_MS = 40_000;
 const HARD_DEADLINE_MS = 46_000;
@@ -101,7 +106,7 @@ export async function POST(req: Request) {
   if (body.force !== true) {
     const reused = userId
       ? await findRecentScan(userId, url, SCAN_FRESH_MS)
-      : await cacheGet<ScanResult>(`scan:${url}`);
+      : await cacheGet<ScanResult>(scanCacheKey(url));
 
     if (reused) {
       const at = reused.scannedAt ? Date.parse(reused.scannedAt) : NaN;
@@ -176,7 +181,7 @@ export async function POST(req: Request) {
             logError("scan.history.failed", e);
           }
         } else if (!outcome.result.partial) {
-          await cacheSet(`scan:${url}`, trimForCache(outcome.result), SCAN_FRESH_SECONDS);
+          await cacheSet(scanCacheKey(url), trimForCache(outcome.result), SCAN_FRESH_SECONDS);
         }
         return;
       }

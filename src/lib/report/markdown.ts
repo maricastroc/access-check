@@ -1,6 +1,7 @@
 import type { ScanResult } from "@/lib/scan/types";
 import { reviewGuidance } from "../scan/review";
 import { buildFindings, type FindingView } from "./findings";
+import { violationsBehindScore } from "../scan/scored";
 import { scoreBreakdown } from "./score";
 import { buildWcagReading } from "./wcag";
 import { severityLabel } from "./severity";
@@ -58,7 +59,7 @@ function findingBlock(f: FindingView, out: string[]) {
 
 export function buildReportMarkdown(result: ScanResult): string {
   const out: string[] = [];
-  const breakdown = scoreBreakdown(result.violations, result.score);
+  const breakdown = scoreBreakdown(violationsBehindScore(result), result.score);
   const wcag = buildWcagReading(result.violations);
   const findings = buildFindings(result);
 

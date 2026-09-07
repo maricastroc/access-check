@@ -1,5 +1,6 @@
 import type { ScanResult } from "@/lib/scan/types";
 import { scoreBreakdown } from "@/lib/report/score";
+import { violationsBehindScore } from "@/lib/scan/scored";
 import { buildWcagReading } from "@/lib/report/wcag";
 import { Ruler, ScoreArithmetic, WcagChips } from "@/components/ui";
 import { safeHost, sevHex, shortId } from "./shared";
@@ -7,7 +8,7 @@ import { PageShell, SectionKicker, SectionKickerMuted } from "./primitives";
 
 export function SummaryPage({ result }: { result: ScanResult }) {
   const host = safeHost(result.finalUrl);
-  const breakdown = scoreBreakdown(result.violations, result.score);
+  const breakdown = scoreBreakdown(violationsBehindScore(result), result.score);
   const wcag = buildWcagReading(result.violations);
   const at = result.scannedAt ? new Date(result.scannedAt) : new Date();
   const date = new Intl.DateTimeFormat("en-US", {
