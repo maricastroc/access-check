@@ -14,6 +14,8 @@ export type ScanWarningCode =
   | "verification-skipped"
   | "audits-skipped"
   | "keyboard-skipped"
+  | "lazy-content-skipped"
+  | "walk-changed-page"
   | "contexts-skipped"
   | "stream-interrupted"
   | "cross-origin-assets";

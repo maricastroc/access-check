@@ -13,8 +13,6 @@ const repo = join(root, "..");
 rmSync(dist, { recursive: true, force: true });
 mkdirSync(join(dist, "vendor"), { recursive: true });
 
-// The extension loads the very artifact the hosted scanner injects, never a
-// second compilation of the same source.
 const engine = await buildDomEngine();
 
 await build({
@@ -37,6 +35,11 @@ await build({
 copyFileSync(join(repo, "node_modules/axe-core/axe.min.js"), join(dist, "vendor/axe.min.js"));
 copyFileSync(ENGINE_FILE, join(dist, "dom-engine.js"));
 copyFileSync(join(root, "manifest.json"), join(dist, "manifest.json"));
+
+mkdirSync(join(dist, "icons"), { recursive: true });
+for (const size of [16, 32, 48, 128]) {
+  copyFileSync(join(root, `icons/icon-${size}.png`), join(dist, `icons/icon-${size}.png`));
+}
 copyFileSync(join(root, "src/panel.html"), join(dist, "panel.html"));
 
 const cssEntry = join(root, "src/panel.css");

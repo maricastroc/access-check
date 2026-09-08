@@ -1,3 +1,4 @@
+import { buildCounts, buildFixFirst, buildSummary, computeScore } from "./derive";
 import type { ContextIssue } from "./contexts";
 import type { ScanResult, ScanViolation, Severity } from "./types";
 
@@ -102,4 +103,30 @@ export function violationsBehindScore(
   return scoringVersionOf(result) === SCORING_VERSION
     ? scoredViolations(result)
     : result.violations;
+}
+
+export type Scorable = Omit<ScanResult, "score" | "summary" | "fixFirst" | "counts"> & {
+  score?: number;
+  summary?: string;
+  fixFirst?: ScanResult["fixFirst"];
+  counts: { passed: number; bestPractice: number; manualReview: number } & Partial<
+    ScanResult["counts"]
+  >;
+};
+
+export function withScoring(result: Scorable): ScanResult {
+  const scored = scoredViolations(result);
+  const counts = buildCounts(scored, {
+    passed: result.counts.passed,
+    bestPractice: result.counts.bestPractice,
+    manualReview: result.counts.manualReview,
+  });
+
+  return {
+    ...result,
+    score: computeScore(scored),
+    counts,
+    summary: buildSummary(counts, { partial: result.partial }),
+    fixFirst: buildFixFirst(scored),
+  };
 }

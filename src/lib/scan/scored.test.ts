@@ -6,6 +6,7 @@ import {
   scoredViolations,
   scoringVersionOf,
   violationsBehindScore,
+  withScoring,
 } from "./scored";
 import type { ScanResult, Severity } from "./types";
 
@@ -61,9 +62,15 @@ describe("scoredViolations", () => {
         reachableInteractive: 0,
         truncated: false,
         cycleComplete: true,
+        startedAtTop: true,
+        stoppedBy: "cycle" as const,
         focusPath: [],
         findings: [
-          { ...finding("focus-not-visible", "serious", 20), id: "focus-not-visible" as const },
+          {
+            ...finding("focus-not-visible", "serious", 20),
+            id: "focus-not-visible" as const,
+            occurrences: [],
+          },
         ],
       },
       audits: {
@@ -232,5 +239,116 @@ describe("scoring model version", () => {
     const current = { violations: [], audits: own, scoringVersion: SCORING_VERSION };
 
     expect(violationsBehindScore(current)).toHaveLength(1);
+  });
+});
+
+describe("withScoring", () => {
+  const base = (): ScanResult => ({
+    url: "https://example.com/",
+    finalUrl: "https://example.com/",
+    title: "Example",
+    scannedElements: 40,
+    durationMs: 10,
+    screenshot: null,
+    scoringVersion: SCORING_VERSION,
+    score: 100,
+    counts: {
+      critical: 0,
+      serious: 0,
+      moderate: 0,
+      minor: 0,
+      passed: 40,
+      bestPractice: 2,
+      manualReview: 3,
+    },
+    summary: "Excellent. No automated findings on this page.",
+    violations: [],
+    incomplete: [],
+    bestPractice: [],
+    passed: [],
+    markers: [],
+    fixFirst: [],
+    partial: true,
+  });
+
+  const keyboard = {
+    totalStops: 21,
+    totalInteractive: 21,
+    reachableInteractive: 21,
+    truncated: false,
+    cycleComplete: true,
+    startedAtTop: true,
+    stoppedBy: "cycle" as const,
+    focusPath: [],
+    findings: [
+      {
+        ...finding("focus-not-visible", "serious" as Severity, 21),
+        id: "focus-not-visible" as const,
+        occurrences: [],
+      },
+    ],
+  };
+
+  it("cannot keep a score that describes an earlier reading", () => {
+    const before = base();
+    const after = withScoring({ ...before, keyboard });
+
+    expect(before.score).toBe(100);
+    expect(after.score).toBeLessThan(100);
+    expect(after.counts.serious).toBe(1);
+    expect(after.summary).not.toContain("Excellent");
+    expect(after.fixFirst.map((f) => f.title)).toEqual([keyboard.findings[0].title]);
+  });
+
+  it("leaves what sits outside the score exactly where it was", () => {
+    const after = withScoring({ ...base(), keyboard });
+
+    expect(after.counts.passed).toBe(40);
+    expect(after.counts.bestPractice).toBe(2);
+    expect(after.counts.manualReview).toBe(3);
+    expect(after.summary).toContain("outside the score");
+  });
+
+  it("charges each rule once, however many places report it", () => {
+    const twice = withScoring({
+      ...base(),
+      violations: [
+        {
+          id: "target-size",
+          severity: "serious",
+          title: "axe says so",
+          criterion: "WCAG 2.5.8",
+          where: ".a",
+          desc: "d",
+          fix: "f",
+          nodes: 3,
+        },
+      ],
+      audits: { targetSize: { measured: 3, findings: [finding("target-size", "serious", 3)] } },
+    });
+
+    expect(twice.counts.serious).toBe(1);
+  });
+
+  it("settles a reading that arrives with no numbers of its own", () => {
+    const { score, summary, fixFirst, counts, ...rest } = base();
+    void score;
+    void summary;
+    void fixFirst;
+
+    const settled = withScoring({
+      ...rest,
+      counts: {
+        passed: counts.passed,
+        bestPractice: counts.bestPractice,
+        manualReview: counts.manualReview,
+      },
+      keyboard,
+    });
+
+    expect(settled.score).toBeLessThan(100);
+    expect(settled.counts.serious).toBe(1);
+    expect(settled.counts.minor).toBe(0);
+    expect(settled.summary.length).toBeGreaterThan(0);
   });
 });

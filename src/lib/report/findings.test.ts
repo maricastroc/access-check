@@ -110,6 +110,8 @@ describe("buildFindings", () => {
         reachableInteractive: 5,
         truncated: false,
         cycleComplete: true,
+        startedAtTop: true,
+        stoppedBy: "cycle" as const,
         focusPath: [],
         findings: [
           {
@@ -121,6 +123,7 @@ describe("buildFindings", () => {
             fix: "add outline",
             count: 2,
             selectors: [".a", ".b"],
+            occurrences: [],
           },
         ],
       },
@@ -292,5 +295,75 @@ describe("buildFindings: one row per rule, whatever found it", () => {
     );
 
     expect(findings[0].contexts).toEqual(["375px viewport"]);
+  });
+});
+
+describe("the list and the header describe the same reading", () => {
+  const keyboardFinding = {
+    id: "focus-not-visible" as const,
+    severity: "serious" as const,
+    criterion: "WCAG 2.4.7 · Focus Visible",
+    title: "No visible focus indicator on 2 elements",
+    desc: "d",
+    fix: "add outline",
+    count: 2,
+    selectors: [".a", ".b"],
+    occurrences: [
+      {
+        stop: 4,
+        selector: ".a",
+        tag: "a",
+        label: "Pricing",
+        html: '<a href="/pricing">Pricing</a>',
+        rect: { x: 4, y: 40, w: 60, h: 18 },
+        onScreen: true,
+        reason: "Focus reached this element and nothing changed",
+        certainty: "conclusive" as const,
+      },
+    ],
+  };
+
+  const withKeyboard = () =>
+    baseResult({
+      violations: [contrast, heading],
+      bestPractice: [
+        { id: "region", title: "All content in landmarks", desc: "d", nodes: 1, selectors: [] },
+      ],
+      keyboard: {
+        totalStops: 6,
+        totalInteractive: 6,
+        reachableInteractive: 6,
+        truncated: false,
+        cycleComplete: true,
+        startedAtTop: true,
+        stoppedBy: "cycle" as const,
+        focusPath: [],
+        findings: [keyboardFinding],
+      },
+    });
+
+  it("shows one row per counted rule, best practice included", () => {
+    const rows = buildFindings(withKeyboard());
+    const counts = { critical: 0, serious: 2, moderate: 1, minor: 0, bestPractice: 1 };
+
+    expect(rows).toHaveLength(
+      counts.critical + counts.serious + counts.moderate + counts.minor + counts.bestPractice,
+    );
+  });
+
+  it("keeps the occurrences of a keyboard finding attached to its row", () => {
+    const row = buildFindings(withKeyboard()).find((f) => f.kind === "keyboard")!;
+
+    expect(row.occurrences).toHaveLength(1);
+    expect(row.occurrences[0].stop).toBe(4);
+    expect(row.occurrences[0].html).toBe('<a href="/pricing">Pricing</a>');
+  });
+
+  it("still marks what sits outside the score as such", () => {
+    const bp = buildFindings(withKeyboard()).find((f) => f.kind === "best-practice")!;
+
+    expect(bp.isWcag).toBe(false);
+    expect(bp.severity).toBeNull();
+    expect(bp.occurrences).toEqual([]);
   });
 });

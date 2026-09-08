@@ -25,6 +25,8 @@ const stop = (
 
 const rawBase: RawKeyboard = {
   focusPath: [],
+  startedAtTop: true,
+  stoppedBy: "cycle",
   trapSelector: null,
   positiveTabindex: [],
   unreachable: [],
@@ -154,5 +156,190 @@ describe("buildKeyboardReport", () => {
     });
     expect(r.totalInteractive).toBe(12);
     expect(r.reachableInteractive).toBe(10);
+  });
+});
+
+const RING = {
+  outlineStyle: "solid",
+  outlineWidth: "2px",
+  outlineColor: "rgb(11, 87, 208)",
+  boxShadow: "none",
+  borderTopWidth: "0px",
+  borderTopColor: "rgb(0, 0, 0)",
+  backgroundColor: "rgba(0, 0, 0, 0)",
+};
+
+const NO_RING = { ...RING, outlineStyle: "none", outlineWidth: "0px" };
+
+describe("what each finding lets you inspect", () => {
+  it("gives every invisible stop its own occurrence, with the evidence attached", () => {
+    const path = [
+      stop(1, 10, 10),
+      {
+        ...stop(2, 10, 30, { focusVisible: false, selector: "#ghost", tag: "a", label: "Buy now" }),
+        html: '<a href="/buy">Buy now</a>',
+        rect: { x: 12, y: 240, w: 80, h: 20 },
+        onScreen: true,
+        focusStyle: NO_RING,
+        baseStyle: NO_RING,
+      },
+    ];
+
+    const f = buildKeyboardReport({ ...rawBase, focusPath: path }).findings.find(
+      (x) => x.id === "focus-not-visible",
+    )!;
+
+    expect(f.occurrences).toHaveLength(f.count);
+    const [only] = f.occurrences;
+    expect(only.stop).toBe(2);
+    expect(only.selector).toBe("#ghost");
+    expect(only.label).toBe("Buy now");
+    expect(only.html).toBe('<a href="/buy">Buy now</a>');
+    expect(only.rect).toEqual({ x: 12, y: 240, w: 80, h: 20 });
+    expect(only.certainty).toBe("conclusive");
+  });
+
+  it("names the visual change that did not happen", () => {
+    const path = [
+      {
+        ...stop(1, 10, 10, { focusVisible: false }),
+        focusStyle: NO_RING,
+        baseStyle: NO_RING,
+      },
+    ];
+
+    const reason = buildKeyboardReport({ ...rawBase, focusPath: path }).findings[0].occurrences[0]
+      .reason;
+
+    expect(reason).toContain("no outline appeared");
+    expect(reason).toContain("outline-style: none");
+    expect(reason).toContain("the box-shadow stayed none");
+    expect(reason).toContain("the background stayed rgba(0, 0, 0, 0)");
+    expect(reason).toContain("A focus indicator is expected");
+  });
+
+  it("falls back to a plain statement when the styles were never recorded", () => {
+    const path = [stop(1, 10, 10, { focusVisible: false })];
+    const reason = buildKeyboardReport({ ...rawBase, focusPath: path }).findings[0].occurrences[0]
+      .reason;
+
+    expect(reason).toContain("no detectable outline");
+    expect(reason).not.toContain("undefined");
+  });
+
+  it("shows each order jump as a move between two numbered stops", () => {
+    const path = [
+      { ...stop(1, 10, 80, { label: "Footer link" }), rect: { x: 10, y: 640, w: 40, h: 20 } },
+      { ...stop(2, 10, 5, { label: "Skip to content" }), rect: { x: 10, y: 40, w: 40, h: 20 } },
+    ];
+
+    const f = buildKeyboardReport({ ...rawBase, focusPath: path }).findings.find(
+      (x) => x.id === "focus-order",
+    )!;
+
+    expect(f.occurrences).toHaveLength(1);
+    const [jump] = f.occurrences;
+    expect(jump.from).toBe(1);
+    expect(jump.to).toBe(2);
+    expect(jump.reason).toContain("Stop 1 → Stop 2");
+    expect(jump.reason).toContain("focus moved back up the page");
+    expect(jump.reason).toContain("near the bottom of the page");
+    expect(jump.reason).toContain("near the top of the page");
+    expect(jump.reason).toContain("640px → 40px");
+  });
+
+  it("does not present a geometric jump as a settled violation", () => {
+    const path = [stop(1, 10, 80), stop(2, 10, 5)];
+    const f = buildKeyboardReport({ ...rawBase, focusPath: path }).findings.find(
+      (x) => x.id === "focus-order",
+    )!;
+
+    expect(f.occurrences[0].certainty).toBe("needs-review");
+    expect(f.occurrences[0].reason).toContain("not proof");
+    expect(f.desc).toContain("need a human check");
+  });
+
+  it("keeps the count and the list of jumps in step", () => {
+    const path = [
+      stop(1, 10, 80),
+      stop(2, 10, 5, { selector: "#dup" }),
+      stop(3, 10, 80),
+      stop(4, 10, 5, { selector: "#dup" }),
+    ];
+
+    const inv = readingOrderInversions(path);
+    const f = buildKeyboardReport({ ...rawBase, focusPath: path }).findings.find(
+      (x) => x.id === "focus-order",
+    )!;
+
+    expect(inv.jumps).toHaveLength(inv.count);
+    expect(f.occurrences).toHaveLength(f.count);
+  });
+
+  it("marks a control the walk never reached as having no stop number", () => {
+    const f = buildKeyboardReport({
+      ...rawBase,
+      unreachable: ["#ghost"],
+      focusPath: [stop(1, 10, 10)],
+    }).findings.find((x) => x.id === "unreachable-control")!;
+
+    expect(f.occurrences[0].stop).toBeNull();
+    expect(f.occurrences[0].selector).toBe("#ghost");
+    expect(f.occurrences[0].certainty).toBe("needs-review");
+  });
+
+  it("borrows what the walk saw when it did reach the element", () => {
+    const f = buildKeyboardReport({
+      ...rawBase,
+      positiveTabindex: ["#el-1"],
+      focusPath: [{ ...stop(1, 10, 10, { label: "Search" }), html: "<input>" }],
+    }).findings.find((x) => x.id === "positive-tabindex")!;
+
+    expect(f.occurrences[0].stop).toBe(1);
+    expect(f.occurrences[0].label).toBe("Search");
+    expect(f.occurrences[0].html).toBe("<input>");
+    expect(f.occurrences[0].certainty).toBe("conclusive");
+  });
+
+  it("lists every occurrence even when the selector list is capped", () => {
+    const path = Array.from({ length: 12 }, (_, i) =>
+      stop(i + 1, 10, 10 + i * 10, { focusVisible: false, selector: `#s${i}` }),
+    );
+
+    const f = buildKeyboardReport({ ...rawBase, focusPath: path }).findings.find(
+      (x) => x.id === "focus-not-visible",
+    )!;
+
+    expect(f.selectors).toHaveLength(8);
+    expect(f.occurrences).toHaveLength(12);
+  });
+});
+
+describe("what a walk is allowed to conclude", () => {
+  it("will not call controls unreachable when the walk never started at the top", async () => {
+    const midway = buildKeyboardReport({
+      ...rawBase,
+      startedAtTop: false,
+      unreachable: ["#one", "#two"],
+      truncated: false,
+      cycleComplete: true,
+      focusPath: [stop(1, 10, 10)],
+    });
+
+    expect(midway.findings.find((f) => f.id === "unreachable-control")).toBeUndefined();
+    expect(midway.startedAtTop).toBe(false);
+  });
+
+  it("reports them when the walk did start at the top and came round", () => {
+    const full = buildKeyboardReport({
+      ...rawBase,
+      startedAtTop: true,
+      unreachable: ["#one", "#two"],
+      truncated: false,
+      cycleComplete: true,
+      focusPath: [stop(1, 10, 10)],
+    });
+
+    expect(full.findings.find((f) => f.id === "unreachable-control")?.count).toBe(2);
   });
 });

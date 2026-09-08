@@ -67,6 +67,8 @@ function keyboard(focusPath: FocusStop[]): KeyboardReport {
     reachableInteractive: focusPath.length,
     truncated: false,
     cycleComplete: true,
+    startedAtTop: true,
+    stoppedBy: "cycle" as const,
     focusPath,
     findings: [],
   };

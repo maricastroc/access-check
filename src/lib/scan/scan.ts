@@ -60,12 +60,12 @@ const EXPIRED = Symbol("expired");
 const AXE_PATH = path.join(process.cwd(), "node_modules/axe-core/axe.min.js");
 const DOM_ENGINE_PATH = path.join(process.cwd(), "dom-engine/dom-engine.js");
 
-async function injectDomEngine(page: Page): Promise<void> {
+export async function injectDomEngine(page: Page, enginePath = DOM_ENGINE_PATH): Promise<void> {
   try {
-    await page.addScriptTag({ path: DOM_ENGINE_PATH });
+    await page.addScriptTag({ path: enginePath });
   } catch (err) {
     throw new ScanFailure(
-      `The audit engine could not be loaded into the page (${DOM_ENGINE_PATH}). Build it with \`npm run build:engine\`. ${err instanceof Error ? err.message : String(err)}`,
+      `The audit engine could not be loaded into the page (${enginePath}). Build it with \`npm run build:engine\`. ${err instanceof Error ? err.message : String(err)}`,
       "internal",
     );
   }
@@ -97,6 +97,8 @@ const WARNING_TEXT: Record<ScanWarningCode, string> = {
   "verification-skipped": "Fixes were not tested on a copy of the page this time.",
   "audits-skipped": "The target-size, motion and live-region checks were skipped.",
   "keyboard-skipped": "The keyboard and focus-order check was skipped.",
+  "lazy-content-skipped": "Content that only renders on scroll was not loaded before the audit.",
+  "walk-changed-page": "Tabbing through the page opened content that stayed open.",
   "contexts-skipped": "The mobile and dynamic-state check was skipped.",
   "stream-interrupted": "The audit was cut short before every check finished.",
   "cross-origin-assets": "Some styles and media came from another origin and could not be read.",
@@ -109,26 +111,7 @@ export function normalizeUrl(input: string): string {
 }
 
 async function primeLazyContent(page: Page): Promise<void> {
-  await page
-    .evaluate(async () => {
-      await new Promise<void>((resolve) => {
-        const step = Math.max(window.innerHeight * 0.9, 400);
-        const maxSteps = 12;
-        let scrolled = 0;
-        let steps = 0;
-        const timer = setInterval(() => {
-          window.scrollBy(0, step);
-          scrolled += step;
-          steps += 1;
-          if (steps >= maxSteps || scrolled >= document.body.scrollHeight) {
-            clearInterval(timer);
-            window.scrollTo(0, 0);
-            resolve();
-          }
-        }, 120);
-      });
-    })
-    .catch(() => {});
+  await page.evaluate(() => window.__accessCheckDom!.primeLazyContent()).catch(() => {});
 }
 
 type VerifyOp = { ruleId: string; selector: string | null; apply: FixApply };
@@ -417,9 +400,9 @@ async function runScanAttempt(
       );
     }
 
-    await track("prime", () => policy.run("prime", () => primeLazyContent(page), undefined));
-
     await track("engine", () => injectDomEngine(page));
+
+    await track("prime", () => policy.run("prime", () => primeLazyContent(page), undefined));
 
     const readiness = await track("contentReady", () =>
       policy.run(

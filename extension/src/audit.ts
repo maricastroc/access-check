@@ -8,20 +8,56 @@ import {
   enrichViolations,
   type AxeResults,
 } from "../../src/lib/scan/violations";
-import {
-  buildCounts,
-  buildFixFirst,
-  buildSummary,
-  computeScore,
-  severityOrder,
-} from "../../src/lib/scan/derive";
+import { severityOrder } from "../../src/lib/scan/derive";
 import { buildMarkers, markerTargets } from "../../src/lib/scan/markers";
-import { SCORING_VERSION, scoredViolations } from "../../src/lib/scan/scored";
+import { SCORING_VERSION, withScoring } from "../../src/lib/scan/scored";
 import type { ScanResult } from "../../src/lib/scan/types";
 import { DOM_ENGINE_VERSION } from "../../src/lib/scan/dom/engine-api";
-import { UNAVAILABLE, crossOriginWarning } from "./coverage";
+import {
+  CONTENT_UNSETTLED,
+  UNAVAILABLE,
+  crossOriginWarning,
+  warningsAfterPriming,
+} from "./coverage";
+import {
+  CONTENT_SIGNATURE,
+  waitForContentReady,
+  type ContentReadiness,
+} from "../../src/lib/scan/page-ready";
+import type { PaintCalm, PrimeReport } from "../../src/lib/scan/dom/prime";
 
 export class EngineMissingError extends Error {}
+
+const SETTLE_MS = 6_000;
+
+const POST_PRIME_SETTLE_MS = 3_000;
+
+const PAINT_CALM_MS = 2_000;
+
+export type AuditContext = { readiness?: ContentReadiness; primed?: boolean };
+
+export function settleActiveDocument(maxMs = SETTLE_MS): Promise<ContentReadiness> {
+  return waitForContentReady(
+    async () => CONTENT_SIGNATURE(),
+    (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+    { maxMs },
+  );
+}
+
+export async function primeActiveDocument(settled: ContentReadiness): Promise<{
+  prime: PrimeReport;
+  readiness: ContentReadiness;
+  calm: PaintCalm | null;
+}> {
+  const dom = engine();
+  const prime = await dom.primeLazyContent();
+
+  if (prime.steps === 0) return { prime, readiness: settled, calm: null };
+
+  const readiness = await settleActiveDocument(POST_PRIME_SETTLE_MS);
+  const calm = await dom.waitForPaintCalm(prime.animatingBefore, PAINT_CALM_MS);
+  return { prime, readiness, calm };
+}
 
 function engine() {
   const dom = window.__accessCheckDom;
@@ -38,14 +74,13 @@ function engine() {
   return dom;
 }
 
-export async function auditActiveDocument(): Promise<ScanResult> {
-  const startedAt = Date.now();
+export async function auditActiveDocument(context: AuditContext = {}): Promise<ScanResult> {
   const dom = engine();
+  dom.overlayClear();
 
-  // This build may only touch the tab the reader clicked on, so it cannot fetch
-  // a stylesheet or a media file from another origin. Asking axe to preload
-  // them would spend a request that is certain to be refused; the checks that
-  // depend on them land in manual review either way.
+  const settled = context.readiness ?? (await settleActiveDocument());
+  const startedAt = Date.now();
+
   const assets = dom.crossOriginAssets();
   const preload = assets.styleSheets === 0 && assets.media === 0;
 
@@ -74,14 +109,7 @@ export async function auditActiveDocument(): Promise<ScanResult> {
     liveRegions: analyzeLiveRegions(dom.collectLiveRegionsRaw()),
   };
 
-  const scored = scoredViolations({ violations, audits });
-  const counts = buildCounts(scored, {
-    passed: axe.passes.length,
-    bestPractice: bpViolations.length,
-    manualReview: axe.incomplete.length,
-  });
-
-  return {
+  return withScoring({
     url: location.href,
     finalUrl: location.href,
     title: document.title || location.href,
@@ -90,25 +118,36 @@ export async function auditActiveDocument(): Promise<ScanResult> {
     scannedAt: new Date(startedAt).toISOString(),
     scoringVersion: SCORING_VERSION,
     screenshot: null,
-    score: computeScore(scored),
-    counts,
-    summary: buildSummary(counts, { partial: true }),
+    counts: {
+      passed: axe.passes.length,
+      bestPractice: bpViolations.length,
+      manualReview: axe.incomplete.length,
+    },
     violations,
     incomplete: buildIncomplete(axe.incomplete),
     bestPractice: buildBestPractice(bpViolations),
     passed: axe.passes.map((p) => p.help),
     markers,
     audits,
-    fixFirst: buildFixFirst(scored),
     partial: true,
-    warnings: preload ? UNAVAILABLE : [...UNAVAILABLE, crossOriginWarning(assets)],
-  };
+    warnings: [
+      ...warningsAfterPriming(UNAVAILABLE, context.primed === true),
+      ...(preload ? [] : [crossOriginWarning(assets)]),
+      ...(settled.settled ? [] : [CONTENT_UNSETTLED]),
+    ],
+  });
 }
 
 declare global {
   interface Window {
-    __accessCheckAudit?: () => Promise<ScanResult>;
+    __accessCheckAudit?: (context?: AuditContext) => Promise<ScanResult>;
+    __accessCheckSettle?: () => Promise<ContentReadiness>;
+    __accessCheckPrime?: (
+      settled: ContentReadiness,
+    ) => Promise<{ prime: PrimeReport; readiness: ContentReadiness; calm: PaintCalm | null }>;
   }
 }
 
 window.__accessCheckAudit = auditActiveDocument;
+window.__accessCheckSettle = () => settleActiveDocument();
+window.__accessCheckPrime = primeActiveDocument;

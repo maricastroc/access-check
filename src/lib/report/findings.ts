@@ -1,5 +1,6 @@
 import type { FixGroup, ScanMarker, ScanResult, ScanViolation, Severity } from "@/lib/scan/types";
 import type { ContextIssue } from "@/lib/scan/contexts";
+import type { KeyboardOccurrence } from "@/lib/scan/keyboard";
 import { SEVERITY_ORDER } from "./severity";
 import { parseContrastFix, type ContrastMeasurement } from "./contrast";
 import { buildVerdict, type Verdict } from "./verdict";
@@ -57,6 +58,7 @@ export type FindingView = {
   located: boolean;
   noMarkerReason: string;
   contexts: string[];
+  occurrences: KeyboardOccurrence[];
 };
 
 function distinct(list: string[]): string[] {
@@ -114,6 +116,7 @@ function wcagFinding(
     markers: linked,
     located: linked.length > 0,
     contexts: v.contexts ?? [],
+    occurrences: [],
     noMarkerReason: linked.length > 0 ? "" : markerReason(v.id, "wcag", isDocLevelCategory(v.id)),
   };
 }
@@ -127,6 +130,7 @@ type PassFinding = {
   fix: string;
   count: number;
   selectors: string[];
+  occurrences?: KeyboardOccurrence[];
 };
 
 function complementaryFinding(f: PassFinding, kind: FindingKind): Omit<FindingView, "n"> {
@@ -165,6 +169,7 @@ function complementaryFinding(f: PassFinding, kind: FindingKind): Omit<FindingVi
     markers: [],
     located: false,
     contexts: [],
+    occurrences: f.occurrences ?? [],
     noMarkerReason: markerReason(f.id, kind, false),
   };
 }
@@ -206,6 +211,7 @@ function contextFinding(issue: ContextIssue, where: string): Omit<FindingView, "
     markers: [],
     located: false,
     contexts: [where],
+    occurrences: [],
     noMarkerReason: markerReason(issue.id, "context", false),
   };
 }
@@ -245,6 +251,7 @@ function bestPracticeFindings(result: ScanResult): Omit<FindingView, "n">[] {
       markers: [],
       located: false,
       contexts: [],
+      occurrences: [],
       noMarkerReason: markerReason(bp.id, "best-practice", false),
     };
   });

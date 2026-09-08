@@ -1,15 +1,34 @@
 import type { ScanResult } from "../../src/lib/scan/types";
+import type { OverlayMark, OverlayReport } from "../../src/lib/scan/dom/overlay";
+
+export type AuditStage = "structure" | "rules" | "focus" | "report";
+
+export type AuditMode = "expanded" | "quick";
 
 export type PanelState =
   | { kind: "idle" }
-  | { kind: "loading"; url: string }
-  | { kind: "done"; result: ScanResult }
+  | { kind: "running"; url: string; mode: AuditMode; stage: AuditStage }
+  | { kind: "done"; result: ScanResult; deepError?: string }
   | { kind: "error"; message: string; recoverable: boolean }
   | { kind: "unsupported"; url: string; reason: string };
 
+export type HighlightRequest = {
+  type: "panel:highlight";
+  marks: OverlayMark[];
+  focus: number | null;
+  scroll: boolean;
+  timeoutMs: number;
+};
+
+export type HighlightReply = { ok: true; report: OverlayReport } | { ok: false; message: string };
+
 export type PanelMessage =
   | { type: "panel:hello" }
-  | { type: "panel:audit" }
+  | { type: "panel:audit"; deep: boolean }
+  | { type: "panel:focus-path" }
+  | HighlightRequest
+  | { type: "panel:clear-highlight" }
+  | { type: "panel:restore-scroll" }
   | { type: "panel:state"; state: PanelState };
 
 const BLOCKED: { test: (url: string) => boolean; reason: string }[] = [

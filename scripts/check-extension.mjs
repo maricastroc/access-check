@@ -10,8 +10,6 @@ const manifest = JSON.parse(readFileSync(join(EXT, "manifest.json"), "utf8"));
 manifest.host_permissions = ["<all_urls>"];
 writeFileSync(join(EXT, "manifest.json"), JSON.stringify(manifest, null, 2));
 
-// A stylesheet from another origin with no CORS header: what a CDN looks like
-// to an extension that may only touch the tab it was clicked on.
 const cdn = createServer((_q, res) => {
   res.writeHead(200, { "content-type": "text/css" });
   res.end(".cdn { color: #8fb8a8; background: #ffffff; }");
@@ -33,9 +31,6 @@ const HTML = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>
 const server = createServer((_q, res) => {
   res.writeHead(200, {
     "content-type": "text/html; charset=utf-8",
-    // Strict on scripts (the isolated world must survive it) but the CDN sheet
-    // has to load, so the audit meets the same wall Stripe puts up: a
-    // stylesheet it can see and may not read.
     "content-security-policy": "default-src 'self'; script-src 'self'; style-src * 'unsafe-inline'",
   });
   res.end(HTML);
@@ -113,8 +108,6 @@ try {
     }),
   );
 
-  // The side panel cannot be opened by an automated gesture, so the same panel
-  // document is loaded as a page: identical React app, identical messages.
   const unhandled = await sw.evaluate(async () => {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     const [{ result }] = await chrome.scripting.executeScript({
@@ -147,8 +140,11 @@ try {
       origins: [...document.querySelectorAll("button .font-cond.uppercase")].map(
         (s) => s.textContent,
       ),
-      partialLabel: text.includes("Partial audit score"),
-      partialNote: text.includes("not comparable with a full audit"),
+      partialLabel: text.includes("Quick audit score"),
+      preliminary: text.includes("Preliminary result"),
+      partialNote: text.includes("not a full audit"),
+      focusPathNamed: text.includes("focus path was not verified"),
+      claimsComplete: /\bcomplete audit\b|\bfull audit score\b/i.test(text),
       notChecked: text.includes("Not checked in this build"),
       notCheckedItems: [...document.querySelectorAll("li")].map((li) => li.textContent),
       checksPerformed: !!document.querySelector("details"),
@@ -170,9 +166,21 @@ try {
       evidenceCollapsed: [...document.querySelectorAll("details")].some(
         (d) => d.textContent.includes("Evidence") && !d.open,
       ),
+      shortSummary: /Partial coverage · \d+ check/.test(text),
+      openByDefault: [...document.querySelectorAll("details")]
+        .filter((d) => d.open)
+        .map((d) => d.querySelector("summary")?.textContent?.trim()),
+      limitationsCollapsed: [...document.querySelectorAll("details")].some(
+        (d) =>
+          /^Coverage limitations/.test(d.querySelector("summary")?.textContent ?? "") && !d.open,
+      ),
       order: [...document.querySelectorAll("span")]
         .map((s) => s.textContent.trim())
-        .filter((t) => /^(Partial audit score|Findings · \d+|Checks performed|Evidence)/.test(t)),
+        .filter((t) =>
+          /^(Quick audit score|Current-tab audit score|Findings · \d+|Checks performed|Evidence)/.test(
+            t,
+          ),
+        ),
       requests: performance
         .getEntriesByType("resource")
         .filter((r) => !r.name.startsWith("chrome-extension://")).length,
@@ -193,8 +201,11 @@ try {
   check(before.scrollY === after.scrollY, "the audited page was scrolled");
   check(seen.screenshot, "no screenshot in the panel");
   check(seen.markers > 0, "no markers drawn on the screenshot");
-  check(seen.partialLabel, "the score is not labelled as a partial audit");
+  check(seen.partialLabel, "a reading with no focus path is not labelled a quick audit");
+  check(seen.preliminary, "a quick audit does not say the result is preliminary");
   check(seen.partialNote, "no note next to the score saying checks were skipped");
+  check(seen.focusPathNamed, "the panel does not say the focus path went unverified");
+  check(!seen.claimsComplete, "the panel calls a reading with missing checks a complete audit");
   check(seen.notChecked, "the panel does not list what it skipped");
   check(seen.checksPerformed, "no collapsible list of the checks performed");
   check(seen.reaudit, "no action to audit the tab again");
@@ -218,13 +229,21 @@ try {
     "the report does not explain the cross-origin assets it could not read",
   );
   check(seen.evidenceCollapsed, "the evidence section is not collapsed by default");
+  check(seen.shortSummary, "the score card does not carry the one-line coverage summary");
+  check(
+    seen.limitationsCollapsed,
+    "the coverage limitations are not collapsed behind their own section",
+  );
+  check(
+    seen.openByDefault.length === 0,
+    `a secondary section is open by default: ${JSON.stringify(seen.openByDefault)}`,
+  );
   check(
     seen.order.findIndex((t) => t.startsWith("Findings")) <
       seen.order.findIndex((t) => t.startsWith("Evidence")),
     `findings must come before the evidence, got ${JSON.stringify(seen.order)}`,
   );
 
-  // A finding opens with keyboard alone and stays inside the panel's width.
   await report.keyboard.press("Tab");
   const expanded = await report.evaluate(async () => {
     const row = [...document.querySelectorAll("button")].find((b) => b.querySelector("h3"));

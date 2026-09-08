@@ -20,7 +20,14 @@
     "fix": "eslint --fix && prettier --write .",
     "build:extension": "node extension/build.mjs",
     "check:extension": "node scripts/check-extension.mjs",
-    "build:engine": "node scripts/build-dom-engine.mjs"
+    "build:engine": "node scripts/build-dom-engine.mjs",
+    "check:deep": "node scripts/check-deep-audit.mjs",
+    "check:manifest": "node scripts/check-manifest.mjs",
+    "build:icons": "node scripts/build-icons.mjs",
+    "pack": "node scripts/pack-extension.mjs",
+    "check:release": "node scripts/check-release.mjs",
+    "build:screenshots": "node scripts/build-store-screenshots.mjs",
+    "build:tile": "node scripts/build-promo-tile.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",

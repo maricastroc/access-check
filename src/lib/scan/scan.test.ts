@@ -607,7 +607,7 @@ describe("runScan (budget, degradation and resilience)", () => {
 
   it("drops the preview before the audit when the budget runs short", async () => {
     const result = await runScan(`${base}/slow`, {
-      budgetMs: SLOW_DELAY_MS + 2_600,
+      budgetMs: SLOW_DELAY_MS + 2_400,
       screenshot: true,
       keyboard: true,
       contexts: true,

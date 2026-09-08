@@ -1,5 +1,6 @@
 import type { Page } from "playwright-core";
 import type { Severity } from "./types";
+import type { FocusProbe, FocusReach, FocusStyle } from "./dom/focus";
 import { severityOrder } from "./derive";
 
 export type KeyboardIssueId =
@@ -8,6 +9,8 @@ export type KeyboardIssueId =
   | "keyboard-trap"
   | "positive-tabindex"
   | "unreachable-control";
+
+export type FocusRect = { x: number; y: number; w: number; h: number };
 
 export type FocusStop = {
   n: number;
@@ -19,6 +22,29 @@ export type FocusStop = {
   top: number | null;
   width: number | null;
   height: number | null;
+  html?: string;
+  rect?: FocusRect | null;
+  onScreen?: boolean;
+  focusStyle?: FocusStyle;
+  baseStyle?: FocusStyle | null;
+};
+
+export type KeyboardCertainty = "conclusive" | "needs-review";
+
+export type WalkEnd = "cycle" | "cap" | "timeout" | "opaque" | "trap";
+
+export type KeyboardOccurrence = {
+  stop: number | null;
+  selector: string;
+  tag: string;
+  label: string;
+  html: string | null;
+  rect: FocusRect | null;
+  onScreen: boolean;
+  reason: string;
+  certainty: KeyboardCertainty;
+  from?: number;
+  to?: number;
 };
 
 export type KeyboardFinding = {
@@ -30,6 +56,7 @@ export type KeyboardFinding = {
   fix: string;
   count: number;
   selectors: string[];
+  occurrences: KeyboardOccurrence[];
 };
 
 export type KeyboardReport = {
@@ -38,12 +65,16 @@ export type KeyboardReport = {
   reachableInteractive: number;
   truncated: boolean;
   cycleComplete: boolean;
+  startedAtTop: boolean;
+  stoppedBy: WalkEnd;
   focusPath: FocusStop[];
   findings: KeyboardFinding[];
 };
 
 export type RawKeyboard = {
   focusPath: FocusStop[];
+  startedAtTop: boolean;
+  stoppedBy: WalkEnd;
   trapSelector: string | null;
   positiveTabindex: string[];
   unreachable: string[];
@@ -67,31 +98,155 @@ function plural(n: number, one: string, many: string): string {
   return n === 1 ? one : many;
 }
 
+export type OrderJump = {
+  from: number;
+  to: number;
+  selector: string;
+  direction: "up" | "back";
+};
+
 export function readingOrderInversions(stops: FocusStop[]): {
   count: number;
   selectors: string[];
+  jumps: OrderJump[];
 } {
   const BAND = 3;
   const positioned = stops.filter(
     (s): s is FocusStop & { top: number; left: number } => s.top !== null && s.left !== null,
   );
-  const selectors: string[] = [];
+
+  const jumps: OrderJump[] = [];
+  const seen = new Set<string>();
   for (let i = 1; i < positioned.length; i++) {
     const prev = positioned[i - 1];
     const cur = positioned[i];
     const dy = cur.top - prev.top;
-    if (dy < -BAND) {
-      selectors.push(cur.selector);
-    } else if (Math.abs(dy) <= BAND && cur.left < prev.left - BAND) {
-      selectors.push(cur.selector);
-    }
+
+    let direction: OrderJump["direction"] | null = null;
+    if (dy < -BAND) direction = "up";
+    else if (Math.abs(dy) <= BAND && cur.left < prev.left - BAND) direction = "back";
+    if (direction === null) continue;
+
+    if (seen.has(cur.selector)) continue;
+    seen.add(cur.selector);
+    jumps.push({ from: prev.n, to: cur.n, selector: cur.selector, direction });
   }
-  const unique = [...new Set(selectors)];
-  return { count: unique.length, selectors: unique };
+
+  return { count: jumps.length, selectors: jumps.map((j) => j.selector), jumps };
+}
+
+function region(top: number | null): string {
+  if (top === null) return "outside the visible viewport";
+  if (top < 25) return "near the top of the page";
+  if (top < 60) return "in the middle of the page";
+  return "near the bottom of the page";
+}
+
+function occurrenceOf(
+  stop: FocusStop,
+  reason: string,
+  certainty: KeyboardCertainty,
+  extra: Partial<KeyboardOccurrence> = {},
+): KeyboardOccurrence {
+  return {
+    stop: stop.n,
+    selector: stop.selector,
+    tag: stop.tag,
+    label: stop.label,
+    html: stop.html ?? null,
+    rect: stop.rect ?? null,
+    onScreen: stop.onScreen ?? stop.top !== null,
+    reason,
+    certainty,
+    ...extra,
+  };
+}
+
+function occurrenceForSelector(
+  selector: string,
+  stops: FocusStop[],
+  reason: string,
+  certainty: KeyboardCertainty,
+): KeyboardOccurrence {
+  const stop = stops.find((s) => s.selector === selector);
+  if (stop) return occurrenceOf(stop, reason, certainty);
+  return {
+    stop: null,
+    selector,
+    tag: "",
+    label: "",
+    html: null,
+    rect: null,
+    onScreen: false,
+    reason,
+    certainty,
+  };
+}
+
+function invisibleReason(stop: FocusStop): string {
+  const focused = stop.focusStyle;
+  const base = stop.baseStyle;
+  if (!focused || !base) {
+    return (
+      "Focus reached this element and produced no detectable outline, box-shadow, border or " +
+      "background change."
+    );
+  }
+
+  const unchanged: string[] = [];
+  if (focused.outlineStyle === "none" || parseFloat(focused.outlineWidth) === 0) {
+    unchanged.push(
+      `no outline appeared (outline-style: ${focused.outlineStyle}, outline-width: ${focused.outlineWidth})`,
+    );
+  }
+  if (focused.boxShadow === base.boxShadow) {
+    unchanged.push(`the box-shadow stayed ${base.boxShadow}`);
+  }
+  if (
+    focused.borderTopWidth === base.borderTopWidth &&
+    focused.borderTopColor === base.borderTopColor
+  ) {
+    unchanged.push(`the border stayed ${base.borderTopWidth} ${base.borderTopColor}`);
+  }
+  if (focused.backgroundColor === base.backgroundColor) {
+    unchanged.push(`the background stayed ${base.backgroundColor}`);
+  }
+
+  return (
+    `Focus reached this element and nothing changed: ${unchanged.join("; ")}. ` +
+    "A focus indicator is expected here — an outline, a box-shadow, a border or a background " +
+    "that differs from the element's resting style."
+  );
+}
+
+function jumpReason(jump: OrderJump, byStop: Map<number, FocusStop>): string {
+  const from = byStop.get(jump.from);
+  const to = byStop.get(jump.to);
+  const movement =
+    jump.direction === "up"
+      ? "focus moved back up the page"
+      : "focus moved back to the left on the same line";
+
+  const where =
+    from && to
+      ? `, from ${region(from.top)} ("${from.label}") to ${region(to.top)} ("${to.label}")`
+      : "";
+
+  const measured =
+    from?.rect && to?.rect
+      ? ` Measured from the top of the viewport: ${Math.round(from.rect.y)}px → ${Math.round(to.rect.y)}px.`
+      : "";
+
+  return (
+    `Stop ${jump.from} → Stop ${jump.to}: ${movement}${where}.${measured} ` +
+    "This is geometric evidence, not proof: check whether it matches the reading order you intend."
+  );
 }
 
 export function buildKeyboardReport(raw: RawKeyboard): KeyboardReport {
   const findings: KeyboardFinding[] = [];
+  const stops = raw.focusPath;
+  const byStop = new Map(stops.map((s) => [s.n, s]));
 
   if (raw.trapSelector) {
     findings.push({
@@ -107,10 +262,18 @@ export function buildKeyboardReport(raw: RawKeyboard): KeyboardReport {
         "way to leave: press Esc to close it and return focus to the control that opened it.",
       count: 1,
       selectors: [raw.trapSelector],
+      occurrences: [
+        occurrenceForSelector(
+          raw.trapSelector,
+          stops,
+          "Tab was pressed here and focus stayed on this same element, so the walk could go no further.",
+          "conclusive",
+        ),
+      ],
     });
   }
 
-  if (raw.cycleComplete && !raw.truncated && raw.unreachable.length > 0) {
+  if (raw.startedAtTop && raw.cycleComplete && !raw.truncated && raw.unreachable.length > 0) {
     const n = raw.unreachable.length;
     findings.push({
       id: "unreachable-control",
@@ -126,10 +289,19 @@ export function buildKeyboardReport(raw: RawKeyboard): KeyboardReport {
         'add tabindex="0" and keyboard handlers so it can be reached and operated.',
       count: n,
       selectors: raw.unreachable.slice(0, MAX_FINDING_SELECTORS),
+      occurrences: raw.unreachable.map((selector) =>
+        occurrenceForSelector(
+          selector,
+          stops,
+          "This element looks interactive (a click handler or an ARIA role) but the Tab walk " +
+            "never landed on it. Confirm it is meant to be operable.",
+          "needs-review",
+        ),
+      ),
     });
   }
 
-  const invisible = raw.focusPath.filter((s) => !s.focusVisible);
+  const invisible = stops.filter((s) => !s.focusVisible);
   if (invisible.length > 0) {
     const n = invisible.length;
     findings.push({
@@ -146,10 +318,11 @@ export function buildKeyboardReport(raw: RawKeyboard): KeyboardReport {
         "instead of removing the outline with outline: none.",
       count: n,
       selectors: invisible.slice(0, MAX_FINDING_SELECTORS).map((s) => s.selector),
+      occurrences: invisible.map((s) => occurrenceOf(s, invisibleReason(s), "conclusive")),
     });
   }
 
-  const inv = readingOrderInversions(raw.focusPath);
+  const inv = readingOrderInversions(stops);
   if (inv.count > 0) {
     findings.push({
       id: "focus-order",
@@ -159,12 +332,24 @@ export function buildKeyboardReport(raw: RawKeyboard): KeyboardReport {
       desc:
         "The Tab order doesn't follow the visual reading order (top-to-bottom, " +
         "left-to-right). Focus jumps backwards or upward, which is disorienting " +
-        "for keyboard and screen-reader users.",
+        "for keyboard and screen-reader users. Each jump is listed below: whether it is wrong " +
+        "depends on the reading order the page intends, so they need a human check.",
       fix:
         "Match the DOM order to the visual order and avoid reordering with CSS " +
         "(order, flex-direction: row-reverse, absolute positioning) or positive tabindex.",
       count: inv.count,
       selectors: inv.selectors.slice(0, MAX_FINDING_SELECTORS),
+      occurrences: inv.jumps.map((jump) => {
+        const to = byStop.get(jump.to);
+        const reason = jumpReason(jump, byStop);
+        return to
+          ? occurrenceOf(to, reason, "needs-review", { from: jump.from, to: jump.to })
+          : {
+              ...occurrenceForSelector(jump.selector, stops, reason, "needs-review"),
+              from: jump.from,
+              to: jump.to,
+            };
+      }),
     });
   }
 
@@ -183,35 +368,38 @@ export function buildKeyboardReport(raw: RawKeyboard): KeyboardReport {
         "DOM order define the sequence.",
       count: n,
       selectors: raw.positiveTabindex.slice(0, MAX_FINDING_SELECTORS),
+      occurrences: raw.positiveTabindex.map((selector) =>
+        occurrenceForSelector(
+          selector,
+          stops,
+          "This element carries a positive tabindex, so it is pulled out of the document order " +
+            "and visited before elements that come before it on the page.",
+          "conclusive",
+        ),
+      ),
     });
   }
 
   findings.sort((a, b) => severityOrder.indexOf(a.severity) - severityOrder.indexOf(b.severity));
 
   return {
-    totalStops: raw.focusPath.length,
+    totalStops: stops.length,
     totalInteractive: raw.totalInteractive,
     reachableInteractive: raw.reachableInteractive,
     truncated: raw.truncated,
     cycleComplete: raw.cycleComplete,
-    focusPath: raw.focusPath,
+    startedAtTop: raw.startedAtTop,
+    stoppedBy: raw.stoppedBy,
+    focusPath: stops,
     findings,
   };
 }
 
 const MAX_TAB_STOPS = 50;
 
-type Viewport = { width: number; height: number };
+const MAX_REWIND_STEPS = 25;
 
-type FocusStyle = {
-  outlineStyle: string;
-  outlineWidth: string;
-  outlineColor: string;
-  boxShadow: string;
-  borderTopWidth: string;
-  borderTopColor: string;
-  backgroundColor: string;
-};
+export type Viewport = { width: number; height: number };
 
 function hasFocusIndicator(focused: FocusStyle, base: FocusStyle): boolean {
   if (focused.outlineStyle !== "none" && parseFloat(focused.outlineWidth) > 0) return true;
@@ -223,222 +411,173 @@ function hasFocusIndicator(focused: FocusStyle, base: FocusStyle): boolean {
   return false;
 }
 
-type RawStop = {
-  selector: string;
-  tag: string;
-  label: string;
-  isBody: boolean;
-  isIframe: boolean;
-  style: FocusStyle;
-  rect: { x: number; y: number; w: number; h: number } | null;
+export type FocusPathIO = {
+  start(): Promise<void>;
+  focusFirst(): Promise<"focused" | "empty" | "failed">;
+  relativeToSeed(): Promise<"before" | "at" | "after" | "unknown">;
+  pressTab(): Promise<void>;
+  pressShiftTab(): Promise<void>;
+  readStop(): Promise<FocusProbe>;
+  peekStop(): Promise<FocusProbe>;
+  readBaseStyles(selectors: string[]): Promise<Record<string, FocusStyle>>;
+  readReach(): Promise<FocusReach>;
+  end(): Promise<unknown>;
 };
+
+type Rewind = { startedAtTop: boolean; startAtSeed: boolean };
+
+async function rewindToTop(io: FocusPathIO): Promise<Rewind> {
+  const seeded = await io.focusFirst();
+  if (seeded === "empty") return { startedAtTop: true, startAtSeed: false };
+  if (seeded === "failed") return { startedAtTop: false, startAtSeed: false };
+
+  for (let i = 0; i < MAX_REWIND_STEPS; i++) {
+    await io.pressShiftTab();
+    if ((await io.peekStop()).isBody) return { startedAtTop: true, startAtSeed: false };
+
+    if ((await io.relativeToSeed()) === "after") {
+      // Nothing precedes the seed: the walk wrapped to the end of the page.
+      const again = await io.focusFirst();
+      return { startedAtTop: again === "focused", startAtSeed: again === "focused" };
+    }
+  }
+
+  return { startedAtTop: false, startAtSeed: false };
+}
+
+export async function collectFocusPath(
+  io: FocusPathIO,
+  viewport: Viewport,
+  opts: { maxMs?: number; maxStops?: number } = {},
+): Promise<RawKeyboard> {
+  const maxStops = opts.maxStops ?? MAX_TAB_STOPS;
+  const deadline =
+    opts.maxMs && opts.maxMs > 0 ? Date.now() + opts.maxMs * 0.6 : Number.POSITIVE_INFINITY;
+
+  await io.start();
+  const rewind = await rewindToTop(io);
+
+  const stops: FocusProbe[] = [];
+  let trapSelector: string | null = null;
+  let cycleComplete = false;
+  let truncated = false;
+  let stoppedBy: WalkEnd = "cycle";
+  let prevSelector: string | null = null;
+
+  try {
+    for (let i = 0; i < maxStops; i++) {
+      if (Date.now() >= deadline) {
+        truncated = true;
+        stoppedBy = "timeout";
+        break;
+      }
+
+      if (i > 0 || !rewind.startAtSeed) await io.pressTab();
+      const info = await io.readStop();
+
+      if (info.isBody) {
+        cycleComplete = true;
+        break;
+      }
+
+      if (prevSelector !== null && info.selector === prevSelector) {
+        if (stops.length === 1 && info.selector === stops[0].selector) {
+          cycleComplete = true;
+          stoppedBy = "cycle";
+          break;
+        }
+
+        if (!info.isIframe && !info.hasShadowRoot) {
+          trapSelector = info.selector;
+          stoppedBy = "trap";
+        } else {
+          truncated = true;
+          stoppedBy = "opaque";
+        }
+        break;
+      }
+
+      if (stops.length > 0 && info.selector === stops[0].selector) {
+        cycleComplete = true;
+        break;
+      }
+
+      stops.push(info);
+      prevSelector = info.selector;
+
+      if (i === maxStops - 1) {
+        truncated = true;
+        stoppedBy = "cap";
+      }
+    }
+
+    const unique = [...new Set(stops.map((s) => s.selector))];
+    const baseStyles = unique.length === 0 ? {} : await io.readBaseStyles(unique);
+    const reach = await io.readReach();
+
+    const focusPath: FocusStop[] = stops.map((s, i) => {
+      const base = baseStyles[s.selector];
+      const focusVisible = base ? hasFocusIndicator(s.style, base) : true;
+      const r = s.rect;
+      const onScreen =
+        r !== null && r.y >= 0 && r.y <= viewport.height && r.x >= 0 && r.x <= viewport.width;
+      return {
+        n: i + 1,
+        selector: s.selector,
+        label: s.label,
+        tag: s.tag,
+        focusVisible,
+        left: onScreen ? (r!.x / viewport.width) * 100 : null,
+        top: onScreen ? (r!.y / viewport.height) * 100 : null,
+        width: onScreen ? (r!.w / viewport.width) * 100 : null,
+        height: onScreen ? (r!.h / viewport.height) * 100 : null,
+        html: s.html,
+        rect: r,
+        onScreen,
+        focusStyle: s.style,
+        baseStyle: base ?? null,
+      };
+    });
+
+    return {
+      focusPath,
+      startedAtTop: rewind.startedAtTop,
+      stoppedBy,
+      trapSelector,
+      positiveTabindex: reach.positiveTabindex,
+      unreachable: reach.unreachable,
+      totalInteractive: reach.totalInteractive,
+      reachableInteractive: reach.reachableInteractive,
+      truncated,
+      cycleComplete,
+    };
+  } finally {
+    await io.end().catch(() => {});
+  }
+}
 
 export async function collectKeyboard(
   page: Page,
   viewport: Viewport,
   opts: { maxMs?: number } = {},
 ): Promise<KeyboardReport> {
-  const tabDeadline =
-    opts.maxMs && opts.maxMs > 0 ? Date.now() + opts.maxMs * 0.6 : Number.POSITIVE_INFINITY;
+  const raw = await collectFocusPath(
+    {
+      start: () => page.evaluate(() => window.__accessCheckDom!.focusProbeStart()),
+      focusFirst: () => page.evaluate(() => window.__accessCheckDom!.focusFirstStop()),
+      relativeToSeed: () => page.evaluate(() => window.__accessCheckDom!.focusRelativeToSeed()),
+      pressTab: () => page.keyboard.press("Tab"),
+      pressShiftTab: () => page.keyboard.press("Shift+Tab"),
+      readStop: () => page.evaluate(() => window.__accessCheckDom!.readFocusedStop()),
+      peekStop: () => page.evaluate(() => window.__accessCheckDom!.readFocusedStop(false)),
+      readBaseStyles: (selectors) =>
+        page.evaluate((sel) => window.__accessCheckDom!.readBaseStyles(sel), selectors),
+      readReach: () => page.evaluate(() => window.__accessCheckDom!.readFocusReach()),
+      end: () => page.evaluate(() => window.__accessCheckDom!.focusProbeEnd()),
+    },
+    viewport,
+    opts,
+  );
 
-  await page.evaluate(() => {
-    const w = window as unknown as Record<string, unknown>;
-    w.__acVisited = [];
-    w.__acCssPath = window.__accessCheckDom!.cssPath;
-
-    w.__acLabel = (el: Element): string => {
-      const aria = el.getAttribute("aria-label");
-      if (aria && aria.trim()) return aria.trim().slice(0, 60);
-      const labelledby = el.getAttribute("aria-labelledby");
-      if (labelledby) {
-        const ref = document.getElementById(labelledby.split(/\s+/)[0]);
-        const t = ref?.textContent?.replace(/\s+/g, " ").trim();
-        if (t) return t.slice(0, 60);
-      }
-      const text = el.textContent?.replace(/\s+/g, " ").trim();
-      if (text) return text.slice(0, 60);
-      const alt = el.getAttribute("alt");
-      if (alt && alt.trim()) return alt.trim().slice(0, 60);
-      const title = el.getAttribute("title");
-      if (title && title.trim()) return title.trim().slice(0, 60);
-      return el.tagName.toLowerCase();
-    };
-
-    (document.activeElement as HTMLElement | null)?.blur?.();
-  });
-
-  const rawStops: RawStop[] = [];
-  let trapSelector: string | null = null;
-  let cycleComplete = false;
-  let truncated = false;
-  let prevSelector: string | null = null;
-
-  for (let i = 0; i < MAX_TAB_STOPS; i++) {
-    if (Date.now() >= tabDeadline) {
-      truncated = true;
-      break;
-    }
-    await page.keyboard.press("Tab");
-    const info = (await page.evaluate(() => {
-      const el = document.activeElement as HTMLElement | null;
-      const w = window as unknown as {
-        __acCssPath: (e: Element | null) => string;
-        __acLabel: (e: Element) => string;
-        __acVisited: Element[];
-      };
-      if (!el || el === document.body || el === document.documentElement) {
-        return { isBody: true } as const;
-      }
-      w.__acVisited.push(el);
-      const cs = getComputedStyle(el);
-      const r = el.getBoundingClientRect();
-      return {
-        isBody: false,
-        selector: w.__acCssPath(el),
-        tag: el.tagName.toLowerCase(),
-        label: w.__acLabel(el),
-        isIframe: el.tagName === "IFRAME",
-        style: {
-          outlineStyle: cs.outlineStyle,
-          outlineWidth: cs.outlineWidth,
-          outlineColor: cs.outlineColor,
-          boxShadow: cs.boxShadow,
-          borderTopWidth: cs.borderTopWidth,
-          borderTopColor: cs.borderTopColor,
-          backgroundColor: cs.backgroundColor,
-        },
-        rect: r.width > 0 || r.height > 0 ? { x: r.left, y: r.top, w: r.width, h: r.height } : null,
-      };
-    })) as { isBody: true } | (RawStop & { isBody: false });
-
-    if (info.isBody) {
-      cycleComplete = true;
-      break;
-    }
-
-    if (prevSelector !== null && info.selector === prevSelector) {
-      if (!info.isIframe) trapSelector = info.selector;
-      break;
-    }
-
-    if (rawStops.length > 0 && info.selector === rawStops[0].selector) {
-      cycleComplete = true;
-      break;
-    }
-
-    rawStops.push(info);
-    prevSelector = info.selector;
-
-    if (i === MAX_TAB_STOPS - 1) truncated = true;
-  }
-
-  const uniqueSelectors = [...new Set(rawStops.map((s) => s.selector))];
-  const baseStyles =
-    uniqueSelectors.length === 0
-      ? {}
-      : ((await page.evaluate((selectors) => {
-          (document.activeElement as HTMLElement | null)?.blur?.();
-          const out: Record<string, FocusStyle> = {};
-          for (const sel of selectors) {
-            try {
-              const el = document.querySelector(sel);
-              if (!el) continue;
-              const cs = getComputedStyle(el);
-              out[sel] = {
-                outlineStyle: cs.outlineStyle,
-                outlineWidth: cs.outlineWidth,
-                outlineColor: cs.outlineColor,
-                boxShadow: cs.boxShadow,
-                borderTopWidth: cs.borderTopWidth,
-                borderTopColor: cs.borderTopColor,
-                backgroundColor: cs.backgroundColor,
-              };
-            } catch {
-              //
-            }
-          }
-          return out;
-        }, uniqueSelectors)) as Record<string, FocusStyle>);
-
-  const reach = (await page.evaluate(() => {
-    const w = window as unknown as {
-      __acCssPath: (e: Element | null) => string;
-      __acVisited: Element[];
-    };
-    const visited = new Set(w.__acVisited);
-    const INTERACTIVE =
-      'a[href], button, input:not([type="hidden"]), select, textarea, [tabindex], ' +
-      '[role="button"], [role="link"], [role="checkbox"], [role="radio"], ' +
-      '[role="tab"], [role="menuitem"], [role="switch"], [contenteditable="true"], [onclick]';
-
-    const isVisible = (el: Element): boolean => {
-      const he = el as HTMLElement;
-      if (he.offsetParent === null && getComputedStyle(he).position !== "fixed") {
-        return el.getClientRects().length > 0;
-      }
-      const r = el.getBoundingClientRect();
-      return r.width > 0 && r.height > 0;
-    };
-
-    const candidates = Array.from(document.querySelectorAll(INTERACTIVE)).filter((el) => {
-      const tabindex = el.getAttribute("tabindex");
-      if (tabindex !== null && parseInt(tabindex, 10) < 0) return false;
-      if ((el as HTMLButtonElement).disabled) return false;
-      if (el.getAttribute("aria-hidden") === "true") return false;
-      return isVisible(el);
-    });
-
-    const unreachable = candidates.filter((el) => !visited.has(el)).map((el) => w.__acCssPath(el));
-
-    const positiveTabindex = Array.from(document.querySelectorAll("[tabindex]"))
-      .filter((el) => parseInt(el.getAttribute("tabindex") || "0", 10) > 0)
-      .map((el) => w.__acCssPath(el));
-
-    const g = window as unknown as Record<string, unknown>;
-    delete g.__acVisited;
-    delete g.__acCssPath;
-    delete g.__acLabel;
-
-    return {
-      totalInteractive: candidates.length,
-      reachableInteractive: candidates.length - unreachable.length,
-      unreachable,
-      positiveTabindex: [...new Set(positiveTabindex)],
-    };
-  })) as {
-    totalInteractive: number;
-    reachableInteractive: number;
-    unreachable: string[];
-    positiveTabindex: string[];
-  };
-
-  const focusPath: FocusStop[] = rawStops.map((s, i) => {
-    const base = baseStyles[s.selector];
-    const focusVisible = base ? hasFocusIndicator(s.style, base) : true;
-    const r = s.rect;
-    const onScreen =
-      r !== null && r.y >= 0 && r.y <= viewport.height && r.x >= 0 && r.x <= viewport.width;
-    return {
-      n: i + 1,
-      selector: s.selector,
-      label: s.label,
-      tag: s.tag,
-      focusVisible,
-      left: onScreen ? (r!.x / viewport.width) * 100 : null,
-      top: onScreen ? (r!.y / viewport.height) * 100 : null,
-      width: onScreen ? (r!.w / viewport.width) * 100 : null,
-      height: onScreen ? (r!.h / viewport.height) * 100 : null,
-    };
-  });
-
-  return buildKeyboardReport({
-    focusPath,
-    trapSelector,
-    positiveTabindex: reach.positiveTabindex,
-    unreachable: reach.unreachable,
-    totalInteractive: reach.totalInteractive,
-    reachableInteractive: reach.reachableInteractive,
-    truncated,
-    cycleComplete,
-  });
+  return buildKeyboardReport(raw);
 }

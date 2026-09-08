@@ -10,6 +10,8 @@ const TEXT = {
   "content-unsettled": "still loading",
   "verification-skipped": "not verified",
   "audits-skipped": "no extra audits",
+  "lazy-content-skipped": "lazy",
+  "walk-changed-page": "walk",
   "keyboard-skipped": "no keyboard pass",
   "contexts-skipped": "no contexts pass",
   "stream-interrupted": "cut short",

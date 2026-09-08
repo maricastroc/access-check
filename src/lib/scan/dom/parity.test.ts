@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, renameSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { createServer, type Server } from "node:http";
 import type { AddressInfo, Socket } from "node:net";
 import { fileURLToPath } from "node:url";
@@ -9,7 +9,7 @@ import type { Browser, Page } from "playwright-core";
 import { acquireBrowser, closeSharedBrowser } from "../browser";
 import { DOM_ENGINE_VERSION } from "./engine-api";
 import { INTERACTIVE } from "../target-size";
-import { runScan } from "../scan";
+import { injectDomEngine, runScan } from "../scan";
 import { SCORING_VERSION } from "../scored";
 import type { ScanResult } from "../types";
 
@@ -236,14 +236,12 @@ describe("ScanResult parity: hosted runScan vs the extension bundle", () => {
 
 describe("a missing engine fails in the open", () => {
   it("tells the hosted scanner how to build it", async () => {
-    const parked = `${HOSTED_ENGINE}.parked`;
-    renameSync(HOSTED_ENGINE, parked);
-    try {
-      await expect(runScan(`${origin}/`, { screenshot: false })).rejects.toThrow(
-        /audit engine could not be loaded[\s\S]*build:engine/,
-      );
-    } finally {
-      renameSync(parked, HOSTED_ENGINE);
-    }
-  }, 60_000);
+    await expect(injectDomEngine(page, repoFile("dom-engine/never-built.js"))).rejects.toThrow(
+      /audit engine could not be loaded[\s\S]*build:engine/,
+    );
+  });
+
+  it("still has the real engine in place for everyone else", () => {
+    expect(existsSync(HOSTED_ENGINE)).toBe(true);
+  });
 });

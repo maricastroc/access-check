@@ -47,6 +47,7 @@ export const demoFinding: FindingView = {
   measurement: demoMeasurement,
   preview: buildContrastPreview(demoMeasurement, "verified", exampleFinding.elements),
   verdict: demoVerdict,
+  occurrences: [],
   affectedSelectors: [exampleFinding.selector],
   selectors: [exampleFinding.selector],
   markers: [
