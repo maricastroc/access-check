@@ -21,6 +21,7 @@
 <p align="center">
   <a href="#-features">Features</a> •
   <a href="#-the-verified-fix-engine">Verified-Fix Engine</a> •
+  <a href="#-the-chrome-extension">Chrome Extension</a> •
   <a href="#-tech-stack">Tech Stack</a> •
   <a href="#ℹ%EF%B8%8F-how-to-run-the-application">How To Run</a> •
   <a href="#-license">License</a>
@@ -62,6 +63,7 @@ A tool that measures contrast shouldn't have questionable contrast of its own, s
 | **🔍 Beyond Violations**  | Surfaces axe's "best practice" recommendations and flags items that need manual review — the two buckets most tools silently discard.                                                                                          |
 | **⌨️ Keyboard Path**      | Tabs through the page in a real browser and maps the focus order — flagging invisible focus, keyboard traps, positive `tabindex`, and controls that can't be reached by keyboard.                                              |
 | **📱 Context-Aware Scan** | Re-audits at a mobile viewport and after opening menus / disclosures, catching violations that only surface on small screens or once the UI is expanded.                                                                       |
+| **🧩 Chrome Extension**   | A Manifest V3 side panel that audits the tab you are already on — including a keyboard focus path walked with real `Tab` presses — and points at the offending element in the live page.                                       |
 
 <br/>
 
@@ -81,6 +83,16 @@ A tool that measures contrast shouldn't have questionable contrast of its own, s
   </tr>
 </table>
 
+<p align="center"><em>The side panel: the score for the current tab, and the focus path drawn over the live page.</em></p>
+
+<p align="center">
+  <img src="store/screenshots/1-score-and-findings.png" alt="AccessCheck's side panel showing the score and the findings list for the current tab" width="820" />
+</p>
+
+<p align="center">
+  <img src="store/screenshots/4-focus-path.png" alt="The side panel stepping through the keyboard focus path, with the stops numbered over the page" width="820" />
+</p>
+
 <br/>
 
 ## 🛠️ Tech Stack
@@ -95,20 +107,22 @@ A tool that measures contrast shouldn't have questionable contrast of its own, s
   <img src="https://img.shields.io/badge/Prisma-2D3748?style=for-the-badge&logo=prisma&logoColor=white" alt="Prisma" />
   <img src="https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white" alt="Upstash Redis" />
   <img src="https://img.shields.io/badge/Auth.js-000000?style=for-the-badge&logo=auth0&logoColor=white" alt="Auth.js" />
+  <img src="https://img.shields.io/badge/Chrome_MV3-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Chrome Manifest V3" />
 </p>
 
-| Category               | Technologies                                                     |
-| ---------------------- | ---------------------------------------------------------------- |
-| **Framework**          | Next.js 16 (App Router), React 19                                |
-| **Language**           | TypeScript 5                                                     |
-| **Styling**            | Tailwind CSS v4                                                  |
-| **Audit Engine**       | axe-core, Playwright (`playwright-core` + `@sparticuz/chromium`) |
-| **Database**           | PostgreSQL (Neon, serverless driver) + Prisma 7                  |
-| **Authentication**     | Auth.js / NextAuth v5 (GitHub, Google — OAuth only)              |
-| **Cache & Rate Limit** | Upstash Redis (HTTP-based, shared across instances)              |
-| **Background Jobs**    | Upstash QStash (fan-out of the multi-page crawl, one run/page)   |
-| **Testing**            | Vitest                                                           |
-| **Tooling**            | ESLint, Prettier                                                 |
+| Category               | Technologies                                                      |
+| ---------------------- | ----------------------------------------------------------------- |
+| **Framework**          | Next.js 16 (App Router), React 19                                 |
+| **Language**           | TypeScript 5                                                      |
+| **Styling**            | Tailwind CSS v4                                                   |
+| **Audit Engine**       | axe-core, Playwright (`playwright-core` + `@sparticuz/chromium`)  |
+| **Database**           | PostgreSQL (Neon, serverless driver) + Prisma 7                   |
+| **Authentication**     | Auth.js / NextAuth v5 (GitHub, Google — OAuth only)               |
+| **Cache & Rate Limit** | Upstash Redis (HTTP-based, shared across instances)               |
+| **Background Jobs**    | Upstash QStash (fan-out of the multi-page crawl, one run/page)    |
+| **Browser Extension**  | Chrome Manifest V3 (side panel, `chrome.debugger` / CDP), esbuild |
+| **Testing**            | Vitest, Playwright-driven gates                                   |
+| **Tooling**            | ESLint, Prettier                                                  |
 
 <br/>
 
@@ -164,9 +178,25 @@ URL → headless Chromium (Playwright) → inject axe-core → WCAG audit
 
 <br/>
 
+## 🧩 The Chrome extension
+
+The web app audits a URL. The extension audits **the tab you are already looking at** — behind a login, mid-checkout, three clicks into a flow no crawler can reach. It is a Manifest V3 side panel that reuses the same engine as the server-side scan.
+
+- **Two readings, by cost.** A **quick audit** runs the rules and returns without ever attaching the debugger. An **expanded audit** adds the keyboard focus path, and says so before it starts.
+- **A real focus path, not a simulated one.** The walk attaches `chrome.debugger` and dispatches genuine `Tab` / `Shift+Tab` through CDP, so the order it reports is the order Chrome actually produces — including what the browser skips. The debugger is attached for that step only and released before the report appears; a walk that is cut short still releases it.
+- **It points at the element.** Every occurrence carries its selector, an abbreviated snippet, and its measured rectangle — and **Locate on page** highlights it in the live tab. Stepping through the focus path numbers the stops over the page itself.
+- **It says what it could not check.** Coverage is stated in the score card (_"Partial coverage · 3 checks unavailable"_) rather than quietly rounded away, and the reading is never called complete when checks were skipped.
+- **Narrow permissions.** `activeTab`, `scripting`, `sidePanel`, `storage`, `debugger` — no host permissions, and nothing is loaded over the network at runtime.
+
+The panel is held to the standard the product sells: one `<main>`, one `<h1>`, no skipped heading levels, a visible focus ring on every control, no horizontal overflow at 320–600px or at 200% zoom, and no layout shift when a finding opens — all asserted by [`scripts/check-panel-ux.mjs`](scripts/check-panel-ux.mjs).
+
+<br/>
+
 ## 🛠️ Engineering challenges
 
 The most challenging part of this project was making the remediation **trustworthy** rather than just plausible. Generating a fix is easy; proving it actually clears the violation meant building a structured apply-and-revert layer over a live DOM and re-running the audit scoped to a single rule. Getting the contrast math right — guaranteeing the suggested color passes its WCAG target _after_ rounding — pushed me toward property-based testing. The deterministic core (color math, fix generators, scoring, grouping, and the history diff) is fully unit-tested with Vitest, ensuring reliability and maintainability of the codebase.
+
+The second one was **making the extension and the server agree.** Two audits of the same page that disagree are worse than one audit, so there is only ever one engine: [`src/lib/scan/dom/engine.ts`](src/lib/scan/dom/engine.ts) is bundled by esbuild into a single IIFE (`dom-engine/dom-engine.js`) with its `sha256` written beside it, and both drivers load that identical artifact — Playwright injects it server-side, the extension ships it as a file. A parity gate then audits the same fixtures through both and fails the build if the focus paths, selectors, markup or measured rectangles diverge, so the two can't quietly drift apart. The packaged release is checked the same way: the archive is rejected if any file in it differs from a fresh build.
 
 <br/>
 
@@ -200,6 +230,23 @@ npm run test
 ```
 
 > ⏩ Access [http://localhost:3000](http://localhost:3000) to view the web application.
+
+### 🧩 The Chrome extension
+
+> Build it:
+
+```bash
+npm run build:extension
+```
+
+> Then open `chrome://extensions`, turn on **Developer mode**, choose **Load unpacked** and select the `extension/dist` folder.
+> Click the AccessCheck icon on any tab to open the side panel.
+
+> Run the extension gates (each drives a real Chrome through Playwright):
+
+```bash
+npm run check:manifest && npm run check:extension && npm run check:deep && npm run check:panel
+```
 
 <br/>
 
