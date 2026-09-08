@@ -436,7 +436,6 @@ async function rewindToTop(io: FocusPathIO): Promise<Rewind> {
     if ((await io.peekStop()).isBody) return { startedAtTop: true, startAtSeed: false };
 
     if ((await io.relativeToSeed()) === "after") {
-      // Nothing precedes the seed: the walk wrapped to the end of the page.
       const again = await io.focusFirst();
       return { startedAtTop: again === "focused", startAtSeed: again === "focused" };
     }
