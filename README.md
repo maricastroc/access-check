@@ -86,11 +86,11 @@ A tool that measures contrast shouldn't have questionable contrast of its own, s
 <p align="center"><em>The side panel: the score for the current tab, and the focus path drawn over the live page.</em></p>
 
 <p align="center">
-  <img src="store/screenshots/1-score-and-findings.png" alt="AccessCheck's side panel showing the score and the findings list for the current tab" width="820" />
+  <img src="docs/extension-1.png" alt="AccessCheck's side panel showing the score and the findings list for the current tab" width="820" />
 </p>
 
 <p align="center">
-  <img src="store/screenshots/4-focus-path.png" alt="The side panel stepping through the keyboard focus path, with the stops numbered over the page" width="820" />
+  <img src="docs/extension-2.png" alt="AccessCheck's side panel showing the score and the findings list foralt="The side panel stepping through the keyboard focus path, with the stops numbered over the page" width="820" />
 </p>
 
 <br/>
