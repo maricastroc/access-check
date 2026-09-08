@@ -568,7 +568,7 @@ try {
       "Checks performed",
       "Evidence",
     ];
-    const order = [...document.querySelectorAll("span, summary")]
+    const order = [...document.querySelectorAll("h1, h2")]
       .map((el) => names.find((n) => el.textContent.trim().startsWith(n)))
       .filter(Boolean);
     const details = [...document.querySelectorAll("details")].map((d) => ({
@@ -622,9 +622,9 @@ try {
     await new Promise((r) => setTimeout(r, 80));
     const text = document.body.textContent;
     const doc = document.documentElement;
-    const body = [...document.querySelectorAll("span")]
+    const body = [...document.querySelectorAll("span, h4")]
       .map((s) => s.textContent.trim())
-      .filter((t) => /^(Suggested fix|Occurrence \d+ of \d+|Selector|Element)/.test(t));
+      .filter((t) => /^(Suggested fix|Occurrence \d+ of \d+|Evidence|Element)/.test(t));
     return {
       focused,
       body,
@@ -644,15 +644,15 @@ try {
   check(opened.locate, "there is no Locate on page action");
   check(
     opened.body.indexOf("Suggested fix") < opened.body.indexOf(opened.counter) &&
-      opened.body.indexOf(opened.counter) < opened.body.indexOf("Selector") &&
-      opened.body.indexOf("Selector") < opened.body.findIndex((t) => t.startsWith("Element")),
+      opened.body.indexOf(opened.counter) < opened.body.indexOf("Evidence") &&
+      opened.body.indexOf("Evidence") < opened.body.findIndex((t) => t.startsWith("Element")),
     `the expanded finding is out of order: ${JSON.stringify(opened.body)}`,
   );
   check(opened.overflow <= 0, `the panel overflows 400px by ${opened.overflow}px`);
 
   const stepped = await panel.evaluate(async () => {
     const counter = () =>
-      [...document.querySelectorAll("span")]
+      [...document.querySelectorAll("h4")]
         .map((s) => s.textContent.trim())
         .find((t) => /^Occurrence \d+ of \d+$/.test(t));
     const press = async (label) => {
@@ -773,7 +773,7 @@ try {
       indicator: [...document.querySelectorAll("span")]
         .map((s) => s.textContent.trim())
         .find((t) => /^Stop \d+ of \d+$/.test(t)),
-      occurrence: [...document.querySelectorAll("span")]
+      occurrence: [...document.querySelectorAll("h4")]
         .map((s) => s.textContent.trim())
         .find((t) => /^Occurrence \d+ of \d+$/.test(t)),
     };
@@ -858,7 +858,7 @@ try {
   });
   const gone = await panel.evaluate(async () => {
     const counter = () =>
-      [...document.querySelectorAll("span")]
+      [...document.querySelectorAll("h4")]
         .map((s) => s.textContent.trim())
         .find((t) => /^Occurrence \d+ of \d+$/.test(t));
     for (let i = 0; i < 4 && counter() !== "Occurrence 3 of 3"; i++) {

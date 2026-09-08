@@ -131,11 +131,16 @@ try {
     const rows = [...document.querySelectorAll("button h3")];
     return {
       text: text.slice(0, 160),
-      header: [...document.querySelectorAll("span")]
+      header: [...document.querySelectorAll("h2")]
         .map((s) => s.textContent.trim())
         .find((t) => /^Findings · \d+$/.test(t))
         ?.split("·")[1]
         ?.trim(),
+      landmarks: document.querySelectorAll("main").length,
+      headingOrder: [...document.querySelectorAll("h1, h2, h3, h4")].map((h) =>
+        Number(h.tagName.slice(1)),
+      ),
+      firstHeading: document.querySelector("h1")?.textContent?.trim() ?? null,
       rows: rows.map((h) => h.textContent),
       origins: [...document.querySelectorAll("button .font-cond.uppercase")].map(
         (s) => s.textContent,
@@ -154,12 +159,10 @@ try {
       claimsClean: /\bExcellent\b/i.test(text),
       claimsNoFailures: /no automated .* failures/i.test(text),
       counts: Object.fromEntries(
-        [...document.querySelectorAll("span")]
-          .filter((s) => s.querySelector("b") && /\d+ [a-z ]+$/.test(s.textContent.trim()))
-          .map((s) => [
-            s.textContent.replace(/^\d+\s*/, "").trim(),
-            Number(s.querySelector("b").textContent),
-          ]),
+        [...document.querySelectorAll("dl > div")].map((row) => [
+          row.querySelector("dd").textContent.trim(),
+          Number(row.querySelector("dt").textContent),
+        ]),
       ),
       screenshot: !!document.querySelector("img[alt^='Screenshot of']"),
       markers: document.querySelectorAll("span[title]").length,
@@ -174,10 +177,10 @@ try {
         (d) =>
           /^Coverage limitations/.test(d.querySelector("summary")?.textContent ?? "") && !d.open,
       ),
-      order: [...document.querySelectorAll("span")]
+      order: [...document.querySelectorAll("h1, h2")]
         .map((s) => s.textContent.trim())
         .filter((t) =>
-          /^(Quick audit score|Current-tab audit score|Findings · \d+|Checks performed|Evidence)/.test(
+          /^(Quick audit score|Current-tab audit score|Findings · \d+|Focus path|Coverage limitations|Checks performed|Evidence)/.test(
             t,
           ),
         ),
@@ -229,6 +232,13 @@ try {
     "the report does not explain the cross-origin assets it could not read",
   );
   check(seen.evidenceCollapsed, "the evidence section is not collapsed by default");
+  check(seen.landmarks === 1, `the panel exposes ${seen.landmarks} main landmarks, expected 1`);
+  check(!!seen.firstHeading, "the panel has no h1");
+  check(seen.headingOrder[0] === 1, `the first heading is an h${seen.headingOrder[0]}, not an h1`);
+  check(
+    seen.headingOrder.every((level, i, all) => i === 0 || level <= all[i - 1] + 1),
+    `the heading levels skip a step: ${JSON.stringify(seen.headingOrder)}`,
+  );
   check(seen.shortSummary, "the score card does not carry the one-line coverage summary");
   check(
     seen.limitationsCollapsed,

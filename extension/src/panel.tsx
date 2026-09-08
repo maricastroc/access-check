@@ -37,31 +37,51 @@ function send(message: PanelMessage): Promise<unknown> {
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
-  return <div className="min-h-screen bg-canvas p-3 font-sans text-ink">{children}</div>;
+  return <main className="min-h-screen bg-canvas pb-4 font-sans text-ink">{children}</main>;
+}
+
+function StickyBar({ title, score, onTop }: { title: string; score?: number; onTop?: () => void }) {
+  return (
+    <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-canvas px-3 py-2">
+      <h1 className="min-w-0 flex-1 truncate text-[13px] font-semibold text-ink">{title}</h1>
+      {typeof score === "number" && onTop && (
+        <button
+          type="button"
+          onClick={onTop}
+          className="shrink-0 cursor-pointer border border-border bg-surface px-2 py-1 font-cond text-[13px] font-semibold text-ink tabular-nums hover:bg-band"
+        >
+          {score}
+          <span className="sr-only"> out of 100 — back to the summary</span>
+        </button>
+      )}
+    </div>
+  );
 }
 
 function Header({ result }: { result: ScanResult }) {
   const scope = auditScope(result);
 
   return (
-    <div className="border border-border bg-surface p-3">
-      <SectionKicker>{scope.kicker}</SectionKicker>
+    <section className="mt-3 border border-border bg-surface p-3" aria-labelledby="score-heading">
+      <SectionKicker as="h2" id="score-heading">
+        {scope.kicker}
+      </SectionKicker>
       {scope.lead && (
-        <p className="mt-0.5 text-[12px] font-semibold text-moderate-text">{scope.lead}</p>
+        <p className="mt-0.5 text-[12.5px] font-semibold text-moderate-text">{scope.lead}</p>
       )}
       <div className="mt-1 flex items-baseline gap-2">
         <span className="font-cond text-[40px] leading-none text-ink tabular-nums">
           {result.score}
         </span>
-        <span className="text-[12px] text-muted">/100</span>
+        <span className="text-[12.5px] text-muted">/100</span>
       </div>
 
-      <p className="mt-1.5 text-[12px] leading-normal font-medium text-moderate-text">
+      <p className="mt-1.5 text-[12.5px] leading-normal font-medium text-moderate-text">
         {scope.summary}
       </p>
-      {scope.badge && <p className="mt-0.5 text-[11.5px] text-muted">{scope.badge}</p>}
+      {scope.badge && <p className="mt-0.5 text-[12px] text-muted">{scope.badge}</p>}
 
-      <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1 text-[12px] text-muted">
+      <dl className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1 text-[12.5px] text-muted">
         {(
           [
             ["critical", result.counts.critical],
@@ -73,13 +93,14 @@ function Header({ result }: { result: ScanResult }) {
             ["manual review", result.counts.manualReview],
           ] as const
         ).map(([label, n]) => (
-          <span key={label}>
-            <b className="font-semibold text-ink tabular-nums">{n}</b> {label}
-          </span>
+          <div key={label} className="whitespace-nowrap">
+            <dt className="inline font-semibold text-ink tabular-nums">{n}</dt>{" "}
+            <dd className="inline">{label}</dd>
+          </div>
         ))}
-      </div>
-      <p className="mt-2 text-[12.5px] leading-normal text-body">{result.summary}</p>
-    </div>
+      </dl>
+      <p className="mt-2.5 text-[13px] leading-[1.55] text-body">{result.summary}</p>
+    </section>
   );
 }
 
@@ -93,12 +114,12 @@ function Collapsed({
   children: React.ReactNode;
 }) {
   return (
-    <details className="mt-3 border border-border bg-surface px-3 py-2">
-      <summary className="cursor-pointer text-[12.5px] font-semibold text-ink">
-        {title}
+    <details className="mt-1 border-t border-hairline px-3 py-2.5">
+      <summary className="cursor-pointer text-[13px] font-semibold text-ink">
+        <h2 className="inline text-[13px] font-semibold">{title}</h2>
         {note && <span className="ml-2 font-normal text-muted">{note}</span>}
       </summary>
-      <div className="mt-2">{children}</div>
+      <div className="mt-2.5">{children}</div>
     </details>
   );
 }
@@ -108,14 +129,11 @@ function Capture({ result }: { result: ScanResult }) {
   const marked = result.markers.length;
 
   return (
-    <details className="mt-3 border border-ink bg-surface">
-      <summary className="cursor-pointer px-3 py-2">
-        <SectionKicker>Evidence · visible viewport</SectionKicker>
-        <span className="ml-2 text-[12px] text-muted">
-          screenshot{marked > 0 ? ` · ${marked} marked` : ""}
-        </span>
-      </summary>
-      <div className="relative border-t border-ink">
+    <Collapsed
+      title="Evidence"
+      note={`viewport screenshot${marked > 0 ? ` · ${marked} marked` : ""}`}
+    >
+      <div className="relative border border-hairline">
         {/* eslint-disable-next-line @next/next/no-img-element -- the panel is not a Next page */}
         <img
           src={result.screenshot}
@@ -137,9 +155,15 @@ function Capture({ result }: { result: ScanResult }) {
           />
         ))}
       </div>
-    </details>
+    </Collapsed>
   );
 }
+
+const PRIMARY_BUTTON =
+  "w-full cursor-pointer bg-ink px-3 py-2 text-[13px] font-semibold text-surface hover:bg-ink-2 disabled:cursor-default disabled:bg-canvas disabled:text-disabled";
+
+const SECONDARY_BUTTON =
+  "w-full cursor-pointer border border-ink bg-surface px-3 py-2 text-[13px] font-semibold text-ink hover:bg-band";
 
 const SMALL_BUTTON =
   "cursor-pointer border border-border bg-canvas px-2 py-1 text-[11.5px] font-semibold text-ink hover:bg-band disabled:cursor-default disabled:text-disabled";
@@ -175,6 +199,15 @@ function CopyButton({
     >
       {state === "done" ? "Copied" : state === "failed" ? "Copy failed" : label}
     </button>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="mt-3">
+      <SectionKicker as="h4">{label}</SectionKicker>
+      <div className="mt-1">{children}</div>
+    </div>
   );
 }
 
@@ -214,61 +247,69 @@ function Occurrences({
   };
 
   const truncated = occurrence.html?.includes("…") ?? false;
+  const where = [
+    occurrence.stop === null ? "Never reached by Tab" : `Stop ${occurrence.stop}`,
+    occurrence.tag ? `<${occurrence.tag}>` : null,
+    occurrence.label || null,
+  ].filter(Boolean);
 
   return (
-    <div className="mt-2.5 border-t border-hairline pt-2.5">
+    <section className="mt-4 border-t border-hairline pt-3" aria-label="Occurrences">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <SectionKicker>
+        <SectionKicker as="h4">
           Occurrence {at + 1} of {total}
         </SectionKicker>
-        <OccurrenceStepper
-          index={at}
-          total={total}
-          onPrev={() => step(-1)}
-          onNext={() => step(1)}
-        />
+        {total > 1 && (
+          <OccurrenceStepper
+            index={at}
+            total={total}
+            onPrev={() => step(-1)}
+            onNext={() => step(1)}
+          />
+        )}
       </div>
 
-      <p className="mt-2 text-[12px] text-muted">
-        {occurrence.stop === null ? "Never reached by Tab" : `Stop ${occurrence.stop}`}
-        {occurrence.tag ? ` · <${occurrence.tag}>` : ""}
-        {occurrence.label ? ` · ${occurrence.label}` : ""}
-        {occurrence.certainty === "needs-review" ? " · needs a human check" : ""}
-      </p>
-      <p className="mt-1.5 text-[12.5px] leading-normal text-body">{occurrence.reason}</p>
+      <p className="mt-2 text-[12px] leading-normal break-words text-muted">{where.join(" · ")}</p>
+
+      <Field label="Evidence">
+        <p className="text-[13px] leading-[1.55] break-words text-body">{occurrence.reason}</p>
+        {occurrence.certainty === "needs-review" && (
+          <p className="mt-1.5 text-[12px] leading-normal text-moderate-text">
+            Geometry alone cannot settle this one — check it against the reading order you intend.
+          </p>
+        )}
+      </Field>
+
       {occurrence.rect && (
-        <p className="mt-1.5 text-[11.5px] text-muted tabular-nums">
-          {Math.round(occurrence.rect.w)}×{Math.round(occurrence.rect.h)}px at{" "}
-          {Math.round(occurrence.rect.x)}, {Math.round(occurrence.rect.y)}
-          {occurrence.onScreen ? "" : " · was outside the viewport when it was measured"}
-        </p>
+        <Field label="Position">
+          <p className="text-[12px] text-muted tabular-nums">
+            {Math.round(occurrence.rect.w)}×{Math.round(occurrence.rect.h)}px at{" "}
+            {Math.round(occurrence.rect.x)}, {Math.round(occurrence.rect.y)}
+            {occurrence.onScreen ? "" : " · outside the viewport when it was measured"}
+          </p>
+        </Field>
       )}
 
-      <div className="mt-2">
-        <SectionKicker>Selector</SectionKicker>
-        <p className="mt-1 overflow-x-auto font-mono text-[11.5px] break-all text-steel">
+      <Field label="Element">
+        <p className="overflow-x-auto font-mono text-[12px] break-all text-steel">
           {occurrence.selector}
         </p>
-      </div>
-
-      {occurrence.html && (
-        <div className="mt-2">
-          <SectionKicker>{truncated ? "Element · abbreviated" : "Element"}</SectionKicker>
-          <pre className="mt-1 max-h-32 overflow-auto bg-code p-2 font-mono text-[11.5px] break-all whitespace-pre-wrap text-ink">
+        {occurrence.html && (
+          <pre className="mt-1.5 max-h-40 overflow-auto bg-code p-2 font-mono text-[12px] break-all whitespace-pre-wrap text-ink">
             {occurrence.html}
           </pre>
-          {truncated && (
-            <p className="mt-1 text-[11px] text-muted">
-              Long attributes and text are cut short with … , and attributes that can carry what you
-              typed are left out. Copy this as evidence, not as markup to paste back.
-            </p>
-          )}
-        </div>
-      )}
+        )}
+        {truncated && (
+          <p className="mt-1.5 text-[12px] leading-normal text-muted">
+            Abbreviated with … , and attributes that can carry what you typed are left out.
+            Evidence, not markup to paste back.
+          </p>
+        )}
+      </Field>
 
       <button
         type="button"
-        className="mt-2.5 w-full cursor-pointer bg-ink px-3 py-2 text-[12.5px] font-semibold text-surface hover:bg-ink-2 disabled:cursor-default disabled:bg-canvas disabled:text-disabled"
+        className={`${PRIMARY_BUTTON} mt-3`}
         disabled={busy}
         onClick={() => void locate()}
       >
@@ -281,11 +322,11 @@ function Occurrences({
       </div>
 
       {notice && (
-        <p role="status" className="mt-1.5 text-[12px] leading-normal text-moderate-text">
+        <p role="status" className="mt-2 text-[12.5px] leading-normal text-moderate-text">
           {notice}
         </p>
       )}
-    </div>
+    </section>
   );
 }
 
@@ -308,9 +349,11 @@ function Findings({
   }
 
   return (
-    <div className="mt-3 border border-border bg-surface">
+    <section className="mt-3 border border-border bg-surface" aria-labelledby="findings-heading">
       <div className="border-b border-border px-3 py-2">
-        <SectionKicker>Findings · {findings.length}</SectionKicker>
+        <SectionKicker as="h2" id="findings-heading">
+          Findings · {findings.length}
+        </SectionKicker>
       </div>
       {findings.length === 0 ? (
         <p className="px-3 py-3 text-[12.5px] text-muted">
@@ -325,28 +368,28 @@ function Findings({
               onSelect={() => setSelected(selected === f.id ? null : f.id)}
             />
             {selected === f.id && (
-              <div className="border-x border-b border-hairline bg-surface px-3 pt-1 pb-3">
-                <p className="text-[12px] text-muted">
-                  {f.severity ?? "best practice"}
-                  {f.contexts.length > 0 ? ` · also fails in ${f.contexts.join(", ")}` : ""}
-                </p>
-                <p className="mt-1.5 text-[12.5px] leading-normal text-body">{f.desc}</p>
-                <div className="mt-2">
-                  <SectionKicker>Suggested fix</SectionKicker>
-                  <p className="mt-1 text-[12.5px] leading-normal text-body">{f.fixText}</p>
+              <div className="border-x border-b border-hairline bg-surface px-3 pt-2 pb-3">
+                {f.contexts.length > 0 && (
+                  <p className="text-[12px] text-muted">Also fails in {f.contexts.join(", ")}</p>
+                )}
+                <Field label="Problem">
+                  <p className="text-[13px] leading-[1.55] break-words text-body">{f.desc}</p>
+                </Field>
+                <Field label="Suggested fix">
+                  <p className="text-[13px] leading-[1.55] break-words text-body">{f.fixText}</p>
                   {f.fixCode && (
-                    <pre className="mt-1.5 overflow-x-auto bg-code p-2 font-mono text-[11.5px] text-ink">
+                    <pre className="mt-1.5 overflow-x-auto bg-code p-2 font-mono text-[12px] text-ink">
                       {f.fixCode}
                     </pre>
                   )}
-                </div>
+                </Field>
                 <Occurrences finding={f} syncStop={syncStop} onLocate={onLocate} />
               </div>
             )}
           </div>
         ))
       )}
-    </div>
+    </section>
   );
 }
 
@@ -366,16 +409,13 @@ function ChecksPerformed({ result }: { result: ScanResult }) {
   ].filter((x): x is string => x !== null);
 
   return (
-    <details className="mt-3 border border-border bg-surface px-3 py-2">
-      <summary className="cursor-pointer text-[12.5px] font-semibold text-ink">
-        Checks performed
-      </summary>
-      <ul className="mt-2 list-disc pl-4 text-[12.5px] leading-relaxed text-body">
+    <Collapsed title="Checks performed" note={`${ran.length}`}>
+      <ul className="list-disc space-y-1 pl-4 text-[12.5px] leading-[1.5] text-body">
         {ran.map((item) => (
           <li key={item}>{item}</li>
         ))}
       </ul>
-    </details>
+    </Collapsed>
   );
 }
 
@@ -442,8 +482,10 @@ function FocusPath({
   const lines = walked ? focusPathLines(walked) : null;
 
   return (
-    <div className="mt-3 border border-border bg-surface p-3">
-      <SectionKicker>Focus path</SectionKicker>
+    <section className="mt-3 border-t border-hairline px-3 pt-3" aria-labelledby="focus-heading">
+      <SectionKicker as="h2" id="focus-heading">
+        Focus path
+      </SectionKicker>
 
       {walked && lines ? (
         <p className="mt-1.5 text-[12.5px] leading-normal text-body">{lines.line}</p>
@@ -470,11 +512,7 @@ function FocusPath({
       {walked && stops > 0 && (
         <>
           {!showing ? (
-            <button
-              type="button"
-              onClick={onShow}
-              className="mt-2.5 w-full cursor-pointer bg-ink px-3 py-2 text-[12.5px] font-semibold text-surface hover:bg-ink-2"
-            >
+            <button type="button" onClick={onShow} className={`${SECONDARY_BUTTON} mt-3`}>
               Show focus path
             </button>
           ) : (
@@ -531,14 +569,11 @@ function FocusPath({
       {notice && <p className="mt-2 text-[12px] leading-normal text-moderate-text">{notice}</p>}
 
       {!walked && (
-        <button
-          onClick={onWalk}
-          className="mt-2.5 w-full cursor-pointer bg-ink px-3 py-2 text-[13px] font-semibold text-surface hover:bg-ink-2"
-        >
+        <button type="button" onClick={onWalk} className={`${PRIMARY_BUTTON} mt-3`}>
           Walk the focus path now
         </button>
       )}
-    </div>
+    </section>
   );
 }
 
@@ -555,19 +590,21 @@ function Running({
   const current = mode === "quick" && stage === "report" ? stages.length - 1 : STAGE_INDEX[stage];
 
   return (
-    <div className="border border-border bg-surface p-4">
-      <SectionKicker>{mode === "quick" ? "Quick audit" : "Expanded audit"}</SectionKicker>
-      <p className="mt-1.5 truncate font-mono text-[11.5px] text-muted">{url}</p>
-      <div className="mt-2.5">
-        <StageList stages={stages} current={current} />
+    <>
+      <StickyBar title={mode === "quick" ? "Quick audit" : "Auditing this tab"} />
+      <div className="px-3 pt-3">
+        <p className="truncate font-mono text-[12px] text-muted">{url}</p>
+        <div className="mt-3 border border-border bg-surface p-3">
+          <StageList stages={stages} current={current} />
+        </div>
+        <p className="mt-3 text-[12.5px] leading-[1.5] text-muted">
+          The score appears when every step above has finished. The page is not modified.
+          {mode === "expanded"
+            ? " Walking the focus path attaches Chrome's debugger for that step only — Chrome shows its own banner meanwhile — and it is released before the report appears."
+            : ""}
+        </p>
       </div>
-      <p className="mt-2.5 border-t border-hairline pt-2.5 text-[12px] leading-normal text-muted">
-        The score appears when every step above has finished. The page is not modified.
-        {mode === "expanded"
-          ? " Walking the focus path attaches Chrome's debugger for that step only — Chrome shows its own banner meanwhile — and it is released before the report appears."
-          : ""}
-      </p>
-    </div>
+    </>
   );
 }
 
@@ -629,44 +666,47 @@ function Report({
 
   return (
     <>
-      <div className="mb-3">
-        <p className="truncate text-[13px] font-semibold text-ink">{result.title}</p>
-        <p className="truncate font-mono text-[11.5px] text-muted">{result.finalUrl}</p>
+      <StickyBar
+        title={result.title}
+        score={result.score}
+        onTop={() => window.scrollTo({ top: 0, behavior: "instant" })}
+      />
+      <div className="px-3">
+        <p className="mt-2 truncate font-mono text-[12px] text-muted">{result.finalUrl}</p>
+        <Header result={result} />
+        <Findings findings={buildFindings(result)} syncStop={syncStop} onLocate={locate} />
+        <FocusPath
+          result={result}
+          error={deepError}
+          notice={notice}
+          showing={showing}
+          at={at}
+          complete={complete}
+          moved={moved}
+          onWalk={onWalk}
+          onShow={() => void showPath(at)}
+          onStep={(delta) => void showPath(((at - 1 + delta + marks.length) % marks.length) + 1)}
+          onToggleComplete={() => {
+            const next = !complete;
+            setComplete(next);
+            void showPath(at, next);
+          }}
+          onClear={() => {
+            setShowing(false);
+            setNotice(null);
+            setSyncStop(null);
+            setMoved(false);
+            clear();
+          }}
+          onRestoreScroll={() => {
+            restoreScroll();
+            setMoved(false);
+          }}
+        />
       </div>
 
-      <Header result={result} />
-      <Findings findings={buildFindings(result)} syncStop={syncStop} onLocate={locate} />
-      <FocusPath
-        result={result}
-        error={deepError}
-        notice={notice}
-        showing={showing}
-        at={at}
-        complete={complete}
-        moved={moved}
-        onWalk={onWalk}
-        onShow={() => void showPath(at)}
-        onStep={(delta) => void showPath(((at - 1 + delta + marks.length) % marks.length) + 1)}
-        onToggleComplete={() => {
-          const next = !complete;
-          setComplete(next);
-          void showPath(at, next);
-        }}
-        onClear={() => {
-          setShowing(false);
-          setNotice(null);
-          setSyncStop(null);
-          setMoved(false);
-          clear();
-        }}
-        onRestoreScroll={() => {
-          restoreScroll();
-          setMoved(false);
-        }}
-      />
-
       <Collapsed title="Coverage limitations" note={scope.summary}>
-        <p className="text-[12.5px] leading-normal text-body">{scope.note}</p>
+        <p className="text-[13px] leading-[1.55] text-body">{scope.note}</p>
         <div className="mt-2.5">
           <WarningList
             warnings={result.warnings ?? []}
@@ -679,34 +719,48 @@ function Report({
       <ChecksPerformed result={result} />
       <Capture result={result} />
 
-      <button
-        onClick={onReaudit}
-        className="mt-3 w-full cursor-pointer bg-ink px-3 py-2 text-[13px] font-semibold text-surface hover:bg-ink-2"
-      >
-        Audit this tab again
-      </button>
-      <button
-        type="button"
-        onClick={onQuick}
-        aria-describedby="quick-audit-note"
-        className="mt-2 w-full cursor-pointer border-2 border-ink bg-surface px-3 py-2 text-[13px] font-semibold text-ink hover:bg-band"
-      >
-        Run quick audit
-      </button>
-      <p id="quick-audit-note" className="mt-1 text-center text-[11.5px] text-muted">
-        No debugger or keyboard focus path
-      </p>
+      <div className="mt-4 border-t border-hairline px-3 pt-3">
+        <button type="button" onClick={onReaudit} className={PRIMARY_BUTTON}>
+          Audit this tab again
+        </button>
+        <button
+          type="button"
+          onClick={onQuick}
+          aria-describedby="quick-audit-note"
+          className={`${SECONDARY_BUTTON} mt-2`}
+        >
+          Run quick audit
+        </button>
+        <p id="quick-audit-note" className="mt-1.5 text-center text-[12px] text-muted">
+          No debugger or keyboard focus path
+        </p>
+      </div>
     </>
   );
 }
 
-function Message({ kicker, title, body }: { kicker: string; title: string; body: string }) {
+function Message({
+  kicker,
+  title,
+  body,
+  children,
+}: {
+  kicker: string;
+  title: string;
+  body: string;
+  children?: React.ReactNode;
+}) {
   return (
-    <div className="border border-border bg-surface p-4">
-      <SectionKicker>{kicker}</SectionKicker>
-      <p className="mt-2 text-[14px] font-semibold text-ink">{title}</p>
-      <p className="mt-1.5 text-[12.5px] leading-normal text-body">{body}</p>
-    </div>
+    <>
+      <StickyBar title={kicker} />
+      <div className="px-3 pt-3">
+        <div className="border border-border bg-surface p-4">
+          <h2 className="text-[15px] font-semibold text-ink">{title}</h2>
+          <p className="mt-1.5 text-[13px] leading-[1.55] text-body">{body}</p>
+        </div>
+        {children}
+      </div>
+    </>
   );
 }
 
@@ -803,17 +857,17 @@ function Panel() {
       )}
 
       {state.kind === "error" && (
-        <>
-          <Message kicker="Audit failed" title="The audit could not finish" body={state.message} />
+        <Message kicker="Audit failed" title="The audit could not finish" body={state.message}>
           {state.recoverable && (
             <button
+              type="button"
               onClick={() => void send({ type: "panel:audit", deep: true })}
-              className="mt-3 w-full cursor-pointer bg-ink px-3 py-2 text-[13px] font-semibold text-surface hover:bg-ink-2"
+              className={`${PRIMARY_BUTTON} mt-3`}
             >
               Try again
             </button>
           )}
-        </>
+        </Message>
       )}
 
       {state.kind === "done" && (

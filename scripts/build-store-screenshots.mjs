@@ -96,12 +96,8 @@ try {
 
   const dom = await panel.evaluate(() => ({
     roots: document.querySelectorAll("#root").length,
-    scoreCards: [...document.querySelectorAll("span")].filter((s) =>
-      /AUDIT SCORE$/.test(s.textContent.trim()),
-    ).length,
-    findingsHeaders: [...document.querySelectorAll("span")].filter((s) =>
-      /^Findings · /.test(s.textContent.trim()),
-    ).length,
+    scoreCards: document.querySelectorAll("#score-heading").length,
+    findingsHeaders: document.querySelectorAll("#findings-heading").length,
     rows: document.querySelectorAll("button h3").length,
     bodyHeight: document.body.scrollHeight,
     scripts: document.querySelectorAll("script").length,
@@ -131,11 +127,11 @@ try {
 
   const scrollPanelTo = (needle) =>
     panel.evaluate(async (text) => {
-      const target = [...document.querySelectorAll("span, h3, summary")].find((el) =>
+      const target = [...document.querySelectorAll("span, h3, h4, summary")].find((el) =>
         el.textContent.trim().startsWith(text),
       );
       target?.scrollIntoView({ block: "start", behavior: "instant" });
-      window.scrollBy(0, -12);
+      window.scrollBy(0, -56);
       await new Promise((r) => setTimeout(r, 200));
     }, needle);
 

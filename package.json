@@ -27,7 +27,8 @@
     "pack": "node scripts/pack-extension.mjs",
     "check:release": "node scripts/check-release.mjs",
     "build:screenshots": "node scripts/build-store-screenshots.mjs",
-    "build:tile": "node scripts/build-promo-tile.mjs"
+    "build:tile": "node scripts/build-promo-tile.mjs",
+    "check:panel": "node scripts/check-panel-ux.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",

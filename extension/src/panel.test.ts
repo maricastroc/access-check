@@ -68,8 +68,8 @@ describe("the panel reuses the product's own report", () => {
     expect(panel).toContain('<CopyButton label="Copy selector"');
     expect(panel).toContain('<CopyButton label="Copy HTML"');
     expect(panel).toContain("aria-label={label}");
-    expect(panel).toContain("<SectionKicker>Selector</SectionKicker>");
-    expect(panel).toContain("Element · abbreviated");
+    expect(panel).toContain('<Field label="Element">');
+    expect(panel).toContain("Abbreviated with …");
   });
 
   it("answers a highlight where the button that asked for it is", () => {
@@ -507,10 +507,11 @@ describe("the panel is an inspector, not a squeezed report", () => {
 
     expect(locate).toBeGreaterThan(-1);
     expect(copies).toBeGreaterThan(locate);
-    expect(occurrences).toContain("w-full");
+    expect(occurrences).toContain("${PRIMARY_BUTTON}");
+    expect(panel).toMatch(/const PRIMARY_BUTTON =\s*\n?\s*"w-full[^"]*bg-ink /);
   });
 
-  it("orders an opened finding as explanation, fix, occurrence, context, selector, markup", () => {
+  it("orders an opened finding as problem, fix, occurrence, evidence, element", () => {
     const findings = panel.slice(
       panel.indexOf("function Findings("),
       panel.indexOf("function ChecksPerformed("),
@@ -520,13 +521,17 @@ describe("the panel is an inspector, not a squeezed report", () => {
       panel.indexOf("function Findings("),
     );
 
-    expect(findings.indexOf("{f.desc}")).toBeLessThan(findings.indexOf("Suggested fix"));
-    expect(findings.indexOf("Suggested fix")).toBeLessThan(findings.indexOf("<Occurrences"));
-    expect(occurrences.indexOf("Occurrence {at + 1} of {total}")).toBeLessThan(
-      occurrences.indexOf("<SectionKicker>Selector</SectionKicker>"),
+    expect(findings.indexOf('<Field label="Problem">')).toBeLessThan(
+      findings.indexOf('<Field label="Suggested fix">'),
     );
-    expect(occurrences.indexOf("<SectionKicker>Selector</SectionKicker>")).toBeLessThan(
-      occurrences.indexOf("Element · abbreviated"),
+    expect(findings.indexOf('<Field label="Suggested fix">')).toBeLessThan(
+      findings.indexOf("<Occurrences"),
+    );
+    expect(occurrences.indexOf("Occurrence {at + 1} of {total}")).toBeLessThan(
+      occurrences.indexOf('<Field label="Evidence">'),
+    );
+    expect(occurrences.indexOf('<Field label="Evidence">')).toBeLessThan(
+      occurrences.indexOf('<Field label="Element">'),
     );
   });
 
@@ -699,5 +704,103 @@ describe("the coverage line is concrete", () => {
     expect(bare([{ code: "content-unsettled", message: "x" }]).summary).toBe(
       "Partial coverage · page still changing",
     );
+  });
+});
+
+describe("the panel reads as a document, not a stack of boxes", () => {
+  const panel = readFileSync(new URL("./panel.tsx", import.meta.url), "utf8");
+
+  it("gives every screen one main landmark and one h1", () => {
+    expect(panel).toMatch(/function Shell\([\s\S]{0,200}<main /);
+    expect(panel.match(/<main /g)).toHaveLength(1);
+    expect(panel.match(/<h1 /g)).toHaveLength(1);
+    expect(panel).toMatch(/function StickyBar\([\s\S]{0,400}<h1 /);
+  });
+
+  it("wraps every screen in that one shell, and heads each with the sticky bar", () => {
+    expect(panel.match(/<Shell>/g)).toHaveLength(1);
+    for (const screen of ["function Running(", "function Message(", "function Report("]) {
+      const body = panel.slice(panel.indexOf(screen), panel.indexOf(screen) + 2400);
+      expect(body).not.toContain("<main");
+      expect(body).toContain("<StickyBar");
+    }
+  });
+
+  it("keeps the audited page and its score in reach while the reader scrolls", () => {
+    const bar = panel.slice(
+      panel.indexOf("function StickyBar("),
+      panel.indexOf("function Header("),
+    );
+    expect(bar).toContain("sticky top-0");
+    expect(bar).toContain("onTop");
+    expect(bar).toContain("out of 100 — back to the summary");
+  });
+
+  it("descends h1 → h2 → h3 → h4 without skipping a level", () => {
+    expect(panel).toMatch(/as="h2" id="score-heading"/);
+    expect(panel).toMatch(/as="h2" id="findings-heading"/);
+    expect(panel).toMatch(/function Field\([\s\S]{0,300}as="h4"/);
+    const collapsed = panel.slice(panel.indexOf("function Collapsed("));
+    expect(collapsed.slice(0, 600)).toContain("<h2 className=");
+  });
+
+  it("carries exactly one filled button, and states the rest by weight", () => {
+    expect(panel).toContain("const PRIMARY_BUTTON =");
+    expect(panel).toContain("const SECONDARY_BUTTON =");
+    expect(panel).toMatch(/const SECONDARY_BUTTON =\s*\n?\s*"w-full[^"]*border border-ink/);
+    const uses = panel.match(/\$\{PRIMARY_BUTTON\}/g) ?? [];
+    expect(uses.length).toBeGreaterThan(0);
+    expect(panel).toMatch(/Show focus path[\s\S]{0,120}|SECONDARY_BUTTON/);
+  });
+
+  it("spaces the long sections with rules instead of nesting more cards", () => {
+    const collapsed = panel.slice(
+      panel.indexOf("function Collapsed("),
+      panel.indexOf("function Capture("),
+    );
+    expect(collapsed).toContain("border-t border-hairline");
+    expect(collapsed).not.toContain("rounded");
+    expect(panel).not.toContain("rounded-lg");
+    expect(panel).not.toContain("shadow-");
+  });
+
+  it("breaks selectors, sentences and attributes rather than widening the panel", () => {
+    const occurrences = panel.slice(
+      panel.indexOf("function Occurrences("),
+      panel.indexOf("function Findings("),
+    );
+    expect(occurrences).toMatch(/break-words text-muted">\{where\.join/);
+    expect(occurrences).toMatch(/break-words text-body">\{occurrence\.reason\}/);
+    expect(occurrences).toMatch(/break-all text-steel">\s*\n?\s*\{occurrence\.selector\}/);
+    expect(occurrences).toMatch(/<pre[\s\S]{0,200}overflow-auto[\s\S]{0,120}break-all/);
+
+    const findings = panel.slice(
+      panel.indexOf("function Findings("),
+      panel.indexOf("function ChecksPerformed("),
+    );
+    expect(findings).toMatch(/break-words text-body">\{f\.desc\}/);
+    expect(findings).toMatch(/break-words text-body">\{f\.fixText\}/);
+  });
+
+  it("labels each part of an occurrence instead of running them together", () => {
+    const occurrences = panel.slice(
+      panel.indexOf("function Occurrences("),
+      panel.indexOf("function Findings("),
+    );
+    for (const label of ["Evidence", "Position", "Element"]) {
+      expect(occurrences).toContain(`<Field label="${label}">`);
+    }
+    expect(occurrences).toContain("Occurrence {at + 1} of {total}");
+    expect(occurrences).toMatch(/total > 1 &&[\s\S]{0,80}<OccurrenceStepper/);
+  });
+
+  it("says the severity once, in the row, and not again in the body", () => {
+    const row = readFileSync(
+      new URL("../../src/components/ui/finding-row.tsx", import.meta.url),
+      "utf8",
+    );
+
+    expect(row).toContain("severity");
+    expect(panel).not.toContain("severity");
   });
 });
