@@ -1,0 +1,14 @@
+{
+  "extName": {
+    "message": "AccessCheck",
+    "description": "Extension name shown in Chrome and on the Web Store listing."
+  },
+  "extDescription": {
+    "message": "Veja os problemas de acessibilidade da aba atual: o que falhou, onde está e o caminho real do foco do teclado.",
+    "description": "Store listing summary. The Web Store caps this at 132 characters."
+  },
+  "actionTitle": {
+    "message": "Auditar esta página com o AccessCheck",
+    "description": "Tooltip on the toolbar icon."
+  }
+}

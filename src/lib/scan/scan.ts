@@ -36,6 +36,8 @@ import type {
   ScanViolation,
   ScanWarningCode,
 } from "./types";
+import { axeLocaleFor } from "../i18n/axe-locale";
+import { DEFAULT_REPORT_LOCALE, type ReportLocale } from "../i18n/locale";
 
 const VIEWPORT = { width: 1200, height: 800 };
 
@@ -196,6 +198,7 @@ const VERIFY_IN_PAGE = async (ops: VerifyOp[]): Promise<FixVerification[]> => {
 };
 
 export type ScanOptions = {
+  locale?: ReportLocale;
   screenshot?: boolean;
   keyboard?: boolean;
   contexts?: boolean;
@@ -296,6 +299,7 @@ async function runScanAttempt(
   timings: Record<string, number>,
 ): Promise<ScanResult> {
   const {
+    locale = DEFAULT_REPORT_LOCALE,
     screenshot: doScreenshot = true,
     keyboard: doKeyboard = true,
     contexts: doContexts = true,
@@ -425,7 +429,10 @@ async function runScanAttempt(
 
     const runAxe = async (): Promise<AxeResults> => {
       await page.addScriptTag({ path: AXE_PATH });
-      return page.evaluate((tags) => window.__accessCheckDom!.runAxe(tags), AXE_TAGS);
+      return page.evaluate(
+        ([tags, axeLocale]) => window.__accessCheckDom!.runAxe(tags, { locale: axeLocale }),
+        [AXE_TAGS, axeLocaleFor(locale)] as const,
+      );
     };
 
     const axe = await track("axe", async (): Promise<AxeResults | null> => {
@@ -541,6 +548,7 @@ async function runScanAttempt(
 
     phase("finalizing");
     const core: ScanResult = {
+      locale,
       url,
       finalUrl,
       title,

@@ -16,6 +16,7 @@ import { join, relative } from "node:path";
 const repo = process.cwd();
 const DIST = join(repo, "extension/dist");
 const RELEASES = join(repo, "release");
+const LOCALES = readdirSync(join(repo, "extension/_locales"));
 
 const EXPECTED = new Set([
   "manifest.json",
@@ -30,6 +31,7 @@ const EXPECTED = new Set([
   "icons/icon-48.png",
   "icons/icon-128.png",
   "vendor/axe.min.js",
+  ...LOCALES.map((locale) => `_locales/${locale}/messages.json`),
 ]);
 
 const ICON_SIZES = {
@@ -77,8 +79,46 @@ if (!/^\d+\.\d+\.\d+$/.test(manifest.version ?? ""))
   fail(`version is not x.y.z: ${manifest.version}`);
 if (manifest.host_permissions) fail("the manifest asks for host permissions");
 if (manifest.optional_permissions) fail("the manifest declares optional permissions");
-if ((manifest.description ?? "").length > 132)
-  fail("the description is over the store's 132-character limit");
+const MSG_PLACEHOLDER = /^__MSG_(\w+)__$/;
+
+function localizedField(field) {
+  const raw = manifest[field] ?? "";
+  const key = MSG_PLACEHOLDER.exec(raw)?.[1];
+  if (!key) return [{ locale: "manifest", text: raw }];
+
+  if (!manifest.default_locale) {
+    fail(`${field} uses ${raw} but the manifest declares no default_locale`);
+    return [];
+  }
+
+  return LOCALES.map((locale) => {
+    const path = join(DIST, "_locales", locale, "messages.json");
+    if (!existsSync(path)) {
+      fail(`_locales/${locale}/messages.json is missing from the build`);
+      return { locale, text: "" };
+    }
+    const text = JSON.parse(readFileSync(path, "utf8"))[key]?.message;
+    if (typeof text !== "string") {
+      fail(`_locales/${locale} has no "${key}" message, which ${field} resolves to`);
+      return { locale, text: "" };
+    }
+    return { locale, text };
+  });
+}
+
+if (manifest.default_locale && !LOCALES.includes(manifest.default_locale)) {
+  fail(`default_locale is "${manifest.default_locale}" but _locales has no such folder`);
+}
+
+for (const { locale, text } of localizedField("description")) {
+  if (text.length > 132) {
+    fail(`the ${locale} description is ${text.length} characters, over the store's limit of 132`);
+  }
+}
+
+for (const { locale, text } of localizedField("name")) {
+  if (text.trim().length === 0) fail(`the ${locale} name is empty`);
+}
 if (!manifest.icons || !manifest.action?.default_icon) fail("the manifest declares no icons");
 
 const EXPECTED_PERMISSIONS = ["activeTab", "debugger", "scripting", "sidePanel", "storage"];

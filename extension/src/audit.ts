@@ -25,6 +25,8 @@ import {
   type ContentReadiness,
 } from "../../src/lib/scan/page-ready";
 import type { PaintCalm, PrimeReport } from "../../src/lib/scan/dom/prime";
+import type { Locale } from "axe-core";
+import { DEFAULT_REPORT_LOCALE, type ReportLocale } from "../../src/lib/i18n/locale";
 
 export class EngineMissingError extends Error {}
 
@@ -34,7 +36,12 @@ const POST_PRIME_SETTLE_MS = 3_000;
 
 const PAINT_CALM_MS = 2_000;
 
-export type AuditContext = { readiness?: ContentReadiness; primed?: boolean };
+export type AuditContext = {
+  readiness?: ContentReadiness;
+  primed?: boolean;
+  axeLocale?: Locale | null;
+  locale?: ReportLocale;
+};
 
 export function settleActiveDocument(maxMs = SETTLE_MS): Promise<ContentReadiness> {
   return waitForContentReady(
@@ -84,7 +91,10 @@ export async function auditActiveDocument(context: AuditContext = {}): Promise<S
   const assets = dom.crossOriginAssets();
   const preload = assets.styleSheets === 0 && assets.media === 0;
 
-  const axe = (await dom.runAxe(dom.AXE_TAGS, { preload })) as unknown as AxeResults;
+  const axe = (await dom.runAxe(dom.AXE_TAGS, {
+    preload,
+    locale: context.axeLocale,
+  })) as unknown as AxeResults;
 
   const wcagViolations = axe.violations.filter((v) => !v.tags.includes("best-practice"));
   const bpViolations = axe.violations.filter((v) => v.tags.includes("best-practice"));
@@ -110,6 +120,7 @@ export async function auditActiveDocument(context: AuditContext = {}): Promise<S
   };
 
   return withScoring({
+    locale: context.locale ?? DEFAULT_REPORT_LOCALE,
     url: location.href,
     finalUrl: location.href,
     title: document.title || location.href,

@@ -1,6 +1,7 @@
 import type { KeyboardReport } from "./keyboard";
 import type { ContextReport } from "./contexts";
 import type { AuditsReport } from "./audits";
+import type { ReportLocale } from "../i18n/locale";
 
 export type Severity = "critical" | "serious" | "moderate" | "minor";
 
@@ -91,6 +92,7 @@ export type ScanBestPractice = {
 
 export type ScanResult = {
   url: string;
+  locale?: ReportLocale;
   finalUrl: string;
   title: string;
   scannedElements: number;

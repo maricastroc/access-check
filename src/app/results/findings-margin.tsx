@@ -2,6 +2,7 @@ import type { ScanResult } from "@/lib/scan/types";
 import type { FindingView } from "@/lib/report/findings";
 import { reviewGuidance } from "@/lib/scan/review";
 import { FindingDetail, FindingRow, SectionKicker } from "@/components/ui";
+import { langAttrs } from "@/lib/i18n/locale";
 
 function Secondary({
   label,
@@ -63,7 +64,12 @@ export function FindingsMargin({
           </p>
         ) : (
           findings.map((f) => (
-            <div key={f.id} id={`finding-${f.id}`} className="scroll-mt-24">
+            <div
+              key={f.id}
+              id={`finding-${f.id}`}
+              className="scroll-mt-24"
+              {...langAttrs(result.locale)}
+            >
               <FindingRow
                 finding={f}
                 selected={f.id === selectedId}

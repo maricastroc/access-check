@@ -1,8 +1,11 @@
-import type { AxeResults, ElementContext, RunOptions } from "axe-core";
+import type { AxeResults, ElementContext, Locale, RunOptions } from "axe-core";
 
 declare global {
   interface Window {
-    axe: { run(context: ElementContext, options: RunOptions): Promise<AxeResults> };
+    axe: {
+      run(context: ElementContext, options: RunOptions): Promise<AxeResults>;
+      configure(spec: { locale?: Locale }): void;
+    };
   }
 }
 
@@ -18,8 +21,10 @@ export const AXE_TAGS = [
 
 export async function runAxeInPage(
   tags: string[],
-  options: { preload?: boolean } = {},
+  options: { preload?: boolean; locale?: Locale | null } = {},
 ): Promise<AxeResults> {
+  if (options.locale) window.axe.configure({ locale: options.locale });
+
   return await window.axe.run(document, {
     runOnly: { type: "tag", values: tags },
     ...(options.preload === undefined ? {} : { preload: options.preload }),

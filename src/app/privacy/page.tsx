@@ -33,7 +33,6 @@ function parse(markdown: string): Block[] {
   return blocks;
 }
 
-/** Renders **bold** without putting the file's text through innerHTML. */
 function Rich({ text }: { text: string }) {
   return (
     <>

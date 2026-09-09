@@ -1,4 +1,4 @@
-import { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
@@ -35,6 +35,14 @@ await build({
 copyFileSync(join(repo, "node_modules/axe-core/axe.min.js"), join(dist, "vendor/axe.min.js"));
 copyFileSync(ENGINE_FILE, join(dist, "dom-engine.js"));
 copyFileSync(join(root, "manifest.json"), join(dist, "manifest.json"));
+
+for (const locale of readdirSync(join(root, "_locales"))) {
+  mkdirSync(join(dist, "_locales", locale), { recursive: true });
+  copyFileSync(
+    join(root, "_locales", locale, "messages.json"),
+    join(dist, "_locales", locale, "messages.json"),
+  );
+}
 
 mkdirSync(join(dist, "icons"), { recursive: true });
 for (const size of [16, 32, 48, 128]) {

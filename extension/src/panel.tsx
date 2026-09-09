@@ -9,6 +9,8 @@ import { buildFindings, type FindingView } from "../../src/lib/report/findings";
 import type { KeyboardOccurrence } from "../../src/lib/scan/keyboard";
 import type { OverlayMark } from "../../src/lib/scan/dom/overlay";
 import type { ScanResult } from "../../src/lib/scan/types";
+import { langAttrs } from "../../src/lib/i18n/locale";
+import type { ReportLocale } from "../../src/lib/i18n/locale";
 import { auditScope, focusPathLines } from "./coverage";
 import type { AuditStage, HighlightReply, PanelMessage, PanelState } from "./state";
 
@@ -332,10 +334,12 @@ function Occurrences({
 
 function Findings({
   findings,
+  locale,
   syncStop,
   onLocate,
 }: {
   findings: FindingView[];
+  locale: ReportLocale | undefined;
   syncStop: number | null;
   onLocate: (occurrence: KeyboardOccurrence) => Promise<string | null>;
 }) {
@@ -361,7 +365,7 @@ function Findings({
         </p>
       ) : (
         findings.map((f) => (
-          <div key={f.id}>
+          <div key={f.id} {...langAttrs(locale)}>
             <FindingRow
               finding={f}
               selected={selected === f.id}
@@ -674,7 +678,12 @@ function Report({
       <div className="px-3">
         <p className="mt-2 truncate font-mono text-[12px] text-muted">{result.finalUrl}</p>
         <Header result={result} />
-        <Findings findings={buildFindings(result)} syncStop={syncStop} onLocate={locate} />
+        <Findings
+          findings={buildFindings(result)}
+          locale={result.locale}
+          syncStop={syncStop}
+          onLocate={locate}
+        />
         <FocusPath
           result={result}
           error={deepError}

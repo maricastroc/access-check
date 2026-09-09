@@ -4,6 +4,8 @@ import { withScoring } from "../../src/lib/scan/scored";
 import type { AuditContext } from "./audit";
 import { WALK_CHANGED_PAGE, warningsAfterDeepAudit } from "./coverage";
 import { CONTENT_SIGNATURE } from "../../src/lib/scan/page-ready";
+import { axeLocaleFor } from "../../src/lib/i18n/axe-locale";
+import { normalizeReportLocale } from "../../src/lib/i18n/locale";
 import { DeepAuditCancelled, DeepAuditError, runDeepAudit } from "./deep";
 import {
   unsupportedReason,
@@ -17,6 +19,10 @@ import {
 const SCREENSHOT_QUALITY = 72;
 
 const STORE = "panelState";
+
+function reportLocale() {
+  return normalizeReportLocale(chrome.i18n.getUILanguage());
+}
 
 let state: PanelState = { kind: "idle" };
 let auditedTabId: number | null = null;
@@ -140,14 +146,17 @@ async function runAudit(tab: chrome.tabs.Tab, opts: { deep: boolean }): Promise<
     });
     if (!settled) throw new Error("The page could not be read.");
 
-    let context: AuditContext = { readiness: settled, primed: false };
+    const locale = reportLocale();
+    const axeLocale = axeLocaleFor(locale);
+
+    let context: AuditContext = { readiness: settled, primed: false, axeLocale, locale };
     if (opts.deep) {
       const [{ result: primed }] = await chrome.scripting.executeScript({
         target: { tabId: tab.id },
         func: (before: typeof settled) => window.__accessCheckPrime!(before),
         args: [settled],
       });
-      context = { readiness: primed?.readiness, primed: true };
+      context = { readiness: primed?.readiness, primed: true, axeLocale, locale };
     }
 
     stage(url, mode, "rules");

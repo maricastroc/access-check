@@ -13,6 +13,7 @@ import {
   WcagChips,
 } from "@/components/ui";
 import { cn } from "@/lib/cn";
+import { langAttrs } from "@/lib/i18n/locale";
 import { modeList, type SimKey } from "./data";
 import { CaptureStage, type FocusPoint } from "./evidence-frame";
 import { type Layer, type MarkerView } from "./report-ui";
@@ -176,7 +177,7 @@ export function MobileReport({
             </p>
           ) : (
             findings.map((f) => (
-              <div key={f.id}>
+              <div key={f.id} {...langAttrs(result.locale)}>
                 <FindingRow
                   finding={f}
                   selected={f.id === selectedId}

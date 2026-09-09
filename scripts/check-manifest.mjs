@@ -9,6 +9,23 @@ cpSync(DIST, EXT, { recursive: true });
 
 const declared = JSON.parse(readFileSync(join(DIST, "manifest.json"), "utf8"));
 
+const messages = declared.default_locale
+  ? JSON.parse(
+      readFileSync(join(DIST, "_locales", declared.default_locale, "messages.json"), "utf8"),
+    )
+  : {};
+
+const resolveMessages = (value) => {
+  if (typeof value === "string") {
+    return value.replace(/__MSG_(\w+)__/g, (whole, key) => messages[key]?.message ?? whole);
+  }
+  if (Array.isArray(value)) return value.map(resolveMessages);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, resolveMessages(v)]));
+  }
+  return value;
+};
+
 const ctx = await chromium.launchPersistentContext(mkdtempSync(join(tmpdir(), "ac-manifest-p-")), {
   channel: "chromium",
   headless: true,
@@ -63,7 +80,7 @@ try {
   for (const [name, value] of Object.entries(declared)) {
     if (name === "optional_permissions") continue;
     check(
-      stable(loaded[name]) === stable(value),
+      stable(loaded[name]) === stable(resolveMessages(value)),
       `Chrome loaded "${name}" differently from the packed manifest`,
     );
   }

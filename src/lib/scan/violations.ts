@@ -130,6 +130,12 @@ export function elementSelectorsFor(violations: AxeRule[]): string[] {
   ];
 }
 
+export function stripFailurePrefix(summary: string): string {
+  const [first, ...rest] = summary.split("\n");
+  if (rest.length > 0 && first.trimEnd().endsWith(":")) return rest.join("\n").trim();
+  return summary.trim();
+}
+
 export function enrichViolations(
   violations: AxeRule[],
   elementInfos: Record<string, ElementInfo>,
@@ -148,8 +154,8 @@ export function enrichViolations(
 
     const firstElInfo = where in elementInfos ? elementInfos[where] : undefined;
     const result = concreteFix(v.id, firstNode, firstElInfo);
-    const fix =
-      result?.text || firstNode?.failureSummary?.replace(/^Fix [^:]+:\s*/i, "").trim() || v.help;
+    const summary = firstNode?.failureSummary;
+    const fix = result?.text || (summary ? stripFailurePrefix(summary) : "") || v.help;
 
     return {
       clusters,

@@ -1,4 +1,4 @@
-import type { AxeResults } from "axe-core";
+import type { AxeResults, Locale } from "axe-core";
 import type { ElementInfo } from "../remediate";
 import type { RawLiveRegions } from "../live-regions";
 import type { RawTargetSize } from "../target-size";
@@ -7,7 +7,7 @@ import type { FocusProbe, FocusReach, FocusStyle } from "./focus";
 import type { OverlayMark, OverlayReport } from "./overlay";
 import type { PaintCalm, PrimeReport } from "./prime";
 
-export const DOM_ENGINE_VERSION = 7;
+export const DOM_ENGINE_VERSION = 8;
 
 export type DomEngine = {
   version: number;
@@ -19,7 +19,10 @@ export type DomEngine = {
   waitForPaintCalm(baseline: number, maxMs: number): Promise<PaintCalm>;
   collectLiveRegionsRaw(): RawLiveRegions;
   collectTargetSizeRaw(interactive: string): RawTargetSize;
-  runAxe(tags: string[], options?: { preload?: boolean }): Promise<AxeResults>;
+  runAxe(
+    tags: string[],
+    options?: { preload?: boolean; locale?: Locale | null },
+  ): Promise<AxeResults>;
   crossOriginAssets(): { styleSheets: number; media: number };
   focusProbeStart(): void;
   focusFirstStop(): "focused" | "empty" | "failed";

@@ -14,6 +14,15 @@ import type { ScanResult, ScanWarning } from "../../src/lib/scan/types";
 
 const file = (rel: string) => readFileSync(fileURLToPath(new URL(rel, import.meta.url)), "utf8");
 
+function between(source: string, from: string, to: string): string {
+  const start = source.indexOf(from);
+  const end = source.indexOf(to);
+  if (start === -1) throw new Error(`Anchor not found in source: ${from}`);
+  if (end === -1) throw new Error(`Anchor not found in source: ${to}`);
+  if (end < start) throw new Error(`Anchor ${to} comes before ${from}`);
+  return source.slice(start, end);
+}
+
 const panel = file("./panel.tsx");
 const audit = file("./audit.ts");
 const manifest = JSON.parse(file("../manifest.json")) as {
@@ -200,7 +209,15 @@ describe("assets the audit is not allowed to fetch", () => {
 
   it("asks axe to preload only when every asset is readable", () => {
     expect(audit).toContain("const preload = assets.styleSheets === 0 && assets.media === 0");
-    expect(audit).toContain("dom.runAxe(dom.AXE_TAGS, { preload })");
+    expect(audit).toMatch(/dom\.runAxe\(dom\.AXE_TAGS, \{\s*preload,/);
+  });
+
+  it("hands axe the locale the background resolved, rather than picking one itself", () => {
+    const background = file("./background.ts");
+    expect(audit).toMatch(/dom\.runAxe\(dom\.AXE_TAGS, \{[\s\S]{0,80}locale: context\.axeLocale/);
+    expect(audit).not.toContain("getUILanguage");
+    expect(background).toContain("normalizeReportLocale(chrome.i18n.getUILanguage())");
+    expect(background).toContain("axeLocaleFor(locale)");
   });
 
   it("adds the warning only when it turned the preload off", () => {
@@ -250,10 +267,7 @@ describe("the deep audit reuses the shared focus analysis", () => {
   });
 
   it("walks the focus path inside the main audit, before any score is published", () => {
-    const run = background.slice(
-      background.indexOf("async function runAudit("),
-      background.indexOf("/** Walks the focus path over"),
-    );
+    const run = between(background, "async function runAudit(", "async function addFocusPath(");
     const focus = run.indexOf('stage(url, mode, "focus")');
     const done = run.indexOf('publish({ kind: "done", result: walked.result');
 
