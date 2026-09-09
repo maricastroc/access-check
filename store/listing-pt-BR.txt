@@ -1,0 +1,25 @@
+O AccessCheck audita a aba em que você está e mostra a evidência, não só uma lista.
+
+Abra qualquer problema e ele se expande no elemento que o gerou: o seletor CSS, o HTML do próprio elemento, uma correção sugerida e — nos problemas de teclado — o que de fato aconteceu quando o foco chegou nele. Seletor e HTML vão para a área de transferência em um clique, e "Localizar na página" desenha uma caixa em volta do elemento na página ao vivo.
+
+O QUE ELE VERIFICA
+
+• Regras do axe-core para WCAG 2.0, 2.1 e 2.2, níveis A e AA
+• O caminho real do foco do teclado — a ordem de tabulação percorrida parada a parada, apontando as que não têm indicador de foco visível
+• Tamanho de alvo e regiões dinâmicas
+• Uma captura da parte visível da página com os elementos que falharam marcados nela
+
+O QUE ELE NÃO FAZ
+
+Não é um selo de conformidade. O teste automático prova uma minoria da WCAG, e o AccessCheck diz isso: a nota cobre o que as verificações conseguiram provar, e tudo que depende de uma pessoa fica listado à parte como revisão manual, em vez de virar número. Quando uma verificação não pôde rodar, o painel diz qual foi, em vez de aprovar em silêncio.
+
+COMO ELE TRATA O SEU NAVEGADOR
+
+• Sem conta, sem login, sem telemetria
+• Só lê uma aba depois que você clica no ícone da barra naquela aba
+• A página auditada nunca é reescrita. A única coisa que o AccessCheck desenha é uma caixa de destaque temporária, quando você pede para localizar um elemento, e ele apaga esse destaque e devolve a sua posição de rolagem ao terminar
+• Nada é enviado para lugar nenhum. A extensão não embarca nenhum código de rede, e a auditoria roda inteira no seu navegador
+
+IDIOMAS
+
+English e Português (Brasil). O painel segue o idioma do navegador por padrão, e você pode trocar no rodapé do painel. O relatório acompanha a mesma escolha, títulos de regra inclusive, e se refaz sozinho para não sobrar nada meio traduzido.

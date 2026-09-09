@@ -1,0 +1,25 @@
+AccessCheck audits the tab you are on and shows you the evidence, not just a list.
+
+Open any finding and it expands into the element that produced it: the CSS selector, the element's own HTML, a suggested fix, and — for keyboard findings — what actually happened when focus reached it. Selector and HTML copy to the clipboard in one click, and "Locate on page" draws a box around the element on the live page.
+
+WHAT IT CHECKS
+
+• axe-core rules for WCAG 2.0, 2.1 and 2.2, levels A and AA
+• The real keyboard focus path — the tab order walked stop by stop, with the stops that have no visible focus indicator called out
+• Target size and live regions
+• A screenshot of the visible page with the failing elements marked on it
+
+WHAT IT DOES NOT DO
+
+It is not a compliance seal. Automated testing proves a minority of WCAG, and AccessCheck says so: the score covers what the checks could prove, and everything that needs a human is listed separately as manual review rather than folded into a number. When a check could not run, the panel names it instead of quietly passing.
+
+HOW IT TREATS YOUR BROWSER
+
+• No account, no sign-in, no telemetry
+• It reads a tab only after you click the toolbar icon on that tab
+• The audited page is never rewritten. The only thing AccessCheck draws is a temporary highlight box when you ask it to locate an element, and it clears that overlay and restores your scroll position when you are done
+• Nothing is uploaded anywhere. The extension ships no network code at all, and the audit runs entirely in your browser
+
+LANGUAGES
+
+English and Português (Brasil). The panel follows your browser's language by default, and you can change it at the bottom of the panel. The report follows the same choice, rule titles included, and re-runs itself so nothing is left half-translated.
