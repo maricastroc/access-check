@@ -11,15 +11,17 @@ import { CenterState, PrintStyles, Toolbar } from "./chrome";
 import { SummaryPage } from "./summary-page";
 import { FindingsPage } from "./findings-page";
 import { ProgressPage } from "./progress-page";
+import { useT } from "@/lib/i18n/provider";
+import type { MessageKey } from "@/lib/i18n/t";
 
 const PAGE_WIDTH = 816;
 
-const PHASE_DETAIL: Record<ScanPhase, string> = {
-  preparing: "Starting a browser and getting the page ready.",
-  loading: "Opening the page and letting it finish loading.",
-  auditing: "Running the WCAG checks on the loaded page.",
-  processing: "Grouping findings and matching them to WCAG checkpoints.",
-  finalizing: "Scoring and putting the report together.",
+const PHASE_DETAIL_KEY: Record<ScanPhase, MessageKey> = {
+  preparing: "report.phase.preparing",
+  loading: "report.phase.loading",
+  auditing: "report.phase.auditing",
+  processing: "report.phase.processing",
+  finalizing: "report.phase.finalizing",
 };
 
 function FitToWidth({ children }: { children: React.ReactNode }) {
@@ -53,6 +55,7 @@ function FitToWidth({ children }: { children: React.ReactNode }) {
 }
 
 function BuildingReport({ url, phase }: { url: string; phase: ScanPhase }) {
+  const t = useT();
   const elapsed = useElapsed();
 
   return (
@@ -61,19 +64,20 @@ function BuildingReport({ url, phase }: { url: string; phase: ScanPhase }) {
         target={url}
         elapsedMs={elapsed}
         budgetMs={TYPICAL_SCAN_MS}
-        note="The report is built from a fresh audit of this page, run right now."
-        status={`Building the report for ${url}. ${PHASE_DETAIL[phase]}`}
+        note={t("report.freshNote")}
+        status={t("report.buildingStatus", { url, detail: t(PHASE_DETAIL_KEY[phase]) })}
       >
-        <ScanStages phase={phase} />
+        <ScanStages t={t} phase={phase} />
       </ProgressCard>
     </div>
   );
 }
 
 export function ReportView({ initialUrl }: { initialUrl: string }) {
+  const t = useT();
   const { status, result, phase, url, error } = usePageAudit({
     initialUrl,
-    fallbackError: "We couldn't build the report. Please try again.",
+    fallbackError: t("report.buildFailed"),
   });
 
   return (
@@ -88,14 +92,14 @@ export function ReportView({ initialUrl }: { initialUrl: string }) {
           <CenterState
             icon={faTriangleExclamation}
             tone="critical"
-            title="Couldn’t build the report"
+            title={t("report.buildFailedTitle")}
             subtitle={error}
             action={
               <Link
                 href="/"
                 className="mt-2 bg-ink px-4 py-2 text-sm font-semibold text-surface transition-colors hover:bg-ink-2"
               >
-                New audit
+                {t("report.newAudit")}
               </Link>
             }
           />

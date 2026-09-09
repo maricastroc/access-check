@@ -1,4 +1,5 @@
 import { criterionFromTags } from "./wcag";
+import type { Translate } from "../i18n/t";
 import {
   fixAriaAllowedAttr,
   fixAriaName,
@@ -66,19 +67,20 @@ const ELEMENT_RULES = new Set(["label", "image-alt", ...ARIA_NAME_RULES]);
 function concreteFix(
   ruleId: string,
   node: AxeNode | undefined,
+  t: Translate,
   elInfo?: ElementInfo,
 ): FixResult | null {
   if (!node) return null;
-  if (ruleId === "html-has-lang" || ruleId === "html-lang-valid") return fixHtmlLang();
-  if (ruleId === "document-title") return fixDocumentTitle();
-  if (ruleId === "meta-viewport" || ruleId === "meta-viewport-large") return fixMetaViewport();
-  if (ruleId === "label" && elInfo) return fixLabel(elInfo);
-  if (ruleId === "image-alt" && elInfo) return fixImageAlt(elInfo);
-  if (ARIA_NAME_RULES.has(ruleId) && elInfo) return fixAriaName(elInfo);
+  if (ruleId === "html-has-lang" || ruleId === "html-lang-valid") return fixHtmlLang(t);
+  if (ruleId === "document-title") return fixDocumentTitle(t);
+  if (ruleId === "meta-viewport" || ruleId === "meta-viewport-large") return fixMetaViewport(t);
+  if (ruleId === "label" && elInfo) return fixLabel(elInfo, t);
+  if (ruleId === "image-alt" && elInfo) return fixImageAlt(elInfo, t);
+  if (ARIA_NAME_RULES.has(ruleId) && elInfo) return fixAriaName(elInfo, t);
   if (ruleId === "aria-required-attr")
-    return fixAriaRequiredAttr(asStringArray(checkData(node, "aria-required-attr")));
+    return fixAriaRequiredAttr(asStringArray(checkData(node, "aria-required-attr")), t);
   if (ruleId === "aria-allowed-attr")
-    return fixAriaAllowedAttr(asStringArray(checkData(node, "aria-allowed-attr")));
+    return fixAriaAllowedAttr(asStringArray(checkData(node, "aria-allowed-attr")), t);
   if (ruleId === "color-contrast") {
     const check = node.any?.find((c) => c.id === "color-contrast");
 
@@ -100,12 +102,15 @@ function concreteFix(
         typeof d.expectedContrastRatio === "string"
           ? parseFloat(d.expectedContrastRatio)
           : (d.expectedContrastRatio ?? 4.5);
-      return fixContrast({
-        fgColor: d.fgColor,
-        bgColor: d.bgColor,
-        contrastRatio: d.contrastRatio,
-        expectedContrastRatio: Number.isFinite(expected) ? expected : 4.5,
-      });
+      return fixContrast(
+        {
+          fgColor: d.fgColor,
+          bgColor: d.bgColor,
+          contrastRatio: d.contrastRatio,
+          expectedContrastRatio: Number.isFinite(expected) ? expected : 4.5,
+        },
+        t,
+      );
     }
   }
   return null;
@@ -139,6 +144,7 @@ export function stripFailurePrefix(summary: string): string {
 export function enrichViolations(
   violations: AxeRule[],
   elementInfos: Record<string, ElementInfo>,
+  t: Translate,
 ): Enriched[] {
   return violations.map((v) => {
     const severity = (v.impact ?? "minor") as Severity;
@@ -148,12 +154,12 @@ export function enrichViolations(
     const perNode = v.nodes.map((n) => {
       const sel = firstTarget(n.target);
       const elInfo = sel && sel in elementInfos ? elementInfos[sel] : undefined;
-      return { selector: sel, result: concreteFix(v.id, n, elInfo) };
+      return { selector: sel, result: concreteFix(v.id, n, t, elInfo) };
     });
     const clusters = clusterFixes(perNode);
 
     const firstElInfo = where in elementInfos ? elementInfos[where] : undefined;
-    const result = concreteFix(v.id, firstNode, firstElInfo);
+    const result = concreteFix(v.id, firstNode, t, firstElInfo);
     const summary = firstNode?.failureSummary;
     const fix = result?.text || (summary ? stripFailurePrefix(summary) : "") || v.help;
 
@@ -163,7 +169,7 @@ export function enrichViolations(
         id: v.id,
         severity,
         title: v.help,
-        criterion: criterionFromTags(v.tags) ?? v.id,
+        criterion: criterionFromTags(v.tags, t) ?? v.id,
         where,
         desc: v.description,
         fix,
@@ -193,13 +199,13 @@ export function buildBestPractice(rules: AxeRule[]): ScanBestPractice[] {
   }));
 }
 
-export function buildIncomplete(rules: AxeRule[]): ScanIncomplete[] {
+export function buildIncomplete(rules: AxeRule[], t: Translate): ScanIncomplete[] {
   return rules.map((v) => ({
     id: v.id,
     title: v.help,
     desc: v.description,
     nodes: v.nodes.length,
-    criterion: criterionFromTags(v.tags) ?? v.id,
+    criterion: criterionFromTags(v.tags, t) ?? v.id,
     selectors: selectorsOf(v.nodes),
   }));
 }

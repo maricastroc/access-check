@@ -2,15 +2,20 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Metadata } from "next";
 import { SiteHeader } from "@/components/home/site-header";
+import { getTranslate, resolveLocale } from "@/lib/i18n/server";
+import type { ReportLocale } from "@/lib/i18n/locale";
 
 export const runtime = "nodejs";
 
-export const metadata: Metadata = {
-  title: "Privacy — AccessCheck extension",
-  description: "What the AccessCheck browser extension reads, and where it goes.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslate();
+  return { title: t("privacy.metaTitle"), description: t("privacy.metaDescription") };
+}
 
-const SOURCE = join(process.cwd(), "extension/PRIVACY.md");
+const SOURCE: Record<ReportLocale, string> = {
+  en: join(process.cwd(), "extension/PRIVACY.md"),
+  "pt-BR": join(process.cwd(), "extension/PRIVACY.pt-BR.md"),
+};
 
 type Block = { kind: "h1" | "h2" | "p"; text: string } | { kind: "ul"; items: string[] };
 
@@ -49,12 +54,13 @@ function Rich({ text }: { text: string }) {
   );
 }
 
-export default function PrivacyPage() {
-  const blocks = parse(readFileSync(SOURCE, "utf8"));
+export default async function PrivacyPage() {
+  const locale = await resolveLocale();
+  const blocks = parse(readFileSync(SOURCE[locale], "utf8"));
 
   return (
     <div className="flex min-h-screen flex-col bg-canvas font-sans text-ink">
-      <SiteHeader />
+      <SiteHeader locale={locale} />
       <main className="mx-auto w-full max-w-2xl px-5 py-10">
         {blocks.map((block, i) => {
           if (block.kind === "h1") {

@@ -3,25 +3,26 @@ import type { Verdict } from "@/lib/report/verdict";
 import { severityColorVar, severityLabel } from "@/lib/report/severity";
 import { SC_LEVEL } from "@/lib/report/wcag";
 import { cn } from "@/lib/cn";
+import type { Translate } from "@/lib/i18n/t";
 
 function railColor(f: FindingView): string {
   if (f.severity) return severityColorVar[f.severity];
   return "var(--color-steel)";
 }
 
-function VerdictCue({ kind }: { kind: Verdict["kind"] }) {
-  if (kind === "verified") return <span className="text-verified">· verified in sandbox</span>;
-  if (kind === "partial") return <span className="text-moderate-text">· partly verified</span>;
-  if (kind === "sampled") return <span className="text-muted">· one example checked</span>;
-  if (kind === "failed") return <span className="text-moderate-text">· needs review</span>;
+function VerdictCue({ kind, t }: { kind: Verdict["kind"]; t: Translate }) {
+  if (kind === "verified") return <span className="text-verified">{t("cue.verified")}</span>;
+  if (kind === "partial") return <span className="text-moderate-text">{t("cue.partial")}</span>;
+  if (kind === "sampled") return <span className="text-muted">{t("cue.sampled")}</span>;
+  if (kind === "failed") return <span className="text-moderate-text">{t("cue.failed")}</span>;
   return null;
 }
 
-function TopTag({ f }: { f: FindingView }) {
+function TopTag({ f, t }: { f: FindingView; t: Translate }) {
   if (f.kind === "best-practice") {
     return (
       <span className="font-cond text-[11px] tracking-widest text-muted uppercase">
-        Best practice
+        {t("finding.kind.bestPractice")}
       </span>
     );
   }
@@ -38,12 +39,16 @@ export function FindingRow({
   finding,
   selected,
   onSelect,
+  t,
 }: {
   finding: FindingView;
   selected: boolean;
   onSelect?: () => void;
+  t: Translate;
 }) {
-  const label = finding.severity ? severityLabel[finding.severity] : "Best practice";
+  const label = finding.severity
+    ? severityLabel(finding.severity, t)
+    : t("finding.kind.bestPractice");
   const noMarker = finding.markers.length === 0;
   const interactive = Boolean(onSelect);
 
@@ -91,7 +96,7 @@ export function FindingRow({
           {finding.passLabel && finding.kind !== "best-practice" ? finding.passLabel : label}
         </span>
         <span className="ml-auto">
-          <TopTag f={finding} />
+          <TopTag f={finding} t={t} />
         </span>
       </div>
 
@@ -103,13 +108,13 @@ export function FindingRow({
         </span>
         <span aria-hidden>·</span>
         <span className="font-mono text-[11.5px]">{finding.ruleId}</span>
-        <VerdictCue kind={finding.verdict.kind} />
+        <VerdictCue kind={finding.verdict.kind} t={t} />
       </p>
 
       {noMarker && (
         <p className="mt-1 flex items-center gap-1.5 text-[11.5px] text-muted">
           <span aria-hidden className="inline-block h-3 w-3 border border-dashed border-border" />
-          no marker · outside the screenshot
+          {t("results.noMarkerOffScreenshot")}
         </p>
       )}
     </button>

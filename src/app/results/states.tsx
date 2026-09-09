@@ -6,16 +6,19 @@ import type { ScanPhase, ScanWarning } from "@/lib/scan/types";
 import { Button, ProgressCard, ScanStages, useElapsed, WarningList } from "@/components/ui";
 import { UrlField } from "@/components/home/url-form";
 import { TYPICAL_SCAN_MS } from "@/lib/scan/policy";
+import { useT } from "@/lib/i18n/provider";
+import type { MessageKey } from "@/lib/i18n/t";
 
-const PHASE_LABEL: Record<ScanPhase, string> = {
-  preparing: "getting ready",
-  loading: "opening the page",
-  auditing: "running the checks",
-  processing: "processing the results",
-  finalizing: "finishing up",
+const PHASE_KEY: Record<ScanPhase, MessageKey> = {
+  preparing: "phase.preparing",
+  loading: "phase.loading",
+  auditing: "phase.auditing",
+  processing: "phase.processing",
+  finalizing: "phase.finalizing",
 };
 
 export function ScanningState({ url, phase }: { url: string; phase: ScanPhase }) {
+  const t = useT();
   const elapsed = useElapsed();
 
   return (
@@ -24,10 +27,10 @@ export function ScanningState({ url, phase }: { url: string; phase: ScanPhase })
         target={url}
         elapsedMs={elapsed}
         budgetMs={TYPICAL_SCAN_MS}
-        note="These are the real steps AccessCheck runs, in the order they happen."
-        status={`Auditing ${url}. Currently ${PHASE_LABEL[phase]}.`}
+        note={t("results.stepsNote")}
+        status={t("results.scanningStatus", { url, phase: t(PHASE_KEY[phase]) })}
       >
-        <ScanStages phase={phase} />
+        <ScanStages t={t} phase={phase} />
       </ProgressCard>
     </div>
   );
@@ -46,6 +49,7 @@ export function ErrorState({
   onChange: (v: string) => void;
   onRetry: () => void;
 }) {
+  const t = useT();
   return (
     <div className="mx-auto w-full max-w-140 px-4 py-16">
       <div role="alert" className="border border-critical bg-surface p-6">
@@ -56,7 +60,7 @@ export function ErrorState({
           >
             <FontAwesomeIcon icon={faXmark} className="text-xs" />
           </span>
-          <h2 className="text-[16px] font-semibold text-ink">Couldn&apos;t open the page</h2>
+          <h2 className="text-[16px] font-semibold text-ink">{t("results.couldNotOpen")}</h2>
         </div>
         <p className="mt-3 text-[14px] leading-normal text-body">{message}</p>
         {hint && <p className="mt-1.5 text-[13px] text-muted">{hint}</p>}
@@ -70,10 +74,10 @@ export function ErrorState({
           <UrlField value={url} onChange={onChange} onSubmit={onRetry} />
           <div className="flex items-center gap-3">
             <Button type="submit" variant="primary" size="md">
-              Try another URL
+              {t("results.tryAnotherUrl")}
             </Button>
             <Button href="/" variant="tertiary">
-              See what we can audit
+              {t("results.seeWhatWeAudit")}
             </Button>
           </div>
         </form>
@@ -89,17 +93,18 @@ export function PartialNotice({
   warnings: ScanWarning[];
   onRerun: () => void;
 }) {
+  const t = useT();
   if (warnings.length === 0) return null;
   return (
     <div className="mx-auto w-full max-w-[1560px] px-4 pt-4 sm:px-6">
       <WarningList
         warnings={warnings}
-        title="Partial report"
-        note="The score reflects only what we could measure. Anything we skipped is listed below, not guessed."
+        title={t("results.partialReport")}
+        note={t("results.partialNote")}
       />
       <div className="mt-2">
         <Button variant="secondary" size="sm" onClick={onRerun}>
-          Run again with more time
+          {t("results.runAgainMoreTime")}
         </Button>
       </div>
     </div>

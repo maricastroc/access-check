@@ -3,22 +3,25 @@ import type { ScoreBreakdown } from "@/lib/report/score";
 import type { WcagReadingModel } from "@/lib/report/wcag";
 import { severityLabel, severityTextVar } from "@/lib/report/severity";
 import { Ruler, SectionKicker, WcagChips } from "@/components/ui";
+import type { Translate } from "@/lib/i18n/t";
 
 export function SummaryBand({
   result,
   breakdown,
   wcag,
+  t,
 }: {
   result: ScanResult;
   breakdown: ScoreBreakdown;
   wcag: WcagReadingModel;
+  t: Translate;
 }) {
   const { counts } = result;
   return (
     <section className="border-b border-border">
       <div className="mx-auto grid w-full max-w-[1560px] grid-cols-1 gap-x-8 gap-y-6 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(0,1fr)_420px]">
         <div>
-          <SectionKicker>Internal priority score</SectionKicker>
+          <SectionKicker>{t("report.internalScore")}</SectionKicker>
           <div className="mt-1 flex items-end gap-2">
             <span className="font-cond text-[56px] leading-[0.85] text-ink tabular-nums">
               {result.score}
@@ -27,6 +30,7 @@ export function SummaryBand({
           </div>
           <div className="mt-3 max-w-[560px]">
             <Ruler
+              t={t}
               variant="score"
               score={result.score}
               deductions={breakdown.deductions}
@@ -44,10 +48,11 @@ export function SummaryBand({
                   ·
                 </span>
                 <span className="font-medium" style={{ color: severityTextVar[d.severity] }}>
-                  {d.issues} {severityLabel[d.severity].toLowerCase()}
+                  {d.issues} {severityLabel(d.severity, t).toLowerCase()}
                 </span>
                 <span className="text-muted tabular-nums">
-                  · {d.elements} element{d.elements === 1 ? "" : "s"} · fix → {d.ifFixed}
+                  · {t("unit.element", { count: d.elements })} ·{" "}
+                  {t("results.fixArrow", { score: d.ifFixed })}
                 </span>
               </span>
             ))}
@@ -55,8 +60,8 @@ export function SummaryBand({
               ·
             </span>
             <span className="text-muted tabular-nums">
-              {counts.manualReview} manual-review item{counts.manualReview === 1 ? "" : "s"} ·
-              outside the score
+              {t("results.manualReviewItems", { count: counts.manualReview })}
+              {t("results.outsideScore")}
             </span>
           </div>
         </div>
@@ -64,7 +69,7 @@ export function SummaryBand({
         <div className="border-t border-hairline pt-5 lg:border-t-0 lg:border-l lg:border-border lg:pt-0 lg:pl-8">
           <p className="text-[15px] leading-normal text-body">{result.summary}</p>
           <div className="mt-4">
-            <WcagChips model={wcag} />
+            <WcagChips t={t} model={wcag} />
           </div>
         </div>
       </div>

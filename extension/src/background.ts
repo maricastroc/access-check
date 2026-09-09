@@ -2,10 +2,11 @@ import type { ScanResult } from "../../src/lib/scan/types";
 import type { OverlayMark, OverlayReport } from "../../src/lib/scan/dom/overlay";
 import { withScoring } from "../../src/lib/scan/scored";
 import type { AuditContext } from "./audit";
-import { WALK_CHANGED_PAGE, warningsAfterDeepAudit } from "./coverage";
+import { walkChangedPage, warningsAfterDeepAudit } from "./coverage";
 import { CONTENT_SIGNATURE } from "../../src/lib/scan/page-ready";
 import { axeLocaleFor } from "../../src/lib/i18n/axe-locale";
 import { normalizeReportLocale } from "../../src/lib/i18n/locale";
+import { translator } from "../../src/lib/i18n/t";
 import { DeepAuditCancelled, DeepAuditError, runDeepAudit } from "./deep";
 import {
   unsupportedReason,
@@ -20,9 +21,8 @@ const SCREENSHOT_QUALITY = 72;
 
 const STORE = "panelState";
 
-function reportLocale() {
-  return normalizeReportLocale(chrome.i18n.getUILanguage());
-}
+const LOCALE = normalizeReportLocale(chrome.i18n.getUILanguage());
+const t = translator(LOCALE);
 
 let state: PanelState = { kind: "idle" };
 let auditedTabId: number | null = null;
@@ -55,8 +55,7 @@ async function restore(): Promise<PanelState> {
     publish({
       kind: "error",
       recoverable: true,
-      message:
-        "Chrome put the extension to sleep before the audit finished, so nothing was measured. Run it again.",
+      message: t("background.wokeUp"),
     });
   }
 
@@ -68,9 +67,7 @@ function stage(url: string, mode: AuditMode, at: AuditStage): void {
 }
 
 function describeDeepFailure(e: unknown): string {
-  if (e instanceof DeepAuditCancelled) {
-    return "You stopped it, so the focus path was not walked. The rest of this report is unchanged.";
-  }
+  if (e instanceof DeepAuditCancelled) return t("deep.cancelled");
   if (e instanceof DeepAuditError) return e.message;
   return e instanceof Error ? e.message : String(e);
 }
@@ -90,12 +87,12 @@ async function withFocusPath(
   try {
     deepTabId = tabId;
     const before = await contentSignature(tabId);
-    const keyboard = await runDeepAudit(tabId);
+    const keyboard = await runDeepAudit(tabId, t);
     const after = await contentSignature(tabId);
 
-    const kept = warningsAfterDeepAudit(warnings);
+    const kept = warningsAfterDeepAudit(warnings, t);
     const withWalk =
-      before !== null && after !== null && before !== after ? [...kept, WALK_CHANGED_PAGE] : kept;
+      before !== null && after !== null && before !== after ? [...kept, walkChangedPage(t)] : kept;
     return {
       result: withScoring({
         ...base,
@@ -106,7 +103,7 @@ async function withFocusPath(
     };
   } catch (e) {
     const message = describeDeepFailure(e);
-    const kept = warningsAfterDeepAudit(warnings, message);
+    const kept = warningsAfterDeepAudit(warnings, t, message);
     return {
       result: withScoring({ ...base, warnings: kept, partial: kept.length > 0 }),
       deepError: message,
@@ -144,19 +141,18 @@ async function runAudit(tab: chrome.tabs.Tab, opts: { deep: boolean }): Promise<
       target: { tabId: tab.id },
       func: () => window.__accessCheckSettle!(),
     });
-    if (!settled) throw new Error("The page could not be read.");
+    if (!settled) throw new Error(t("background.pageUnreadable"));
 
-    const locale = reportLocale();
-    const axeLocale = axeLocaleFor(locale);
+    const axeLocale = axeLocaleFor(LOCALE);
 
-    let context: AuditContext = { readiness: settled, primed: false, axeLocale, locale };
+    let context: AuditContext = { readiness: settled, primed: false, axeLocale, locale: LOCALE };
     if (opts.deep) {
       const [{ result: primed }] = await chrome.scripting.executeScript({
         target: { tabId: tab.id },
         func: (before: typeof settled) => window.__accessCheckPrime!(before),
         args: [settled],
       });
-      context = { readiness: primed?.readiness, primed: true, axeLocale, locale };
+      context = { readiness: primed?.readiness, primed: true, axeLocale, locale: LOCALE };
     }
 
     stage(url, mode, "rules");
@@ -165,7 +161,7 @@ async function runAudit(tab: chrome.tabs.Tab, opts: { deep: boolean }): Promise<
       func: (given: AuditContext) => window.__accessCheckAudit!(given),
       args: [context],
     });
-    if (!result) throw new Error("The audit returned nothing.");
+    if (!result) throw new Error(t("background.auditEmpty"));
 
     const shot = await chrome.tabs
       .captureVisibleTab(tab.windowId, { format: "jpeg", quality: SCREENSHOT_QUALITY })
@@ -190,9 +186,7 @@ async function runAudit(tab: chrome.tabs.Tab, opts: { deep: boolean }): Promise<
     publish({
       kind: "error",
       recoverable: true,
-      message: lostAccess
-        ? "This tab moved on, so the one-tab permission lapsed. Click the AccessCheck icon on the page to audit it again."
-        : message,
+      message: lostAccess ? t("background.permissionLapsed") : message,
     });
   } finally {
     running = false;
@@ -219,7 +213,7 @@ async function addFocusPath(): Promise<void> {
 }
 
 async function inAuditedTab<T>(run: (tabId: number) => Promise<T>): Promise<T> {
-  if (auditedTabId === null) throw new Error("Nothing has been audited in this tab yet.");
+  if (auditedTabId === null) throw new Error(t("background.nothingAudited"));
   await chrome.scripting.executeScript({
     target: { tabId: auditedTabId },
     files: ["dom-engine.js"],
@@ -302,8 +296,8 @@ chrome.runtime.onMessage.addListener((message: PanelMessage, _sender, sendRespon
             ok: false,
             message:
               e instanceof Error && /Cannot access|No tab with id|Frame with ID/i.test(e.message)
-                ? "This tab moved on, so the page can no longer be reached from here."
-                : "The page could not be marked up.",
+                ? t("background.tabUnreachable")
+                : t("background.markupFailed"),
           } satisfies HighlightReply),
       );
     return true;
@@ -332,8 +326,7 @@ chrome.runtime.onMessage.addListener((message: PanelMessage, _sender, sendRespon
         publish({
           kind: "error",
           recoverable: true,
-          message:
-            "Auditing another tab needs a click on the AccessCheck icon there: that click is what grants access to it.",
+          message: t("background.otherTab"),
         });
         return;
       }

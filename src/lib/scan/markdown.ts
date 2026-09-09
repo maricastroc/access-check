@@ -1,18 +1,18 @@
 import type { FixGroup, FixVerification, ScanResult } from "./types";
 import { severityOrder } from "./derive";
 import { reviewGuidance } from "./review";
+import { translator, type MessageKey, type Translate } from "../i18n/t";
 
-const severityLabel: Record<string, string> = {
-  critical: "Critical",
-  serious: "Serious",
-  moderate: "Moderate",
-  minor: "Minor",
+const SEVERITY_KEY: Record<string, MessageKey> = {
+  critical: "severity.critical",
+  serious: "severity.serious",
+  moderate: "severity.moderate",
+  minor: "severity.minor",
 };
 
-const verificationLabel: Record<FixVerification, string> = {
-  verified: "✅ Verified — re-scan passes",
-  failed: "⚠️ Needs review — re-scan still flags",
-  unchecked: "",
+const VERIFICATION_KEY: Partial<Record<FixVerification, MessageKey>> = {
+  verified: "md.verifiedTag",
+  failed: "md.needsReviewTag",
 };
 
 function host(url: string): string {
@@ -23,34 +23,38 @@ function host(url: string): string {
   }
 }
 
-function fixGroupLines(g: FixGroup): string[] {
+function fixGroupLines(g: FixGroup, t: Translate): string[] {
   const lines: string[] = [];
   lines.push(g.text);
   if (g.code) lines.push("", "```", g.code, "```");
   const meta: string[] = [];
-  if (g.count > 1) meta.push(`Resolves ${g.count} elements`);
-  if (verificationLabel[g.verification]) meta.push(verificationLabel[g.verification]);
+  if (g.count > 1) meta.push(t("md.resolvesElements", { count: g.count }));
+  const tag = VERIFICATION_KEY[g.verification];
+  if (tag) meta.push(t(tag));
   if (meta.length) lines.push("", `_${meta.join(" · ")}_`);
   return lines;
 }
 
 export function buildMarkdown(result: ScanResult): string {
+  const t = translator(result.locale);
   const { counts } = result;
   const out: string[] = [];
 
-  out.push(`# Accessibility report — ${result.title || host(result.finalUrl)}`);
+  out.push(`# ${t("md.reportTitleDash", { name: result.title || host(result.finalUrl) })}`);
   out.push("");
-  out.push(`- **URL:** ${result.finalUrl}`);
-  out.push(`- **Score:** ${result.score} / 100`);
-  out.push(`- **Elements scanned:** ${result.scannedElements}`);
-  out.push(`- **Generated:** ${new Date().toISOString().slice(0, 10)}`);
+  out.push(`- **${t("md.url")}:** ${result.finalUrl}`);
+  out.push(`- **${t("md.scoreLabel")}:** ${result.score} / 100`);
+  out.push(`- **${t("md.elementsScanned")}:** ${result.scannedElements}`);
+  out.push(`- **${t("md.generated")}:** ${new Date().toISOString().slice(0, 10)}`);
   out.push("");
   out.push(`> ${result.summary}`);
   out.push("");
 
-  out.push("## Summary");
+  out.push(`## ${t("md.summary")}`);
   out.push("");
-  out.push("| Critical | Serious | Moderate | Minor | Passed |");
+  out.push(
+    `| ${t("md.colCritical")} | ${t("md.colSerious")} | ${t("md.colModerate")} | ${t("md.colMinor")} | ${t("md.colPassed")} |`,
+  );
   out.push("| --- | --- | --- | --- | --- |");
   out.push(
     `| ${counts.critical} | ${counts.serious} | ${counts.moderate} | ${counts.minor} | ${counts.passed} |`,
@@ -58,40 +62,45 @@ export function buildMarkdown(result: ScanResult): string {
   out.push("");
 
   if (result.fixFirst.length > 0) {
-    out.push("## Fix First");
+    out.push(`## ${t("md.fixFirst")}`);
     out.push("");
     for (const f of result.fixFirst) {
-      out.push(`${Number(f.n)}. **${f.title}** — impact ${f.impact}, effort ${f.effort}`);
+      out.push(
+        `${Number(f.n)}. ` +
+          t("md.fixFirstLine", { title: f.title, impact: f.impact, effort: f.effort }),
+      );
     }
     out.push("");
   }
 
-  out.push("## Violations");
+  out.push(`## ${t("md.violations")}`);
   out.push("");
   if (result.violations.length === 0) {
-    out.push("No automated violations detected. 🎉");
+    out.push(t("md.noViolations"));
     out.push("");
   } else {
     for (const sev of severityOrder) {
       const items = result.violations.filter((v) => v.severity === sev);
       if (items.length === 0) continue;
-      out.push(`### ${severityLabel[sev]} (${items.length})`);
+      out.push(
+        `### ` + t("md.severityHeading", { severity: t(SEVERITY_KEY[sev]), count: items.length }),
+      );
       out.push("");
       for (const v of items) {
         out.push(`#### ${v.title}`);
         out.push("");
         out.push(`- **WCAG:** ${v.criterion}`);
-        out.push(`- **Selector:** \`${v.where}\``);
-        out.push(`- **Occurrences:** ${v.nodes}`);
+        out.push(`- **${t("md.selectorLabel")}:** \`${v.where}\``);
+        out.push(`- **${t("md.occurrencesLabel")}:** ${v.nodes}`);
         out.push("");
         if (v.desc) {
           out.push(v.desc);
           out.push("");
         }
-        out.push("**Suggested fix:**");
+        out.push(`**${t("md.suggestedFix")}:**`);
         out.push("");
         if (v.fixGroups && v.fixGroups.length > 0) {
-          for (const g of v.fixGroups) out.push(...fixGroupLines(g));
+          for (const g of v.fixGroups) out.push(...fixGroupLines(g, t));
         } else {
           out.push(v.fix);
         }
@@ -102,34 +111,40 @@ export function buildMarkdown(result: ScanResult): string {
 
   const kb = result.keyboard;
   if (kb) {
-    out.push("## Keyboard & focus");
+    out.push(`## ${t("md.keyboardHeading")}`);
     out.push("");
     out.push(
-      `Traced ${kb.totalStops} focus ${kb.totalStops === 1 ? "stop" : "stops"} · ` +
+      t("md.tracedStops", { count: kb.totalStops }) +
+        " · " +
         (kb.totalInteractive > 0
-          ? `${kb.reachableInteractive}/${kb.totalInteractive} interactive elements reachable by keyboard`
-          : "no interactive controls detected") +
+          ? t("md.reachableCounts", {
+              reachable: kb.reachableInteractive,
+              total: kb.totalInteractive,
+            })
+          : t("md.noInteractive")) +
         ".",
     );
     out.push("");
     if (kb.findings.length === 0) {
-      out.push("No keyboard or focus issues detected. 🎉");
+      out.push(t("md.noKeyboard"));
       out.push("");
     } else {
       for (const f of kb.findings) {
         out.push(`### ${f.title}`);
         out.push("");
-        out.push(`- **Severity:** ${severityLabel[f.severity]}`);
+        out.push(`- **${t("md.severityLabel")}:** ${t(SEVERITY_KEY[f.severity])}`);
         out.push(`- **WCAG:** ${f.criterion}`);
         if (f.selectors.length > 0) {
           const shown = f.selectors.map((s) => `\`${s}\``).join(", ");
           const extra = f.count - f.selectors.length;
-          out.push(`- **Affected:** ${shown}${extra > 0 ? ` _(+${extra} more)_` : ""}`);
+          out.push(
+            `- **${t("md.affected")}:** ${shown}${extra > 0 ? ` _${t("md.andMore", { count: extra })}_` : ""}`,
+          );
         }
         out.push("");
         out.push(f.desc);
         out.push("");
-        out.push(`**Fix:** ${f.fix}`);
+        out.push(`**${t("md.fixLabel")}:** ${f.fix}`);
         out.push("");
       }
     }
@@ -137,26 +152,27 @@ export function buildMarkdown(result: ScanResult): string {
 
   const ctx = result.contexts;
   if (ctx && (ctx.mobile.ran || ctx.dynamic.ran)) {
-    out.push("## Responsive & dynamic");
+    out.push(`## ${t("md.contextsHeading")}`);
     out.push("");
     const checked: string[] = [];
-    if (ctx.mobile.ran) checked.push(`${ctx.mobile.width}px viewport`);
-    if (ctx.dynamic.ran)
-      checked.push(`${ctx.dynamic.opened} opened state${ctx.dynamic.opened === 1 ? "" : "s"}`);
-    out.push(`Re-scanned beyond the initial desktop load — checked ${checked.join(", ")}.`);
+    if (ctx.mobile.ran) checked.push(t("md.viewportChecked", { width: ctx.mobile.width }));
+    if (ctx.dynamic.ran) checked.push(t("md.openedStates", { count: ctx.dynamic.opened }));
+    out.push(t("md.rescannedBeyond", { checked: checked.join(", ") }));
     out.push("");
 
     const issueLines = (issue: (typeof ctx.mobile.onlyOnMobile)[number]) => {
-      out.push(`- **${issue.title}** — ${severityLabel[issue.severity]} · ${issue.criterion}`);
+      out.push(`- **${issue.title}** — ${t(SEVERITY_KEY[issue.severity])} · ${issue.criterion}`);
       if (issue.selectors.length > 0) {
         const shown = issue.selectors.map((s) => `\`${s}\``).join(", ");
         const extra = issue.nodes - issue.selectors.length;
-        out.push(`  - Affected: ${shown}${extra > 0 ? ` (+${extra} more)` : ""}`);
+        out.push(
+          `  - ${t("md.affected")}: ${shown}${extra > 0 ? ` ${t("md.andMore", { count: extra })}` : ""}`,
+        );
       }
     };
 
     if (ctx.mobile.onlyOnMobile.length > 0) {
-      out.push(`### Only at ${ctx.mobile.width}px`);
+      out.push(`### ${t("md.onlyAtWidth", { width: ctx.mobile.width })}`);
       out.push("");
       for (const issue of ctx.mobile.onlyOnMobile) issueLines(issue);
       out.push("");
@@ -168,26 +184,26 @@ export function buildMarkdown(result: ScanResult): string {
       out.push("");
     }
     if (ctx.mobile.onlyOnMobile.length === 0 && ctx.dynamic.states.length === 0) {
-      out.push("No new violations surfaced in these contexts. 🎉");
+      out.push(t("md.noContexts"));
       out.push("");
     }
   }
 
   if (result.incomplete.length > 0) {
-    out.push("## Needs manual review");
+    out.push(`## ${t("md.needsManualReview")}`);
     out.push("");
-    out.push("Automated testing couldn't determine these — confirm them by hand.");
+    out.push(t("md.manualNote"));
     out.push("");
     for (const inc of result.incomplete) {
       out.push(`### ${inc.title}`);
       out.push("");
       out.push(`- **WCAG:** ${inc.criterion}`);
       if (inc.selectors.length > 0) {
-        out.push(`- **Where:** ${inc.selectors.map((s) => `\`${s}\``).join(", ")}`);
+        out.push(`- **${t("md.whereLabel")}:** ${inc.selectors.map((s) => `\`${s}\``).join(", ")}`);
       }
       out.push("");
-      const guide = reviewGuidance(inc.id);
-      out.push(`**How to check:** ${guide.how}`);
+      const guide = reviewGuidance(inc.id, t);
+      out.push(`**${t("md.howToCheck")}:** ${guide.how}`);
       out.push("");
       for (const step of guide.steps) out.push(`- ${step}`);
       out.push("");
@@ -195,7 +211,7 @@ export function buildMarkdown(result: ScanResult): string {
   }
 
   if (result.passed.length > 0) {
-    out.push(`## Passed checks (${result.passed.length})`);
+    out.push(`## ${t("md.passedChecks", { count: result.passed.length })}`);
     out.push("");
     for (const p of result.passed) out.push(`- ${p}`);
     out.push("");

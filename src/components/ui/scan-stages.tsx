@@ -1,13 +1,14 @@
 import type { ScanPhase } from "@/lib/scan/types";
 import { cn } from "@/lib/cn";
+import type { MessageKey, Translate } from "@/lib/i18n/t";
 
-const STAGES = [
-  "Opening the page and waiting for it to settle",
-  "Running the WCAG A and AA checks (axe-core)",
-  "Testing fixes on a copy of the page",
-  "Taking the screenshot",
-  "Keyboard and mobile checks",
-] as const;
+const STAGE_KEYS: MessageKey[] = [
+  "stages.opening",
+  "stages.rules",
+  "stages.testingFixes",
+  "stages.screenshot",
+  "stages.keyboardMobile",
+];
 
 const PHASE_STAGE: Record<ScanPhase, number> = {
   preparing: 0,
@@ -55,6 +56,6 @@ export function StageList({ stages, current }: { stages: readonly string[]; curr
   );
 }
 
-export function ScanStages({ phase }: { phase: ScanPhase }) {
-  return <StageList stages={STAGES} current={PHASE_STAGE[phase]} />;
+export function ScanStages({ phase, t }: { phase: ScanPhase; t: Translate }) {
+  return <StageList stages={STAGE_KEYS.map((key) => t(key))} current={PHASE_STAGE[phase]} />;
 }

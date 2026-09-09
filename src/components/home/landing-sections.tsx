@@ -3,12 +3,13 @@ import {
   axeRules,
   complementaryPasses,
   exampleFinding,
-  exampleMarkdown,
+  exampleMarkdownKeys,
   exampleScore,
   steps,
 } from "./content";
 import { UrlForm } from "./url-form";
 import { CapturePreview } from "./evidence-preview";
+import type { MessageKey, Translate } from "@/lib/i18n/t";
 
 function SectionHead({
   kicker,
@@ -30,9 +31,9 @@ function SectionHead({
   );
 }
 
-const STAGE_LABEL = ["Open", "Locate", "Verify"];
+const STAGE_LABEL_KEY: MessageKey[] = ["home.stage.open", "home.stage.locate", "home.stage.verify"];
 
-function StageArtifact({ i }: { i: number }) {
+function StageArtifact({ i, t }: { i: number; t: Translate }) {
   if (i === 0) {
     return (
       <div className="space-y-1.5">
@@ -44,7 +45,7 @@ function StageArtifact({ i }: { i: number }) {
           <span aria-hidden className="text-verified">
             ✓
           </span>
-          Chromium · axe-core injected · content settled
+          {t("home.stage.browserReady")}
         </div>
       </div>
     );
@@ -75,7 +76,7 @@ function StageArtifact({ i }: { i: number }) {
                 state="selected"
                 label="2.1:1"
                 size={22}
-                ariaLabel="Located occurrence"
+                ariaLabel={t("home.lens.locatedOccurrence")}
               />
             </span>
           </span>
@@ -95,21 +96,23 @@ function StageArtifact({ i }: { i: number }) {
         <span className="font-mono text-[11px] text-ink">#2F6B57</span>
         <span className="font-cond text-verified">4.62:1</span>
       </div>
-      <StatusSeal status="verified">Verified in sandbox</StatusSeal>
+      <StatusSeal t={t} status="verified">
+        {t("home.lens.verifiedInSandbox")}
+      </StatusSeal>
     </div>
   );
 }
 
-export function HowItWorks() {
+export function HowItWorks({ t }: { t: Translate }) {
   return (
     <section id="how" className="bg-band">
       <div className="mx-auto w-full max-w-300 px-6 py-12">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <SectionHead kicker="How it works" title="One page, opened, located and verified" />
+          <SectionHead kicker={t("home.howItWorks.kicker")} title={t("home.howItWorks.title")} />
           <p className="font-cond text-[15px] tracking-[0.04em] text-muted">
-            <span className="text-serious">Open</span> →{" "}
-            <span className="text-serious">Locate</span> →{" "}
-            <span className="text-verified">Verify</span>
+            <span className="text-serious">{t("home.stage.open")}</span> →{" "}
+            <span className="text-serious">{t("home.stage.locate")}</span> →{" "}
+            <span className="text-verified">{t("home.stage.verify")}</span>
           </p>
         </div>
 
@@ -149,13 +152,13 @@ export function HowItWorks() {
                     >
                       {s.n}
                     </span>
-                    <SectionKicker tone="ink">{STAGE_LABEL[i]}</SectionKicker>
+                    <SectionKicker tone="ink">{t(STAGE_LABEL_KEY[i])}</SectionKicker>
                   </div>
                   <div className="mt-4 min-h-23">
-                    <StageArtifact i={i} />
+                    <StageArtifact i={i} t={t} />
                   </div>
-                  <h3 className="mt-4 text-[16.5px] font-semibold text-ink">{s.title}</h3>
-                  <p className="mt-1.5 text-[14px] leading-normal text-body">{s.body}</p>
+                  <h3 className="mt-4 text-[16.5px] font-semibold text-ink">{t(s.title)}</h3>
+                  <p className="mt-1.5 text-[14px] leading-normal text-body">{t(s.body)}</p>
                 </div>
               );
             })}
@@ -166,36 +169,33 @@ export function HowItWorks() {
   );
 }
 
-export function ChecksIncluded() {
+export function ChecksIncluded({ t }: { t: Translate }) {
   return (
     <section id="checks" className="bg-canvas">
       <div className="mx-auto w-full max-w-300 px-6 py-12">
-        <SectionHead
-          kicker="Checks included"
-          title="Every automated check, plus the passes a tool can't run on its own"
-        />
+        <SectionHead kicker={t("home.checks.kicker")} title={t("home.checks.title")} />
 
         <div className="mt-9 grid grid-cols-1 md:grid-cols-2">
           <div className="border border-ink bg-surface">
             <div className="flex items-baseline justify-between border-b border-ink px-5 py-3">
-              <SectionKicker tone="steel">axe-core rules</SectionKicker>
-              <span className="text-[12px] text-muted">pass or fail, objectively</span>
+              <SectionKicker tone="steel">{t("home.axeRules.kicker")}</SectionKicker>
+              <span className="text-[12px] text-muted">{t("home.axeRules.note")}</span>
             </div>
             <div className="flex items-end gap-3 px-5 pt-5">
               <span className="font-cond text-[52px] leading-[0.8] text-ink tabular-nums">
                 {axeRules.length}
               </span>
               <span className="pb-2 text-[13px] leading-tight text-muted">
-                success criteria
+                {t("home.axeRules.countLine1")}
                 <br />
-                checked automatically
+                {t("home.axeRules.countLine2")}
               </span>
             </div>
             <ul className="grid grid-cols-1 gap-y-2.5 px-5 py-5">
               {axeRules.map((r) => (
                 <li key={r.sc} className="grid grid-cols-[52px_1fr] items-baseline gap-3">
                   <span className="font-mono text-[13px] text-steel tabular-nums">{r.sc}</span>
-                  <span className="text-[13.5px] text-body">{r.label}</span>
+                  <span className="text-[13.5px] text-body">{t(r.label)}</span>
                 </li>
               ))}
             </ul>
@@ -203,26 +203,26 @@ export function ChecksIncluded() {
 
           <div className="border border-ink bg-band md:border-l-0">
             <div className="flex items-baseline justify-between border-b border-ink px-5 py-3">
-              <SectionKicker tone="steel">complementary passes</SectionKicker>
-              <span className="text-[12px] text-muted">what a tool can&apos;t judge alone</span>
+              <SectionKicker tone="steel">{t("home.complementary.kicker")}</SectionKicker>
+              <span className="text-[12px] text-muted">{t("home.complementary.note")}</span>
             </div>
             <div className="flex items-end gap-3 px-5 pt-5">
               <span className="font-cond text-[52px] leading-[0.8] text-ink tabular-nums">
                 {complementaryPasses.length}
               </span>
               <span className="pb-2 text-[13px] leading-tight text-muted">
-                passes beyond
+                {t("home.complementary.countLine1")}
                 <br />
-                the static DOM
+                {t("home.complementary.countLine2")}
               </span>
             </div>
             <ul className="grid grid-cols-1 gap-y-2.5 px-5 py-5">
               {complementaryPasses.map((p) => (
                 <li key={p.label} className="grid grid-cols-[86px_1fr] items-baseline gap-3">
                   <span className="font-cond text-[11px] tracking-widest text-steel uppercase">
-                    {p.label}
+                    {t(p.label)}
                   </span>
-                  <span className="text-[13.5px] text-body">{p.desc}</span>
+                  <span className="text-[13.5px] text-body">{t(p.desc)}</span>
                 </li>
               ))}
             </ul>
@@ -233,7 +233,7 @@ export function ChecksIncluded() {
   );
 }
 
-export function EvidenceLensSection() {
+export function EvidenceLensSection({ t }: { t: Translate }) {
   return (
     <section id="evidence" className="bg-band">
       <div className="mx-auto w-full max-w-300 px-6 py-16">
@@ -241,29 +241,29 @@ export function EvidenceLensSection() {
           <div>
             <span aria-hidden className="mb-3 block h-0.75 w-10 bg-steel" />
             <h2 className="text-[34px] leading-[1.08] font-semibold tracking-[-0.02em] text-ink">
-              See the barrier on the element that caused it
+              {t("home.lens.title")}
             </h2>
           </div>
-          <p className="max-w-[46ch] text-[16px] leading-[1.55] text-body">
-            Element, selector, measurement and diagnosis stay in one chain. Select a finding and its
-            marker fills in. The located element is labeled with the ratio, and the others keep a
-            dashed outline, so you can tell them apart without relying on color.
-          </p>
+          <p className="max-w-[46ch] text-[16px] leading-[1.55] text-body">{t("home.lens.body")}</p>
         </div>
 
         <div className="mt-8 grid grid-cols-1 gap-0 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
           <div className="border border-ink bg-surface">
             <div className="flex items-center justify-between gap-3 border-b border-ink px-4 py-2.5">
-              <SectionKicker>
-                Evidence Lens · aurora-coffee.com · 1200 × 800 · scale 43%
-              </SectionKicker>
+              <SectionKicker>{t("home.lens.frameLabelFull")}</SectionKicker>
               <div className="hidden items-stretch border border-border text-[12px] sm:flex">
-                <span className="bg-ink px-2.5 py-1 font-medium text-surface">Normal</span>
-                <span className="border-l border-border px-2.5 py-1 text-muted">Deuteranopia</span>
-                <span className="border-l border-border px-2.5 py-1 text-muted">Grayscale</span>
+                <span className="bg-ink px-2.5 py-1 font-medium text-surface">
+                  {t("vision.normal")}
+                </span>
+                <span className="border-l border-border px-2.5 py-1 text-muted">
+                  {t("vision.deuteranopia")}
+                </span>
+                <span className="border-l border-border px-2.5 py-1 text-muted">
+                  {t("vision.grayscale")}
+                </span>
               </div>
             </div>
-            <CapturePreview height={340} />
+            <CapturePreview t={t} height={340} />
           </div>
 
           <div className="relative pt-8 lg:pt-2 lg:pl-8">
@@ -288,14 +288,13 @@ export function EvidenceLensSection() {
               </span>
               <span className="ml-auto font-mono text-[12px] text-steel">1.4.3 AA</span>
             </div>
-            <h3 className="mt-1.5 text-[16px] font-semibold text-ink">{exampleFinding.title}</h3>
+            <h3 className="mt-1.5 text-[16px] font-semibold text-ink">{t(exampleFinding.title)}</h3>
             <p className="mt-1.5 text-[13.5px] leading-normal text-ink-2">
-              The white text on the light-green button disappears for people with low vision, or for
-              anyone in bright sunlight. And this is the checkout button.
+              {t("home.lens.contrastStory")}
             </p>
 
             <div className="mt-4 border-t border-hairline pt-3">
-              <SectionKicker>Measurement</SectionKicker>
+              <SectionKicker>{t("home.lens.measurement")}</SectionKicker>
               <div className="mt-1.5 flex items-end gap-2">
                 <span className="font-cond text-[30px] leading-none text-serious tabular-nums">
                   2.1:1
@@ -304,6 +303,7 @@ export function EvidenceLensSection() {
               </div>
               <div className="mt-2">
                 <Ruler
+                  t={t}
                   variant="ratio"
                   found={exampleFinding.measured}
                   required={exampleFinding.required}
@@ -314,7 +314,7 @@ export function EvidenceLensSection() {
             </div>
 
             <div className="mt-4 border-t border-hairline pt-3">
-              <SectionKicker>Suggested fix</SectionKicker>
+              <SectionKicker>{t("home.lens.suggestedFix")}</SectionKicker>
               <div className="mt-2 flex flex-wrap items-center gap-2 text-[12.5px]">
                 <ColorSwatch hex={exampleFinding.fromHex} size={14} />
                 <span className="font-mono text-[11.5px] text-muted line-through">#8FB8A8</span>
@@ -326,24 +326,23 @@ export function EvidenceLensSection() {
                 <span className="text-muted">(color)</span>
               </div>
               <div className="mt-3">
-                <StatusSeal status="verified" />
+                <StatusSeal t={t} status="verified" />
               </div>
-              <p className="mt-2 text-[12px] text-muted">
-                Tested in a sandbox copy. aurora-coffee.com was not altered.
-              </p>
+              <p className="mt-2 text-[12px] text-muted">{t("home.lens.sandboxNote")}</p>
             </div>
           </div>
         </div>
 
         <div className="mt-4 flex flex-wrap gap-x-8 gap-y-1.5 text-[13px] text-muted">
           <span>
-            <span className="font-cond text-serious">2.1:1</span> the measure found
+            <span className="font-cond text-serious">2.1:1</span> {t("home.lens.measureFound")}
           </span>
           <span>
-            <span className="font-mono text-steel">a.hero__cta</span> the exact selector
+            <span className="font-mono text-steel">a.hero__cta</span> {t("home.lens.exactSelector")}
           </span>
           <span>
-            <span className="font-cond text-verified">Sandbox</span> re-audited in a copy
+            <span className="font-cond text-verified">{t("home.lens.sandbox")}</span>{" "}
+            {t("home.lens.reauditedInCopy")}
           </span>
         </div>
       </div>
@@ -383,25 +382,20 @@ function BeatButton({
   );
 }
 
-export function SandboxSection() {
+export function SandboxSection({ t }: { t: Translate }) {
   return (
     <section className="bg-canvas">
       <div className="mx-auto w-full max-w-300 px-6 py-16">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] lg:items-end">
-          <SectionHead
-            kicker="Sandbox verification"
-            title="Every fix is proved on a copy, so your site is never touched"
-          />
+          <SectionHead kicker={t("home.sandbox.kicker")} title={t("home.sandbox.title")} />
           <p className="max-w-[52ch] text-[16px] leading-[1.55] text-body">
-            We apply the change to a copy of the page, run the check again, then undo it. If the
-            issue stops showing up, we mark the fix as verified. It is never a guarantee, and it
-            never touches your real site.
+            {t("home.sandbox.body")}
           </p>
         </div>
 
         <div className="mt-8 border border-ink bg-surface">
           <div className="flex items-center justify-between border-b border-ink px-4 py-2.5">
-            <SectionKicker>Contrast measurement · 1.4.3 AA</SectionKicker>
+            <SectionKicker>{t("home.sandbox.measurement")}</SectionKicker>
             <span className="font-mono text-[12px] text-steel">a.hero__cta</span>
           </div>
 
@@ -411,11 +405,12 @@ export function SandboxSection() {
                 2.1:1
               </span>
               <span className="pb-2 text-[13px] text-muted">
-                found · minimum for normal text is {exampleFinding.required}:1
+                {t("home.sandbox.found", { required: exampleFinding.required })}
               </span>
             </div>
             <div className="mt-3">
               <Ruler
+                t={t}
                 variant="ratio"
                 found={exampleFinding.measured}
                 required={exampleFinding.required}
@@ -426,7 +421,7 @@ export function SandboxSection() {
 
             <div className="mt-9 grid grid-cols-1 items-center gap-5 sm:grid-cols-[1fr_auto_1fr]">
               <div>
-                <SectionKicker tone="steel">Before</SectionKicker>
+                <SectionKicker tone="steel">{t("home.lens.before")}</SectionKicker>
                 <div className="mt-2">
                   <BeatButton hex={exampleFinding.fromHex} ratio="2.1:1" tone="serious" />
                 </div>
@@ -444,7 +439,9 @@ export function SandboxSection() {
                   <SectionKicker tone="steel" className="text-verified!">
                     After
                   </SectionKicker>
-                  <StatusSeal status="verified">Verified</StatusSeal>
+                  <StatusSeal t={t} status="verified">
+                    {t("home.cta.verified")}
+                  </StatusSeal>
                 </div>
                 <div className="mt-2">
                   <BeatButton hex={exampleFinding.toHex} ratio="4.62:1" tone="verified" />
@@ -458,7 +455,7 @@ export function SandboxSection() {
   );
 }
 
-function MiniPdf() {
+function MiniPdf({ t }: { t: Translate }) {
   return (
     <div className="border border-ink bg-surface p-4">
       <div className="flex items-center justify-between border-b border-hairline pb-2">
@@ -470,7 +467,7 @@ function MiniPdf() {
       </div>
       <div className="mt-3">
         <span className="font-cond text-[8.5px] tracking-[0.12em] text-muted uppercase">
-          Internal priority score
+          {t("report.internalScore")}
         </span>
         <div className="mt-0.5 flex items-end gap-1.5">
           <span className="font-cond text-[34px] leading-[0.8] text-ink tabular-nums">
@@ -480,6 +477,7 @@ function MiniPdf() {
         </div>
         <div className="mt-2">
           <Ruler
+            t={t}
             variant="score"
             score={exampleScore.score}
             deductions={exampleScore.deductions}
@@ -490,10 +488,12 @@ function MiniPdf() {
       <div className="mt-3 space-y-1.5">
         <div className="border-l-2 border-serious bg-band px-2 py-1">
           <div className="flex items-center justify-between text-[9px]">
-            <span className="font-cond tracking-[0.08em] text-serious uppercase">Serious</span>
+            <span className="font-cond tracking-[0.08em] text-serious uppercase">
+              {t("severity.serious")}
+            </span>
             <span className="font-mono text-steel">1.4.3</span>
           </div>
-          <div className="text-[10px] font-semibold text-ink">Text below minimum contrast</div>
+          <div className="text-[10px] font-semibold text-ink">{t("home.example.title")}</div>
         </div>
         <div className="border-l-2 border-moderate bg-band px-2 py-1">
           <div className="flex items-center justify-between text-[9px]">
@@ -502,40 +502,36 @@ function MiniPdf() {
             </span>
             <span className="font-mono text-steel">1.3.1</span>
           </div>
-          <div className="text-[10px] font-semibold text-ink">Heading level skips</div>
+          <div className="text-[10px] font-semibold text-ink">{t("home.example.headingSkip")}</div>
         </div>
       </div>
     </div>
   );
 }
 
-export function ExportSection() {
+export function ExportSection({ t }: { t: Translate }) {
   return (
     <section className="bg-band">
       <div className="mx-auto w-full max-w-300 px-6 py-12">
-        <SectionHead
-          kicker="Export"
-          title="Two exports for two readers: the person who decides and the person who fixes"
-        />
+        <SectionHead kicker={t("home.export.kicker")} title={t("home.export.title")} />
 
         <div className="mt-9 grid grid-cols-1 gap-6 md:grid-cols-2">
           <div className="grid grid-cols-[180px_1fr] gap-5">
-            <MiniPdf />
+            <MiniPdf t={t} />
             <div>
               <div className="flex items-center gap-2">
                 <span className="border border-border bg-surface px-1.5 py-0.5 font-cond text-[10px] tracking-widest text-ink uppercase">
                   PDF
                 </span>
                 <span className="font-cond text-[11px] tracking-widest text-muted uppercase">
-                  for the person who decides
+                  {t("home.export.pdfFor")}
                 </span>
               </div>
               <h3 className="mt-2.5 text-[17px] font-semibold text-ink">
-                Score, ruler and impact in plain language
+                {t("home.export.pdfTitle")}
               </h3>
               <p className="mt-1.5 text-[14px] leading-normal text-body">
-                Summary, severity levels and each finding&apos;s impact on people. Ready to send to
-                a client or a product team, with no engineering context required.
+                {t("home.export.pdfBody")}
               </p>
             </div>
           </div>
@@ -544,25 +540,18 @@ export function ExportSection() {
             <div className="border border-ink bg-surface">
               <div className="flex items-center gap-2 border-b border-hairline px-3 py-1.5">
                 <span aria-hidden className="size-2 bg-steel" />
-                <span className="font-mono text-[10.5px] text-muted">
-                  accesscheck-aurora-coffee-com.md
-                </span>
+                <span className="font-mono text-[10.5px] text-muted">{t("home.md.filename")}</span>
               </div>
               <div className="bg-code px-3 py-2.5 font-mono text-[12px] leading-[1.7]">
-                {exampleMarkdown.split("\n").map((text, i) => (
-                  <div
-                    key={i}
-                    className={
-                      text.startsWith("###")
-                        ? "text-muted"
-                        : text.includes("verified")
-                          ? "text-verified"
-                          : "text-[#2b2b2d]"
-                    }
-                  >
-                    {text}
-                  </div>
-                ))}
+                {exampleMarkdownKeys.map((key, i) => {
+                  const text = t(key);
+                  const tone = key === "home.md.line5" ? "text-muted" : "text-[#2b2b2d]";
+                  return (
+                    <div key={i} className={key === "home.md.line6" ? "text-verified" : tone}>
+                      {text}
+                    </div>
+                  );
+                })}
               </div>
             </div>
             <div>
@@ -571,15 +560,14 @@ export function ExportSection() {
                   MD
                 </span>
                 <span className="font-cond text-[11px] tracking-widest text-muted uppercase">
-                  for the person who fixes
+                  {t("home.export.mdFor")}
                 </span>
               </div>
               <h3 className="mt-2.5 text-[17px] font-semibold text-ink">
-                Selector, snippet and verification status
+                {t("home.export.mdTitle")}
               </h3>
               <p className="mt-1.5 text-[14px] leading-normal text-body">
-                A severity table and a prioritized list, ready to paste into a ticket or a pull
-                request, with the verified fixes already marked.
+                {t("home.export.mdBody")}
               </p>
             </div>
           </div>
@@ -589,48 +577,45 @@ export function ExportSection() {
   );
 }
 
-export function FinalCta() {
+export function FinalCta({ t }: { t: Translate }) {
   return (
     <section className="bg-ink text-surface">
       <div className="mx-auto w-full max-w-300 px-6 py-16">
         <div className="flex flex-wrap items-center gap-x-8 gap-y-2 border-b border-ink-2 pb-6 font-cond text-[13px] tracking-[0.06em] text-band uppercase">
           <span className="flex items-center gap-2">
-            <span aria-hidden className="hatch-serious size-2.5" /> Measured
+            <span aria-hidden className="hatch-serious size-2.5" /> {t("home.cta.measured")}
           </span>
           <span className="flex items-center gap-2">
-            <span aria-hidden className="size-2.5 bg-steel" /> Located
+            <span aria-hidden className="size-2.5 bg-steel" /> {t("home.cta.located")}
           </span>
           <span className="flex items-center gap-2">
-            <span aria-hidden className="size-2.5 bg-verified" /> Verified
+            <span aria-hidden className="size-2.5 bg-verified" /> {t("home.cta.verified")}
           </span>
           <span className="ml-auto font-sans text-[12px] tracking-normal text-disabled normal-case">
-            axe-core · Playwright · WCAG A &amp; AA
+            {t("home.footerStandards")}
           </span>
         </div>
 
         <div className="grid grid-cols-1 gap-10 pt-8 lg:grid-cols-[minmax(0,1fr)_560px] lg:items-center">
           <div>
             <h2 className="text-[32px] leading-[1.1] font-semibold tracking-[-0.02em]">
-              Audit a page now and see where each barrier is
+              {t("home.cta.title")}
             </h2>
             <p className="mt-3 max-w-[52ch] text-[15px] leading-normal text-band">
-              No account, no extension, no change to your site. The report is ready in under half a
-              minute and exports as PDF or Markdown.
+              {t("home.cta.body")}
             </p>
           </div>
           <div>
             <UrlForm accent examples={["wikipedia.org", "stripe.com", "github.com"]} />
-            <p className="mt-3 text-[13px] text-disabled">
-              We can only audit public pages. Private or internal addresses will be refused.
-            </p>
+            <p className="mt-3 text-[13px] text-disabled">{t("home.cta.publicOnly")}</p>
           </div>
         </div>
       </div>
 
       <div className="border-t border-ink-2">
         <div className="mx-auto flex w-full max-w-300 flex-col gap-2 px-6 py-6 text-[13px] text-disabled sm:flex-row sm:items-center sm:justify-between">
-          <span>AccessCheck · axe-core · Playwright · WCAG 2.0 / 2.1 / 2.2 levels A and AA</span>
-          <span>Internal priority score · not a conformance statement</span>
+          <span>{t("home.cta.standards")}</span>
+          <span>{t("home.cta.notConformance")}</span>
         </div>
       </div>
     </section>

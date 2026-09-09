@@ -26,7 +26,7 @@ function stop(selector: string, style: FocusStyle = RING): FocusProbe {
     isIframe: false,
     hasShadowRoot: false,
     style,
-    rect: { x: 10, y: 10, w: 100, h: 30 },
+    rect: { x: 10, y: 10, w: 100, h: 30, docX: 10, docY: 10 },
   };
 }
 
@@ -191,21 +191,24 @@ describe("what the walk keeps for later inspection", () => {
 
     const [only] = raw.focusPath;
     expect(only.html).toBe("<button>#a</button>");
-    expect(only.rect).toEqual({ x: 10, y: 10, w: 100, h: 30 });
+    expect(only.rect).toEqual({ x: 10, y: 10, w: 100, h: 30, docX: 10, docY: 10 });
     expect(only.onScreen).toBe(true);
     expect(only.focusStyle).toEqual(NO_RING);
     expect(only.baseStyle).toEqual(NO_RING);
   });
 
   it("says a stop was off-screen instead of inventing a position for it", async () => {
-    const offscreen: FocusProbe = { ...stop("#below"), rect: { x: 10, y: 4000, w: 80, h: 20 } };
+    const offscreen: FocusProbe = {
+      ...stop("#below"),
+      rect: { x: 10, y: 4000, w: 80, h: 20, docX: 10, docY: 4000 },
+    };
     const { io: fake } = io([offscreen]);
 
     const raw = await collectFocusPath(fake, VIEWPORT);
 
     expect(raw.focusPath[0].onScreen).toBe(false);
     expect(raw.focusPath[0].top).toBeNull();
-    expect(raw.focusPath[0].rect).toEqual({ x: 10, y: 4000, w: 80, h: 20 });
+    expect(raw.focusPath[0].rect).toEqual({ x: 10, y: 4000, w: 80, h: 20, docX: 10, docY: 4000 });
   });
 
   it("records that no resting style could be read rather than guessing one", async () => {

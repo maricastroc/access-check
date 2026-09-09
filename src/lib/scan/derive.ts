@@ -1,4 +1,5 @@
 import type { Effort, ScanResult, Severity, ScanViolation } from "./types";
+import type { Translate } from "../i18n/t";
 
 const severityWeight: Record<Severity, number> = {
   critical: 10,
@@ -47,18 +48,17 @@ export function buildFixFirst(violations: ScanViolation[]) {
   }));
 }
 
-function remaining(bestPractice: number, manualReview: number): string {
+function remaining(bestPractice: number, manualReview: number, t: Translate): string {
   const parts: string[] = [];
-  if (bestPractice > 0) {
-    parts.push(`${bestPractice} best-practice recommendation${bestPractice === 1 ? "" : "s"}`);
-  }
-  if (manualReview > 0) {
-    parts.push(`${manualReview} manual-review item${manualReview === 1 ? "" : "s"}`);
-  }
+  if (bestPractice > 0) parts.push(t("summary.bestPractice", { count: bestPractice }));
+  if (manualReview > 0) parts.push(t("summary.manualReview", { count: manualReview }));
   if (parts.length === 0) return "";
 
   const single = parts.length === 1 && (bestPractice === 1 || manualReview === 1);
-  return ` ${parts.join(" and ")} ${single ? "remains" : "remain"}, outside the score.`;
+  return t("summary.remaining", {
+    count: single ? 1 : 2,
+    parts: parts.join(` ${t("unit.and")} `),
+  });
 }
 
 export function buildSummary(
@@ -69,30 +69,28 @@ export function buildSummary(
     bestPractice?: number;
     manualReview?: number;
   },
+  t: Translate,
   options: { partial?: boolean } = {},
 ): string {
-  const scope = options.partial ? " among the checks that ran" : "";
-  const tail = remaining(counts.bestPractice ?? 0, counts.manualReview ?? 0);
+  const scope = options.partial ? t("summary.scope") : "";
+  const tail = remaining(counts.bestPractice ?? 0, counts.manualReview ?? 0, t);
 
   if (counts.critical > 0) {
-    const n = counts.critical;
-    return `Strong foundation, but ${n} critical finding${n > 1 ? "s" : ""} block${n > 1 ? "" : "s"} WCAG level AA. Fix ${n > 1 ? "them" : "it"} first.${tail}`;
+    return `${t("summary.critical", { count: counts.critical })}${tail}`;
   }
   if (counts.serious > 0) {
-    const n = counts.serious;
-    return `No critical blockers${scope}, but ${n} serious finding${n > 1 ? "s" : ""} still ${n > 1 ? "make" : "makes"} the page harder to use for people who rely on assistive technology.${tail}`;
+    return `${t("summary.serious", { count: counts.serious, scope })}${tail}`;
   }
   if (counts.moderate > 0) {
-    return options.partial
-      ? `Only moderate findings among the checks that ran.${tail}`
-      : `Solid result. Only moderate findings are left to polish.${tail}`;
+    const line = options.partial ? t("summary.moderatePartial") : t("summary.moderate");
+    return `${line}${tail}`;
   }
 
   const clean = options.partial
-    ? `No scored WCAG failures in the checks that ran. Some checks did not run here, so this is not a clean bill of health.`
+    ? t("summary.cleanPartial")
     : tail
-      ? `No scored WCAG failures were found.`
-      : `Excellent. No automated findings on this page.`;
+      ? t("summary.cleanNoFailures")
+      : t("summary.excellent");
 
   return `${clean}${tail}`;
 }

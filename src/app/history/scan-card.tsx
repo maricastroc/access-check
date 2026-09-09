@@ -5,8 +5,10 @@ import Link from "next/link";
 import type { ScanListItem } from "@/lib/scans";
 import { DeleteScanButton } from "./history-buttons";
 import { dateFmt, host, scoreColor } from "./history-utils";
+import { useT } from "@/lib/i18n/provider";
 
 export function ScanCard({ scan, delta }: { scan: ScanListItem; delta: number | null }) {
+  const t = useT();
   const [loaded, setLoaded] = useState(false);
 
   const sev = [
@@ -27,7 +29,7 @@ export function ScanCard({ scan, delta }: { scan: ScanListItem; delta: number | 
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={`/api/scan/${scan.id}/screenshot`}
-            alt={`Screenshot of ${host(scan.finalUrl)}`}
+            alt={t("panel.screenshotAlt", { url: host(scan.finalUrl) })}
             loading="lazy"
             onLoad={() => setLoaded(true)}
             onError={() => setLoaded(true)}
@@ -56,8 +58,8 @@ export function ScanCard({ scan, delta }: { scan: ScanListItem; delta: number | 
                   <span aria-hidden>{delta > 0 ? `▲ +${delta}` : `▼ ${delta}`}</span>
                   <span className="sr-only">
                     {delta > 0
-                      ? `up ${delta} points since the previous audit`
-                      : `down ${Math.abs(delta)} points since the previous audit`}
+                      ? t("history.scoreUp", { count: delta })
+                      : t("history.scoreDown", { count: Math.abs(delta) })}
                   </span>
                 </span>
               )}

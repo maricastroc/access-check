@@ -8,8 +8,10 @@ import { ClearHistoryButton } from "./history-buttons";
 import { band, host, type BandKey, type SortKey } from "./history-utils";
 import { HistoryToolbar } from "./history-toolbar";
 import { ScanCard } from "./scan-card";
+import { useT } from "@/lib/i18n/provider";
 
 export function HistoryList({ scans }: { scans: ScanListItem[] }) {
+  const t = useT();
   const params = useSearchParams();
   const [query, setQuery] = useState(() => params.get("q") ?? "");
   const [sort, setSort] = useState<SortKey>(() => {
@@ -74,7 +76,7 @@ export function HistoryList({ scans }: { scans: ScanListItem[] }) {
                 History
               </p>
               <div className="mt-0.5 flex items-center gap-2.5">
-                <h1 className="text-2xl font-bold tracking-tight text-ink">Audit history</h1>
+                <h1 className="text-2xl font-bold tracking-tight text-ink">{t("history.title")}</h1>
                 {hasScans && (
                   <span
                     role="status"
@@ -91,6 +93,7 @@ export function HistoryList({ scans }: { scans: ScanListItem[] }) {
 
           {hasScans && (
             <HistoryToolbar
+              t={t}
               query={query}
               sort={sort}
               scoreBand={scoreBand}
@@ -116,10 +119,8 @@ export function HistoryList({ scans }: { scans: ScanListItem[] }) {
           <NoScans />
         ) : visible.length === 0 ? (
           <div className="border-line-strong bg-card flex flex-col items-center justify-center rounded-2xl border border-dashed px-6 py-16 text-center">
-            <p className="text-base font-semibold text-ink">No audits match your filters</p>
-            <p className="mt-1.5 max-w-sm text-sm text-muted">
-              Try a different domain, or clear the score filter to see everything again.
-            </p>
+            <p className="text-base font-semibold text-ink">{t("history.noMatches")}</p>
+            <p className="mt-1.5 max-w-sm text-sm text-muted">{t("history.tryDifferentDomain")}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -134,18 +135,16 @@ export function HistoryList({ scans }: { scans: ScanListItem[] }) {
 }
 
 function NoScans() {
+  const t = useT();
   return (
     <div className="border-line-strong bg-card flex flex-col items-center justify-center rounded-2xl border border-dashed px-6 py-16 text-center">
-      <p className="text-base font-semibold text-ink">No audits yet</p>
-      <p className="mt-1.5 max-w-sm text-sm text-muted">
-        Run an audit while signed in and it’ll show up here, so you can track each site’s score over
-        time.
-      </p>
+      <p className="text-base font-semibold text-ink">{t("history.empty")}</p>
+      <p className="mt-1.5 max-w-sm text-sm text-muted">{t("history.emptyBody")}</p>
       <Link
         href="/"
         className="bg-brand-600 hover:bg-brand-700 mt-5 rounded-[10px] px-4 py-2 text-sm font-semibold text-white transition-colors"
       >
-        Run an audit
+        {t("history.runAudit")}
       </Link>
     </div>
   );

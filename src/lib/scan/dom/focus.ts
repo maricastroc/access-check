@@ -20,7 +20,7 @@ export type FocusProbe = {
   isIframe: boolean;
   hasShadowRoot: boolean;
   style: FocusStyle;
-  rect: { x: number; y: number; w: number; h: number } | null;
+  rect: { x: number; y: number; w: number; h: number; docX: number; docY: number } | null;
 };
 
 export type FocusReach = {
@@ -193,7 +193,17 @@ export function readFocusedStop(record = true): FocusProbe {
     isIframe: el.tagName === "IFRAME",
     hasShadowRoot: el.shadowRoot !== null,
     style: styleOf(el),
-    rect: r.width > 0 || r.height > 0 ? { x: r.left, y: r.top, w: r.width, h: r.height } : null,
+    rect:
+      r.width > 0 || r.height > 0
+        ? {
+            x: r.left,
+            y: r.top,
+            w: r.width,
+            h: r.height,
+            docX: r.left + window.scrollX,
+            docY: r.top + window.scrollY,
+          }
+        : null,
   };
 }
 

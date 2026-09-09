@@ -14,9 +14,9 @@ import { SCORING_VERSION, withScoring } from "../../src/lib/scan/scored";
 import type { ScanResult } from "../../src/lib/scan/types";
 import { DOM_ENGINE_VERSION } from "../../src/lib/scan/dom/engine-api";
 import {
-  CONTENT_UNSETTLED,
-  UNAVAILABLE,
+  contentUnsettled,
   crossOriginWarning,
+  unavailableWarnings,
   warningsAfterPriming,
 } from "./coverage";
 import {
@@ -27,6 +27,7 @@ import {
 import type { PaintCalm, PrimeReport } from "../../src/lib/scan/dom/prime";
 import type { Locale } from "axe-core";
 import { DEFAULT_REPORT_LOCALE, type ReportLocale } from "../../src/lib/i18n/locale";
+import { translator, type Translate } from "../../src/lib/i18n/t";
 
 export class EngineMissingError extends Error {}
 
@@ -56,7 +57,7 @@ export async function primeActiveDocument(settled: ContentReadiness): Promise<{
   readiness: ContentReadiness;
   calm: PaintCalm | null;
 }> {
-  const dom = engine();
+  const dom = engine(translator());
   const prime = await dom.primeLazyContent();
 
   if (prime.steps === 0) return { prime, readiness: settled, calm: null };
@@ -66,23 +67,21 @@ export async function primeActiveDocument(settled: ContentReadiness): Promise<{
   return { prime, readiness, calm };
 }
 
-function engine() {
+function engine(t: Translate) {
   const dom = window.__accessCheckDom;
-  if (!dom) {
-    throw new EngineMissingError(
-      "The AccessCheck audit engine was not injected into this page. Reload the extension and try again.",
-    );
-  }
+  if (!dom) throw new EngineMissingError(t("engine.missing"));
   if (dom.version !== DOM_ENGINE_VERSION) {
     throw new EngineMissingError(
-      `The audit engine in the page reports version ${dom.version}, this build needs ${DOM_ENGINE_VERSION}.`,
+      t("engine.versionMismatch", { found: dom.version, needed: DOM_ENGINE_VERSION }),
     );
   }
   return dom;
 }
 
 export async function auditActiveDocument(context: AuditContext = {}): Promise<ScanResult> {
-  const dom = engine();
+  const locale = context.locale ?? DEFAULT_REPORT_LOCALE;
+  const t = translator(locale);
+  const dom = engine(t);
   dom.overlayClear();
 
   const settled = context.readiness ?? (await settleActiveDocument());
@@ -100,7 +99,7 @@ export async function auditActiveDocument(context: AuditContext = {}): Promise<S
   const bpViolations = axe.violations.filter((v) => v.tags.includes("best-practice"));
 
   const elementInfos = dom.collectElementInfo(elementSelectorsFor(wcagViolations));
-  const enriched = enrichViolations(wcagViolations, elementInfos);
+  const enriched = enrichViolations(wcagViolations, elementInfos, t);
   attachFixGroups(enriched);
 
   const violations = enriched
@@ -115,12 +114,12 @@ export async function auditActiveDocument(context: AuditContext = {}): Promise<S
   );
 
   const audits = {
-    targetSize: analyzeTargetSize(dom.collectTargetSizeRaw(INTERACTIVE)),
-    liveRegions: analyzeLiveRegions(dom.collectLiveRegionsRaw()),
+    targetSize: analyzeTargetSize(dom.collectTargetSizeRaw(INTERACTIVE), t),
+    liveRegions: analyzeLiveRegions(dom.collectLiveRegionsRaw(), t),
   };
 
   return withScoring({
-    locale: context.locale ?? DEFAULT_REPORT_LOCALE,
+    locale,
     url: location.href,
     finalUrl: location.href,
     title: document.title || location.href,
@@ -135,16 +134,16 @@ export async function auditActiveDocument(context: AuditContext = {}): Promise<S
       manualReview: axe.incomplete.length,
     },
     violations,
-    incomplete: buildIncomplete(axe.incomplete),
+    incomplete: buildIncomplete(axe.incomplete, t),
     bestPractice: buildBestPractice(bpViolations),
     passed: axe.passes.map((p) => p.help),
     markers,
     audits,
     partial: true,
     warnings: [
-      ...warningsAfterPriming(UNAVAILABLE, context.primed === true),
-      ...(preload ? [] : [crossOriginWarning(assets)]),
-      ...(settled.settled ? [] : [CONTENT_UNSETTLED]),
+      ...warningsAfterPriming(unavailableWarnings(t), context.primed === true),
+      ...(preload ? [] : [crossOriginWarning(assets, t)]),
+      ...(settled.settled ? [] : [contentUnsettled(t)]),
     ],
   });
 }

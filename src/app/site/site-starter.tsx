@@ -7,14 +7,16 @@ import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import { Button, Ruler, StageList } from "@/components/ui";
 import { CrawlShell } from "./chrome";
 import { crawlHost } from "./shared";
+import { useT } from "@/lib/i18n/provider";
+import type { MessageKey } from "@/lib/i18n/t";
 
 const BUDGET_MS = 20_000;
 
-const DISCOVERY_STAGES = [
-  "Reading the sitemap",
-  "Following the links on the home page",
-  "Choosing the pages to audit",
-] as const;
+const DISCOVERY_STAGE_KEYS: MessageKey[] = [
+  "site.readingSitemap",
+  "site.followingLinks",
+  "site.choosingPages",
+];
 
 function stageFor(elapsedMs: number): number {
   if (elapsedMs < 6_000) return 0;
@@ -23,6 +25,7 @@ function stageFor(elapsedMs: number): number {
 }
 
 export function SiteStarter({ initialUrl }: { initialUrl: string }) {
+  const t = useT();
   const router = useRouter();
   const [error, setError] = useState("");
   const [elapsed, setElapsed] = useState(0);
@@ -45,16 +48,13 @@ export function SiteStarter({ initialUrl }: { initialUrl: string }) {
           body: JSON.stringify({ url: initialUrl }),
         });
         const json = await res.json();
-        if (!res.ok)
-          throw new Error(json.error || "We couldn't start the site audit. Please try again.");
+        if (!res.ok) throw new Error(json.error || t("site.startFailed"));
         router.replace(`/site/${json.id}`);
       } catch (e) {
-        setError(
-          e instanceof Error ? e.message : "We couldn't start the site audit. Please try again.",
-        );
+        setError(e instanceof Error ? e.message : t("site.startFailed"));
       }
     })();
-  }, [initialUrl, router]);
+  }, [initialUrl, router, t]);
 
   useEffect(() => {
     if (error) return;
@@ -63,11 +63,11 @@ export function SiteStarter({ initialUrl }: { initialUrl: string }) {
     return () => clearInterval(id);
   }, [error]);
 
-  const host = crawlHost(initialUrl) || "the site";
+  const host = crawlHost(initialUrl) || t("site.theSite");
 
   if (error) {
     return (
-      <CrawlShell>
+      <CrawlShell t={t}>
         <div
           role="alert"
           className="mx-auto w-full max-w-140 border border-critical bg-surface p-6"
@@ -79,17 +79,15 @@ export function SiteStarter({ initialUrl }: { initialUrl: string }) {
             >
               <FontAwesomeIcon icon={faXmark} className="text-xs" />
             </span>
-            <h1 className="text-[16px] font-semibold text-ink">
-              Couldn&apos;t start the site audit
-            </h1>
+            <h1 className="text-[16px] font-semibold text-ink">{t("site.startFailedTitle")}</h1>
           </div>
           <p className="mt-3 text-[14px] leading-normal text-body">{error}</p>
           <div className="mt-5 flex flex-wrap items-center gap-3">
             <Button href="/" variant="primary" size="md">
-              Try another address
+              {t("site.tryAnotherAddress")}
             </Button>
             <Button href={`/results?url=${encodeURIComponent(initialUrl)}`} variant="tertiary">
-              Audit just this page
+              {t("site.auditJustThisPage")}
             </Button>
           </div>
         </div>
@@ -98,13 +96,14 @@ export function SiteStarter({ initialUrl }: { initialUrl: string }) {
   }
 
   return (
-    <CrawlShell>
+    <CrawlShell t={t}>
       <DiscoveryProgress host={host} elapsed={elapsed} />
     </CrawlShell>
   );
 }
 
 export function DiscoveryProgress({ host, elapsed }: { host: string; elapsed: number }) {
+  const t = useT();
   const secs = (elapsed / 1000).toFixed(1);
   const budget = Math.round(BUDGET_MS / 1000);
 
@@ -113,23 +112,25 @@ export function DiscoveryProgress({ host, elapsed }: { host: string; elapsed: nu
       <div className="border border-border bg-surface p-6">
         <div className="flex items-baseline gap-2">
           <span className="font-cond text-[28px] leading-none text-ink tabular-nums">{secs}s</span>
-          <span className="text-[13px] text-muted">of up to {budget}s</span>
+          <span className="text-[13px] text-muted">{t("site.upTo", { seconds: budget })}</span>
           <span className="ml-auto truncate font-mono text-[12.5px] text-muted">{host}</span>
         </div>
         <div className="mt-3">
           <Ruler
+            t={t}
             variant="progress"
             elapsedMs={elapsed}
             budgetMs={BUDGET_MS}
-            label={`Finding pages on ${host}: ${secs}s of up to ${budget}s`}
+            label={t("site.findingPages", { host, elapsed: secs, budget })}
           />
         </div>
         <div className="mt-4">
-          <StageList stages={DISCOVERY_STAGES} current={stageFor(elapsed)} />
+          <StageList
+            stages={DISCOVERY_STAGE_KEYS.map((key) => t(key))}
+            current={stageFor(elapsed)}
+          />
         </div>
-        <p className="mt-3 text-[12.5px] text-muted">
-          We build the list from the sitemap and the links we can reach, then audit each page.
-        </p>
+        <p className="mt-3 text-[12.5px] text-muted">{t("site.listNote")}</p>
         <p className="sr-only" role="status" aria-live="polite">
           Finding pages to audit on {host}.
         </p>

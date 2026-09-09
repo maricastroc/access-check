@@ -1,4 +1,5 @@
 import type { Severity } from "@/lib/scan/types";
+import type { MessageKey } from "@/lib/i18n/t";
 
 export type SimKey =
   | "normal"
@@ -8,13 +9,13 @@ export type SimKey =
   | "lowvision"
   | "grayscale";
 
-export const modeList: { key: SimKey; label: string }[] = [
-  { key: "normal", label: "Normal" },
-  { key: "deuteranopia", label: "Deuteranopia" },
-  { key: "protanopia", label: "Protanopia" },
-  { key: "tritanopia", label: "Tritanopia" },
-  { key: "lowvision", label: "Low Vision" },
-  { key: "grayscale", label: "Grayscale" },
+export const modeList: { key: SimKey; label: MessageKey }[] = [
+  { key: "normal", label: "vision.normal" },
+  { key: "deuteranopia", label: "vision.deuteranopia" },
+  { key: "protanopia", label: "vision.protanopia" },
+  { key: "tritanopia", label: "vision.tritanopia" },
+  { key: "lowvision", label: "vision.lowVision" },
+  { key: "grayscale", label: "vision.grayscale" },
 ];
 
 export const previewFilters: Record<SimKey, string> = {
@@ -26,13 +27,13 @@ export const previewFilters: Record<SimKey, string> = {
   grayscale: "grayscale(1)",
 };
 
-export const modeDesc: Record<SimKey, string> = {
-  normal: "Default rendering, with no vision filter.",
-  deuteranopia: "Red-green color blindness, missing green cones. Affects about 6% of men.",
-  protanopia: "Red-green color blindness, missing red cones. Affects about 2% of men.",
-  tritanopia: "Blue-yellow color blindness, missing blue cones. Rare, about 0.01%.",
-  lowvision: "Reduced sharpness and contrast sensitivity.",
-  grayscale: "All color removed. Checks that meaning survives without hue.",
+export const modeDesc: Record<SimKey, MessageKey> = {
+  normal: "sim.normalDesc",
+  deuteranopia: "sim.deuteranopiaDesc",
+  protanopia: "sim.protanopiaDesc",
+  tritanopia: "sim.tritanopiaDesc",
+  lowvision: "sim.lowVisionDesc",
+  grayscale: "sim.grayscaleDesc",
 };
 
 export const sevDot: Record<Severity, string> = {

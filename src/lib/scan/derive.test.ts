@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { buildFixFirst, buildSummary, computeScore } from "./derive";
 import type { ScanViolation, Severity } from "./types";
+import { translator } from "../i18n/t";
+
+const t = translator();
 
 const v = (severity: Severity, nodes = 1, id = "rule"): ScanViolation => ({
   id,
@@ -70,14 +73,14 @@ describe("buildFixFirst", () => {
 
 describe("buildSummary", () => {
   it("highlights criticals when there are any", () => {
-    expect(buildSummary({ critical: 2, serious: 0, moderate: 0 })).toMatch(/critical/);
+    expect(buildSummary({ critical: 2, serious: 0, moderate: 0 }, t)).toMatch(/critical/);
   });
   it("falls back to serious, then moderate", () => {
-    expect(buildSummary({ critical: 0, serious: 1, moderate: 0 })).toMatch(/serious/);
-    expect(buildSummary({ critical: 0, serious: 0, moderate: 3 })).toMatch(/moderate/i);
+    expect(buildSummary({ critical: 0, serious: 1, moderate: 0 }, t)).toMatch(/serious/);
+    expect(buildSummary({ critical: 0, serious: 0, moderate: 3 }, t)).toMatch(/moderate/i);
   });
   it("celebrates when everything is clean", () => {
-    expect(buildSummary({ critical: 0, serious: 0, moderate: 0 })).toMatch(/Excellent/i);
+    expect(buildSummary({ critical: 0, serious: 0, moderate: 0 }, t)).toMatch(/Excellent/i);
   });
 });
 
@@ -85,11 +88,11 @@ describe("buildSummary tells the four kinds apart", () => {
   const none = { critical: 0, serious: 0, moderate: 0 };
 
   it("says a clean page is clean when nothing at all is left", () => {
-    expect(buildSummary(none)).toBe("Excellent. No automated findings on this page.");
+    expect(buildSummary(none, t)).toBe("Excellent. No automated findings on this page.");
   });
 
   it("does not call a page clean while a best practice is listed", () => {
-    const text = buildSummary({ ...none, bestPractice: 1 });
+    const text = buildSummary({ ...none, bestPractice: 1 }, t);
 
     expect(text).not.toContain("Excellent");
     expect(text).toContain("No scored WCAG failures were found.");
@@ -97,37 +100,37 @@ describe("buildSummary tells the four kinds apart", () => {
   });
 
   it("names manual-review items left behind", () => {
-    const text = buildSummary({ ...none, manualReview: 2 });
+    const text = buildSummary({ ...none, manualReview: 2 }, t);
 
     expect(text).toContain("No scored WCAG failures were found.");
     expect(text).toContain("2 manual-review items remain, outside the score.");
   });
 
   it("names both when both are there", () => {
-    expect(buildSummary({ ...none, bestPractice: 1, manualReview: 2 })).toBe(
+    expect(buildSummary({ ...none, bestPractice: 1, manualReview: 2 }, t)).toBe(
       "No scored WCAG failures were found. 1 best-practice recommendation and 2 manual-review items remain, outside the score.",
     );
   });
 
   it("keeps the failure sentence first when something did fail", () => {
-    const text = buildSummary({ critical: 1, serious: 0, moderate: 0, bestPractice: 1 });
+    const text = buildSummary({ critical: 1, serious: 0, moderate: 0, bestPractice: 1 }, t);
 
     expect(text).toMatch(/^Strong foundation, but 1 critical finding blocks/);
     expect(text).toContain("1 best-practice recommendation remains");
   });
 
   it("keeps the partial caveat in every one of those states", () => {
-    expect(buildSummary(none, { partial: true })).toContain("not a clean bill of health");
-    expect(buildSummary({ ...none, bestPractice: 1 }, { partial: true })).toContain(
+    expect(buildSummary(none, t, { partial: true })).toContain("not a clean bill of health");
+    expect(buildSummary({ ...none, bestPractice: 1 }, t, { partial: true })).toContain(
       "not a clean bill of health",
     );
-    expect(buildSummary({ ...none, manualReview: 2 }, { partial: true })).toContain(
+    expect(buildSummary({ ...none, manualReview: 2 }, t, { partial: true })).toContain(
       "2 manual-review items remain",
     );
-    expect(buildSummary({ critical: 1, serious: 0, moderate: 0 }, { partial: true })).toContain(
+    expect(buildSummary({ critical: 1, serious: 0, moderate: 0 }, t, { partial: true })).toContain(
       "critical finding blocks",
     );
-    expect(buildSummary({ critical: 0, serious: 2, moderate: 0 }, { partial: true })).toContain(
+    expect(buildSummary({ critical: 0, serious: 2, moderate: 0 }, t, { partial: true })).toContain(
       "No critical blockers among the checks that ran",
     );
   });

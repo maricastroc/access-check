@@ -1,11 +1,12 @@
 import type { ReactNode } from "react";
 import type { FixStatus } from "@/lib/report/severity";
 import { cn } from "@/lib/cn";
+import type { MessageKey, Translate } from "@/lib/i18n/t";
 
-const DEFAULT_TEXT: Record<FixStatus, string> = {
-  verified: "Verified: the rule stopped flagging the element",
-  "needs-review": "Needs review: the suggestion alone doesn't clear it",
-  unchecked: "Not re-audited",
+const DEFAULT_TEXT_KEY: Record<FixStatus, MessageKey> = {
+  verified: "seal.verified",
+  "needs-review": "seal.needsReview",
+  unchecked: "seal.notReaudited",
 };
 
 const GLYPH: Record<FixStatus, string> = {
@@ -20,7 +21,15 @@ const CLS: Record<FixStatus, string> = {
   unchecked: "border border-dashed border-border text-muted",
 };
 
-export function StatusSeal({ status, children }: { status: FixStatus; children?: ReactNode }) {
+export function StatusSeal({
+  status,
+  children,
+  t,
+}: {
+  status: FixStatus;
+  children?: ReactNode;
+  t: Translate;
+}) {
   return (
     <span
       className={cn(
@@ -31,7 +40,7 @@ export function StatusSeal({ status, children }: { status: FixStatus; children?:
       <span aria-hidden className="font-cond text-[13px]">
         {GLYPH[status]}
       </span>
-      <span>{children ?? DEFAULT_TEXT[status]}</span>
+      <span>{children ?? t(DEFAULT_TEXT_KEY[status])}</span>
     </span>
   );
 }

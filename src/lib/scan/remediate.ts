@@ -1,3 +1,4 @@
+import type { Translate } from "../i18n/t";
 export type ContrastData = {
   fgColor: string;
   bgColor: string;
@@ -50,61 +51,51 @@ function humanize(raw: string): string {
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
-export function fixLabel(el: ElementInfo): FixResult | null {
+export function fixLabel(el: ElementInfo, t: Translate): FixResult | null {
   if (el.ariaLabel && el.ariaLabel.trim()) return null;
 
   const guess =
     (el.placeholder && el.placeholder.trim()) ||
     (el.name && humanize(el.name)) ||
     (el.id && humanize(el.id)) ||
-    "Describe this field";
+    t("fix.describeField");
 
   const apply = { kind: "attr", name: "aria-label", value: guess } as const;
 
   if (el.id) {
     return {
-      text:
-        `This ${el.tag} has no accessible name. Add a <label> linked by its ` +
-        `id ("${el.id}") so screen readers announce it.`,
+      text: t("fix.labelWithId", { tag: el.tag, id: el.id }),
       code: `<label for="${el.id}">${guess}</label>`,
       apply,
     };
   }
 
   return {
-    text:
-      `This ${el.tag} has no id to bind a <label> to. Add an aria-label ` +
-      `(or give it an id and a <label for>) so it has an accessible name.`,
+    text: t("fix.labelNoId", { tag: el.tag }),
     code: `aria-label="${guess}"`,
     apply,
   };
 }
 
-export function fixHtmlLang(): FixResult {
+export function fixHtmlLang(t: Translate): FixResult {
   return {
-    text:
-      "The <html> element has no lang attribute, so assistive tech can't " +
-      "tell which language to read. Set it to the page's primary language.",
+    text: t("fix.htmlLang"),
     code: `<html lang="en">`,
     apply: { kind: "doc", target: "lang", value: "en" },
   };
 }
 
-export function fixDocumentTitle(): FixResult {
+export function fixDocumentTitle(t: Translate): FixResult {
   return {
-    text:
-      "The page has no <title>, the first thing screen readers announce and " +
-      "the label browsers show in tabs and history. Add a descriptive one.",
-    code: `<title>Descriptive page title</title>`,
-    apply: { kind: "doc", target: "title", value: "Descriptive page title" },
+    text: t("fix.documentTitle"),
+    code: `<title>${t("fix.descriptivePageTitle")}</title>`,
+    apply: { kind: "doc", target: "title", value: t("fix.descriptivePageTitle") },
   };
 }
 
-export function fixMetaViewport(): FixResult {
+export function fixMetaViewport(t: Translate): FixResult {
   return {
-    text:
-      "The viewport meta tag blocks pinch-zoom, which low-vision users rely " +
-      "on. Remove user-scalable=no and any maximum-scale below 5.",
+    text: t("fix.metaViewport"),
     code: `<meta name="viewport" content="width=device-width, initial-scale=1">`,
     apply: {
       kind: "viewport",
@@ -113,48 +104,42 @@ export function fixMetaViewport(): FixResult {
   };
 }
 
-export function fixAriaName(el: ElementInfo): FixResult {
+export function fixAriaName(el: ElementInfo, t: Translate): FixResult {
   const guess =
     (el.text && el.text.trim().slice(0, 60)) ||
     (el.ariaLabel && el.ariaLabel.trim()) ||
     (el.name && humanize(el.name)) ||
     (el.id && humanize(el.id)) ||
-    "Describe this control";
+    t("fix.describeControl");
 
-  const noun = el.tag === "a" ? "link" : el.tag === "button" ? "button" : el.tag;
+  const noun =
+    el.tag === "a" ? t("fix.nounLink") : el.tag === "button" ? t("fix.nounButton") : el.tag;
   return {
-    text:
-      `This ${noun} has no accessible name, so screen readers announce it as ` +
-      `just "${noun}". Add visible text inside it, or an aria-label.`,
+    text: t("fix.ariaName", { noun }),
     code: `aria-label="${guess}"`,
     apply: { kind: "attr", name: "aria-label", value: guess },
   };
 }
 
-export function fixAriaRequiredAttr(missing: string[]): FixResult | null {
+export function fixAriaRequiredAttr(missing: string[], t: Translate): FixResult | null {
   const attrs = missing.filter(Boolean);
   if (attrs.length === 0) return null;
   return {
-    text:
-      `This element's role requires ARIA attributes that are missing: ` +
-      `${attrs.join(", ")}. Add each one with a valid value.`,
+    text: t("fix.ariaRequired", { attrs: attrs.join(", ") }),
     code: attrs.map((a) => `${a}="…"`).join(" "),
   };
 }
 
-export function fixAriaAllowedAttr(invalid: string[]): FixResult | null {
+export function fixAriaAllowedAttr(invalid: string[], t: Translate): FixResult | null {
   const names = invalid.map((s) => s.split("=")[0].trim()).filter(Boolean);
   if (names.length === 0) return null;
   return {
-    text:
-      `These ARIA attributes aren't allowed on this element and should be ` +
-      `removed (or change the element's role to one that permits them): ` +
-      `${names.join(", ")}.`,
-    code: `Remove: ${names.join(", ")}`,
+    text: t("fix.ariaNotAllowed", { names: names.join(", ") }),
+    code: t("fix.ariaRemove", { names: names.join(", ") }),
   };
 }
 
-export function fixImageAlt(el: ElementInfo): FixResult {
+export function fixImageAlt(el: ElementInfo, t: Translate): FixResult {
   const clean = (s?: string) => (s ? s.replace(/\s+/g, " ").trim() : "");
 
   const guess = (
@@ -165,17 +150,13 @@ export function fixImageAlt(el: ElementInfo): FixResult {
 
   if (guess) {
     return {
-      text:
-        `This image has no alt text. There's a suggested description below. Confirm it ` +
-        `matches the image, or use an empty alt ("") if the image is purely decorative.`,
+      text: t("fix.imageAltGuess"),
       code: `alt="${guess}"`,
       apply: { kind: "attr", name: "alt", value: guess },
     };
   }
   return {
-    text:
-      "This image has no alt text. Add a short description if it's meaningful, " +
-      `or an empty alt ("") if it's decorative so screen readers skip it.`,
+    text: t("fix.imageAltNoGuess"),
     code: `alt=""`,
     apply: { kind: "attr", name: "alt", value: "" },
   };
@@ -323,13 +304,16 @@ function nearestPassingBg(fg: Rgb, bg: Rgb, target: number): Rgb | null {
   return null;
 }
 
-export function fixContrast(data: ContrastData): FixResult | null {
+export function fixContrast(data: ContrastData, t: Translate): FixResult | null {
   const fg = parseColor(data.fgColor);
   const bg = parseColor(data.bgColor);
   if (!fg || !bg) return null;
 
   const target = data.expectedContrastRatio || 4.5;
-  const was = `(was ${data.contrastRatio.toFixed(2)}:1, needs ${target.toFixed(1)}:1)`;
+  const was = t("fix.contrastWas", {
+    measured: data.contrastRatio.toFixed(2),
+    required: target.toFixed(1),
+  });
 
   const fgFix = nearestPassingFg(fg, bg, target);
   const bgFix = nearestPassingBg(fg, bg, target);
@@ -337,13 +321,16 @@ export function fixContrast(data: ContrastData): FixResult | null {
   if (fgFix) {
     const newHex = toHex(fgFix.rgb);
     const ratio = contrastRatio(fgFix.rgb, bg);
-    const hueNote = fgFix.huePreserved
-      ? " The hue stays the same; only the lightness changes."
-      : " (the hue is shifted toward neutral to reach the needed contrast on this background)";
-    let text =
-      `Replace text color ${toHex(fg)} with ${newHex} → ${ratio.toFixed(2)}:1 ` +
-      `against ${toHex(bg)} ${was}.${hueNote}`;
-    if (bgFix) text += ` Or keep the text and set the background to ${toHex(bgFix)}.`;
+    const hueNote = fgFix.huePreserved ? t("fix.contrastHueKept") : t("fix.contrastHueShifted");
+    let text = t("fix.contrastForeground", {
+      from: toHex(fg),
+      to: newHex,
+      ratio: ratio.toFixed(2),
+      bg: toHex(bg),
+      was,
+      hueNote,
+    });
+    if (bgFix) text += t("fix.contrastAlsoBackground", { bg: toHex(bgFix) });
     return {
       text,
       code: `color: ${newHex};`,
@@ -355,20 +342,25 @@ export function fixContrast(data: ContrastData): FixResult | null {
     const bgHex = toHex(bgFix);
     const ratio = contrastRatio(fg, bgFix);
     return {
-      text:
-        `Text color ${toHex(fg)} can't reach ${target.toFixed(1)}:1 on ${toHex(bg)} ` +
-        `by changing the text alone. Set the background to ${bgHex} instead → ` +
-        `${ratio.toFixed(2)}:1 ${was}. The background hue stays the same; only its lightness changes.`,
+      text: t("fix.contrastBackground", {
+        fg: toHex(fg),
+        required: target.toFixed(1),
+        bg: toHex(bg),
+        newBg: bgHex,
+        ratio: ratio.toFixed(2),
+        was,
+      }),
       code: `background: ${bgHex};`,
       apply: { kind: "style", prop: "background-color", value: bgHex },
     };
   }
 
   return {
-    text:
-      `Text color ${toHex(fg)} on ${toHex(bg)} reaches only ` +
-      `${data.contrastRatio.toFixed(2)}:1 (needs ${target.toFixed(1)}:1). ` +
-      `Neither the text nor the background clears it by lightness alone on these ` +
-      `hues, so pick a darker or lighter pairing.`,
+    text: t("fix.contrastNeither", {
+      fg: toHex(fg),
+      bg: toHex(bg),
+      measured: data.contrastRatio.toFixed(2),
+      required: target.toFixed(1),
+    }),
   };
 }

@@ -63,6 +63,18 @@ export type ScanViolation = {
   contexts?: string[];
 };
 
+export const OVERVIEW_CAPTURE = "overview";
+
+export type EvidenceState = "captured" | "shared" | "unavailable";
+
+export type ScanCapture = {
+  id: string;
+  image: string;
+  width: number;
+  height: number;
+  docY: number;
+};
+
 export type ScanMarker = {
   n: number;
   severity: Severity;
@@ -71,6 +83,32 @@ export type ScanMarker = {
   top: number;
   width: number;
   height: number;
+  captureId: string;
+  evidence: EvidenceState;
+  doc?: DocBox;
+};
+
+export type DocBox = { x: number; y: number; w: number; h: number };
+
+export type OverviewStop = "complete" | "tiles" | "height" | "bytes" | "time" | "error";
+
+export type OverviewTile = {
+  image: string;
+  docY: number;
+  docHeight: number;
+  width: number;
+  height: number;
+};
+
+export type ScanOverview = {
+  tiles: OverviewTile[];
+  scale: number;
+  pageWidth: number;
+  documentHeight: number;
+  capturedHeight: number;
+  complete: boolean;
+  stoppedBy: OverviewStop;
+  grew?: boolean;
 };
 
 export type ScanIncomplete = {
@@ -115,6 +153,8 @@ export type ScanResult = {
   bestPractice: ScanBestPractice[];
   passed: string[];
   markers: ScanMarker[];
+  captures?: ScanCapture[];
+  overview?: ScanOverview;
   keyboard?: KeyboardReport;
   contexts?: ContextReport;
   audits?: AuditsReport;

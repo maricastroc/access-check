@@ -5,24 +5,31 @@ import { useSyncExternalStore } from "react";
 import { faArrowLeft, faArrowRotateRight } from "@fortawesome/free-solid-svg-icons";
 import type { ScanResult } from "@/lib/scan/types";
 import { BrandMark, Button } from "@/components/ui";
+import { useLocale, useT } from "@/lib/i18n/provider";
+import type { Translate } from "@/lib/i18n/t";
+import type { ReportLocale } from "@/lib/i18n/locale";
 
 const MINUTE = 60_000;
 
-function describeWhen(iso: string): string {
+function describeWhen(iso: string, t: Translate, locale: ReportLocale): string {
   const at = Date.parse(iso);
   if (Number.isNaN(at)) return "";
 
   const ago = Date.now() - at;
-  if (ago < MINUTE) return "Audited just now";
-  if (ago < 60 * MINUTE) return `Audited ${Math.round(ago / MINUTE)} min ago`;
+  if (ago < MINUTE) return t("results.auditedJustNow");
+  if (ago < 60 * MINUTE) {
+    return t("results.auditedMinutesAgo", { minutes: Math.round(ago / MINUTE) });
+  }
 
-  return `Audited ${new Intl.DateTimeFormat("en-US", {
+  const when = new Intl.DateTimeFormat(locale, {
     month: "short",
     day: "numeric",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(at)}`;
+  }).format(at);
+
+  return t("results.auditedAt", { when });
 }
 
 function subscribeToMinute(onChange: () => void): () => void {
@@ -31,9 +38,11 @@ function subscribeToMinute(onChange: () => void): () => void {
 }
 
 function AuditTime({ iso }: { iso: string }) {
+  const t = useT();
+  const locale = useLocale();
   const label = useSyncExternalStore(
     subscribeToMinute,
-    () => describeWhen(iso),
+    () => describeWhen(iso, t, locale),
     () => "",
   );
 
@@ -71,6 +80,8 @@ export function TopBar({
   onMarkdown: () => void;
   busy: boolean;
 }) {
+  const t = useT();
+
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-surface">
       <div className="mx-auto flex h-15.5 w-full max-w-[1560px] items-center gap-4 px-4 sm:px-6">
@@ -85,10 +96,10 @@ export function TopBar({
               variant="secondary"
               size="sm"
               icon={faArrowLeft}
-              aria-label="Back to site audit"
+              aria-label={t("results.backToSite")}
               className="shrink-0 self-center"
             >
-              <span className="hidden sm:inline">Site audit</span>
+              <span className="hidden sm:inline">{t("results.siteAudit")}</span>
             </Button>
           )}
           {result && (
@@ -109,15 +120,15 @@ export function TopBar({
             variant="secondary"
             size="sm"
             icon={faArrowRotateRight}
-            aria-label="Re-audit this page"
+            aria-label={t("results.reauditPage")}
             onClick={onRerun}
             disabled={busy}
           >
-            <span className="hidden sm:inline">Re-audit</span>
+            <span className="hidden sm:inline">{t("results.reaudit")}</span>
           </Button>
           <div className="hidden items-center gap-2 lg:flex">
             <Button variant="secondary" size="sm" onClick={onMarkdown} disabled={!result}>
-              Export Markdown
+              {t("results.exportMarkdown")}
             </Button>
             {result ? (
               <Button
@@ -125,14 +136,14 @@ export function TopBar({
                 variant="primary"
                 size="sm"
               >
-                Export PDF
+                {t("results.exportPdf")}
               </Button>
             ) : (
               <Link
                 href="/"
                 className="inline-flex h-9 items-center justify-center bg-ink px-4 text-[13.5px] font-semibold text-surface hover:bg-ink-2"
               >
-                New audit
+                {t("results.newAudit")}
               </Link>
             )}
           </div>

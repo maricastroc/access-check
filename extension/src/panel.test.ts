@@ -9,6 +9,7 @@ import {
   warningsAfterPriming,
 } from "./coverage";
 import { unsupportedReason } from "./state";
+import { translator } from "../../src/lib/i18n/t";
 import type { KeyboardReport } from "../../src/lib/scan/keyboard";
 import type { ScanResult, ScanWarning } from "../../src/lib/scan/types";
 
@@ -22,6 +23,9 @@ function between(source: string, from: string, to: string): string {
   if (end < start) throw new Error(`Anchor ${to} comes before ${from}`);
   return source.slice(start, end);
 }
+
+const t = translator();
+const pt = translator("pt-BR");
 
 const panel = file("./panel.tsx");
 const audit = file("./audit.ts");
@@ -57,10 +61,11 @@ describe("the panel reuses the product's own report", () => {
   });
 
   it("takes the wording of the score from the reading, not from the markup", () => {
-    expect(panel).toContain("auditScope(result)");
+    expect(panel).toContain("auditScope(result, t)");
     expect(panel).toContain("{scope.kicker}");
     expect(panel).not.toContain("Expanded audit score");
     expect(panel).not.toContain("Quick audit score");
+    expect(panel).toContain("const t = translator(UI_LOCALE)");
   });
 
   it("shows no score at all while the audit is still running", () => {
@@ -74,11 +79,11 @@ describe("the panel reuses the product's own report", () => {
   });
 
   it("names what each copy action copies, and titles the block it came from", () => {
-    expect(panel).toContain('<CopyButton label="Copy selector"');
-    expect(panel).toContain('<CopyButton label="Copy HTML"');
+    expect(panel).toContain('<CopyButton label={t("panel.copySelector")}');
+    expect(panel).toContain('<CopyButton label={t("panel.copyHtml")}');
     expect(panel).toContain("aria-label={label}");
-    expect(panel).toContain('<Field label="Element">');
-    expect(panel).toContain("Abbreviated with …");
+    expect(panel).toContain('<Field label={t("panel.element")}>');
+    expect(panel).toContain('t("panel.abbreviated")');
   });
 
   it("answers a highlight where the button that asked for it is", () => {
@@ -86,7 +91,7 @@ describe("the panel reuses the product's own report", () => {
       panel.indexOf("function Occurrences("),
       panel.indexOf("function Findings("),
     );
-    expect(occurrences).toContain("Locate on page");
+    expect(occurrences).toContain('t("panel.locate")');
     expect(occurrences).toContain('role="status"');
     expect(occurrences).toContain("setNotice(await onLocate(occurrence))");
   });
@@ -120,12 +125,14 @@ describe("permissions stay minimal", () => {
 
 describe("pages the audit cannot read", () => {
   it("names a reason for each one", () => {
-    expect(unsupportedReason("chrome://settings")).toMatch(/own pages/);
-    expect(unsupportedReason("chrome-extension://abc/panel.html")).toMatch(/extension page/);
-    expect(unsupportedReason("https://chromewebstore.google.com/detail/x")).toMatch(/Web Store/);
-    expect(unsupportedReason("file:///Users/me/page.html")).toMatch(/file access/);
-    expect(unsupportedReason("https://example.com/report.pdf")).toMatch(/viewer/);
-    expect(unsupportedReason(undefined)).toMatch(/no address/);
+    expect(unsupportedReason("chrome://settings")).toBe("blocked.chromePages");
+    expect(unsupportedReason("chrome-extension://abc/panel.html")).toBe("blocked.extensionPage");
+    expect(unsupportedReason("https://chromewebstore.google.com/detail/x")).toBe(
+      "blocked.webStore",
+    );
+    expect(unsupportedReason("file:///Users/me/page.html")).toBe("blocked.localFile");
+    expect(unsupportedReason("https://example.com/report.pdf")).toBe("blocked.builtinViewer");
+    expect(unsupportedReason(undefined)).toBe("blocked.noAddress");
   });
 
   it("lets an ordinary page through", () => {
@@ -136,7 +143,7 @@ describe("pages the audit cannot read", () => {
 
 describe("assets the audit is not allowed to fetch", () => {
   it("says what was unreadable, in counts, never in URLs", () => {
-    const one = crossOriginWarning({ styleSheets: 1, media: 0 });
+    const one = crossOriginWarning({ styleSheets: 1, media: 0 }, t);
 
     expect(one.code).toBe("cross-origin-assets");
     expect(one.message).toContain("1 stylesheet on this page comes from another origin");
@@ -146,13 +153,13 @@ describe("assets the audit is not allowed to fetch", () => {
   });
 
   it("counts stylesheets and media together", () => {
-    const both = crossOriginWarning({ styleSheets: 3, media: 2 });
+    const both = crossOriginWarning({ styleSheets: 3, media: 2 }, t);
 
     expect(both.message).toContain("3 stylesheets and 2 media files on this page come from");
   });
 
   it("keeps the rest of the reading intact in its wording", () => {
-    expect(crossOriginWarning({ styleSheets: 1, media: 0 }).message).toContain(
+    expect(crossOriginWarning({ styleSheets: 1, media: 0 }, t).message).toContain(
       "Everything read from the page itself is unaffected",
     );
   });
@@ -193,7 +200,7 @@ describe("assets the audit is not allowed to fetch", () => {
     expect(audit).toContain("waitForContentReady(");
     expect(audit).toContain("CONTENT_SIGNATURE()");
     expect(audit).toContain("readiness ?? (await settleActiveDocument())");
-    expect(audit).toContain("...(settled.settled ? [] : [CONTENT_UNSETTLED])");
+    expect(audit).toContain("...(settled.settled ? [] : [contentUnsettled(t)])");
   });
 
   it("settles the page while it is still reading the structure, before the rules", () => {
@@ -212,16 +219,20 @@ describe("assets the audit is not allowed to fetch", () => {
     expect(audit).toMatch(/dom\.runAxe\(dom\.AXE_TAGS, \{\s*preload,/);
   });
 
+  it("marks a finding's language only when it differs from the panel around it", () => {
+    expect(panel).toContain("{...langAttrs(locale, UI_LOCALE)}");
+  });
+
   it("hands axe the locale the background resolved, rather than picking one itself", () => {
     const background = file("./background.ts");
     expect(audit).toMatch(/dom\.runAxe\(dom\.AXE_TAGS, \{[\s\S]{0,80}locale: context\.axeLocale/);
     expect(audit).not.toContain("getUILanguage");
     expect(background).toContain("normalizeReportLocale(chrome.i18n.getUILanguage())");
-    expect(background).toContain("axeLocaleFor(locale)");
+    expect(background).toContain("axeLocaleFor(LOCALE)");
   });
 
   it("adds the warning only when it turned the preload off", () => {
-    expect(audit).toContain("...(preload ? [] : [crossOriginWarning(assets)])");
+    expect(audit).toContain("...(preload ? [] : [crossOriginWarning(assets, t)])");
   });
 });
 
@@ -232,7 +243,7 @@ describe("the deep audit reuses the shared focus analysis", () => {
   it("walks the path with the shared loop and the shared analyser", () => {
     expect(deep).toContain('from "../../src/lib/scan/keyboard"');
     expect(deep).toContain("collectFocusPath(");
-    expect(deep).toContain("buildKeyboardReport(raw)");
+    expect(deep).toContain("buildKeyboardReport(raw, t)");
   });
 
   it("has no second implementation of the focus rules", () => {
@@ -284,9 +295,11 @@ describe("the deep audit reuses the shared focus analysis", () => {
   });
 
   it("says the debugger is attached, for which step, and that it is let go", () => {
-    expect(panel).toContain("attaches Chrome's debugger for that step only");
-    expect(panel).toContain("released before the report appears");
-    expect(panel).toContain("Chrome shows its own banner");
+    expect(panel).toContain('t("panel.runningNoteDeep")');
+    expect(t("panel.runningNoteDeep")).toContain("attaches Chrome's debugger for that step only");
+    expect(t("panel.runningNoteDeep")).toContain("released before the report appears");
+    expect(t("panel.runningNoteDeep")).toContain("Chrome shows its own banner");
+    expect(pt("panel.runningNoteDeep")).toContain("depurador do Chrome");
   });
 
   it("keeps the reading on screen when the deep audit fails", () => {
@@ -327,8 +340,8 @@ describe("the deep audit reuses the shared focus analysis", () => {
   });
 
   it("stops saying the focus path was skipped once it has been walked", () => {
-    expect(background).toContain("warningsAfterDeepAudit(warnings)");
-    expect(background).toContain("warningsAfterDeepAudit(warnings, message)");
+    expect(background).toContain("warningsAfterDeepAudit(warnings, t)");
+    expect(background).toContain("warningsAfterDeepAudit(warnings, t, message)");
   });
 });
 
@@ -378,7 +391,7 @@ describe("how much of the audit is behind the number", () => {
     }) as ScanResult;
 
   it("calls a reading without a focus path preliminary, and says why", () => {
-    const scope = auditScope(result());
+    const scope = auditScope(result(), t);
 
     expect(scope.kicker).toBe("Quick audit score");
     expect(scope.lead).toBe("Preliminary result");
@@ -388,7 +401,7 @@ describe("how much of the audit is behind the number", () => {
   });
 
   it("never calls a reading complete, even with the focus path walked", () => {
-    const scope = auditScope(result({ keyboard: report(), warnings: [] }));
+    const scope = auditScope(result({ keyboard: report(), warnings: [] }), t);
 
     expect(scope.kicker).toBe("Current-tab audit score");
     expect(scope.lead).toBeNull();
@@ -409,6 +422,7 @@ describe("how much of the audit is behind the number", () => {
           { code: "cross-origin-assets", message: "a stylesheet" },
         ],
       }),
+      t,
     );
 
     expect(scope.summary).toBe("Partial coverage · 2 checks unavailable");
@@ -419,26 +433,30 @@ describe("how much of the audit is behind the number", () => {
   it("counts one missing check in the singular", () => {
     const scope = auditScope(
       result({ keyboard: report(), warnings: [{ code: "audits-skipped", message: "x" }] }),
+      t,
     );
 
     expect(scope.summary).toBe("Partial coverage · 1 check unavailable");
   });
 
   it("says so plainly when nothing was skipped", () => {
-    expect(auditScope(result({ keyboard: report(), warnings: [] })).summary).toBe(
+    expect(auditScope(result({ keyboard: report(), warnings: [] }), t).summary).toBe(
       "Every check this build runs completed",
     );
   });
 
   it("does not present a walk that never reached the first control as whole", () => {
-    const scope = auditScope(result({ keyboard: report({ startedAtTop: false }), warnings: [] }));
+    const scope = auditScope(
+      result({ keyboard: report({ startedAtTop: false }), warnings: [] }),
+      t,
+    );
 
     expect(scope.focusPath).toBe("partial");
     expect(scope.note).toContain("could not be taken back to the first control");
   });
 
   it("says where a truncated walk stopped", () => {
-    const scope = auditScope(result({ keyboard: report({ truncated: true }), warnings: [] }));
+    const scope = auditScope(result({ keyboard: report({ truncated: true }), warnings: [] }), t);
 
     expect(scope.focusPath).toBe("truncated");
     expect(scope.kicker).toBe("Current-tab audit score");
@@ -452,6 +470,7 @@ describe("how much of the audit is behind the number", () => {
         { code: "keyboard-skipped", message: "Run the deep audit." },
         { code: "audits-skipped", message: "reduced motion" },
       ],
+      t,
       "You stopped it.",
     );
 
@@ -463,10 +482,13 @@ describe("how much of the audit is behind the number", () => {
   });
 
   it("drops the invitation once the path has actually been walked", () => {
-    const kept = warningsAfterDeepAudit([
-      { code: "keyboard-skipped", message: "Run the deep audit." },
-      { code: "audits-skipped", message: "reduced motion" },
-    ]);
+    const kept = warningsAfterDeepAudit(
+      [
+        { code: "keyboard-skipped", message: "Run the deep audit." },
+        { code: "audits-skipped", message: "reduced motion" },
+      ],
+      t,
+    );
 
     expect(kept.map((w) => w.code)).toEqual(["audits-skipped"]);
   });
@@ -484,7 +506,7 @@ describe("the panel is an inspector, not a squeezed report", () => {
       "<Header",
       "<Findings",
       "<FocusPath",
-      "Coverage limitations",
+      't("panel.coverageLimitations")',
       "<ChecksPerformed",
       "<Capture",
     ];
@@ -506,7 +528,7 @@ describe("the panel is an inspector, not a squeezed report", () => {
   });
 
   it("keeps the long limitations behind a section that starts closed", () => {
-    expect(panel).toContain('<Collapsed title="Coverage limitations"');
+    expect(panel).toContain('<Collapsed title={t("panel.coverageLimitations")}');
     expect(panel).toContain("{scope.note}");
     expect(panel).not.toMatch(/<details[^>]*\sopen/);
   });
@@ -516,8 +538,8 @@ describe("the panel is an inspector, not a squeezed report", () => {
       panel.indexOf("function Occurrences("),
       panel.indexOf("function Findings("),
     );
-    const locate = occurrences.indexOf("Locate on page");
-    const copies = occurrences.indexOf('label="Copy selector"');
+    const locate = occurrences.indexOf('t("panel.locate")');
+    const copies = occurrences.indexOf('label={t("panel.copySelector")}');
 
     expect(locate).toBeGreaterThan(-1);
     expect(copies).toBeGreaterThan(locate);
@@ -535,27 +557,27 @@ describe("the panel is an inspector, not a squeezed report", () => {
       panel.indexOf("function Findings("),
     );
 
-    expect(findings.indexOf('<Field label="Problem">')).toBeLessThan(
-      findings.indexOf('<Field label="Suggested fix">'),
+    expect(findings.indexOf('<Field label={t("panel.problem")}>')).toBeLessThan(
+      findings.indexOf('<Field label={t("panel.suggestedFix")}>'),
     );
-    expect(findings.indexOf('<Field label="Suggested fix">')).toBeLessThan(
+    expect(findings.indexOf('<Field label={t("panel.suggestedFix")}>')).toBeLessThan(
       findings.indexOf("<Occurrences"),
     );
-    expect(occurrences.indexOf("Occurrence {at + 1} of {total}")).toBeLessThan(
-      occurrences.indexOf('<Field label="Evidence">'),
+    expect(occurrences.indexOf('t("panel.occurrenceOf"')).toBeLessThan(
+      occurrences.indexOf('<Field label={t("panel.evidence")}>'),
     );
-    expect(occurrences.indexOf('<Field label="Evidence">')).toBeLessThan(
-      occurrences.indexOf('<Field label="Element">'),
+    expect(occurrences.indexOf('<Field label={t("panel.evidence")}>')).toBeLessThan(
+      occurrences.indexOf('<Field label={t("panel.element")}>'),
     );
   });
 
   it("names the focus-path controls, and says which stop is current", () => {
-    expect(panel).toContain('aria-label="Previous stop"');
-    expect(panel).toContain('aria-label="Next stop"');
-    expect(panel).toContain("Stop {at} of {stops}");
-    expect(panel).toContain("Show complete path");
-    expect(panel).toContain("Clear overlay");
-    expect(panel).toContain("Back to where you were");
+    expect(panel).toContain('aria-label={t("panel.previousStop")}');
+    expect(panel).toContain('aria-label={t("panel.nextStop")}');
+    expect(panel).toContain('t("panel.stopOf", { at, total: stops })');
+    expect(panel).toContain('t("panel.showComplete")');
+    expect(panel).toContain('t("panel.clearOverlay")');
+    expect(panel).toContain('t("panel.backToWhereYouWere")');
   });
 
   it("draws a small neighbourhood by default", () => {
@@ -612,6 +634,7 @@ describe("what the walk says it covered", () => {
   it("never calls a control reachable just because the walk happened to visit it", () => {
     const { line, notes } = focusPathLines(
       walk({ focusPath: path(50), totalInteractive: 169, truncated: true, stoppedBy: "cap" }),
+      t,
     );
 
     expect(line).toBe("Checked the first 50 of 169 detected controls.");
@@ -624,6 +647,7 @@ describe("what the walk says it covered", () => {
   it("claims the whole tab order only when it went all the way round", () => {
     const { line, notes } = focusPathLines(
       walk({ focusPath: path(12), totalInteractive: 12, stoppedBy: "cycle" }),
+      t,
     );
 
     expect(line).toBe("Walked the full tab order: 12 stops across 12 detected controls.");
@@ -633,6 +657,7 @@ describe("what the walk says it covered", () => {
   it("says a walk ran out of time rather than blaming the cap", () => {
     const { notes } = focusPathLines(
       walk({ focusPath: path(8), totalInteractive: 30, truncated: true, stoppedBy: "timeout" }),
+      t,
     );
 
     expect(notes[0]).toBe(
@@ -643,6 +668,7 @@ describe("what the walk says it covered", () => {
   it("names an iframe or shadow root as what ended the walk", () => {
     const { notes } = focusPathLines(
       walk({ focusPath: path(5), totalInteractive: 9, truncated: true, stoppedBy: "opaque" }),
+      t,
     );
 
     expect(notes[0]).toContain("iframe or a shadow root");
@@ -652,6 +678,7 @@ describe("what the walk says it covered", () => {
   it("gets the singular right for one leftover control", () => {
     const { notes } = focusPathLines(
       walk({ focusPath: path(3), totalInteractive: 4, stoppedBy: "trap" }),
+      t,
     );
 
     expect(notes[0]).toBe(
@@ -662,6 +689,7 @@ describe("what the walk says it covered", () => {
   it("gets the singular right for one stop and one control", () => {
     const { line } = focusPathLines(
       walk({ focusPath: path(1), totalInteractive: 1, stoppedBy: "cycle" }),
+      t,
     );
 
     expect(line).toBe("Walked the full tab order: 1 stop across 1 detected control.");
@@ -670,6 +698,7 @@ describe("what the walk says it covered", () => {
   it("does not invent leftovers when the cap and the total coincide", () => {
     const { notes } = focusPathLines(
       walk({ focusPath: path(50), totalInteractive: 50, truncated: true, stoppedBy: "cap" }),
+      t,
     );
 
     expect(notes[0]).toBe(
@@ -678,7 +707,7 @@ describe("what the walk says it covered", () => {
   });
 
   it("says plainly when there was nothing to walk", () => {
-    expect(focusPathLines(walk()).line).toBe(
+    expect(focusPathLines(walk(), t).line).toBe(
       "No keyboard-focusable controls were found on this page.",
     );
   });
@@ -692,6 +721,7 @@ describe("what the walk says it covered", () => {
         truncated: true,
         stoppedBy: "cap",
       }),
+      t,
     );
 
     expect(notes).toHaveLength(2);
@@ -702,7 +732,7 @@ describe("what the walk says it covered", () => {
 
 describe("the coverage line is concrete", () => {
   const bare = (warnings: ScanWarning[]) =>
-    auditScope({ warnings, keyboard: undefined } as ScanResult);
+    auditScope({ warnings, keyboard: undefined } as ScanResult, t);
 
   it("never says the word caveat", () => {
     const scope = bare([
@@ -747,7 +777,7 @@ describe("the panel reads as a document, not a stack of boxes", () => {
     );
     expect(bar).toContain("sticky top-0");
     expect(bar).toContain("onTop");
-    expect(bar).toContain("out of 100 — back to the summary");
+    expect(bar).toContain('t("panel.scoreOutOf")');
   });
 
   it("descends h1 → h2 → h3 → h4 without skipping a level", () => {
@@ -801,10 +831,10 @@ describe("the panel reads as a document, not a stack of boxes", () => {
       panel.indexOf("function Occurrences("),
       panel.indexOf("function Findings("),
     );
-    for (const label of ["Evidence", "Position", "Element"]) {
-      expect(occurrences).toContain(`<Field label="${label}">`);
+    for (const key of ["panel.evidence", "panel.position", "panel.element"]) {
+      expect(occurrences).toContain(`<Field label={t("${key}")}>`);
     }
-    expect(occurrences).toContain("Occurrence {at + 1} of {total}");
+    expect(occurrences).toContain('t("panel.occurrenceOf", { at: at + 1, total })');
     expect(occurrences).toMatch(/total > 1 &&[\s\S]{0,80}<OccurrenceStepper/);
   });
 

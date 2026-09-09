@@ -1,6 +1,7 @@
 import type { Page } from "playwright-core";
 import type { AuditFinding } from "./audits";
 import { MAX_AUDIT_SELECTORS, sortFindings } from "./audits";
+import type { MessageKey, Translate } from "../i18n/t";
 
 const VALID_LIVE = new Set(["polite", "assertive", "off"]);
 const ASSERTIVE_ROLES = new Set(["alert"]);
@@ -26,25 +27,25 @@ function group(
   id: string,
   severity: AuditFinding["severity"],
   regions: LiveRegion[],
-  title: (n: number) => string,
-  desc: string,
-  fix: string,
+  keys: { title: MessageKey; desc: MessageKey; fix: MessageKey },
+  t: Translate,
 ): AuditFinding | null {
   if (regions.length === 0) return null;
   const selectors = [...new Set(regions.map((r) => r.selector))].filter(Boolean);
+  const count = selectors.length;
   return {
     id,
     severity,
-    criterion: "WCAG 4.1.3 · Status Messages",
-    title: title(selectors.length),
-    desc,
-    fix,
-    count: selectors.length,
+    criterion: t("audit.live.criterion"),
+    title: t(keys.title, { count }),
+    desc: t(keys.desc, { count }),
+    fix: t(keys.fix),
+    count,
     selectors: selectors.slice(0, MAX_AUDIT_SELECTORS),
   };
 }
 
-export function analyzeLiveRegions(raw: RawLiveRegions): LiveRegionsReport {
+export function analyzeLiveRegions(raw: RawLiveRegions, t: Translate): LiveRegionsReport {
   const regions = raw.regions;
 
   const invalid = regions.filter((r) => r.ariaLive !== null && !VALID_LIVE.has(r.ariaLive));
@@ -58,39 +59,39 @@ export function analyzeLiveRegions(raw: RawLiveRegions): LiveRegionsReport {
       "live-region-invalid",
       "serious",
       invalid,
-      (n) => `${n} live ${n === 1 ? "region has" : "regions have"} an invalid aria-live value`,
-      "aria-live must be polite, assertive or off. Any other value is ignored, so screen " +
-        "readers never announce updates to the region.",
-      'Set aria-live to "polite" for routine updates or "assertive" for urgent ones.',
+      {
+        title: "audit.live.invalidTitle",
+        desc: "audit.live.invalidDesc",
+        fix: "audit.live.invalidFix",
+      },
+      t,
     ),
     group(
       "live-region-hidden",
       "serious",
       hidden,
-      (n) => `${n} live ${n === 1 ? "region is" : "regions are"} hidden and can't announce`,
-      "The region is removed from the accessibility tree (display:none, visibility:hidden or " +
-        "aria-hidden), so updates written into it are never announced. Note this is different " +
-        "from the valid visually-hidden pattern, which keeps the node in the tree.",
-      "Keep the live region in the accessibility tree: use a clip or screen-reader-only pattern " +
-        "instead of display:none, and remove aria-hidden from it.",
+      {
+        title: "audit.live.hiddenTitle",
+        desc: "audit.live.hiddenDesc",
+        fix: "audit.live.hiddenFix",
+      },
+      t,
     ),
     group(
       "live-region-muted",
       "moderate",
       muted,
-      (n) => `${n} ${n === 1 ? "alert is" : "alerts are"} muted with aria-live="off"`,
-      'An element with role="alert" is meant to interrupt, but aria-live="off" silences it. ' +
-        "The two contradict each other, so nothing is announced.",
-      'Remove aria-live="off" from the alert (role="alert" is assertive by default).',
+      { title: "audit.live.mutedTitle", desc: "audit.live.mutedDesc", fix: "audit.live.mutedFix" },
+      t,
     ),
   ].filter((f): f is AuditFinding => f !== null);
 
   return { regions: regions.length, findings: sortFindings(findings) };
 }
 
-export async function collectLiveRegions(page: Page): Promise<LiveRegionsReport> {
+export async function collectLiveRegions(page: Page, t: Translate): Promise<LiveRegionsReport> {
   const raw = (await page.evaluate(() =>
     window.__accessCheckDom!.collectLiveRegionsRaw(),
   )) as RawLiveRegions;
-  return analyzeLiveRegions(raw);
+  return analyzeLiveRegions(raw, t);
 }

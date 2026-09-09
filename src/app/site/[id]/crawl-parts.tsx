@@ -8,6 +8,8 @@ import { SEVERITY_ORDER, severityColorVar, severityLabel } from "@/lib/report/se
 import { Ruler, SectionKicker, StatusPill } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { crawlHost, pagePath, type CrawlPage, type CrawlSnapshot } from "../shared";
+import type { Translate } from "@/lib/i18n/t";
+import { useT } from "@/lib/i18n/provider";
 
 function scoreTone(score: number): string {
   if (score >= 90) return "bg-verified";
@@ -16,6 +18,7 @@ function scoreTone(score: number): string {
 }
 
 export function ProgressHeader({ snap }: { snap: CrawlSnapshot }) {
+  const t = useT();
   const running = snap.status === "running";
   const settled = snap.scannedPages + snap.failedPages;
 
@@ -23,7 +26,7 @@ export function ProgressHeader({ snap }: { snap: CrawlSnapshot }) {
     <section className="border-b border-border pb-5">
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div className="min-w-0">
-          <SectionKicker as="div">Full-site accessibility audit</SectionKicker>
+          <SectionKicker as="div">{t("site.fullAudit")}</SectionKicker>
           <h1 className="mt-1 truncate font-cond text-[38px] leading-none text-ink sm:text-[46px]">
             {crawlHost(snap.rootUrl)}
           </h1>
@@ -34,7 +37,7 @@ export function ProgressHeader({ snap }: { snap: CrawlSnapshot }) {
             {running
               ? `Auditing ${settled} of ${snap.totalPages}`
               : snap.status === "failed"
-                ? "Audit failed"
+                ? t("site.auditFailed")
                 : `Done · ${snap.totalPages} page${snap.totalPages === 1 ? "" : "s"}`}
           </span>
         </p>
@@ -43,11 +46,12 @@ export function ProgressHeader({ snap }: { snap: CrawlSnapshot }) {
       {running && (
         <div className="mt-4">
           <Ruler
+            t={t}
             variant="steps"
             done={settled}
             total={snap.totalPages}
             runningShare={0.06}
-            label={`Site audit progress: ${settled} of ${snap.totalPages} pages audited`}
+            label={t("site.crawlProgress", { done: settled, total: snap.totalPages })}
           />
         </div>
       )}
@@ -61,16 +65,24 @@ export function ProgressHeader({ snap }: { snap: CrawlSnapshot }) {
   );
 }
 
-export function SiteSummary({ snap, score }: { snap: CrawlSnapshot; score: number | null }) {
+export function SiteSummary({
+  snap,
+  score,
+  t,
+}: {
+  snap: CrawlSnapshot;
+  score: number | null;
+  t: Translate;
+}) {
   const done = snap.pages.filter((p) => p.status === "done");
   const found = SEVERITY_ORDER.map((severity) => ({
     severity,
     value: done.reduce((sum, p) => sum + p.counts[severity], 0),
-  })).filter((t) => t.value > 0);
+  })).filter((row) => row.value > 0);
 
   return (
     <section className="mt-6 border border-border bg-surface p-5 sm:p-6">
-      <SectionKicker>Site score</SectionKicker>
+      <SectionKicker>{t("site.score")}</SectionKicker>
       <div className="mt-1 flex items-end gap-2">
         <span className="font-cond text-[56px] leading-[0.85] text-ink tabular-nums">
           {score ?? "—"}
@@ -78,13 +90,12 @@ export function SiteSummary({ snap, score }: { snap: CrawlSnapshot; score: numbe
         <span className="pb-1.5 font-cond text-[18px] text-muted">/100</span>
       </div>
       <p className="mt-1.5 text-[13px] text-muted">
-        {snap.status === "running"
-          ? "running average across audited pages"
-          : "average across all audited pages"}
+        {snap.status === "running" ? t("site.runningAverage") : t("site.finalAverage")}
       </p>
 
       <div className="mt-3 max-w-[560px]">
         <Ruler
+          t={t}
           variant="score"
           score={score ?? 0}
           deductions={[]}
@@ -104,24 +115,26 @@ export function SiteSummary({ snap, score }: { snap: CrawlSnapshot; score: numbe
             <span aria-hidden className="text-border">
               ·
             </span>
-            <StatusPill tone="verified">No automated findings</StatusPill>
+            <StatusPill tone="verified">{t("site.noAutomatedFindings")}</StatusPill>
           </span>
         )}
-        {found.map((t) => (
-          <span key={t.severity} className="flex items-center gap-1.5">
+        {found.map((row) => (
+          <span key={row.severity} className="flex items-center gap-1.5">
             <span aria-hidden className="text-border">
               ·
             </span>
             <span
               aria-hidden
-              className={cn("size-2.5 shrink-0", t.severity === "minor" && "bg-muted")}
+              className={cn("size-2.5 shrink-0", row.severity === "minor" && "bg-muted")}
               style={
-                t.severity === "minor" ? undefined : { background: severityColorVar[t.severity] }
+                row.severity === "minor"
+                  ? undefined
+                  : { background: severityColorVar[row.severity] }
               }
             />
             <span className="tabular-nums">
-              <span className="font-semibold text-ink">{t.value}</span>{" "}
-              {severityLabel[t.severity].toLowerCase()}
+              <span className="font-semibold text-ink">{row.value}</span>{" "}
+              {severityLabel(row.severity, t).toLowerCase()}
             </span>
           </span>
         ))}
@@ -184,34 +197,34 @@ function StatusSquare({ page }: { page: CrawlPage }) {
   );
 }
 
-function SeverityCounts({ counts }: { counts: Record<Severity, number> }) {
+function SeverityCounts({ counts, t }: { counts: Record<Severity, number>; t: Translate }) {
   const total = SEVERITY_ORDER.reduce((sum, s) => sum + counts[s], 0);
 
-  if (total === 0) return <StatusPill tone="verified">No findings</StatusPill>;
+  if (total === 0) return <StatusPill tone="verified">{t("site.noFindings")}</StatusPill>;
 
   return (
     <span className="flex items-center gap-3 text-[13px] text-body">
       {SEVERITY_ORDER.filter((s) => counts[s] > 0).map((s) => (
-        <span key={s} className="flex items-center gap-1.5" title={severityLabel[s]}>
+        <span key={s} className="flex items-center gap-1.5" title={severityLabel(s, t)}>
           <span
             aria-hidden
             className={cn("size-2.5 shrink-0", s === "minor" && "bg-muted")}
             style={s === "minor" ? undefined : { background: severityColorVar[s] }}
           />
           <span className="tabular-nums">{counts[s]}</span>
-          <span className="sr-only">{severityLabel[s]}</span>
+          <span className="sr-only">{severityLabel(s, t)}</span>
         </span>
       ))}
     </span>
   );
 }
 
-export function PageRow({ page, siteId }: { page: CrawlPage; siteId: string }) {
+export function PageRow({ page, siteId, t }: { page: CrawlPage; siteId: string; t: Translate }) {
   const done = page.status === "done";
 
   const secondary =
     page.status === "failed"
-      ? page.error || "This page could not be audited."
+      ? page.error || t("site.pageFailed")
       : page.status === "pending"
         ? "Waiting…"
         : page.status === "running"
@@ -247,7 +260,7 @@ export function PageRow({ page, siteId }: { page: CrawlPage; siteId: string }) {
 
       {done && (
         <div className="shrink-0">
-          <SeverityCounts counts={page.counts} />
+          <SeverityCounts t={t} counts={page.counts} />
         </div>
       )}
 

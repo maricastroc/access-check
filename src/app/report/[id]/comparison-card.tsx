@@ -8,7 +8,8 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import type { ScanDiff, ViolationRef } from "@/lib/scan/diff";
 import type { Severity } from "@/lib/scan/types";
-import { sevHex, sevLabel } from "../shared";
+import { sevHex, sevLabelKey } from "../shared";
+import type { Translate } from "@/lib/i18n/t";
 
 const MAX_LISTED = 6;
 
@@ -18,7 +19,15 @@ const dateFmt = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
 });
 
-export function ComparisonCard({ diff, previousAt }: { diff: ScanDiff; previousAt: Date }) {
+export function ComparisonCard({
+  diff,
+  previousAt,
+  t,
+}: {
+  diff: ScanDiff;
+  previousAt: Date;
+  t: Translate;
+}) {
   const up = diff.scoreDelta > 0;
   const down = diff.scoreDelta < 0;
   const deltaColor = up ? "#16764f" : down ? "#c62a2f" : "#63676f";
@@ -28,7 +37,7 @@ export function ComparisonCard({ diff, previousAt }: { diff: ScanDiff; previousA
       <div className="flex items-start justify-between gap-4">
         <div>
           <span className="text-brand-600 text-[10px] font-semibold tracking-[0.2em] uppercase">
-            Changes since last audit
+            {t("report.changesSinceLast")}
           </span>
           <h2 className="mt-1.5 text-xl font-bold tracking-tight text-ink">
             What moved since {dateFmt.format(previousAt)}
@@ -52,7 +61,7 @@ export function ComparisonCard({ diff, previousAt }: { diff: ScanDiff; previousA
             </span>
           ) : (
             <span className="rounded-full bg-canvas px-2.5 py-1 text-sm font-semibold text-muted">
-              Scoring model updated
+              {t("report.scoringModelUpdated")}
             </span>
           )}
         </div>
@@ -65,7 +74,7 @@ export function ComparisonCard({ diff, previousAt }: { diff: ScanDiff; previousA
             <div key={s} className="border-line rounded-xl border bg-canvas px-3 py-2.5">
               <div className="flex items-center gap-1.5">
                 <span className="size-2 rounded-full" style={{ background: sevHex[s] }} />
-                <span className="text-[11px] font-semibold text-ink">{sevLabel[s]}</span>
+                <span className="text-[11px] font-semibold text-ink">{t(sevLabelKey[s])}</span>
               </div>
               <div className="mt-1 flex items-baseline gap-1.5">
                 <span className="text-sm text-muted">{c.from}</span>
@@ -87,9 +96,7 @@ export function ComparisonCard({ diff, previousAt }: { diff: ScanDiff; previousA
 
       {!diff.comparable && (
         <p className="mt-3 text-[12.5px] text-muted">
-          These two audits were scored by different models (v{diff.scoringFrom} and v
-          {diff.scoringTo}), so the numbers above are not a rise or a fall. Which rules were fixed
-          and which regressed is unaffected.
+          {t("report.scoringModelNote", { from: diff.scoringFrom, to: diff.scoringTo })}
         </p>
       )}
 
@@ -99,14 +106,14 @@ export function ComparisonCard({ diff, previousAt }: { diff: ScanDiff; previousA
           items={diff.fixed}
           icon={faCheck}
           tone="#16764f"
-          empty="No rules cleared since the last audit."
+          empty={t("diff.noneCleared")}
         />
         <DiffList
-          title="New or worse"
+          title={t("diff.newOrWorse")}
           items={diff.regressed}
           icon={faTriangleExclamation}
           tone="#c62a2f"
-          empty="No new rules flagged. Nothing got worse."
+          empty={t("diff.noneWorse")}
         />
       </div>
     </section>

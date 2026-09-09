@@ -1,15 +1,20 @@
 import type { FixVerification, Severity } from "@/lib/scan/types";
+import type { MessageKey, Translate } from "@/lib/i18n/t";
 
 export type FixStatus = "verified" | "needs-review" | "unchecked";
 
 export const SEVERITY_ORDER: Severity[] = ["critical", "serious", "moderate", "minor"];
 
-export const severityLabel: Record<Severity, string> = {
-  critical: "Critical",
-  serious: "Serious",
-  moderate: "Moderate",
-  minor: "Minor",
+export const SEVERITY_LABEL_KEY: Record<Severity, MessageKey> = {
+  critical: "severity.critical",
+  serious: "severity.serious",
+  moderate: "severity.moderate",
+  minor: "severity.minor",
 };
+
+export function severityLabel(severity: Severity, t: Translate): string {
+  return t(SEVERITY_LABEL_KEY[severity]);
+}
 
 export const severityColorVar: Record<Severity, string> = {
   critical: "var(--color-critical)",
@@ -43,25 +48,25 @@ export const SEVERITY_META: Record<Severity, SeverityMeta> = {
   critical: {
     label: "Critical",
     blocksAA: true,
-    who: "Blocks access outright for some assistive-tech users.",
+    who: "severity.criticalDesc",
     short: "blocks access",
   },
   serious: {
     label: "Serious",
     blocksAA: true,
-    who: "Major barrier. Many people can't complete the task.",
+    who: "severity.seriousDesc",
     short: "major barrier",
   },
   moderate: {
     label: "Moderate",
     blocksAA: false,
-    who: "Noticeable friction, but the task stays possible.",
+    who: "severity.moderateDesc",
     short: "adds friction",
   },
   minor: {
     label: "Minor",
     blocksAA: false,
-    who: "Small polish item with limited impact.",
+    who: "severity.minorDesc",
     short: "polish",
   },
 };

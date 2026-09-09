@@ -109,7 +109,7 @@ describe("POST /api/scan", () => {
     const events = await eventsOf(await post({ url: "example.com" }));
 
     expect(runScan).not.toHaveBeenCalled();
-    expect(cacheGet).toHaveBeenCalledWith(`scan:v${SCORING_VERSION}:https://example.com`);
+    expect(cacheGet).toHaveBeenCalledWith(`scan:v${SCORING_VERSION}:en:https://example.com`);
     expect(events).toEqual([
       {
         type: "result",
@@ -144,7 +144,7 @@ describe("POST /api/scan", () => {
     await eventsOf(await post({ url: "example.com" }));
 
     expect(cacheSet).toHaveBeenCalledWith(
-      `scan:v${SCORING_VERSION}:https://example.com`,
+      `scan:v${SCORING_VERSION}:en:https://example.com`,
       expect.objectContaining({ screenshot: SHOT }),
       SCAN_FRESH_SECONDS,
     );
@@ -156,7 +156,7 @@ describe("POST /api/scan", () => {
     await eventsOf(await post({ url: "example.com" }));
 
     expect(cacheSet).toHaveBeenCalledWith(
-      `scan:v${SCORING_VERSION}:https://example.com`,
+      `scan:v${SCORING_VERSION}:en:https://example.com`,
       expect.objectContaining({ screenshot: null }),
       SCAN_FRESH_SECONDS,
     );

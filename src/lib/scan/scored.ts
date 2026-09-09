@@ -1,6 +1,7 @@
 import { buildCounts, buildFixFirst, buildSummary, computeScore } from "./derive";
 import type { ContextIssue } from "./contexts";
 import type { ScanResult, ScanViolation, Severity } from "./types";
+import { translator } from "../i18n/t";
 
 type RuleFinding = {
   id: string;
@@ -66,7 +67,7 @@ function contextViolations(result: Pick<ScanResult, "contexts">): ScanViolation[
       criterion: issue.criterion,
       where: issue.selectors[0] ?? "—",
       desc: `Found only in this context (${where}). It does not fail on the first desktop load.`,
-      fix: "Re-check this element in the affected context.",
+      fix: translator()("context.recheckShort"),
       nodes: issue.nodes,
       contexts: [where],
     });
@@ -126,7 +127,7 @@ export function withScoring(result: Scorable): ScanResult {
     ...result,
     score: computeScore(scored),
     counts,
-    summary: buildSummary(counts, { partial: result.partial }),
+    summary: buildSummary(counts, translator(result.locale), { partial: result.partial }),
     fixFirst: buildFixFirst(scored),
   };
 }

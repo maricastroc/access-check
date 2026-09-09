@@ -4,10 +4,12 @@ import { auth } from "@/auth";
 import { getUserScans } from "@/lib/scans";
 import { SiteHeader } from "@/components/home/site-header";
 import { HistoryList } from "./history-list";
+import { resolveLocale } from "@/lib/i18n/server";
 
 export const runtime = "nodejs";
 
 export default async function HistoryPage() {
+  const locale = await resolveLocale();
   const userId = (await auth())?.user?.id;
   if (!userId) redirect("/login");
 
@@ -15,7 +17,7 @@ export default async function HistoryPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-canvas font-sans text-ink">
-      <SiteHeader />
+      <SiteHeader locale={locale} />
       <Suspense>
         <HistoryList scans={scans} />
       </Suspense>

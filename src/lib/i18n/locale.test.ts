@@ -59,6 +59,11 @@ describe("langAttrs", () => {
     expect(langAttrs(undefined)).toEqual({});
     expect(langAttrs("pt-BR")).toEqual({ lang: "pt-BR" });
   });
+
+  it("stays silent once the surrounding interface speaks the same language", () => {
+    expect(langAttrs("pt-BR", "pt-BR")).toEqual({});
+    expect(langAttrs("en", "pt-BR")).toEqual({ lang: "en" });
+  });
 });
 
 describe("axeLocaleFile", () => {

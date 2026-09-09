@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { newIssues, toContextIssue, type RawRule } from "./contexts";
+import { translator } from "../i18n/t";
+
+const t = translator();
 
 const rule = (over: Partial<RawRule> = {}): RawRule => ({
   id: "target-size",
@@ -13,7 +16,7 @@ const rule = (over: Partial<RawRule> = {}): RawRule => ({
 
 describe("toContextIssue", () => {
   it("maps impact→severity, tags→criterion and truncates selectors", () => {
-    const issue = toContextIssue(rule());
+    const issue = toContextIssue(rule(), t);
     expect(issue.severity).toBe("serious");
     expect(issue.criterion).toBe("WCAG 2.5.8 · Target Size (Minimum)");
     expect(issue.nodes).toBe(3);
@@ -21,7 +24,7 @@ describe("toContextIssue", () => {
   });
 
   it("falls back to 'minor' when impact is null and to the id when there is no criterion", () => {
-    const issue = toContextIssue(rule({ impact: null, tags: ["cat.foo"], id: "custom" }));
+    const issue = toContextIssue(rule({ impact: null, tags: ["cat.foo"], id: "custom" }), t);
     expect(issue.severity).toBe("minor");
     expect(issue.criterion).toBe("custom");
   });
@@ -35,12 +38,12 @@ describe("newIssues", () => {
       rule({ id: "target-size" }),
       rule({ id: "meta-viewport" }),
     ];
-    const out = newIssues(baseline, rules);
+    const out = newIssues(baseline, rules, t);
     expect(out.map((i) => i.id)).toEqual(["target-size", "meta-viewport"]);
   });
 
   it("empty baseline keeps everything; no rules keeps nothing", () => {
-    expect(newIssues(new Set(), [rule({ id: "a" }), rule({ id: "b" })])).toHaveLength(2);
-    expect(newIssues(new Set(["a"]), [])).toHaveLength(0);
+    expect(newIssues(new Set(), [rule({ id: "a" }), rule({ id: "b" })], t)).toHaveLength(2);
+    expect(newIssues(new Set(["a"]), [], t)).toHaveLength(0);
   });
 });

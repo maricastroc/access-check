@@ -3,10 +3,11 @@ import { isIP } from "node:net";
 import type { BrowserContext } from "playwright-core";
 import { shouldBlockResource } from "./resource-policy";
 import type { ScanErrorCode } from "./types";
+import { translator, type Translate } from "../i18n/t";
 
 export class BlockedUrlError extends Error {
   constructor(
-    message = "This address is a private or internal one, so we can't audit it. Enter a public web page instead.",
+    message: string,
     readonly code: ScanErrorCode = "blocked-url",
   ) {
     super(message);
@@ -130,31 +131,25 @@ function stripBrackets(host: string): string {
   return host.startsWith("[") && host.endsWith("]") ? host.slice(1, -1) : host;
 }
 
-export async function assertPublicUrl(raw: string): Promise<void> {
+export async function assertPublicUrl(raw: string, t: Translate = translator()): Promise<void> {
   let url: URL;
   try {
     url = new URL(raw);
   } catch {
-    throw new BlockedUrlError(
-      "That doesn't look like a valid web address. Check it and try again.",
-      "invalid-url",
-    );
+    throw new BlockedUrlError(t("ssrf.invalidAddress"), "invalid-url");
   }
 
   if (url.protocol !== "http:" && url.protocol !== "https:") {
-    throw new BlockedUrlError(
-      "Only web pages (addresses starting with http or https) can be audited.",
-      "invalid-url",
-    );
+    throw new BlockedUrlError(t("ssrf.onlyHttp"), "invalid-url");
   }
 
   const host = stripBrackets(url.hostname).toLowerCase();
   if (host === "" || host === "localhost" || host.endsWith(".localhost")) {
-    throw new BlockedUrlError();
+    throw new BlockedUrlError(t("ssrf.privateAddress"));
   }
 
   if (isIP(host)) {
-    if (isBlockedIp(host)) throw new BlockedUrlError();
+    if (isBlockedIp(host)) throw new BlockedUrlError(t("ssrf.privateAddress"));
     return;
   }
 
@@ -162,13 +157,10 @@ export async function assertPublicUrl(raw: string): Promise<void> {
   try {
     addrs = await lookup(host, { all: true });
   } catch {
-    throw new BlockedUrlError(
-      "We couldn't find a site at that address. Check the spelling and try again.",
-      "navigation-failed",
-    );
+    throw new BlockedUrlError(t("ssrf.notFound"), "navigation-failed");
   }
   if (addrs.length === 0 || addrs.some((a) => isBlockedIp(a.address))) {
-    throw new BlockedUrlError();
+    throw new BlockedUrlError(t("ssrf.privateAddress"));
   }
 }
 
@@ -182,7 +174,9 @@ export async function installNetworkGuard(context: BrowserContext): Promise<void
           await assertPublicUrl(url.toString());
         } else {
           const host = stripBrackets(url.hostname);
-          if (isIP(host) && isBlockedIp(host)) throw new BlockedUrlError();
+          if (isIP(host) && isBlockedIp(host)) {
+            throw new BlockedUrlError(translator()("ssrf.privateAddress"));
+          }
 
           if (shouldBlockResource(req.resourceType(), url.toString())) {
             await route.abort("blockedbyclient");

@@ -1,5 +1,6 @@
 import type { FixGroup, ScanViolation } from "@/lib/scan/types";
 import type { ContrastMeasurement } from "./contrast";
+import type { Translate } from "../i18n/t";
 
 export type VerdictKind =
   | "verified"
@@ -88,60 +89,77 @@ export function buildVerdict(input: VerdictInput): Verdict {
   return { kind: "sampled", ...base };
 }
 
-export function verdictLabel(v: Verdict): string {
+export function verdictLabel(v: Verdict, t: Translate): string {
   switch (v.kind) {
     case "verified":
-      return "Verified fix";
+      return t("verdict.label.verified");
     case "partial":
-      return "Partly verified";
+      return t("verdict.label.partial");
     case "sampled":
-      return v.reaudited > 1 ? "Examples checked" : "One example checked";
+      return v.reaudited > 1 ? t("verdict.label.sampledMany") : t("verdict.label.sampledOne");
     case "failed":
-      return "Needs human review";
+      return t("verdict.label.failed");
     case "unverifiable":
-      return "Could not verify";
+      return t("verdict.label.unverifiable");
     case "no-auto-fix":
-      return "Needs human review";
+      return t("verdict.label.noAutoFix");
     case "best-practice":
-      return "Best practice";
+      return t("verdict.label.bestPractice");
     case "complementary":
-      return "Not re-audited";
+      return t("verdict.label.complementary");
   }
 }
 
-export function verdictMessage(v: Verdict, measurement?: ContrastMeasurement | null): string {
+export function verdictMessage(
+  v: Verdict,
+  t: Translate,
+  measurement?: ContrastMeasurement | null,
+): string {
   const n = v.totalElements;
   const notChecked = n - v.reaudited;
-  const others = (count: number) =>
-    `The other ${count} occurrence${count === 1 ? "" : "s"} share the same suggestion but ${count === 1 ? "was" : "were"} not individually verified.`;
+  const others = (count: number) => t("verdict.others", { count });
 
   switch (v.kind) {
     case "verified":
-      return v.shared
-        ? `Applied in a sandbox copy and re-audited: the rule stopped flagging each of the ${n} occurrences.`
-        : "Applied in a sandbox copy and re-audited: the rule stopped flagging the element.";
+      return v.shared ? t("verdict.verifiedShared", { count: n }) : t("verdict.verifiedSingle");
     case "partial":
-      return `Re-audited each occurrence in a sandbox copy: ${v.sampledCleared} of ${n} cleared, ${v.sampledFailed} still flag. Review the ones that still flag.`;
+      return t("verdict.partial", {
+        cleared: v.sampledCleared,
+        total: n,
+        failed: v.sampledFailed,
+      });
     case "sampled":
       if (v.reaudited === 1) {
-        return `The sampled element passed after the suggested change in a sandbox copy. ${others(notChecked)}`;
+        return t("verdict.sampledOne", { others: others(notChecked) });
       }
-      return `Re-audited ${v.reaudited} of ${n} occurrences in a sandbox copy (one representative per suggested fix): ${v.sampledCleared} passed${v.sampledFailed > 0 ? `, ${v.sampledFailed} still flag` : ""}. The other ${notChecked} ${notChecked === 1 ? "was" : "were"} not individually verified.`;
+      return t("verdict.sampledMany", {
+        reaudited: v.reaudited,
+        total: n,
+        cleared: v.sampledCleared,
+        failedTail:
+          v.sampledFailed > 0 ? t("verdict.sampledFailedTail", { failed: v.sampledFailed }) : "",
+        others: others(notChecked),
+      });
     case "failed": {
-      const subject = n === 1 ? "This element" : "The sampled element";
+      const subject =
+        n === 1 ? t("verdict.failedSubjectSingle") : t("verdict.failedSubjectSampled");
       const tail = n > 1 ? ` ${others(notChecked)}` : "";
       if (measurement?.fixed != null) {
-        return `${subject} still fails after the suggested change: the new color reaches ${measurement.fixed.toFixed(2)}:1 against the sampled background, but the rule still flags it. The real background may be an image, gradient or overlapping layer.${tail}`;
+        return t("verdict.failedMeasured", {
+          subject,
+          ratio: measurement.fixed.toFixed(2),
+          tail,
+        });
       }
-      return `${subject} still fails after the change was applied in a sandbox copy. Review it by hand.${tail}`;
+      return t("verdict.failedPlain", { subject, tail });
     }
     case "unverifiable":
-      return "The element couldn't be re-audited in the sandbox copy (it wasn't found, or verification was cut short for time). Confirm the change by hand.";
+      return t("verdict.unverifiable");
     case "no-auto-fix":
-      return "This finding has no automatic fix. A person needs to decide the right change for the page.";
+      return t("verdict.noAutoFix");
     case "best-practice":
-      return "Best practice, not a WCAG success criterion. Worth fixing, but it does not affect the WCAG reading.";
+      return t("verdict.bestPractice");
     case "complementary":
-      return "Found by a complementary pass (keyboard, mobile, vision or dynamic state); it isn't re-audited in a sandbox copy. Fix and re-run to confirm.";
+      return t("verdict.complementary");
   }
 }

@@ -2,6 +2,7 @@ import type { Page } from "playwright-core";
 import type { Severity } from "./types";
 import type { FocusProbe, FocusReach, FocusStyle } from "./dom/focus";
 import { severityOrder } from "./derive";
+import type { Translate } from "../i18n/t";
 
 export type KeyboardIssueId =
   | "focus-not-visible"
@@ -10,7 +11,14 @@ export type KeyboardIssueId =
   | "positive-tabindex"
   | "unreachable-control";
 
-export type FocusRect = { x: number; y: number; w: number; h: number };
+export type FocusRect = {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  docX?: number;
+  docY?: number;
+};
 
 export type FocusStop = {
   n: number;
@@ -22,6 +30,8 @@ export type FocusStop = {
   top: number | null;
   width: number | null;
   height: number | null;
+  docX?: number | null;
+  docY?: number | null;
   html?: string;
   rect?: FocusRect | null;
   onScreen?: boolean;
@@ -94,10 +104,6 @@ const CRITERION: Record<KeyboardIssueId, string> = {
 
 const MAX_FINDING_SELECTORS = 8;
 
-function plural(n: number, one: string, many: string): string {
-  return n === 1 ? one : many;
-}
-
 export type OrderJump = {
   from: number;
   to: number;
@@ -135,11 +141,11 @@ export function readingOrderInversions(stops: FocusStop[]): {
   return { count: jumps.length, selectors: jumps.map((j) => j.selector), jumps };
 }
 
-function region(top: number | null): string {
-  if (top === null) return "outside the visible viewport";
-  if (top < 25) return "near the top of the page";
-  if (top < 60) return "in the middle of the page";
-  return "near the bottom of the page";
+function region(top: number | null, t: Translate): string {
+  if (top === null) return t("keyboard.region.offscreen");
+  if (top < 25) return t("keyboard.region.top");
+  if (top < 60) return t("keyboard.region.middle");
+  return t("keyboard.region.bottom");
 }
 
 function occurrenceOf(
@@ -183,67 +189,68 @@ function occurrenceForSelector(
   };
 }
 
-function invisibleReason(stop: FocusStop): string {
+function invisibleReason(stop: FocusStop, t: Translate): string {
   const focused = stop.focusStyle;
   const base = stop.baseStyle;
-  if (!focused || !base) {
-    return (
-      "Focus reached this element and produced no detectable outline, box-shadow, border or " +
-      "background change."
-    );
-  }
+  if (!focused || !base) return t("keyboard.invisible.noStyles");
 
   const unchanged: string[] = [];
   if (focused.outlineStyle === "none" || parseFloat(focused.outlineWidth) === 0) {
     unchanged.push(
-      `no outline appeared (outline-style: ${focused.outlineStyle}, outline-width: ${focused.outlineWidth})`,
+      t("keyboard.invisible.noOutline", {
+        style: focused.outlineStyle,
+        width: focused.outlineWidth,
+      }),
     );
   }
   if (focused.boxShadow === base.boxShadow) {
-    unchanged.push(`the box-shadow stayed ${base.boxShadow}`);
+    unchanged.push(t("keyboard.invisible.boxShadow", { value: base.boxShadow }));
   }
   if (
     focused.borderTopWidth === base.borderTopWidth &&
     focused.borderTopColor === base.borderTopColor
   ) {
-    unchanged.push(`the border stayed ${base.borderTopWidth} ${base.borderTopColor}`);
+    unchanged.push(
+      t("keyboard.invisible.border", {
+        width: base.borderTopWidth,
+        color: base.borderTopColor,
+      }),
+    );
   }
   if (focused.backgroundColor === base.backgroundColor) {
-    unchanged.push(`the background stayed ${base.backgroundColor}`);
+    unchanged.push(t("keyboard.invisible.background", { value: base.backgroundColor }));
   }
 
-  return (
-    `Focus reached this element and nothing changed: ${unchanged.join("; ")}. ` +
-    "A focus indicator is expected here — an outline, a box-shadow, a border or a background " +
-    "that differs from the element's resting style."
-  );
+  return t("keyboard.invisible.nothingChanged", { unchanged: unchanged.join("; ") });
 }
 
-function jumpReason(jump: OrderJump, byStop: Map<number, FocusStop>): string {
+function jumpReason(jump: OrderJump, byStop: Map<number, FocusStop>, t: Translate): string {
   const from = byStop.get(jump.from);
   const to = byStop.get(jump.to);
-  const movement =
-    jump.direction === "up"
-      ? "focus moved back up the page"
-      : "focus moved back to the left on the same line";
+  const movement = jump.direction === "up" ? t("keyboard.jump.up") : t("keyboard.jump.back");
 
   const where =
     from && to
-      ? `, from ${region(from.top)} ("${from.label}") to ${region(to.top)} ("${to.label}")`
+      ? t("keyboard.jump.where", {
+          fromRegion: region(from.top, t),
+          fromLabel: from.label,
+          toRegion: region(to.top, t),
+          toLabel: to.label,
+        })
       : "";
 
   const measured =
     from?.rect && to?.rect
-      ? ` Measured from the top of the viewport: ${Math.round(from.rect.y)}px → ${Math.round(to.rect.y)}px.`
+      ? t("keyboard.jump.measured", {
+          from: Math.round(from.rect.y),
+          to: Math.round(to.rect.y),
+        })
       : "";
 
-  return (
-    `Stop ${jump.from} → Stop ${jump.to}: ${movement}${where}.${measured} ` +
-    "This is geometric evidence, not proof: check whether it matches the reading order you intend."
-  );
+  return t("keyboard.jump.reason", { from: jump.from, to: jump.to, movement, where, measured });
 }
 
-export function buildKeyboardReport(raw: RawKeyboard): KeyboardReport {
+export function buildKeyboardReport(raw: RawKeyboard, t: Translate): KeyboardReport {
   const findings: KeyboardFinding[] = [];
   const stops = raw.focusPath;
   const byStop = new Map(stops.map((s) => [s.n, s]));
@@ -253,22 +260,13 @@ export function buildKeyboardReport(raw: RawKeyboard): KeyboardReport {
       id: "keyboard-trap",
       severity: "critical",
       criterion: CRITERION["keyboard-trap"],
-      title: "Keyboard focus is trapped",
-      desc:
-        "Pressing Tab kept focus on the same element instead of advancing. " +
-        "Keyboard and screen-reader users can get stuck here with no way out.",
-      fix:
-        "Make sure the element doesn't intercept Tab, or (if it's a dialog) give a clear " +
-        "way to leave: press Esc to close it and return focus to the control that opened it.",
+      title: t("keyboard.trap.title"),
+      desc: t("keyboard.trap.desc"),
+      fix: t("keyboard.trap.fix"),
       count: 1,
       selectors: [raw.trapSelector],
       occurrences: [
-        occurrenceForSelector(
-          raw.trapSelector,
-          stops,
-          "Tab was pressed here and focus stayed on this same element, so the walk could go no further.",
-          "conclusive",
-        ),
+        occurrenceForSelector(raw.trapSelector, stops, t("keyboard.trap.occurrence"), "conclusive"),
       ],
     });
   }
@@ -279,22 +277,16 @@ export function buildKeyboardReport(raw: RawKeyboard): KeyboardReport {
       id: "unreachable-control",
       severity: "serious",
       criterion: CRITERION["unreachable-control"],
-      title: `${n} interactive ${plural(n, "control is", "controls are")} not keyboard-reachable`,
-      desc:
-        `${n} ${plural(n, "element behaves", "elements behave")} as interactive ` +
-        "(click handlers or ARIA roles) but Tab never reaches " +
-        `${plural(n, "it", "them")}, so ${plural(n, "it's", "they're")} usable by mouse only.`,
-      fix:
-        "Give each control a native focusable element (<button>, <a href>) or " +
-        'add tabindex="0" and keyboard handlers so it can be reached and operated.',
+      title: t("keyboard.unreachable.title", { count: n }),
+      desc: t("keyboard.unreachable.desc", { count: n }),
+      fix: t("keyboard.unreachable.fix"),
       count: n,
       selectors: raw.unreachable.slice(0, MAX_FINDING_SELECTORS),
       occurrences: raw.unreachable.map((selector) =>
         occurrenceForSelector(
           selector,
           stops,
-          "This element looks interactive (a click handler or an ARIA role) but the Tab walk " +
-            "never landed on it. Confirm it is meant to be operable.",
+          t("keyboard.unreachable.occurrence"),
           "needs-review",
         ),
       ),
@@ -308,17 +300,12 @@ export function buildKeyboardReport(raw: RawKeyboard): KeyboardReport {
       id: "focus-not-visible",
       severity: "serious",
       criterion: CRITERION["focus-not-visible"],
-      title: `No visible focus indicator on ${n} ${plural(n, "element", "elements")}`,
-      desc:
-        `Focusing ${plural(n, "this element", "these elements")} by keyboard produced ` +
-        "no detectable outline, box-shadow, border or background change. Sighted " +
-        "keyboard users can't tell where they are on the page.",
-      fix:
-        "Add a clear :focus-visible style (for example outline: 2px solid; outline-offset: 2px;) " +
-        "instead of removing the outline with outline: none.",
+      title: t("keyboard.invisible.title", { count: n }),
+      desc: t("keyboard.invisible.desc", { count: n }),
+      fix: t("keyboard.invisible.fix"),
       count: n,
       selectors: invisible.slice(0, MAX_FINDING_SELECTORS).map((s) => s.selector),
-      occurrences: invisible.map((s) => occurrenceOf(s, invisibleReason(s), "conclusive")),
+      occurrences: invisible.map((s) => occurrenceOf(s, invisibleReason(s, t), "conclusive")),
     });
   }
 
@@ -328,20 +315,14 @@ export function buildKeyboardReport(raw: RawKeyboard): KeyboardReport {
       id: "focus-order",
       severity: "moderate",
       criterion: CRITERION["focus-order"],
-      title: `Focus order jumps out of sequence ${inv.count} ${plural(inv.count, "time", "times")}`,
-      desc:
-        "The Tab order doesn't follow the visual reading order (top-to-bottom, " +
-        "left-to-right). Focus jumps backwards or upward, which is disorienting " +
-        "for keyboard and screen-reader users. Each jump is listed below: whether it is wrong " +
-        "depends on the reading order the page intends, so they need a human check.",
-      fix:
-        "Match the DOM order to the visual order and avoid reordering with CSS " +
-        "(order, flex-direction: row-reverse, absolute positioning) or positive tabindex.",
+      title: t("keyboard.order.title", { count: inv.count }),
+      desc: t("keyboard.order.desc"),
+      fix: t("keyboard.order.fix"),
       count: inv.count,
       selectors: inv.selectors.slice(0, MAX_FINDING_SELECTORS),
       occurrences: inv.jumps.map((jump) => {
         const to = byStop.get(jump.to);
-        const reason = jumpReason(jump, byStop);
+        const reason = jumpReason(jump, byStop, t);
         return to
           ? occurrenceOf(to, reason, "needs-review", { from: jump.from, to: jump.to })
           : {
@@ -359,23 +340,13 @@ export function buildKeyboardReport(raw: RawKeyboard): KeyboardReport {
       id: "positive-tabindex",
       severity: "moderate",
       criterion: CRITERION["positive-tabindex"],
-      title: `${n} ${plural(n, "element uses", "elements use")} a positive tabindex`,
-      desc:
-        "A positive tabindex overrides the natural tab order and is almost always " +
-        "a source of confusing, hard-to-maintain focus behavior.",
-      fix:
-        'Replace positive tabindex values with tabindex="0" (or none) and let the ' +
-        "DOM order define the sequence.",
+      title: t("keyboard.tabindex.title", { count: n }),
+      desc: t("keyboard.tabindex.desc"),
+      fix: t("keyboard.tabindex.fix"),
       count: n,
       selectors: raw.positiveTabindex.slice(0, MAX_FINDING_SELECTORS),
       occurrences: raw.positiveTabindex.map((selector) =>
-        occurrenceForSelector(
-          selector,
-          stops,
-          "This element carries a positive tabindex, so it is pulled out of the document order " +
-            "and visited before elements that come before it on the page.",
-          "conclusive",
-        ),
+        occurrenceForSelector(selector, stops, t("keyboard.tabindex.occurrence"), "conclusive"),
       ),
     });
   }
@@ -530,6 +501,8 @@ export async function collectFocusPath(
         top: onScreen ? (r!.y / viewport.height) * 100 : null,
         width: onScreen ? (r!.w / viewport.width) * 100 : null,
         height: onScreen ? (r!.h / viewport.height) * 100 : null,
+        docX: r?.docX ?? null,
+        docY: r?.docY ?? null,
         html: s.html,
         rect: r,
         onScreen,
@@ -558,6 +531,7 @@ export async function collectFocusPath(
 export async function collectKeyboard(
   page: Page,
   viewport: Viewport,
+  t: Translate,
   opts: { maxMs?: number } = {},
 ): Promise<KeyboardReport> {
   const raw = await collectFocusPath(
@@ -578,5 +552,5 @@ export async function collectKeyboard(
     opts,
   );
 
-  return buildKeyboardReport(raw);
+  return buildKeyboardReport(raw, t);
 }

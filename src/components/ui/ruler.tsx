@@ -2,38 +2,43 @@ import type { Severity } from "@/lib/scan/types";
 import { ratioPosition } from "@/lib/report/contrast";
 import { severityHatchClass } from "@/lib/report/severity";
 import { cn } from "@/lib/cn";
+import type { Translate } from "@/lib/i18n/t";
 
-export type RulerProps =
-  | {
-      variant: "score";
-      score: number;
-      deductions: { severity: Severity; deduction: number }[];
-      height?: number;
-      ticks?: boolean;
-      label?: string;
-    }
-  | {
-      variant: "ratio";
-      found: number;
-      required: number;
-      fixed?: number | null;
-      height?: number;
-      label?: string;
-    }
-  | {
-      variant: "progress";
-      elapsedMs: number;
-      budgetMs: number;
-      runningShare?: number;
-      label?: string;
-    }
-  | {
-      variant: "steps";
-      done: number;
-      total: number;
-      runningShare?: number;
-      label: string;
-    };
+type Base = { t: Translate };
+
+export type RulerProps = Base &
+  (
+    | {
+        variant: "score";
+        score: number;
+        deductions: { severity: Severity; deduction: number }[];
+        height?: number;
+        ticks?: boolean;
+        label?: string;
+      }
+    | {
+        variant: "ratio";
+        found: number;
+        required: number;
+        fixed?: number | null;
+        height?: number;
+        label?: string;
+      }
+    | {
+        variant: "progress";
+        elapsedMs: number;
+        budgetMs: number;
+        runningShare?: number;
+        label?: string;
+      }
+    | {
+        variant: "steps";
+        done: number;
+        total: number;
+        runningShare?: number;
+        label: string;
+      }
+  );
 
 function hatchFor(severity: Severity): string {
   return severityHatchClass[severity];
@@ -52,9 +57,10 @@ function ScoreRuler({
   height = 26,
   ticks = false,
   label,
+  t,
 }: Extract<RulerProps, { variant: "score" }>) {
   const clamped = Math.max(0, Math.min(100, score));
-  const ariaLabel = label ?? `Internal priority score ${score} out of 100`;
+  const ariaLabel = label ?? t("score.ariaLabel", { score });
 
   return (
     <div>
@@ -114,14 +120,15 @@ function RatioRuler({
   fixed,
   height = 18,
   label,
+  t,
 }: Extract<RulerProps, { variant: "ratio" }>) {
   const foundPos = ratioPosition(found);
   const requiredPos = ratioPosition(required);
   const fixedPos = fixed != null ? ratioPosition(fixed) : null;
   const ariaLabel =
     label ??
-    `Contrast ${found.toFixed(2)} to 1, minimum ${required.toFixed(1)} to 1` +
-      (fixed != null ? `, fix reaches ${fixed.toFixed(2)} to 1` : "");
+    t("ratio.ariaLabel", { found: found.toFixed(2), required: required.toFixed(1) }) +
+      (fixed != null ? t("ratio.ariaLabelFixed", { fixed: fixed.toFixed(2) }) : "");
 
   return (
     <div>

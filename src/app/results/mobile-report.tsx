@@ -1,7 +1,7 @@
 "use client";
 
 import type { ScanResult } from "@/lib/scan/types";
-import type { FindingView } from "@/lib/report/findings";
+import { locatedMarkers, type FindingView } from "@/lib/report/findings";
 import type { ScoreBreakdown } from "@/lib/report/score";
 import type { WcagReadingModel } from "@/lib/report/wcag";
 import {
@@ -15,12 +15,15 @@ import {
 import { cn } from "@/lib/cn";
 import { langAttrs } from "@/lib/i18n/locale";
 import { modeList, type SimKey } from "./data";
-import { CaptureStage, type FocusPoint } from "./evidence-frame";
-import { type Layer, type MarkerView } from "./report-ui";
+import { CaptureStage, PartialOverviewNote, type FocusPoint } from "./evidence-frame";
+import { type ActiveCapture, type Layer, type MarkerView } from "./report-ui";
+import { useT } from "@/lib/i18n/provider";
 
 const MOBILE_MODES: SimKey[] = ["normal", "deuteranopia", "grayscale"];
 
 export function MobileReport({
+  capture,
+  overviewTop,
   result,
   host,
   breakdown,
@@ -32,6 +35,7 @@ export function MobileReport({
   selectedFinding,
   selectedId,
   onSelect,
+  onOpenEvidence,
   markerViews,
   focusPoints,
   onSelectMarker,
@@ -42,6 +46,8 @@ export function MobileReport({
   onRunFull,
   pending = false,
 }: {
+  capture: ActiveCapture;
+  overviewTop?: number | null;
   result: ScanResult;
   host: string;
   breakdown: ScoreBreakdown;
@@ -53,6 +59,7 @@ export function MobileReport({
   selectedFinding: FindingView | null;
   selectedId: string | null;
   onSelect: (id: string) => void;
+  onOpenEvidence: (id: string) => void;
   markerViews: MarkerView[];
   focusPoints: FocusPoint[];
   onSelectMarker: (markerN: number) => void;
@@ -63,6 +70,7 @@ export function MobileReport({
   onRunFull?: () => void;
   pending?: boolean;
 }) {
+  const t = useT();
   return (
     <div className="pb-20">
       <div className="sticky top-15.5 z-20 border-b border-border bg-surface px-4 py-3">
@@ -78,6 +86,7 @@ export function MobileReport({
           </span>
           <div className="flex-1">
             <Ruler
+              t={t}
               variant="score"
               score={result.score}
               deductions={breakdown.deductions}
@@ -86,23 +95,29 @@ export function MobileReport({
           </div>
         </div>
         <div className="mt-2.5">
-          <WcagChips model={wcag} />
+          <WcagChips model={wcag} t={t} />
         </div>
       </div>
 
-      <div role="tablist" aria-label="Report view" className="grid grid-cols-2 border-b border-ink">
-        {(["capture", "findings"] as const).map((t) => (
+      <div
+        role="tablist"
+        aria-label={t("results.reportView")}
+        className="grid grid-cols-2 border-b border-ink"
+      >
+        {(["capture", "findings"] as const).map((pane) => (
           <button
-            key={t}
+            key={pane}
             role="tab"
-            aria-selected={tab === t}
-            onClick={() => setTab(t)}
+            aria-selected={tab === pane}
+            onClick={() => setTab(pane)}
             className={cn(
               "flex h-12.5 cursor-pointer items-center justify-center text-[15px] font-semibold",
-              tab === t ? "bg-ink text-surface" : "bg-surface text-ink",
+              tab === pane ? "bg-ink text-surface" : "bg-surface text-ink",
             )}
           >
-            {t === "capture" ? "Screenshot" : `Findings · ${findings.length}`}
+            {pane === "capture"
+              ? t("capture.screenshot")
+              : t("results.findingsCount", { count: findings.length })}
           </button>
         ))}
       </div>
@@ -122,14 +137,21 @@ export function MobileReport({
                   sim === m ? "bg-ink text-surface" : "bg-surface text-ink",
                 )}
               >
-                {modeList.find((x) => x.key === m)?.label ?? m}
+                {(() => {
+                  const found = modeList.find((x) => x.key === m);
+                  return found ? t(found.label) : m;
+                })()}
               </button>
             ))}
           </div>
 
           <div className="border border-ink">
+            {capture.partial && capture.tiles && capture.tiles.length > 0 && (
+              <PartialOverviewNote capture={capture} />
+            )}
             <CaptureStage
-              result={result}
+              capture={capture}
+              overviewTop={overviewTop}
               host={host}
               sim={sim}
               layer={layer}
@@ -148,11 +170,11 @@ export function MobileReport({
             <div className="mt-4">
               <div className="flex items-center justify-between gap-3">
                 <span className="text-[12.5px] text-muted">
-                  {selectedFinding.elements} element{selectedFinding.elements === 1 ? "" : "s"} ·{" "}
-                  {selectedFinding.markers.length} on the screenshot
+                  {t("unit.element", { count: selectedFinding.elements })} ·{" "}
+                  {t("capture.shownOnScreenshot", { count: locatedMarkers(selectedFinding) })}
                 </span>
                 <Button variant="primary" size="md" onClick={() => setTab("findings")}>
-                  View finding
+                  {t("results.viewFinding")}
                 </Button>
               </div>
               <div className="mt-3 border border-border bg-surface p-3">
@@ -163,33 +185,34 @@ export function MobileReport({
               </div>
             </div>
           ) : (
-            <p className="mt-4 text-[13.5px] text-muted">
-              Tap a marker to open the finding it belongs to.
-            </p>
+            <p className="mt-4 text-[13.5px] text-muted">{t("results.tapMarker")}</p>
           )}
         </div>
       ) : (
         <div className="flex flex-col gap-2 p-4">
           {findings.length === 0 ? (
-            <p className="text-[13.5px] text-muted">
-              No automated failures on this page. Some things still need a person to check, shown as
-              manual-review items below.
-            </p>
+            <p className="text-[13.5px] text-muted">{t("results.noFailuresMobile")}</p>
           ) : (
             findings.map((f) => (
               <div key={f.id} {...langAttrs(result.locale)}>
                 <FindingRow
+                  t={t}
                   finding={f}
                   selected={f.id === selectedId}
                   onSelect={() => onSelect(f.id)}
                 />
                 {f.id === selectedId && (
                   <>
-                    <FindingDetail finding={f} host={host} />
-                    {f.markers.length > 0 && (
+                    <FindingDetail
+                      t={t}
+                      finding={f}
+                      host={host}
+                      onOpenEvidence={() => onOpenEvidence(f.id)}
+                    />
+                    {locatedMarkers(f) > 0 && (
                       <div className="mt-2">
                         <Button variant="secondary" size="md" onClick={() => setTab("capture")}>
-                          Show on screenshot
+                          {t("results.showOnScreenshot")}
                         </Button>
                       </div>
                     )}
@@ -208,7 +231,7 @@ export function MobileReport({
 
       <div className="fixed inset-x-0 bottom-0 z-30 flex gap-2 border-t border-border bg-surface px-4 py-2.5">
         <Button variant="secondary" size="md" onClick={onMarkdown} className="flex-1">
-          Export Markdown
+          {t("results.exportMarkdown")}
         </Button>
         <Button
           href={`/report?url=${encodeURIComponent(result.finalUrl)}`}
@@ -216,7 +239,7 @@ export function MobileReport({
           size="md"
           className="flex-1"
         >
-          Export PDF
+          {t("results.exportPdf")}
         </Button>
       </div>
     </div>

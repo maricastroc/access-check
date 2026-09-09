@@ -9,6 +9,9 @@ import {
   withScoring,
 } from "./scored";
 import type { ScanResult, Severity } from "./types";
+import { translator } from "../i18n/t";
+
+const t = translator();
 
 function finding(id: string, severity: Severity, count: number) {
   return {
@@ -41,7 +44,7 @@ describe("scoredViolations", () => {
 
     expect(counts.serious).toBe(1);
     expect(computeScore(scored)).toBeLessThan(100);
-    expect(buildSummary(counts)).not.toContain("Excellent");
+    expect(buildSummary(counts, t)).not.toContain("Excellent");
   });
 
   it("keeps rules and elements apart", () => {
@@ -205,16 +208,16 @@ describe("partial readings never claim a clean page", () => {
   const none = { critical: 0, serious: 0, moderate: 0 };
 
   it("says what it is speaking for when checks were skipped", () => {
-    expect(buildSummary(none, { partial: true })).not.toContain("Excellent");
-    expect(buildSummary(none, { partial: true })).toContain("checks that ran");
+    expect(buildSummary(none, t, { partial: true })).not.toContain("Excellent");
+    expect(buildSummary(none, t, { partial: true })).toContain("checks that ran");
   });
 
   it("still reads plainly when everything ran", () => {
-    expect(buildSummary(none)).toBe("Excellent. No automated findings on this page.");
+    expect(buildSummary(none, t)).toBe("Excellent. No automated findings on this page.");
   });
 
   it("scopes an absence claim that sits next to real findings", () => {
-    expect(buildSummary({ critical: 0, serious: 2, moderate: 0 }, { partial: true })).toContain(
+    expect(buildSummary({ critical: 0, serious: 2, moderate: 0 }, t, { partial: true })).toContain(
       "No critical blockers among the checks that ran",
     );
   });

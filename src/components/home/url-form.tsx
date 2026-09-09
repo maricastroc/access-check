@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 import { cn } from "@/lib/cn";
+import { SectionKicker } from "@/components/ui";
+import { useT } from "@/lib/i18n/provider";
 
 export function UrlField({
   value,
@@ -11,7 +13,6 @@ export function UrlField({
   size = "md",
   placeholder = "example.com",
   error,
-  trailing,
   autoFocus,
 }: {
   value: string;
@@ -20,9 +21,9 @@ export function UrlField({
   size?: "sm" | "md" | "lg";
   placeholder?: string;
   error?: string;
-  trailing?: React.ReactNode;
   autoFocus?: boolean;
 }) {
+  const t = useT();
   const height = size === "lg" ? "h-[66px]" : size === "sm" ? "h-[52px]" : "h-[56px]";
   const errorId = useId();
 
@@ -46,14 +47,13 @@ export function UrlField({
               onSubmit();
             }
           }}
-          aria-label="Website address to audit"
+          aria-label={t("form.addressLabel")}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? errorId : undefined}
           placeholder={placeholder}
           autoFocus={autoFocus}
           className="min-w-0 flex-1 bg-transparent font-mono text-[16px] text-ink placeholder:text-muted focus:outline-none"
         />
-        {trailing}
       </div>
       {error && (
         <p id={errorId} role="alert" className="mt-1.5 text-[12.5px] text-critical">
@@ -67,6 +67,7 @@ export function UrlField({
 type Scope = "page" | "site";
 
 export function UrlForm({ accent = false, examples }: { accent?: boolean; examples?: string[] }) {
+  const t = useT();
   const router = useRouter();
   const [value, setValue] = useState("");
   const [scope, setScope] = useState<Scope>("page");
@@ -75,7 +76,7 @@ export function UrlForm({ accent = false, examples }: { accent?: boolean; exampl
   const go = (target: string, s: Scope) => {
     const v = target.trim();
     if (!v) {
-      setError("Enter a web address to audit, like example.com.");
+      setError(t("form.addressHint"));
       return;
     }
     router.push(`${s === "site" ? "/site" : "/results"}?url=${encodeURIComponent(v)}`);
@@ -83,6 +84,36 @@ export function UrlForm({ accent = false, examples }: { accent?: boolean; exampl
 
   return (
     <div>
+      <div className="mb-2.5 flex flex-wrap items-center gap-x-3 gap-y-2">
+        <SectionKicker tone={accent ? "band" : "muted"}>{t("form.whatToAudit")}</SectionKicker>
+        <div
+          className={cn("flex items-stretch border", accent ? "border-disabled" : "border-border")}
+          role="group"
+          aria-label={t("form.whatToAudit")}
+        >
+          {(["page", "site"] as Scope[]).map((s) => (
+            <button
+              key={s}
+              type="button"
+              aria-pressed={scope === s}
+              onClick={() => setScope(s)}
+              className={cn(
+                "h-7 cursor-pointer px-3 text-[12.5px] font-medium",
+                scope === s
+                  ? accent
+                    ? "bg-surface text-ink"
+                    : "bg-ink text-surface"
+                  : accent
+                    ? "text-band hover:bg-ink-2"
+                    : "bg-surface text-muted hover:bg-band",
+                s === "site" && (accent ? "border-l border-disabled" : "border-l border-border"),
+              )}
+            >
+              {s === "page" ? t("form.scopePage") : t("form.scopeSite")}
+            </button>
+          ))}
+        </div>
+      </div>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
         <div className="min-w-0 flex-1">
           <UrlField
@@ -94,30 +125,6 @@ export function UrlForm({ accent = false, examples }: { accent?: boolean; exampl
             onSubmit={() => go(value, scope)}
             error={error}
             size="lg"
-            trailing={
-              <div
-                className="hidden items-stretch border border-border sm:flex"
-                role="tablist"
-                aria-label="What to audit"
-              >
-                {(["page", "site"] as Scope[]).map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    role="tab"
-                    aria-selected={scope === s}
-                    onClick={() => setScope(s)}
-                    className={cn(
-                      "cursor-pointer px-3 text-[13px] font-medium",
-                      scope === s ? "bg-ink text-surface" : "bg-surface text-muted hover:bg-band",
-                      s === "site" && "border-l border-border",
-                    )}
-                  >
-                    {s === "page" ? "Page" : "Site"}
-                  </button>
-                ))}
-              </div>
-            }
           />
         </div>
         <button
@@ -128,20 +135,20 @@ export function UrlForm({ accent = false, examples }: { accent?: boolean; exampl
             accent ? "bg-serious hover:brightness-110" : "bg-ink hover:bg-ink-2",
           )}
         >
-          {scope === "site" ? "Audit site" : "Audit page"}
+          {scope === "site" ? t("home.auditSite") : t("home.auditPage")}
           <span aria-hidden className="h-px w-5 bg-surface" />
         </button>
       </div>
       <p className={cn("mt-3 text-[13.5px]", accent ? "text-disabled" : "text-muted")}>
-        No account, no extension, no change to the audited site
+        {t("home.form.noAccount")}
         <span aria-hidden className="mx-2 inline-block h-3 w-px translate-y-0.5 bg-border" />
-        Export as PDF or Markdown
+        {t("home.form.exportNote")}
         <span aria-hidden className="mx-2 inline-block h-3 w-px translate-y-0.5 bg-border" />
-        About 10 to 25 seconds per page
+        {t("home.timing")}
       </p>
       {examples && examples.length > 0 && (
         <p className={cn("mt-2 text-[13px]", accent ? "text-band" : "text-muted")}>
-          Quick examples:{" "}
+          {t("home.quickExamples")}{" "}
           {examples.map((ex, i) => (
             <span key={ex}>
               {i > 0 && (

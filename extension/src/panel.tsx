@@ -9,23 +9,25 @@ import { buildFindings, type FindingView } from "../../src/lib/report/findings";
 import type { KeyboardOccurrence } from "../../src/lib/scan/keyboard";
 import type { OverlayMark } from "../../src/lib/scan/dom/overlay";
 import type { ScanResult } from "../../src/lib/scan/types";
-import { langAttrs } from "../../src/lib/i18n/locale";
+import { langAttrs, normalizeReportLocale } from "../../src/lib/i18n/locale";
 import type { ReportLocale } from "../../src/lib/i18n/locale";
+import { translator } from "../../src/lib/i18n/t";
 import { auditScope, focusPathLines } from "./coverage";
 import type { AuditStage, HighlightReply, PanelMessage, PanelState } from "./state";
 
+const UI_LOCALE = normalizeReportLocale(chrome.i18n.getUILanguage());
+const t = translator(UI_LOCALE);
+
+document.documentElement.lang = UI_LOCALE;
+
 const STAGES = [
-  "Checking page structure",
-  "Running accessibility rules",
-  "Walking the focus path",
-  "Preparing the report",
+  t("stage.structure"),
+  t("stage.rules"),
+  t("stage.focus"),
+  t("stage.report"),
 ] as const;
 
-const QUICK_STAGES = [
-  "Checking page structure",
-  "Running accessibility rules",
-  "Preparing the report",
-] as const;
+const QUICK_STAGES = [t("stage.structure"), t("stage.rules"), t("stage.report")] as const;
 
 const STAGE_INDEX: Record<AuditStage, number> = {
   structure: 0,
@@ -53,7 +55,7 @@ function StickyBar({ title, score, onTop }: { title: string; score?: number; onT
           className="shrink-0 cursor-pointer border border-border bg-surface px-2 py-1 font-cond text-[13px] font-semibold text-ink tabular-nums hover:bg-band"
         >
           {score}
-          <span className="sr-only"> out of 100 — back to the summary</span>
+          <span className="sr-only">{t("panel.scoreOutOf")}</span>
         </button>
       )}
     </div>
@@ -61,7 +63,7 @@ function StickyBar({ title, score, onTop }: { title: string; score?: number; onT
 }
 
 function Header({ result }: { result: ScanResult }) {
-  const scope = auditScope(result);
+  const scope = auditScope(result, t);
 
   return (
     <section className="mt-3 border border-border bg-surface p-3" aria-labelledby="score-heading">
@@ -75,7 +77,7 @@ function Header({ result }: { result: ScanResult }) {
         <span className="font-cond text-[40px] leading-none text-ink tabular-nums">
           {result.score}
         </span>
-        <span className="text-[12.5px] text-muted">/100</span>
+        <span className="text-[12.5px] text-muted">{t("panel.perHundred")}</span>
       </div>
 
       <p className="mt-1.5 text-[12.5px] leading-normal font-medium text-moderate-text">
@@ -86,18 +88,18 @@ function Header({ result }: { result: ScanResult }) {
       <dl className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1 text-[12.5px] text-muted">
         {(
           [
-            ["critical", result.counts.critical],
-            ["serious", result.counts.serious],
-            ["moderate", result.counts.moderate],
-            ["minor", result.counts.minor],
-            ["passed", result.counts.passed],
-            ["best practice", result.counts.bestPractice],
-            ["manual review", result.counts.manualReview],
+            ["panel.count.critical", result.counts.critical],
+            ["panel.count.serious", result.counts.serious],
+            ["panel.count.moderate", result.counts.moderate],
+            ["panel.count.minor", result.counts.minor],
+            ["panel.count.passed", result.counts.passed],
+            ["panel.count.bestPractice", result.counts.bestPractice],
+            ["panel.count.manualReview", result.counts.manualReview],
           ] as const
         ).map(([label, n]) => (
           <div key={label} className="whitespace-nowrap">
             <dt className="inline font-semibold text-ink tabular-nums">{n}</dt>{" "}
-            <dd className="inline">{label}</dd>
+            <dd className="inline">{t(label)}</dd>
           </div>
         ))}
       </dl>
@@ -132,14 +134,14 @@ function Capture({ result }: { result: ScanResult }) {
 
   return (
     <Collapsed
-      title="Evidence"
-      note={`viewport screenshot${marked > 0 ? ` · ${marked} marked` : ""}`}
+      title={t("panel.evidence")}
+      note={marked > 0 ? t("panel.evidenceNoteMarked", { count: marked }) : t("panel.evidenceNote")}
     >
       <div className="relative border border-hairline">
         {/* eslint-disable-next-line @next/next/no-img-element -- the panel is not a Next page */}
         <img
           src={result.screenshot}
-          alt={`Screenshot of ${result.finalUrl}`}
+          alt={t("panel.screenshotAlt", { url: result.finalUrl })}
           className="block w-full"
         />
         {result.markers.map((m) => (
@@ -199,7 +201,7 @@ function CopyButton({
         )
       }
     >
-      {state === "done" ? "Copied" : state === "failed" ? "Copy failed" : label}
+      {state === "done" ? t("panel.copied") : state === "failed" ? t("panel.copyFailed") : label}
     </button>
   );
 }
@@ -250,19 +252,18 @@ function Occurrences({
 
   const truncated = occurrence.html?.includes("…") ?? false;
   const where = [
-    occurrence.stop === null ? "Never reached by Tab" : `Stop ${occurrence.stop}`,
+    occurrence.stop === null ? t("panel.neverReached") : t("panel.stopN", { n: occurrence.stop }),
     occurrence.tag ? `<${occurrence.tag}>` : null,
     occurrence.label || null,
   ].filter(Boolean);
 
   return (
-    <section className="mt-4 border-t border-hairline pt-3" aria-label="Occurrences">
+    <section className="mt-4 border-t border-hairline pt-3" aria-label={t("panel.occurrences")}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <SectionKicker as="h4">
-          Occurrence {at + 1} of {total}
-        </SectionKicker>
+        <SectionKicker as="h4">{t("panel.occurrenceOf", { at: at + 1, total })}</SectionKicker>
         {total > 1 && (
           <OccurrenceStepper
+            t={t}
             index={at}
             total={total}
             onPrev={() => step(-1)}
@@ -273,26 +274,30 @@ function Occurrences({
 
       <p className="mt-2 text-[12px] leading-normal break-words text-muted">{where.join(" · ")}</p>
 
-      <Field label="Evidence">
+      <Field label={t("panel.evidence")}>
         <p className="text-[13px] leading-[1.55] break-words text-body">{occurrence.reason}</p>
         {occurrence.certainty === "needs-review" && (
           <p className="mt-1.5 text-[12px] leading-normal text-moderate-text">
-            Geometry alone cannot settle this one — check it against the reading order you intend.
+            {t("panel.geometryUnsure")}
           </p>
         )}
       </Field>
 
       {occurrence.rect && (
-        <Field label="Position">
+        <Field label={t("panel.position")}>
           <p className="text-[12px] text-muted tabular-nums">
-            {Math.round(occurrence.rect.w)}×{Math.round(occurrence.rect.h)}px at{" "}
-            {Math.round(occurrence.rect.x)}, {Math.round(occurrence.rect.y)}
-            {occurrence.onScreen ? "" : " · outside the viewport when it was measured"}
+            {t("panel.positionValue", {
+              w: Math.round(occurrence.rect.w),
+              h: Math.round(occurrence.rect.h),
+              x: Math.round(occurrence.rect.x),
+              y: Math.round(occurrence.rect.y),
+            })}
+            {occurrence.onScreen ? "" : t("panel.offViewport")}
           </p>
         </Field>
       )}
 
-      <Field label="Element">
+      <Field label={t("panel.element")}>
         <p className="overflow-x-auto font-mono text-[12px] break-all text-steel">
           {occurrence.selector}
         </p>
@@ -302,10 +307,7 @@ function Occurrences({
           </pre>
         )}
         {truncated && (
-          <p className="mt-1.5 text-[12px] leading-normal text-muted">
-            Abbreviated with … , and attributes that can carry what you typed are left out.
-            Evidence, not markup to paste back.
-          </p>
+          <p className="mt-1.5 text-[12px] leading-normal text-muted">{t("panel.abbreviated")}</p>
         )}
       </Field>
 
@@ -315,12 +317,12 @@ function Occurrences({
         disabled={busy}
         onClick={() => void locate()}
       >
-        {busy ? "Looking for it…" : "Locate on page"}
+        {busy ? t("panel.locating") : t("panel.locate")}
       </button>
 
       <div className="mt-1.5 flex flex-wrap gap-1.5">
-        <CopyButton label="Copy selector" value={occurrence.selector} />
-        {occurrence.html && <CopyButton label="Copy HTML" value={occurrence.html} />}
+        <CopyButton label={t("panel.copySelector")} value={occurrence.selector} />
+        {occurrence.html && <CopyButton label={t("panel.copyHtml")} value={occurrence.html} />}
       </div>
 
       {notice && (
@@ -360,13 +362,12 @@ function Findings({
         </SectionKicker>
       </div>
       {findings.length === 0 ? (
-        <p className="px-3 py-3 text-[12.5px] text-muted">
-          None of the checks this build runs found a failure.
-        </p>
+        <p className="px-3 py-3 text-[12.5px] text-muted">{t("panel.noFailures")}</p>
       ) : (
         findings.map((f) => (
-          <div key={f.id} {...langAttrs(locale)}>
+          <div key={f.id} {...langAttrs(locale, UI_LOCALE)}>
             <FindingRow
+              t={t}
               finding={f}
               selected={selected === f.id}
               onSelect={() => setSelected(selected === f.id ? null : f.id)}
@@ -374,12 +375,14 @@ function Findings({
             {selected === f.id && (
               <div className="border-x border-b border-hairline bg-surface px-3 pt-2 pb-3">
                 {f.contexts.length > 0 && (
-                  <p className="text-[12px] text-muted">Also fails in {f.contexts.join(", ")}</p>
+                  <p className="text-[12px] text-muted">
+                    {t("panel.alsoFailsIn", { contexts: f.contexts.join(", ") })}
+                  </p>
                 )}
-                <Field label="Problem">
+                <Field label={t("panel.problem")}>
                   <p className="text-[13px] leading-[1.55] break-words text-body">{f.desc}</p>
                 </Field>
-                <Field label="Suggested fix">
+                <Field label={t("panel.suggestedFix")}>
                   <p className="text-[13px] leading-[1.55] break-words text-body">{f.fixText}</p>
                   {f.fixCode && (
                     <pre className="mt-1.5 overflow-x-auto bg-code p-2 font-mono text-[12px] text-ink">
@@ -400,20 +403,20 @@ function Findings({
 function ChecksPerformed({ result }: { result: ScanResult }) {
   const primed = !(result.warnings ?? []).some((w) => w.code === "lazy-content-skipped");
   const ran = [
-    primed ? "Walked the page first so content that renders on scroll was read" : null,
-    "axe-core, WCAG A and AA (2.0, 2.1, 2.2) plus best practice",
-    "Target size (WCAG 2.5.8)",
-    "Live regions (WCAG 4.1.3)",
-    result.screenshot ? "Screenshot of the visible viewport" : null,
+    primed ? t("panel.check.primed") : null,
+    t("panel.check.axe"),
+    t("panel.check.targetSize"),
+    t("panel.check.liveRegions"),
+    result.screenshot ? t("panel.check.screenshot") : null,
     result.keyboard
       ? result.keyboard.truncated
-        ? "Focus path with real Tab presses (stopped early)"
-        : "Focus path with real Tab presses"
+        ? t("panel.check.focusPathStopped")
+        : t("panel.check.focusPath")
       : null,
   ].filter((x): x is string => x !== null);
 
   return (
-    <Collapsed title="Checks performed" note={`${ran.length}`}>
+    <Collapsed title={t("panel.checksPerformed")} note={`${ran.length}`}>
       <ul className="list-disc space-y-1 pl-4 text-[12.5px] leading-[1.5] text-body">
         {ran.map((item) => (
           <li key={item}>{item}</li>
@@ -437,10 +440,10 @@ function marksFor(result: ScanResult): OverlayMark[] {
     selector: s.selector,
     kind: !s.focusVisible ? "failure" : jumped.has(s.n) ? "attention" : "stop",
     label: !s.focusVisible
-      ? "no focus ring"
+      ? t("panel.mark.noFocusRing")
       : jumped.has(s.n)
-        ? "check order"
-        : (s.label || "stop").slice(0, 28),
+        ? t("panel.mark.checkOrder")
+        : (s.label || t("panel.mark.stop")).slice(0, 28),
   }));
 }
 
@@ -483,21 +486,19 @@ function FocusPath({
 }) {
   const walked = result.keyboard;
   const stops = walked?.focusPath.length ?? 0;
-  const lines = walked ? focusPathLines(walked) : null;
+  const lines = walked ? focusPathLines(walked, t) : null;
 
   return (
     <section className="mt-3 border-t border-hairline px-3 pt-3" aria-labelledby="focus-heading">
       <SectionKicker as="h2" id="focus-heading">
-        Focus path
+        {t("panel.focusPath")}
       </SectionKicker>
 
       {walked && lines ? (
         <p className="mt-1.5 text-[12.5px] leading-normal text-body">{lines.line}</p>
       ) : (
         <p className="mt-1.5 text-[12.5px] leading-normal text-body">
-          This reading has no focus path. Walking it attaches Chrome&apos;s debugger for the length
-          of the walk — Chrome shows its own banner meanwhile — types Tab into the page, and puts
-          focus and scroll back afterwards.
+          {t("panel.focusPathAbsent")}
         </p>
       )}
 
@@ -517,53 +518,53 @@ function FocusPath({
         <>
           {!showing ? (
             <button type="button" onClick={onShow} className={`${SECONDARY_BUTTON} mt-3`}>
-              Show focus path
+              {t("panel.showFocusPath")}
             </button>
           ) : (
             <>
               <div className="mt-2.5 flex items-center gap-1.5">
                 <button
                   type="button"
-                  aria-label="Previous stop"
+                  aria-label={t("panel.previousStop")}
                   className={`${SMALL_BUTTON} flex-1`}
                   onClick={() => onStep(-1)}
                 >
-                  Previous
+                  {t("panel.previous")}
                 </button>
                 <span
                   aria-live="polite"
                   className="min-w-24 text-center font-cond text-[13px] font-semibold text-ink tabular-nums"
                 >
-                  Stop {at} of {stops}
+                  {t("panel.stopOf", { at, total: stops })}
                 </span>
                 <button
                   type="button"
-                  aria-label="Next stop"
+                  aria-label={t("panel.nextStop")}
                   className={`${SMALL_BUTTON} flex-1`}
                   onClick={() => onStep(1)}
                 >
-                  Next
+                  {t("panel.next")}
                 </button>
               </div>
 
               <div className="mt-1.5 flex flex-wrap gap-1.5">
                 <button type="button" className={SMALL_BUTTON} onClick={onToggleComplete}>
-                  {complete ? "Show nearby stops only" : "Show complete path"}
+                  {complete ? t("panel.showNearbyOnly") : t("panel.showComplete")}
                 </button>
                 <button type="button" className={SMALL_BUTTON} onClick={onClear}>
-                  Clear overlay
+                  {t("panel.clearOverlay")}
                 </button>
                 {moved && (
                   <button type="button" className={SMALL_BUTTON} onClick={onRestoreScroll}>
-                    Back to where you were
+                    {t("panel.backToWhereYouWere")}
                   </button>
                 )}
               </div>
 
               <p className="mt-1.5 text-[11.5px] leading-normal text-muted">
                 {complete
-                  ? "Every stop is drawn. The current one is highlighted; the rest are dimmed."
-                  : `Drawing the current stop and ${NEIGHBOURS} either side, so the page stays readable.`}
+                  ? t("panel.drawingAll")
+                  : t("panel.drawingWindow", { neighbours: NEIGHBOURS })}
               </p>
             </>
           )}
@@ -574,7 +575,7 @@ function FocusPath({
 
       {!walked && (
         <button type="button" onClick={onWalk} className={`${PRIMARY_BUTTON} mt-3`}>
-          Walk the focus path now
+          {t("panel.walkNow")}
         </button>
       )}
     </section>
@@ -595,17 +596,15 @@ function Running({
 
   return (
     <>
-      <StickyBar title={mode === "quick" ? "Quick audit" : "Auditing this tab"} />
+      <StickyBar title={mode === "quick" ? t("panel.quickAudit") : t("panel.auditingTab")} />
       <div className="px-3 pt-3">
         <p className="truncate font-mono text-[12px] text-muted">{url}</p>
         <div className="mt-3 border border-border bg-surface p-3">
           <StageList stages={stages} current={current} />
         </div>
         <p className="mt-3 text-[12.5px] leading-[1.5] text-muted">
-          The score appears when every step above has finished. The page is not modified.
-          {mode === "expanded"
-            ? " Walking the focus path attaches Chrome's debugger for that step only — Chrome shows its own banner meanwhile — and it is released before the report appears."
-            : ""}
+          {t("panel.runningNote")}
+          {mode === "expanded" ? t("panel.runningNoteDeep") : ""}
         </p>
       </div>
     </>
@@ -642,7 +641,7 @@ function Report({
   const [at, setAt] = useState(1);
   const [syncStop, setSyncStop] = useState<number | null>(null);
   const marks = marksFor(result);
-  const scope = auditScope(result);
+  const scope = auditScope(result, t);
 
   const locate = async (occurrence: KeyboardOccurrence) => {
     setShowing(false);
@@ -714,13 +713,13 @@ function Report({
         />
       </div>
 
-      <Collapsed title="Coverage limitations" note={scope.summary}>
+      <Collapsed title={t("panel.coverageLimitations")} note={scope.summary}>
         <p className="text-[13px] leading-[1.55] text-body">{scope.note}</p>
         <div className="mt-2.5">
           <WarningList
             warnings={result.warnings ?? []}
-            title="Not checked in this build"
-            note="A reading from this build is never a clean bill of health for the page."
+            title={t("panel.notChecked")}
+            note={t("panel.notCheckedNote")}
           />
         </div>
       </Collapsed>
@@ -730,7 +729,7 @@ function Report({
 
       <div className="mt-4 border-t border-hairline px-3 pt-3">
         <button type="button" onClick={onReaudit} className={PRIMARY_BUTTON}>
-          Audit this tab again
+          {t("panel.auditAgain")}
         </button>
         <button
           type="button"
@@ -738,10 +737,10 @@ function Report({
           aria-describedby="quick-audit-note"
           className={`${SECONDARY_BUTTON} mt-2`}
         >
-          Run quick audit
+          {t("panel.runQuickAudit")}
         </button>
         <p id="quick-audit-note" className="mt-1.5 text-center text-[12px] text-muted">
-          No debugger or keyboard focus path
+          {t("panel.quickAuditNote")}
         </p>
       </div>
     </>
@@ -818,18 +817,24 @@ function Panel() {
       timeoutMs,
     })) as HighlightReply | undefined;
 
-    if (!reply) return { notice: "The page could not be reached from here.", moved: false };
+    if (!reply) return { notice: t("panel.pageUnreachable"), moved: false };
     if (!reply.ok) return { notice: reply.message, moved: false };
 
     const { missing, offScreen, focused, movedScroll } = reply.report;
     const notice = !focused
       ? null
       : !focused.found
-        ? "That element is no longer in the page: the DOM changed since the audit ran."
+        ? t("panel.elementGone")
         : missing.length > 0
-          ? `${missing.length} of ${missing.length + reply.report.drawn} stops are no longer in the page, so they could not be drawn.`
+          ? t("panel.someStopsGone", {
+              missing: missing.length,
+              total: missing.length + reply.report.drawn,
+            })
           : offScreen.length > 0 && marks.length > 1
-            ? `${offScreen.length} of ${marks.length} stops are outside the viewport right now, so only the rest are drawn.`
+            ? t("panel.someStopsOffScreen", {
+                offScreen: offScreen.length,
+                total: marks.length,
+              })
             : null;
 
     return { notice, moved: movedScroll };
@@ -841,16 +846,15 @@ function Panel() {
     <Shell>
       <div role="status" aria-live="polite" className="sr-only">
         {running
-          ? `Auditing. Step ${STAGE_INDEX[state.stage] + 1}: ${STAGES[STAGE_INDEX[state.stage]]}.`
+          ? t("panel.announceStep", {
+              n: STAGE_INDEX[state.stage] + 1,
+              stage: STAGES[STAGE_INDEX[state.stage]],
+            })
           : ""}
       </div>
 
       {state.kind === "idle" && (
-        <Message
-          kicker="AccessCheck"
-          title="Nothing audited yet"
-          body="Click the AccessCheck icon in the toolbar to audit the page you are on. The audit runs the rules and then walks the focus path, which attaches Chrome's debugger for that step. Nothing leaves your browser."
-        />
+        <Message kicker="AccessCheck" title={t("panel.idleTitle")} body={t("panel.idleBody")} />
       )}
 
       {state.kind === "running" && (
@@ -859,21 +863,21 @@ function Panel() {
 
       {state.kind === "unsupported" && (
         <Message
-          kicker="Not supported here"
-          title="This page cannot be audited"
-          body={state.reason}
+          kicker={t("panel.unsupportedKicker")}
+          title={t("panel.unsupportedTitle")}
+          body={t(state.reason)}
         />
       )}
 
       {state.kind === "error" && (
-        <Message kicker="Audit failed" title="The audit could not finish" body={state.message}>
+        <Message kicker={t("panel.errorKicker")} title={t("panel.errorTitle")} body={state.message}>
           {state.recoverable && (
             <button
               type="button"
               onClick={() => void send({ type: "panel:audit", deep: true })}
               className={`${PRIMARY_BUTTON} mt-3`}
             >
-              Try again
+              {t("panel.tryAgain")}
             </button>
           )}
         </Message>

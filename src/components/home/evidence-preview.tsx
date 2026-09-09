@@ -4,6 +4,7 @@ import { buildVerdict } from "@/lib/report/verdict";
 import { buildContrastPreview } from "@/lib/report/preview";
 import { BrowserFrame, ColorSwatch, Marker, StatusSeal } from "@/components/ui";
 import { exampleFinding } from "./content";
+import type { Translate } from "@/lib/i18n/t";
 
 const demoMeasurement: ContrastMeasurement = {
   measured: exampleFinding.measured,
@@ -25,48 +26,54 @@ const demoVerdict = buildVerdict({
   verifySkipped: false,
 });
 
-export const demoFinding: FindingView = {
-  id: "demo",
-  n: 1,
-  kind: "wcag",
-  isWcag: true,
-  severity: "serious",
-  passLabel: null,
-  title: exampleFinding.title,
-  criterionSc: exampleFinding.sc,
-  criterionName: exampleFinding.name,
-  elements: exampleFinding.elements,
-  ruleId: exampleFinding.ruleId,
-  desc: "Ensures the contrast between foreground and background colors meets the WCAG threshold.",
-  impact:
-    "People with low vision or reduced contrast sensitivity may be unable to read this text, especially on low-quality screens or in bright light.",
-  fixText: `Set the text color to ${exampleFinding.toHex.toUpperCase()} → ${exampleFinding.fixed}:1.`,
-  fixCode: `color: ${exampleFinding.toHex};`,
-  fixGroups: null,
-  guidance: null,
-  measurement: demoMeasurement,
-  preview: buildContrastPreview(demoMeasurement, "verified", exampleFinding.elements),
-  verdict: demoVerdict,
-  occurrences: [],
-  affectedSelectors: [exampleFinding.selector],
-  selectors: [exampleFinding.selector],
-  markers: [
-    {
-      n: 1,
-      severity: "serious",
-      label: exampleFinding.title,
-      left: 8,
-      top: 46,
-      width: 14,
-      height: 7,
-    },
-  ],
-  located: true,
-  contexts: [],
-  noMarkerReason: "",
-};
+export function demoFinding(t: Translate): FindingView {
+  return {
+    id: "demo",
+    n: 1,
+    kind: "wcag",
+    isWcag: true,
+    severity: "serious",
+    passLabel: null,
+    title: t(exampleFinding.title),
+    criterionSc: exampleFinding.sc,
+    criterionName: t(exampleFinding.name),
+    elements: exampleFinding.elements,
+    ruleId: exampleFinding.ruleId,
+    desc: t("home.example.desc"),
+    impact: t("impact.contrast"),
+    fixText: t("home.example.fixText", {
+      hex: exampleFinding.toHex.toUpperCase(),
+      ratio: exampleFinding.fixed,
+    }),
+    fixCode: `color: ${exampleFinding.toHex};`,
+    fixGroups: null,
+    guidance: null,
+    measurement: demoMeasurement,
+    preview: buildContrastPreview(demoMeasurement, "verified", exampleFinding.elements),
+    verdict: demoVerdict,
+    occurrences: [],
+    affectedSelectors: [exampleFinding.selector],
+    selectors: [exampleFinding.selector],
+    markers: [
+      {
+        n: 1,
+        severity: "serious",
+        label: t(exampleFinding.title),
+        left: 8,
+        top: 46,
+        width: 14,
+        height: 7,
+        captureId: "overview",
+        evidence: "captured" as const,
+      },
+    ],
+    located: true,
+    contexts: [],
+    noMarkerReason: "",
+  };
+}
 
-export function CapturePreview({ height = 240 }: { height?: number }) {
+export function CapturePreview({ height = 240, t }: { height?: number; t: Translate }) {
   return (
     <div
       className="relative overflow-hidden border-b border-ink"
@@ -92,13 +99,7 @@ export function CapturePreview({ height = 240 }: { height?: number }) {
               Order now
             </span>
             <span className="absolute top-1/2 left-0 translate-x-[-135%] -translate-y-1/2">
-              <Marker
-                n={2}
-                state="idle"
-                dimmed
-                size={24}
-                ariaLabel="Contrast finding, another element sharing this color"
-              />
+              <Marker n={2} state="idle" dimmed size={24} ariaLabel={t("home.lens.sharedColor")} />
             </span>
           </span>
         </div>
@@ -111,7 +112,7 @@ export function CapturePreview({ height = 240 }: { height?: number }) {
           small batch, since 2011
         </h3>
         <p className="mt-2 max-w-[62%] text-[10px] leading-normal text-ink/70">
-          Roasted in Porto every Tuesday and shipped the same week.
+          {t("home.demo.roasted")}
         </p>
         <span className="relative mt-4 inline-block">
           <span
@@ -130,7 +131,7 @@ export function CapturePreview({ height = 240 }: { height?: number }) {
               n={1}
               state="selected"
               label="2.1:1 · needs 4.5:1"
-              ariaLabel="Contrast finding, located element"
+              ariaLabel={t("home.lens.locatedElement")}
             />
           </span>
         </span>
@@ -139,19 +140,23 @@ export function CapturePreview({ height = 240 }: { height?: number }) {
   );
 }
 
-export function HeroEvidencePreview() {
+export function HeroEvidencePreview({ t }: { t: Translate }) {
   return (
     <BrowserFrame
-      label="Screenshot · scale 43%"
+      label={t("home.lens.frameLabel")}
       trailing={
         <div className="hidden items-stretch border border-border text-[11px] sm:flex">
-          <span className="bg-ink px-2 py-0.5 font-medium text-surface">Normal</span>
-          <span className="border-l border-border px-2 py-0.5 text-muted">Deut.</span>
-          <span className="border-l border-border px-2 py-0.5 text-muted">Gray</span>
+          <span className="bg-ink px-2 py-0.5 font-medium text-surface">{t("vision.normal")}</span>
+          <span className="border-l border-border px-2 py-0.5 text-muted">
+            {t("vision.short.deut")}
+          </span>
+          <span className="border-l border-border px-2 py-0.5 text-muted">
+            {t("vision.short.gray")}
+          </span>
         </div>
       }
     >
-      <CapturePreview height={210} />
+      <CapturePreview t={t} height={210} />
       <div
         className="border-t border-ink p-3.5"
         style={{ borderLeft: "3px solid var(--color-serious)" }}
@@ -164,11 +169,11 @@ export function HeroEvidencePreview() {
             1
           </span>
           <span className="font-cond text-[11px] tracking-widest text-serious uppercase">
-            Serious
+            {t("severity.serious")}
           </span>
           <span className="ml-auto font-mono text-[12px] text-steel">1.4.3 AA</span>
         </div>
-        <p className="mt-2 text-[14.5px] font-semibold text-ink">{demoFinding.title}</p>
+        <p className="mt-2 text-[14.5px] font-semibold text-ink">{t(exampleFinding.title)}</p>
         <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-muted">
           <span className="font-mono text-[11.5px] text-steel">a.hero__cta</span>
           <span aria-hidden className="text-border">
@@ -197,7 +202,9 @@ export function HeroEvidencePreview() {
           </span>
           <span className="font-cond text-verified">→ 4.62:1</span>
           <span className="ml-auto">
-            <StatusSeal status="verified">Located element verified</StatusSeal>
+            <StatusSeal t={t} status="verified">
+              {t("home.lens.locatedVerified")}
+            </StatusSeal>
           </span>
         </div>
       </div>

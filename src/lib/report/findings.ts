@@ -5,6 +5,7 @@ import { SEVERITY_ORDER } from "./severity";
 import { parseContrastFix, type ContrastMeasurement } from "./contrast";
 import { buildVerdict, type Verdict } from "./verdict";
 import { buildContrastPreview, type ContrastPreview } from "./preview";
+import { translator, type MessageKey, type Translate } from "../i18n/t";
 import {
   fixGuidance,
   humanImpact,
@@ -22,13 +23,13 @@ export type FindingKind =
   | "context"
   | "best-practice";
 
-const PASS_LABEL: Partial<Record<FindingKind, string>> = {
-  keyboard: "Keyboard",
-  "target-size": "Target size",
-  "reduced-motion": "Reduced motion",
-  "live-regions": "Live regions",
-  context: "Responsive & dynamic",
-  "best-practice": "Best practice",
+const PASS_LABEL_KEY: Partial<Record<FindingKind, MessageKey>> = {
+  keyboard: "finding.kind.keyboard",
+  "target-size": "finding.kind.targetSize",
+  "reduced-motion": "finding.kind.reducedMotion",
+  "live-regions": "finding.kind.liveRegions",
+  context: "finding.kind.context",
+  "best-practice": "finding.kind.bestPractice",
 };
 
 export type FindingView = {
@@ -75,6 +76,7 @@ function wcagFinding(
   v: ScanViolation,
   markers: ScanMarker[],
   verifySkipped: boolean,
+  t: Translate,
 ): Omit<FindingView, "n"> {
   const { sc, name } = splitCriterion(v.criterion);
   const measurement = parseContrastFix(v.fix, v.fixCode);
@@ -103,11 +105,11 @@ function wcagFinding(
     elements: v.nodes,
     ruleId: v.id,
     desc: v.desc,
-    impact: humanImpact(v.id),
+    impact: humanImpact(v.id, t),
     fixText: v.fix,
     fixCode: v.fixCode ?? null,
     fixGroups,
-    guidance: v.fixCode || measurement ? null : fixGuidance(v.id),
+    guidance: v.fixCode || measurement ? null : fixGuidance(v.id, t),
     measurement,
     preview: buildContrastPreview(measurement, v.verification, v.nodes),
     verdict,
@@ -117,7 +119,8 @@ function wcagFinding(
     located: linked.length > 0,
     contexts: v.contexts ?? [],
     occurrences: [],
-    noMarkerReason: linked.length > 0 ? "" : markerReason(v.id, "wcag", isDocLevelCategory(v.id)),
+    noMarkerReason:
+      linked.length > 0 ? "" : markerReason(v.id, "wcag", isDocLevelCategory(v.id), t),
   };
 }
 
@@ -133,7 +136,11 @@ type PassFinding = {
   occurrences?: KeyboardOccurrence[];
 };
 
-function complementaryFinding(f: PassFinding, kind: FindingKind): Omit<FindingView, "n"> {
+function complementaryFinding(
+  f: PassFinding,
+  kind: FindingKind,
+  t: Translate,
+): Omit<FindingView, "n"> {
   const { sc, name } = splitCriterion(f.criterion);
   const verdict = buildVerdict({
     kind,
@@ -149,18 +156,18 @@ function complementaryFinding(f: PassFinding, kind: FindingKind): Omit<FindingVi
     kind,
     isWcag: true,
     severity: f.severity,
-    passLabel: PASS_LABEL[kind] ?? null,
+    passLabel: PASS_LABEL_KEY[kind] ? t(PASS_LABEL_KEY[kind]) : null,
     title: f.title,
     criterionSc: sc,
     criterionName: name,
     elements: f.count,
     ruleId: f.id,
     desc: f.desc,
-    impact: humanImpact(f.id, kind),
+    impact: humanImpact(f.id, t, kind),
     fixText: f.fix,
     fixCode: null,
     fixGroups: null,
-    guidance: fixGuidance(f.id, kind),
+    guidance: fixGuidance(f.id, t, kind),
     measurement: null,
     preview: null,
     verdict,
@@ -170,11 +177,11 @@ function complementaryFinding(f: PassFinding, kind: FindingKind): Omit<FindingVi
     located: false,
     contexts: [],
     occurrences: f.occurrences ?? [],
-    noMarkerReason: markerReason(f.id, kind, false),
+    noMarkerReason: markerReason(f.id, kind, false, t),
   };
 }
 
-function contextFinding(issue: ContextIssue, where: string): Omit<FindingView, "n"> {
+function contextFinding(issue: ContextIssue, where: string, t: Translate): Omit<FindingView, "n"> {
   const { sc, name } = splitCriterion(issue.criterion);
   const verdict = buildVerdict({
     kind: "context",
@@ -190,19 +197,18 @@ function contextFinding(issue: ContextIssue, where: string): Omit<FindingView, "
     kind: "context",
     isWcag: true,
     severity: issue.severity,
-    passLabel: PASS_LABEL.context ?? "Responsive & dynamic",
+    passLabel: t("finding.kind.context"),
     title: issue.title,
     criterionSc: sc,
     criterionName: name,
     elements: issue.nodes,
     ruleId: issue.id,
-    desc: `Found only in this context (${where}). It does not fail on the first desktop load.`,
-    impact: humanImpact(issue.id, "context"),
-    fixText:
-      "Re-check this element in the affected context; the engine did not sandbox a fix here.",
+    desc: t("finding.contextOnly", { where }),
+    impact: humanImpact(issue.id, t, "context"),
+    fixText: t("context.recheckLong"),
     fixCode: null,
     fixGroups: null,
-    guidance: fixGuidance(issue.id, "context"),
+    guidance: fixGuidance(issue.id, t, "context"),
     measurement: null,
     preview: null,
     verdict,
@@ -212,11 +218,11 @@ function contextFinding(issue: ContextIssue, where: string): Omit<FindingView, "
     located: false,
     contexts: [where],
     occurrences: [],
-    noMarkerReason: markerReason(issue.id, "context", false),
+    noMarkerReason: markerReason(issue.id, "context", false, t),
   };
 }
 
-function bestPracticeFindings(result: ScanResult): Omit<FindingView, "n">[] {
+function bestPracticeFindings(result: ScanResult, t: Translate): Omit<FindingView, "n">[] {
   return result.bestPractice.map((bp) => {
     const affected = distinct(bp.selectors);
     return {
@@ -224,18 +230,18 @@ function bestPracticeFindings(result: ScanResult): Omit<FindingView, "n">[] {
       kind: "best-practice" as const,
       isWcag: false,
       severity: null,
-      passLabel: PASS_LABEL["best-practice"] ?? "Best practice",
+      passLabel: t("finding.kind.bestPractice"),
       title: bp.title,
       criterionSc: null,
       criterionName: null,
       elements: bp.nodes,
       ruleId: bp.id,
       desc: bp.desc,
-      impact: humanImpact(bp.id, "best-practice"),
+      impact: humanImpact(bp.id, t, "best-practice"),
       fixText: bp.desc,
       fixCode: null,
       fixGroups: null,
-      guidance: fixGuidance(bp.id, "best-practice"),
+      guidance: fixGuidance(bp.id, t, "best-practice"),
       measurement: null,
       preview: null,
       verdict: buildVerdict({
@@ -252,9 +258,13 @@ function bestPracticeFindings(result: ScanResult): Omit<FindingView, "n">[] {
       located: false,
       contexts: [],
       occurrences: [],
-      noMarkerReason: markerReason(bp.id, "best-practice", false),
+      noMarkerReason: markerReason(bp.id, "best-practice", false, t),
     };
   });
+}
+
+export function locatedMarkers(finding: { markers: ScanMarker[] } | null): number {
+  return new Set((finding?.markers ?? []).map((m) => m.n)).size;
 }
 
 function linkMarkers(v: ScanViolation, markers: ScanMarker[]): ScanMarker[] {
@@ -269,6 +279,7 @@ function splitCriterion(criterion: string): { sc: string | null; name: string | 
 }
 
 export function buildFindings(result: ScanResult): FindingView[] {
+  const t = translator(result.locale);
   const verifySkipped = (result.warnings ?? []).some((w) => w.code === "verification-skipped");
   const withSeverity: Omit<FindingView, "n">[] = [];
 
@@ -283,23 +294,23 @@ export function buildFindings(result: ScanResult): FindingView[] {
     withSeverity.push(finding);
   };
 
-  for (const v of result.violations) add(wcagFinding(v, result.markers, verifySkipped));
+  for (const v of result.violations) add(wcagFinding(v, result.markers, verifySkipped, t));
 
-  for (const f of result.keyboard?.findings ?? []) add(complementaryFinding(f, "keyboard"));
+  for (const f of result.keyboard?.findings ?? []) add(complementaryFinding(f, "keyboard", t));
 
   for (const f of result.audits?.targetSize?.findings ?? [])
-    add(complementaryFinding(f, "target-size"));
+    add(complementaryFinding(f, "target-size", t));
   for (const f of result.audits?.reducedMotion?.findings ?? [])
-    add(complementaryFinding(f, "reduced-motion"));
+    add(complementaryFinding(f, "reduced-motion", t));
   for (const f of result.audits?.liveRegions?.findings ?? [])
-    add(complementaryFinding(f, "live-regions"));
+    add(complementaryFinding(f, "live-regions", t));
 
   const ctx = result.contexts;
   if (ctx) {
     const mobile = `${ctx.mobile.width}px viewport`;
-    for (const issue of ctx.mobile.onlyOnMobile) add(contextFinding(issue, mobile), mobile);
+    for (const issue of ctx.mobile.onlyOnMobile) add(contextFinding(issue, mobile, t), mobile);
     for (const state of ctx.dynamic.states)
-      for (const issue of state.newIssues) add(contextFinding(issue, state.label), state.label);
+      for (const issue of state.newIssues) add(contextFinding(issue, state.label, t), state.label);
   }
 
   withSeverity.sort((a, b) => {
@@ -309,7 +320,7 @@ export function buildFindings(result: ScanResult): FindingView[] {
     return b.elements - a.elements;
   });
 
-  const bestPractice = bestPracticeFindings(result).filter((f) => !listed.has(f.ruleId));
+  const bestPractice = bestPracticeFindings(result, t).filter((f) => !listed.has(f.ruleId));
 
   const ordered = [...withSeverity, ...bestPractice];
   return ordered.map((f, i) => ({ ...f, n: i + 1 }));

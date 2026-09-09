@@ -1,6 +1,7 @@
 import type { Page } from "playwright-core";
 import type { AuditFinding } from "./audits";
 import { MAX_AUDIT_SELECTORS } from "./audits";
+import type { Translate } from "../i18n/t";
 
 const TRIVIAL_MS = 250;
 
@@ -31,7 +32,7 @@ function isDisruptive(a: RunningAnimation): boolean {
   return true;
 }
 
-export function analyzeReducedMotion(raw: RawReducedMotion): ReducedMotionReport {
+export function analyzeReducedMotion(raw: RawReducedMotion, t: Translate): ReducedMotionReport {
   if (!raw.ran) return { ran: false, running: 0, findings: [] };
 
   const disruptive = raw.animations.filter(isDisruptive);
@@ -43,15 +44,10 @@ export function analyzeReducedMotion(raw: RawReducedMotion): ReducedMotionReport
     findings.push({
       id: "reduced-motion",
       severity: "moderate",
-      criterion: "WCAG 2.3.3 · Animation from Interactions",
-      title: `${n} ${n === 1 ? "element keeps" : "elements keep"} animating under reduced motion`,
-      desc:
-        `With prefers-reduced-motion: reduce set, ${n} ${n === 1 ? "element" : "elements"} still ` +
-        "ran a looping or long, non-trivial animation. Motion the user asked to avoid can trigger " +
-        "nausea, dizziness or migraines for people with vestibular disorders.",
-      fix:
-        "Wrap non-essential animation in @media (prefers-reduced-motion: reduce) and turn it off or " +
-        "shorten it there. For example, use animation: none, or a brief opacity fade instead of movement.",
+      criterion: t("audit.motion.criterion"),
+      title: t("audit.motion.title", { count: n }),
+      desc: t("audit.motion.desc", { count: n }),
+      fix: t("audit.motion.fix"),
       count: n,
       selectors: selectors.slice(0, MAX_AUDIT_SELECTORS),
     });
@@ -60,7 +56,7 @@ export function analyzeReducedMotion(raw: RawReducedMotion): ReducedMotionReport
   return { ran: true, running: raw.animations.length, findings };
 }
 
-export async function collectReducedMotion(page: Page): Promise<ReducedMotionReport> {
+export async function collectReducedMotion(page: Page, t: Translate): Promise<ReducedMotionReport> {
   await page.emulateMedia({ reducedMotion: "reduce" });
   try {
     await page.waitForTimeout(200);
@@ -111,7 +107,7 @@ export async function collectReducedMotion(page: Page): Promise<ReducedMotionRep
       return { ran: true, animations: out };
     })) as RawReducedMotion;
 
-    return analyzeReducedMotion(raw);
+    return analyzeReducedMotion(raw, t);
   } finally {
     await page.emulateMedia({ reducedMotion: "no-preference" });
   }

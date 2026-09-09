@@ -1,6 +1,7 @@
 import type { Page } from "playwright-core";
 import type { AuditFinding } from "./audits";
 import { MAX_AUDIT_SELECTORS } from "./audits";
+import type { Translate } from "../i18n/t";
 
 const MIN_SIZE = 24;
 const RADIUS = MIN_SIZE / 2;
@@ -52,7 +53,7 @@ function isCrowded(t: TargetRect, all: TargetRect[]): boolean {
   );
 }
 
-export function analyzeTargetSize(raw: RawTargetSize): TargetSizeReport {
+export function analyzeTargetSize(raw: RawTargetSize, t: Translate): TargetSizeReport {
   const { targets } = raw;
   const offenders = targets.filter((t) => !t.inline && isUndersized(t) && isCrowded(t, targets));
 
@@ -62,15 +63,10 @@ export function analyzeTargetSize(raw: RawTargetSize): TargetSizeReport {
     findings.push({
       id: "target-size",
       severity: "serious",
-      criterion: "WCAG 2.5.8 · Target Size (Minimum)",
-      title: `${n} touch ${n === 1 ? "target is" : "targets are"} smaller than 24×24px`,
-      desc:
-        `${n} interactive ${n === 1 ? "control is" : "controls are"} below the 24×24 CSS pixel ` +
-        "minimum and sit too close to another target to earn the spacing exception. Small, " +
-        "crowded targets are hard to hit for people with motor impairments or on touch screens.",
-      fix:
-        "Grow each control to at least 24×24px, or add enough spacing around it that a 24px " +
-        "circle centred on it clears its neighbours (padding on the control usually does both).",
+      criterion: t("audit.target.criterion"),
+      title: t("audit.target.title", { count: n }),
+      desc: t("audit.target.desc", { count: n }),
+      fix: t("audit.target.fix"),
       count: n,
       selectors: offenders.slice(0, MAX_AUDIT_SELECTORS).map((t) => t.selector),
     });
@@ -84,10 +80,10 @@ export const INTERACTIVE =
   '[role="button"], [role="link"], [role="checkbox"], [role="radio"], ' +
   '[role="tab"], [role="menuitem"], [role="switch"], [contenteditable="true"], [onclick]';
 
-export async function collectTargetSize(page: Page): Promise<TargetSizeReport> {
+export async function collectTargetSize(page: Page, t: Translate): Promise<TargetSizeReport> {
   const raw = (await page.evaluate(
     (interactive) => window.__accessCheckDom!.collectTargetSizeRaw(interactive),
     INTERACTIVE,
   )) as RawTargetSize;
-  return analyzeTargetSize(raw);
+  return analyzeTargetSize(raw, t);
 }

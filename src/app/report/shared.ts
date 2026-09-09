@@ -1,3 +1,4 @@
+import type { MessageKey } from "@/lib/i18n/t";
 import type { Severity } from "@/lib/scan/types";
 
 export type Status = "loading" | "done" | "error";
@@ -14,11 +15,11 @@ export const sevTint: Record<Severity, string> = {
   moderate: "#f0ecd3",
   minor: "#ecebe4",
 };
-export const sevLabel: Record<Severity, string> = {
-  critical: "Critical",
-  serious: "Serious",
-  moderate: "Moderate",
-  minor: "Minor",
+export const sevLabelKey: Record<Severity, MessageKey> = {
+  critical: "severity.critical",
+  serious: "severity.serious",
+  moderate: "severity.moderate",
+  minor: "severity.minor",
 };
 
 export function safeHost(url: string): string {

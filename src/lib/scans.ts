@@ -14,7 +14,7 @@ function parseDataUrl(dataUrl: string): { mimeType: string; data: Uint8Array<Arr
 
 export async function saveScan(userId: string, result: ScanResult): Promise<string> {
   const img = result.screenshot ? parseDataUrl(result.screenshot) : null;
-  const storedResult = { ...result, screenshot: null };
+  const storedResult = { ...result, screenshot: null, overview: undefined };
 
   const scan = await prisma.scan.create({
     data: {

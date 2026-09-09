@@ -1,4 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { translator } from "../i18n/t";
+
+const t = translator();
 import {
   contrastRatio,
   fixAriaAllowedAttr,
@@ -46,12 +49,15 @@ describe("contrastRatio", () => {
 
 describe("fixContrast", () => {
   it("suggests a color that actually reaches the target", () => {
-    const fix = fixContrast({
-      fgColor: "#999999",
-      bgColor: "#ffffff",
-      contrastRatio: 2.85,
-      expectedContrastRatio: 4.5,
-    });
+    const fix = fixContrast(
+      {
+        fgColor: "#999999",
+        bgColor: "#ffffff",
+        contrastRatio: 2.85,
+        expectedContrastRatio: 4.5,
+      },
+      t,
+    );
     expect(fix).not.toBeNull();
     const m = fix!.code!.match(/color: (#[0-9a-f]{6});/);
     expect(m).not.toBeNull();
@@ -60,12 +66,15 @@ describe("fixContrast", () => {
   });
 
   it("accepts rgb() in addition to hex", () => {
-    const fix = fixContrast({
-      fgColor: "rgb(150, 150, 150)",
-      bgColor: "rgb(255, 255, 255)",
-      contrastRatio: 2.85,
-      expectedContrastRatio: 4.5,
-    });
+    const fix = fixContrast(
+      {
+        fgColor: "rgb(150, 150, 150)",
+        bgColor: "rgb(255, 255, 255)",
+        contrastRatio: 2.85,
+        expectedContrastRatio: 4.5,
+      },
+      t,
+    );
     expect(fix?.code).toMatch(/^color: #[0-9a-f]{6};$/);
   });
 
@@ -75,12 +84,15 @@ describe("fixContrast", () => {
       const fg = `#${g.toString(16).padStart(2, "0").repeat(3)}`;
       for (const bg of ["#ffffff", "#000000", "#888888", "#3b82f6"]) {
         for (const target of targets) {
-          const fix = fixContrast({
-            fgColor: fg,
-            bgColor: bg,
-            contrastRatio: 1,
-            expectedContrastRatio: target,
-          });
+          const fix = fixContrast(
+            {
+              fgColor: fg,
+              bgColor: bg,
+              contrastRatio: 1,
+              expectedContrastRatio: target,
+            },
+            t,
+          );
           const m = fix?.code?.match(/color: (#[0-9a-f]{6});/);
           if (!m) continue;
           expect(contrastRatio(hex(m[1]), hex(bg))).toBeGreaterThanOrEqual(target);
@@ -90,12 +102,15 @@ describe("fixContrast", () => {
   });
 
   it("preserves the hue: blue stays blue, does not turn gray/black", () => {
-    const fix = fixContrast({
-      fgColor: "#6699ff",
-      bgColor: "#ffffff",
-      contrastRatio: 2.0,
-      expectedContrastRatio: 4.5,
-    });
+    const fix = fixContrast(
+      {
+        fgColor: "#6699ff",
+        bgColor: "#ffffff",
+        contrastRatio: 2.0,
+        expectedContrastRatio: 4.5,
+      },
+      t,
+    );
     const m = fix!.code!.match(/color: (#[0-9a-f]{6});/)!;
     const c = hex(m[1]);
     expect(contrastRatio(c, hex("#ffffff"))).toBeGreaterThanOrEqual(4.5);
@@ -106,22 +121,28 @@ describe("fixContrast", () => {
   });
 
   it("offers the background as an alternative when the text already resolves it", () => {
-    const fix = fixContrast({
-      fgColor: "#999999",
-      bgColor: "#ffffff",
-      contrastRatio: 2.85,
-      expectedContrastRatio: 4.5,
-    });
+    const fix = fixContrast(
+      {
+        fgColor: "#999999",
+        bgColor: "#ffffff",
+        contrastRatio: 2.85,
+        expectedContrastRatio: 4.5,
+      },
+      t,
+    );
     expect(fix!.text).toMatch(/set the background to #[0-9a-f]{6}/i);
   });
 
   it("when the text does not resolve it alone, suggests and validates the background", () => {
-    const fix = fixContrast({
-      fgColor: "#e0e0e0",
-      bgColor: "#8a8a8a",
-      contrastRatio: 1.6,
-      expectedContrastRatio: 7,
-    });
+    const fix = fixContrast(
+      {
+        fgColor: "#e0e0e0",
+        bgColor: "#8a8a8a",
+        contrastRatio: 1.6,
+        expectedContrastRatio: 7,
+      },
+      t,
+    );
     expect(fix!.code).toMatch(/^background: #[0-9a-f]{6};$/);
     expect(fix!.apply).toMatchObject({ kind: "style", prop: "background-color" });
     const m = fix!.code!.match(/background: (#[0-9a-f]{6});/)!;
@@ -130,23 +151,26 @@ describe("fixContrast", () => {
 
   it("returns null when the colors are not parseable", () => {
     expect(
-      fixContrast({
-        fgColor: "rebeccapurple",
-        bgColor: "#fff",
-        contrastRatio: 3,
-        expectedContrastRatio: 4.5,
-      }),
+      fixContrast(
+        {
+          fgColor: "rebeccapurple",
+          bgColor: "#fff",
+          contrastRatio: 3,
+          expectedContrastRatio: 4.5,
+        },
+        t,
+      ),
     ).toBeNull();
   });
 });
 
 describe("fixLabel", () => {
   it("suggests nothing when there is already an aria-label", () => {
-    expect(fixLabel(el({ ariaLabel: "Email" }))).toBeNull();
+    expect(fixLabel(el({ ariaLabel: "Email" }), t)).toBeNull();
   });
 
   it("uses <label for> when there is an id, with aria-label as the validation mutation", () => {
-    const fix = fixLabel(el({ id: "email", name: "email" }));
+    const fix = fixLabel(el({ id: "email", name: "email" }), t);
     expect(fix?.code).toBe('<label for="email">Email</label>');
     expect(fix?.apply).toEqual({
       kind: "attr",
@@ -156,13 +180,13 @@ describe("fixLabel", () => {
   });
 
   it("falls back to aria-label when there is no id", () => {
-    const fix = fixLabel(el({ placeholder: "Your name" }));
+    const fix = fixLabel(el({ placeholder: "Your name" }), t);
     expect(fix?.code).toBe('aria-label="Your name"');
   });
 
   it("prioritizes placeholder over name and humanizes the name", () => {
-    expect(fixLabel(el({ id: "x", placeholder: "Search" }))?.code).toContain("Search");
-    expect(fixLabel(el({ id: "x", name: "amountToSend" }))?.code).toBe(
+    expect(fixLabel(el({ id: "x", placeholder: "Search" }), t)?.code).toContain("Search");
+    expect(fixLabel(el({ id: "x", name: "amountToSend" }), t)?.code).toBe(
       '<label for="x">Amount to send</label>',
     );
   });
@@ -170,7 +194,7 @@ describe("fixLabel", () => {
 
 describe("fixImageAlt", () => {
   it("uses the title when it exists", () => {
-    const fix = fixImageAlt(el({ tag: "img", title: "Company logo" }));
+    const fix = fixImageAlt(el({ tag: "img", title: "Company logo" }), t);
     expect(fix.code).toBe('alt="Company logo"');
     expect(fix.apply).toEqual({
       kind: "attr",
@@ -180,19 +204,19 @@ describe("fixImageAlt", () => {
   });
 
   it("infers from the file name, stripping @2x and the extension", () => {
-    expect(fixImageAlt(el({ tag: "img", src: "/assets/euro-flag@2x.png" })).code).toBe(
+    expect(fixImageAlt(el({ tag: "img", src: "/assets/euro-flag@2x.png" }), t).code).toBe(
       'alt="Euro flag"',
     );
   });
 
   it("falls back to empty alt when nothing is inferable", () => {
-    expect(fixImageAlt(el({ tag: "img" })).code).toBe('alt=""');
+    expect(fixImageAlt(el({ tag: "img" }), t).code).toBe('alt=""');
   });
 });
 
 describe("fixAriaName", () => {
   it("uses the visible text of the control", () => {
-    const fix = fixAriaName(el({ tag: "button", text: "Submit" }));
+    const fix = fixAriaName(el({ tag: "button", text: "Submit" }), t);
     expect(fix.code).toBe('aria-label="Submit"');
     expect(fix.apply).toEqual({
       kind: "attr",
@@ -202,43 +226,43 @@ describe("fixAriaName", () => {
   });
 
   it("falls back to a generic placeholder without clues", () => {
-    expect(fixAriaName(el({ tag: "a" })).code).toBe('aria-label="Describe this control"');
+    expect(fixAriaName(el({ tag: "a" }), t).code).toBe('aria-label="Describe this control"');
   });
 });
 
 describe("document-level fixes", () => {
   it("html lang", () => {
-    expect(fixHtmlLang().apply).toEqual({
+    expect(fixHtmlLang(t).apply).toEqual({
       kind: "doc",
       target: "lang",
       value: "en",
     });
   });
   it("document title", () => {
-    expect(fixDocumentTitle().apply).toMatchObject({
+    expect(fixDocumentTitle(t).apply).toMatchObject({
       kind: "doc",
       target: "title",
     });
   });
   it("viewport", () => {
-    expect(fixMetaViewport().apply?.kind).toBe("viewport");
+    expect(fixMetaViewport(t).apply?.kind).toBe("viewport");
   });
 });
 
 describe("ARIA attribute fixes", () => {
   it("lists the missing required attributes", () => {
-    const fix = fixAriaRequiredAttr(["aria-valuenow", "aria-valuemin"]);
+    const fix = fixAriaRequiredAttr(["aria-valuenow", "aria-valuemin"], t);
     expect(fix?.code).toContain('aria-valuenow="…"');
     expect(fix?.code).toContain('aria-valuemin="…"');
     expect(fix?.apply).toBeUndefined();
   });
 
   it("returns null with no attributes", () => {
-    expect(fixAriaRequiredAttr([])).toBeNull();
-    expect(fixAriaAllowedAttr([])).toBeNull();
+    expect(fixAriaRequiredAttr([], t)).toBeNull();
+    expect(fixAriaAllowedAttr([], t)).toBeNull();
   });
 
   it("extracts only the name of the forbidden attribute", () => {
-    expect(fixAriaAllowedAttr(['aria-foo="bar"'])!.code).toBe("Remove: aria-foo");
+    expect(fixAriaAllowedAttr(['aria-foo="bar"'], t)!.code).toBe("Remove: aria-foo");
   });
 });

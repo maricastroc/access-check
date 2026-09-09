@@ -1,6 +1,7 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMagnifyingGlass, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { BANDS, SORTS, type BandKey, type SortKey } from "./history-utils";
+import type { Translate } from "@/lib/i18n/t";
 
 export function HistoryToolbar({
   query,
@@ -9,6 +10,7 @@ export function HistoryToolbar({
   onQuery,
   onSort,
   onBand,
+  t,
 }: {
   query: string;
   sort: SortKey;
@@ -16,12 +18,13 @@ export function HistoryToolbar({
   onQuery: (v: string) => void;
   onSort: (v: SortKey) => void;
   onBand: (v: BandKey) => void;
+  t: Translate;
 }) {
   return (
     <div className="mt-5 flex flex-col gap-3 lg:flex-row lg:items-center">
       <div className="flex flex-1 items-center gap-2">
         <label htmlFor="history-search" className="sr-only">
-          Search audits by domain
+          {t("history.searchByDomain")}
         </label>
         <div className="border-line-strong bg-card focus-within:border-brand-400 flex h-9 w-full items-center gap-2.5 rounded-[10px] border px-3">
           <FontAwesomeIcon icon={faMagnifyingGlass} aria-hidden className="text-xs text-muted" />
@@ -30,13 +33,13 @@ export function HistoryToolbar({
             type="search"
             value={query}
             onChange={(e) => onQuery(e.target.value)}
-            placeholder="Search by domain…"
+            placeholder={t("history.searchPlaceholder")}
             className="h-full w-full bg-transparent text-sm text-ink placeholder:text-muted focus:outline-none [&::-webkit-search-cancel-button]:appearance-none"
           />
           {query && (
             <button
               type="button"
-              aria-label="Clear search"
+              aria-label={t("history.clearSearch")}
               onClick={() => onQuery("")}
               className="flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted transition-colors hover:bg-canvas hover:text-ink"
             >
@@ -49,7 +52,7 @@ export function HistoryToolbar({
       <div className="flex flex-wrap items-center gap-2.5">
         <div
           role="group"
-          aria-label="Filter by score"
+          aria-label={t("history.filterByScore")}
           className="border-line-strong bg-card flex h-9 items-center gap-0.5 rounded-[10px] border p-0.5"
         >
           {BANDS.map((b) => (
@@ -68,7 +71,7 @@ export function HistoryToolbar({
         </div>
 
         <label htmlFor="history-sort" className="sr-only">
-          Sort audits
+          {t("history.sortLabel")}
         </label>
         <select
           id="history-sort"

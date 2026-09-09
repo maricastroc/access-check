@@ -4,6 +4,7 @@ import {
   type KeyboardReport,
 } from "../../src/lib/scan/keyboard";
 import type { FocusStyle } from "../../src/lib/scan/dom/focus";
+import { translator, type Translate } from "../../src/lib/i18n/t";
 
 export class DeepAuditError extends Error {
   constructor(
@@ -15,8 +16,8 @@ export class DeepAuditError extends Error {
 }
 
 export class DeepAuditCancelled extends DeepAuditError {
-  constructor() {
-    super("The deep audit was cancelled, so the focus path was not walked.");
+  constructor(t: Translate = translator()) {
+    super(t("deep.cancelledPlain"));
   }
 }
 
@@ -31,14 +32,12 @@ const SHIFT = 8;
 
 const MAX_MS = 20_000;
 
-function attachReason(message: string): string {
-  if (/already attached/i.test(message)) {
-    return "Another debugger is attached to this tab — usually DevTools. Close it and run the deep audit again.";
-  }
+function attachReason(message: string, t: Translate): string {
+  if (/already attached/i.test(message)) return t("deep.alreadyAttached");
   if (/Cannot access|chrome:\/\/|extensions gallery|devtools/i.test(message)) {
-    return "Chrome does not allow debugging this page, so the focus path cannot be walked here.";
+    return t("deep.notDebuggable");
   }
-  return `Chrome refused to attach the debugger: ${message}`;
+  return t("deep.attachRefused", { reason: message });
 }
 
 async function inPage<T>(tabId: number, fn: () => T): Promise<T> {
@@ -46,7 +45,7 @@ async function inPage<T>(tabId: number, fn: () => T): Promise<T> {
   return frame.result as T;
 }
 
-export async function runDeepAudit(tabId: number): Promise<KeyboardReport> {
+export async function runDeepAudit(tabId: number, t: Translate): Promise<KeyboardReport> {
   const target = { tabId };
   let detachFailure: string | null = null;
   let report: KeyboardReport | null = null;
@@ -54,7 +53,7 @@ export async function runDeepAudit(tabId: number): Promise<KeyboardReport> {
   try {
     await chrome.debugger.attach(target, "1.3");
   } catch (e) {
-    throw new DeepAuditError(attachReason(e instanceof Error ? e.message : String(e)));
+    throw new DeepAuditError(attachReason(e instanceof Error ? e.message : String(e), t));
   }
 
   let cancelled = false;
@@ -106,14 +105,14 @@ export async function runDeepAudit(tabId: number): Promise<KeyboardReport> {
       { maxMs: MAX_MS },
     );
 
-    report = buildKeyboardReport(raw);
+    report = buildKeyboardReport(raw, t);
   } catch (e) {
-    if (cancelled) throw new DeepAuditCancelled();
+    if (cancelled) throw new DeepAuditCancelled(t);
     const message = e instanceof Error ? e.message : String(e);
     throw new DeepAuditError(
       /No tab with given id|detached|Inspected target/i.test(message)
-        ? "The tab moved on while the focus path was being walked, so the deep audit stopped."
-        : `The deep audit could not finish: ${message}`,
+        ? t("deep.tabMovedOn")
+        : t("deep.unfinished", { reason: message }),
     );
   } finally {
     chrome.debugger.onDetach.removeListener(onDetach);
@@ -130,8 +129,7 @@ export async function runDeepAudit(tabId: number): Promise<KeyboardReport> {
         });
 
       if (!released) {
-        detachFailure =
-          "Chrome would not release the debugger. The banner on the tab may stay until you reload it.";
+        detachFailure = t("deep.notReleased");
       }
     }
   }

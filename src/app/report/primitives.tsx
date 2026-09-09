@@ -1,6 +1,7 @@
 import type { Severity } from "@/lib/scan/types";
 import { BrandMark } from "@/components/ui";
-import { sevHex, sevLabel } from "./shared";
+import { sevHex, sevLabelKey } from "./shared";
+import type { Translate } from "@/lib/i18n/t";
 
 export function SectionKicker({ children }: { children: React.ReactNode }) {
   return (
@@ -30,33 +31,35 @@ export function PageShell({
   children,
   page,
   host,
+  t,
 }: {
   children: React.ReactNode;
   page: number;
   host: string;
+  t: Translate;
 }) {
   return (
     <section className="ac-page flex min-h-264 w-204 flex-col border border-border bg-surface px-[0.62in] py-12">
       <div className="flex flex-1 flex-col">{children}</div>
-      <PageFooter page={page} host={host} />
+      <PageFooter page={page} host={host} t={t} />
     </section>
   );
 }
 
-function PageFooter({ page, host }: { page: number; host: string }) {
+function PageFooter({ page, host, t }: { page: number; host: string; t: Translate }) {
   return (
     <div className="mt-auto flex items-center justify-between border-t border-hairline pt-3 text-[10px] text-muted">
       <span className="flex items-center gap-1.5">
         <BrandMark size={13} />
-        <span>Internal score · not a conformance statement</span>
+        <span>{t("report.internalScoreFooter")}</span>
       </span>
       <span className="truncate px-2 font-mono text-[9.5px]">{host}</span>
-      <span>WCAG A &amp; AA · Page {page} / 3</span>
+      <span>{t("report.pageOf", { page })}</span>
     </div>
   );
 }
 
-export function MiniHeader({ host }: { host: string }) {
+export function MiniHeader({ host, t }: { host: string; t: Translate }) {
   return (
     <div className="flex items-center justify-between border-b border-hairline pb-3">
       <div className="flex items-center gap-2">
@@ -64,26 +67,26 @@ export function MiniHeader({ host }: { host: string }) {
         <span className="text-[14px] font-semibold text-ink">AccessCheck</span>
       </div>
       <span className="truncate pl-3 font-mono text-[10.5px] text-muted">
-        Accessibility report · {host}
+        {t("report.headerTitle", { host })}
       </span>
     </div>
   );
 }
 
-export function LegendChip({ sev, count }: { sev: Severity; count: number }) {
+export function LegendChip({ sev, count, t }: { sev: Severity; count: number; t: Translate }) {
   return (
     <span className="inline-flex items-center gap-1.5 border border-border bg-surface px-3 py-1.5 text-[11px] font-medium text-ink">
       <span aria-hidden className="size-2.5" style={{ background: sevHex[sev] }} />
-      {sevLabel[sev]} <b className="font-medium text-muted tabular-nums">{count}</b>
+      {t(sevLabelKey[sev])} <b className="font-medium text-muted tabular-nums">{count}</b>
     </span>
   );
 }
 
-export function GroupHeading({ sev, count }: { sev: Severity; count: number }) {
+export function GroupHeading({ sev, count, t }: { sev: Severity; count: number; t: Translate }) {
   return (
     <div className="flex items-center gap-2.5">
       <span aria-hidden className="size-2.5" style={{ background: sevHex[sev] }} />
-      <span className="text-[13px] font-semibold text-ink">{sevLabel[sev]}</span>
+      <span className="text-[13px] font-semibold text-ink">{t(sevLabelKey[sev])}</span>
       <span
         className="px-2 py-0.5 font-cond text-[10px] font-medium tracking-[0.08em] uppercase"
         style={{ color: sevHex[sev] }}

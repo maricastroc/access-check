@@ -1,4 +1,5 @@
 import { cn } from "@/lib/cn";
+import type { Translate } from "@/lib/i18n/t";
 
 export function OccurrenceStepper({
   index,
@@ -7,6 +8,7 @@ export function OccurrenceStepper({
   onNext,
   size = "sm",
   className,
+  t,
 }: {
   index: number;
   total: number;
@@ -14,6 +16,7 @@ export function OccurrenceStepper({
   onNext: () => void;
   size?: "sm" | "lg";
   className?: string;
+  t: Translate;
 }) {
   const btn = size === "lg" ? "size-11" : "size-[26px]";
   const counterWidth = size === "lg" ? "min-w-14" : "min-w-11";
@@ -23,7 +26,7 @@ export function OccurrenceStepper({
     <div className={cn("inline-flex items-center gap-1.5", className)}>
       <button
         type="button"
-        aria-label="Previous occurrence"
+        aria-label={t("stepper.previous")}
         onClick={onPrev}
         disabled={disabled}
         className={cn(
@@ -45,7 +48,7 @@ export function OccurrenceStepper({
       </span>
       <button
         type="button"
-        aria-label="Next occurrence"
+        aria-label={t("stepper.next")}
         onClick={onNext}
         disabled={disabled}
         className={cn(

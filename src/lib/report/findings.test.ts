@@ -94,8 +94,28 @@ describe("buildFindings", () => {
 
   it("links only the finding's own capture markers", () => {
     const markers: ScanMarker[] = [
-      { n: 1, severity: "serious", label: contrast.title, left: 10, top: 20, width: 5, height: 5 },
-      { n: 2, severity: "moderate", label: heading.title, left: 30, top: 40, width: 5, height: 5 },
+      {
+        n: 1,
+        severity: "serious",
+        label: contrast.title,
+        left: 10,
+        top: 20,
+        width: 5,
+        height: 5,
+        captureId: "overview",
+        evidence: "captured",
+      },
+      {
+        n: 2,
+        severity: "moderate",
+        label: heading.title,
+        left: 30,
+        top: 40,
+        width: 5,
+        height: 5,
+        captureId: "overview",
+        evidence: "captured",
+      },
     ];
     const f = buildFindings(baseResult({ violations: [contrast, heading], markers }));
     const c = f.find((x) => x.id === "wcag:color-contrast")!;

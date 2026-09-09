@@ -5,6 +5,9 @@ import {
   type FocusStop,
   type RawKeyboard,
 } from "./keyboard";
+import { translator } from "../i18n/t";
+
+const t = translator();
 
 const stop = (
   n: number,
@@ -78,17 +81,20 @@ describe("readingOrderInversions", () => {
 
 describe("buildKeyboardReport", () => {
   it("no symptoms → no findings", () => {
-    const r = buildKeyboardReport({ ...rawBase, focusPath: [stop(1, 10, 10), stop(2, 10, 30)] });
+    const r = buildKeyboardReport({ ...rawBase, focusPath: [stop(1, 10, 10), stop(2, 10, 30)] }, t);
     expect(r.findings).toHaveLength(0);
     expect(r.totalStops).toBe(2);
   });
 
   it("a keyboard trap becomes a critical finding", () => {
-    const r = buildKeyboardReport({
-      ...rawBase,
-      trapSelector: "#modal",
-      focusPath: [stop(1, 10, 10)],
-    });
+    const r = buildKeyboardReport(
+      {
+        ...rawBase,
+        trapSelector: "#modal",
+        focusPath: [stop(1, 10, 10)],
+      },
+      t,
+    );
     const trap = r.findings.find((f) => f.id === "keyboard-trap");
     expect(trap?.severity).toBe("critical");
     expect(trap?.selectors).toContain("#modal");
@@ -100,47 +106,56 @@ describe("buildKeyboardReport", () => {
       stop(2, 10, 30, { focusVisible: false, selector: "#hidden" }),
       stop(3, 10, 50, { focusVisible: false, selector: "#hidden2" }),
     ];
-    const r = buildKeyboardReport({ ...rawBase, focusPath });
+    const r = buildKeyboardReport({ ...rawBase, focusPath }, t);
     const f = r.findings.find((x) => x.id === "focus-not-visible");
     expect(f?.count).toBe(2);
     expect(f?.selectors).toEqual(["#hidden", "#hidden2"]);
   });
 
   it("an unreachable control is only reported with a complete cycle and no truncation", () => {
-    const withTruncation = buildKeyboardReport({
-      ...rawBase,
-      unreachable: ["#ghost"],
-      truncated: true,
-      cycleComplete: false,
-    });
+    const withTruncation = buildKeyboardReport(
+      {
+        ...rawBase,
+        unreachable: ["#ghost"],
+        truncated: true,
+        cycleComplete: false,
+      },
+      t,
+    );
     expect(withTruncation.findings.find((f) => f.id === "unreachable-control")).toBeUndefined();
 
-    const complete = buildKeyboardReport({
-      ...rawBase,
-      unreachable: ["#ghost"],
-      truncated: false,
-      cycleComplete: true,
-    });
+    const complete = buildKeyboardReport(
+      {
+        ...rawBase,
+        unreachable: ["#ghost"],
+        truncated: false,
+        cycleComplete: true,
+      },
+      t,
+    );
     expect(complete.findings.find((f) => f.id === "unreachable-control")?.severity).toBe("serious");
   });
 
   it("positive tabindex becomes a moderate finding", () => {
-    const r = buildKeyboardReport({ ...rawBase, positiveTabindex: ["#a", "#b"] });
+    const r = buildKeyboardReport({ ...rawBase, positiveTabindex: ["#a", "#b"] }, t);
     const f = r.findings.find((x) => x.id === "positive-tabindex");
     expect(f?.count).toBe(2);
     expect(f?.severity).toBe("moderate");
   });
 
   it("sorts findings by severity (critical first)", () => {
-    const r = buildKeyboardReport({
-      ...rawBase,
-      trapSelector: "#trap",
-      positiveTabindex: ["#a"],
-      focusPath: [
-        stop(1, 10, 50, { focusVisible: false }),
-        stop(2, 10, 10, { focusVisible: false }),
-      ],
-    });
+    const r = buildKeyboardReport(
+      {
+        ...rawBase,
+        trapSelector: "#trap",
+        positiveTabindex: ["#a"],
+        focusPath: [
+          stop(1, 10, 50, { focusVisible: false }),
+          stop(2, 10, 10, { focusVisible: false }),
+        ],
+      },
+      t,
+    );
     expect(r.findings[0].severity).toBe("critical");
     const rank = { critical: 0, serious: 1, moderate: 2, minor: 3 } as const;
     for (let i = 1; i < r.findings.length; i++) {
@@ -149,11 +164,14 @@ describe("buildKeyboardReport", () => {
   });
 
   it("propagates reachability counts", () => {
-    const r = buildKeyboardReport({
-      ...rawBase,
-      totalInteractive: 12,
-      reachableInteractive: 10,
-    });
+    const r = buildKeyboardReport(
+      {
+        ...rawBase,
+        totalInteractive: 12,
+        reachableInteractive: 10,
+      },
+      t,
+    );
     expect(r.totalInteractive).toBe(12);
     expect(r.reachableInteractive).toBe(10);
   });
@@ -185,7 +203,7 @@ describe("what each finding lets you inspect", () => {
       },
     ];
 
-    const f = buildKeyboardReport({ ...rawBase, focusPath: path }).findings.find(
+    const f = buildKeyboardReport({ ...rawBase, focusPath: path }, t).findings.find(
       (x) => x.id === "focus-not-visible",
     )!;
 
@@ -208,8 +226,8 @@ describe("what each finding lets you inspect", () => {
       },
     ];
 
-    const reason = buildKeyboardReport({ ...rawBase, focusPath: path }).findings[0].occurrences[0]
-      .reason;
+    const reason = buildKeyboardReport({ ...rawBase, focusPath: path }, t).findings[0]
+      .occurrences[0].reason;
 
     expect(reason).toContain("no outline appeared");
     expect(reason).toContain("outline-style: none");
@@ -220,8 +238,8 @@ describe("what each finding lets you inspect", () => {
 
   it("falls back to a plain statement when the styles were never recorded", () => {
     const path = [stop(1, 10, 10, { focusVisible: false })];
-    const reason = buildKeyboardReport({ ...rawBase, focusPath: path }).findings[0].occurrences[0]
-      .reason;
+    const reason = buildKeyboardReport({ ...rawBase, focusPath: path }, t).findings[0]
+      .occurrences[0].reason;
 
     expect(reason).toContain("no detectable outline");
     expect(reason).not.toContain("undefined");
@@ -233,7 +251,7 @@ describe("what each finding lets you inspect", () => {
       { ...stop(2, 10, 5, { label: "Skip to content" }), rect: { x: 10, y: 40, w: 40, h: 20 } },
     ];
 
-    const f = buildKeyboardReport({ ...rawBase, focusPath: path }).findings.find(
+    const f = buildKeyboardReport({ ...rawBase, focusPath: path }, t).findings.find(
       (x) => x.id === "focus-order",
     )!;
 
@@ -250,7 +268,7 @@ describe("what each finding lets you inspect", () => {
 
   it("does not present a geometric jump as a settled violation", () => {
     const path = [stop(1, 10, 80), stop(2, 10, 5)];
-    const f = buildKeyboardReport({ ...rawBase, focusPath: path }).findings.find(
+    const f = buildKeyboardReport({ ...rawBase, focusPath: path }, t).findings.find(
       (x) => x.id === "focus-order",
     )!;
 
@@ -268,7 +286,7 @@ describe("what each finding lets you inspect", () => {
     ];
 
     const inv = readingOrderInversions(path);
-    const f = buildKeyboardReport({ ...rawBase, focusPath: path }).findings.find(
+    const f = buildKeyboardReport({ ...rawBase, focusPath: path }, t).findings.find(
       (x) => x.id === "focus-order",
     )!;
 
@@ -277,11 +295,14 @@ describe("what each finding lets you inspect", () => {
   });
 
   it("marks a control the walk never reached as having no stop number", () => {
-    const f = buildKeyboardReport({
-      ...rawBase,
-      unreachable: ["#ghost"],
-      focusPath: [stop(1, 10, 10)],
-    }).findings.find((x) => x.id === "unreachable-control")!;
+    const f = buildKeyboardReport(
+      {
+        ...rawBase,
+        unreachable: ["#ghost"],
+        focusPath: [stop(1, 10, 10)],
+      },
+      t,
+    ).findings.find((x) => x.id === "unreachable-control")!;
 
     expect(f.occurrences[0].stop).toBeNull();
     expect(f.occurrences[0].selector).toBe("#ghost");
@@ -289,11 +310,14 @@ describe("what each finding lets you inspect", () => {
   });
 
   it("borrows what the walk saw when it did reach the element", () => {
-    const f = buildKeyboardReport({
-      ...rawBase,
-      positiveTabindex: ["#el-1"],
-      focusPath: [{ ...stop(1, 10, 10, { label: "Search" }), html: "<input>" }],
-    }).findings.find((x) => x.id === "positive-tabindex")!;
+    const f = buildKeyboardReport(
+      {
+        ...rawBase,
+        positiveTabindex: ["#el-1"],
+        focusPath: [{ ...stop(1, 10, 10, { label: "Search" }), html: "<input>" }],
+      },
+      t,
+    ).findings.find((x) => x.id === "positive-tabindex")!;
 
     expect(f.occurrences[0].stop).toBe(1);
     expect(f.occurrences[0].label).toBe("Search");
@@ -306,7 +330,7 @@ describe("what each finding lets you inspect", () => {
       stop(i + 1, 10, 10 + i * 10, { focusVisible: false, selector: `#s${i}` }),
     );
 
-    const f = buildKeyboardReport({ ...rawBase, focusPath: path }).findings.find(
+    const f = buildKeyboardReport({ ...rawBase, focusPath: path }, t).findings.find(
       (x) => x.id === "focus-not-visible",
     )!;
 
@@ -317,28 +341,34 @@ describe("what each finding lets you inspect", () => {
 
 describe("what a walk is allowed to conclude", () => {
   it("will not call controls unreachable when the walk never started at the top", async () => {
-    const midway = buildKeyboardReport({
-      ...rawBase,
-      startedAtTop: false,
-      unreachable: ["#one", "#two"],
-      truncated: false,
-      cycleComplete: true,
-      focusPath: [stop(1, 10, 10)],
-    });
+    const midway = buildKeyboardReport(
+      {
+        ...rawBase,
+        startedAtTop: false,
+        unreachable: ["#one", "#two"],
+        truncated: false,
+        cycleComplete: true,
+        focusPath: [stop(1, 10, 10)],
+      },
+      t,
+    );
 
     expect(midway.findings.find((f) => f.id === "unreachable-control")).toBeUndefined();
     expect(midway.startedAtTop).toBe(false);
   });
 
   it("reports them when the walk did start at the top and came round", () => {
-    const full = buildKeyboardReport({
-      ...rawBase,
-      startedAtTop: true,
-      unreachable: ["#one", "#two"],
-      truncated: false,
-      cycleComplete: true,
-      focusPath: [stop(1, 10, 10)],
-    });
+    const full = buildKeyboardReport(
+      {
+        ...rawBase,
+        startedAtTop: true,
+        unreachable: ["#one", "#two"],
+        truncated: false,
+        cycleComplete: true,
+        focusPath: [stop(1, 10, 10)],
+      },
+      t,
+    );
 
     expect(full.findings.find((f) => f.id === "unreachable-control")?.count).toBe(2);
   });

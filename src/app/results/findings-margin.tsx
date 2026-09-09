@@ -3,6 +3,7 @@ import type { FindingView } from "@/lib/report/findings";
 import { reviewGuidance } from "@/lib/scan/review";
 import { FindingDetail, FindingRow, SectionKicker } from "@/components/ui";
 import { langAttrs } from "@/lib/i18n/locale";
+import type { Translate } from "@/lib/i18n/t";
 
 function Secondary({
   label,
@@ -34,12 +35,16 @@ export function FindingsMargin({
   host,
   selectedId,
   onSelect,
+  onOpenEvidence,
+  t,
 }: {
   findings: FindingView[];
   result: ScanResult;
   host: string;
   selectedId: string | null;
   onSelect: (id: string) => void;
+  onOpenEvidence: (id: string) => void;
+  t: Translate;
 }) {
   const totalElements = findings.reduce((sum, f) => sum + f.elements, 0);
   const focusStops = result.keyboard?.focusPath ?? [];
@@ -47,10 +52,12 @@ export function FindingsMargin({
   return (
     <section className="border-l border-border bg-surface">
       <div className="flex items-baseline justify-between gap-3 border-b border-hairline px-4 py-3">
-        <SectionKicker>Findings · by priority</SectionKicker>
+        <SectionKicker>{t("results.findingsByPriority")}</SectionKicker>
         <span className="text-[12px] text-muted tabular-nums">
-          {findings.length} finding{findings.length === 1 ? "" : "s"} · {totalElements} element
-          {totalElements === 1 ? "" : "s"}
+          {t("results.findingsAndElements", {
+            findings: t("unit.finding", { count: findings.length }),
+            elements: t("unit.element", { count: totalElements }),
+          })}
         </span>
       </div>
 
@@ -60,7 +67,7 @@ export function FindingsMargin({
             <span className="font-semibold text-ink">No automated failures on this page.</span>{" "}
             {result.counts.passed} checks passed. This is not the same as WCAG conformance:{" "}
             {result.counts.manualReview} item{result.counts.manualReview === 1 ? "" : "s"} still
-            need a person to review, listed below.
+            {t("results.needPersonReview")}
           </p>
         ) : (
           findings.map((f) => (
@@ -71,18 +78,26 @@ export function FindingsMargin({
               {...langAttrs(result.locale)}
             >
               <FindingRow
+                t={t}
                 finding={f}
                 selected={f.id === selectedId}
                 onSelect={() => onSelect(f.id)}
               />
-              {f.id === selectedId && <FindingDetail finding={f} host={host} />}
+              {f.id === selectedId && (
+                <FindingDetail
+                  t={t}
+                  finding={f}
+                  host={host}
+                  onOpenEvidence={() => onOpenEvidence(f.id)}
+                />
+              )}
             </div>
           ))
         )}
       </div>
 
       <div className="px-4 pb-4">
-        <Secondary label="automated checks passed" count={result.counts.passed}>
+        <Secondary label={t("results.checksPassedLabel")} count={result.counts.passed}>
           <ul className="flex flex-col gap-1.5 text-[12.5px] text-body">
             {result.passed.map((p, i) => (
               <li key={i} className="flex gap-2">
@@ -95,13 +110,10 @@ export function FindingsMargin({
           </ul>
         </Secondary>
 
-        <Secondary
-          label="manual-review items, with how to check"
-          count={result.counts.manualReview}
-        >
+        <Secondary label={t("results.manualReviewLabel")} count={result.counts.manualReview}>
           <ul className="flex flex-col gap-3">
             {result.incomplete.map((inc) => {
-              const guide = reviewGuidance(inc.id);
+              const guide = reviewGuidance(inc.id, t);
               return (
                 <li key={inc.id} className="border-l-2 border-hairline pl-3">
                   <p className="text-[13.5px] font-semibold text-ink">{inc.title}</p>
@@ -118,7 +130,7 @@ export function FindingsMargin({
           </ul>
         </Secondary>
 
-        <Secondary label="focus-path stops" count={focusStops.length}>
+        <Secondary label={t("results.focusPathStops")} count={focusStops.length}>
           <ol className="flex flex-col gap-1 text-[12.5px] text-body">
             {focusStops.map((s) => (
               <li key={s.n} className="flex items-baseline gap-2">

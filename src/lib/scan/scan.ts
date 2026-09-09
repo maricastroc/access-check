@@ -14,9 +14,22 @@ import { Budget } from "./budget";
 import { OPTIONAL_ORDER, ScanPolicy, STAGES, type StageId } from "./policy";
 import { CONTENT_SIGNATURE, waitForContentReady } from "./page-ready";
 import { AXE_TAGS } from "./dom/axe";
-import type { DomRect } from "./dom/rects";
+import type { DocRect } from "./dom/rects";
 import { DOM_ENGINE_VERSION } from "./dom/engine-api";
-import { buildMarkers, markerTargets } from "./markers";
+import {
+  buildMarkers,
+  centeredMargin,
+  numberTargets,
+  overviewMarkers,
+  markerTargets,
+  orderByDocument,
+  fitsViewport,
+  markerFromCrop,
+  unavailableMarker,
+  MAX_CAPTURE_CHARS,
+  MAX_EXTRA_CAPTURES,
+  type MarkerTarget,
+} from "./markers";
 import { SCORING_VERSION, scoredViolations } from "./scored";
 import {
   attachFixGroups,
@@ -27,8 +40,12 @@ import {
   type AxeResults,
 } from "./violations";
 import { captureScreenshot, SCREENSHOT_QUALITY } from "./screenshot";
+import { captureOverview, MAX_OVERVIEW_MS } from "./overview";
 import { installNetworkGuard } from "./ssrf";
 import type {
+  ScanCapture,
+  ScanOverview,
+  ScanMarker,
   FixVerification,
   ScanErrorCode,
   ScanPhase,
@@ -38,6 +55,7 @@ import type {
 } from "./types";
 import { axeLocaleFor } from "../i18n/axe-locale";
 import { DEFAULT_REPORT_LOCALE, type ReportLocale } from "../i18n/locale";
+import { translator, type Translate } from "../i18n/t";
 
 const VIEWPORT = { width: 1200, height: 800 };
 
@@ -62,12 +80,21 @@ const EXPIRED = Symbol("expired");
 const AXE_PATH = path.join(process.cwd(), "node_modules/axe-core/axe.min.js");
 const DOM_ENGINE_PATH = path.join(process.cwd(), "dom-engine/dom-engine.js");
 
-export async function injectDomEngine(page: Page, enginePath = DOM_ENGINE_PATH): Promise<void> {
+export async function injectDomEngine(
+  page: Page,
+  enginePath = DOM_ENGINE_PATH,
+  locale: ReportLocale = DEFAULT_REPORT_LOCALE,
+): Promise<void> {
+  const t = translator(locale);
+
   try {
     await page.addScriptTag({ path: enginePath });
   } catch (err) {
     throw new ScanFailure(
-      `The audit engine could not be loaded into the page (${enginePath}). Build it with \`npm run build:engine\`. ${err instanceof Error ? err.message : String(err)}`,
+      t("scanFail.engineMissing", {
+        path: enginePath,
+        detail: err instanceof Error ? err.message : String(err),
+      }),
       "internal",
     );
   }
@@ -75,7 +102,7 @@ export async function injectDomEngine(page: Page, enginePath = DOM_ENGINE_PATH):
   const version = await page.evaluate(() => window.__accessCheckDom?.version ?? null);
   if (version !== DOM_ENGINE_VERSION) {
     throw new ScanFailure(
-      `The audit engine in the page reports version ${version}, this driver needs ${DOM_ENGINE_VERSION}. Rebuild it with \`npm run build:engine\`.`,
+      t("scanFail.engineVersion", { found: String(version), needed: DOM_ENGINE_VERSION }),
       "internal",
     );
   }
@@ -91,20 +118,22 @@ export class ScanFailure extends Error {
   }
 }
 
-const WARNING_TEXT: Record<ScanWarningCode, string> = {
-  "screenshot-unavailable": "The screenshot could not be taken in time.",
-  "fix-details-skipped": "Some findings show general guidance instead of a specific suggested fix.",
-  "markers-skipped": "The markers could not be placed on the screenshot.",
-  "content-unsettled": "The page was still loading when the audit ran.",
-  "verification-skipped": "Fixes were not tested on a copy of the page this time.",
-  "audits-skipped": "The target-size, motion and live-region checks were skipped.",
-  "keyboard-skipped": "The keyboard and focus-order check was skipped.",
-  "lazy-content-skipped": "Content that only renders on scroll was not loaded before the audit.",
-  "walk-changed-page": "Tabbing through the page opened content that stayed open.",
-  "contexts-skipped": "The mobile and dynamic-state check was skipped.",
-  "stream-interrupted": "The audit was cut short before every check finished.",
-  "cross-origin-assets": "Some styles and media came from another origin and could not be read.",
-};
+function warningText(t: Translate): Record<ScanWarningCode, string> {
+  return {
+    "screenshot-unavailable": t("scanWarning.screenshotUnavailable"),
+    "fix-details-skipped": t("scanWarning.fixDetailsSkipped"),
+    "markers-skipped": t("scanWarning.markersSkipped"),
+    "content-unsettled": t("scanWarning.contentUnsettled"),
+    "verification-skipped": t("scanWarning.verificationSkipped"),
+    "audits-skipped": t("scanWarning.auditsSkipped"),
+    "keyboard-skipped": t("scanWarning.keyboardSkipped"),
+    "lazy-content-skipped": t("scanWarning.lazyContentSkipped"),
+    "walk-changed-page": t("scanWarning.walkChangedPage"),
+    "contexts-skipped": t("scanWarning.contextsSkipped"),
+    "stream-interrupted": t("scanWarning.streamInterrupted"),
+    "cross-origin-assets": t("scanWarning.crossOriginAssets"),
+  };
+}
 
 export function normalizeUrl(input: string): string {
   const trimmed = input.trim();
@@ -252,6 +281,105 @@ async function sessionIsGone(page: Page): Promise<boolean> {
   }
 }
 
+const CROP_SETTLE_MS = 250;
+
+async function captureEvidenceCrops(
+  page: Page,
+  targets: MarkerTarget[],
+  numbered: number[],
+  onOverview: Set<number>,
+  viewport: { width: number; height: number },
+  deadline: number,
+): Promise<{ captures: ScanCapture[]; markers: ScanMarker[] }> {
+  const captures: ScanCapture[] = [];
+  const markers: ScanMarker[] = [];
+  const pending = new Set(numbered);
+  const numberOf = new Map(numbered.map((index, position) => [index, position + 1]));
+  let budget = MAX_CAPTURE_CHARS;
+
+  const docRects = await page.evaluate(
+    (sels) => window.__accessCheckDom!.collectDocRects(sels),
+    targets.map((t) => t.selector),
+  );
+
+  for (const index of orderByDocument(numbered, docRects)) {
+    if (!pending.has(index)) continue;
+    if (captures.length >= MAX_EXTRA_CAPTURES || Date.now() > deadline) break;
+
+    const anchor = docRects[index];
+    if (!anchor) continue;
+
+    const inset = await page.evaluate(() => window.__accessCheckDom!.stickyInset());
+    const topMargin = centeredMargin(anchor.h, viewport, inset);
+    const scrolledTo = await page.evaluate(
+      ([docY, margin]) => window.__accessCheckDom!.scrollToDocY(docY, margin),
+      [anchor.docY, topMargin] as const,
+    );
+    await page.waitForTimeout(CROP_SETTLE_MS);
+
+    const atEnd = scrolledTo < Math.round(anchor.docY - topMargin);
+
+    const members = [...pending];
+    const rects = await page.evaluate(
+      (sels) => window.__accessCheckDom!.collectRects(sels),
+      members.map((i) => targets[i].selector),
+    );
+
+    const placed = members
+      .map((i, k) => ({ index: i, rect: rects[k] }))
+      .filter((x) => x.rect && fitsViewport(x.rect, viewport, atEnd))
+      .sort((a, b) => a.rect!.y - b.rect!.y);
+
+    if (placed.length === 0) continue;
+
+    const shot = await page
+      .screenshot({
+        type: "jpeg",
+        quality: SCREENSHOT_QUALITY,
+        clip: { x: 0, y: 0, ...viewport },
+        animations: "disabled",
+        timeout: Math.max(1_000, Math.min(6_000, deadline - Date.now())),
+      })
+      .catch(() => null);
+
+    if (!shot) continue;
+
+    const image = `data:image/jpeg;base64,${shot.toString("base64")}`;
+    if (image.length > budget) break;
+    budget -= image.length;
+
+    const captureId = `c${captures.length + 1}`;
+    captures.push({
+      id: captureId,
+      image,
+      width: viewport.width,
+      height: viewport.height,
+      docY: scrolledTo,
+    });
+
+    for (const { index: i, rect } of placed) {
+      markers.push(
+        markerFromCrop(
+          targets[i],
+          rect!,
+          viewport,
+          numberOf.get(i)!,
+          captureId,
+          i === index ? "captured" : "shared",
+        ),
+      );
+      pending.delete(i);
+    }
+  }
+
+  for (const index of pending) {
+    if (onOverview.has(index)) continue;
+    markers.push(unavailableMarker(targets[index], numberOf.get(index)!));
+  }
+
+  return { captures, markers };
+}
+
 export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<ScanResult> {
   const budgetMs = opts.budgetMs ?? DEFAULT_SCAN_BUDGET_MS;
   const budget = new Budget(
@@ -259,12 +387,10 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
     Math.min(FINALIZE_RESERVE_MS, Math.round(budgetMs * FINALIZE_RESERVE_SHARE)),
   );
   const timings: Record<string, number> = {};
+  const locale = opts.locale ?? DEFAULT_REPORT_LOCALE;
 
   const unavailable = () =>
-    new ScanFailure(
-      "The browser we use to open the page stopped responding before the audit could run.",
-      "browser-unavailable",
-    );
+    new ScanFailure(translator(locale)("scanFail.browserUnavailable"), "browser-unavailable");
 
   try {
     try {
@@ -312,7 +438,7 @@ async function runScanAttempt(
 
   const url = normalizeUrl(rawUrl);
   const startedAt = Date.now();
-  const policy = new ScanPolicy(budget, WARNING_TEXT);
+  const policy = new ScanPolicy(budget, warningText(translator(locale)));
 
   const track = async <T>(label: string, fn: () => Promise<T>): Promise<T> => {
     const t0 = Date.now();
@@ -356,10 +482,7 @@ async function runScanAttempt(
 
         await context?.close().catch(() => noop());
         await closeSharedBrowser().catch(() => noop());
-        throw new ScanFailure(
-          "The browser we use to open the page took too long to start. Please try again.",
-          "browser-unavailable",
-        );
+        throw new ScanFailure(translator(locale)("scanFail.browserSlow"), "browser-unavailable");
       } catch (err) {
         if (err instanceof ScanFailure) throw err;
         await context?.close().catch(() => noop());
@@ -387,24 +510,26 @@ async function runScanAttempt(
 
         if (/timeout/i.test(message)) {
           throw new ScanFailure(
-            `The page took longer than ${Math.round(navTimeout / 1000)}s to respond.`,
+            translator(locale)("scanFail.navigationTimeout", {
+              seconds: Math.round(navTimeout / 1000),
+            }),
             "navigation-timeout",
           );
         }
         if (await sessionIsGone(page)) throw new BrowserGoneError(err);
-        throw new ScanFailure("The page could not be reached.", "navigation-failed");
+        throw new ScanFailure(translator(locale)("scanFail.unreachable"), "navigation-failed");
       }),
     );
 
     const httpStatus = response?.status() ?? 0;
     if (httpStatus >= 400) {
       throw new ScanFailure(
-        `The page returned an error (HTTP ${httpStatus}). The address may be wrong or removed, or the page may need a login.`,
+        translator(locale)("scanFail.httpError", { status: httpStatus }),
         "http-error",
       );
     }
 
-    await track("engine", () => injectDomEngine(page));
+    await track("engine", () => injectDomEngine(page, DOM_ENGINE_PATH, locale));
 
     await track("prime", () => policy.run("prime", () => primeLazyContent(page), undefined));
 
@@ -448,10 +573,7 @@ async function runScanAttempt(
     });
 
     if (!axe) {
-      throw new ScanFailure(
-        "The accessibility audit could not finish on this page in time.",
-        "audit-failed",
-      );
+      throw new ScanFailure(translator(locale)("scanFail.timeout"), "audit-failed");
     }
 
     phase("processing");
@@ -476,7 +598,7 @@ async function runScanAttempt(
             )
           ).value;
 
-    const enriched = enrichViolations(wcagViolations, elementInfos);
+    const enriched = enrichViolations(wcagViolations, elementInfos, translator(locale));
 
     const applyFixGroups = () => attachFixGroups(enriched);
 
@@ -522,11 +644,11 @@ async function runScanAttempt(
     const targets = markerTargets(wcagViolations);
 
     const rects = (
-      await policy.run<(DomRect | null)[]>(
+      await policy.run<(DocRect | null)[]>(
         "markers",
         () =>
           page.evaluate(
-            (selectors) => window.__accessCheckDom!.collectRects(selectors),
+            (selectors) => window.__accessCheckDom!.collectDocRects(selectors),
             targets.map((t) => t.selector),
           ),
         targets.map(() => null),
@@ -544,7 +666,7 @@ async function runScanAttempt(
     const passed = axe.passes.map((p) => p.help);
 
     const bestPractice = buildBestPractice(bpViolations);
-    const incomplete = buildIncomplete(axe.incomplete);
+    const incomplete = buildIncomplete(axe.incomplete, translator(locale));
 
     phase("finalizing");
     const core: ScanResult = {
@@ -559,7 +681,7 @@ async function runScanAttempt(
       screenshot: null,
       score: computeScore(violations),
       counts,
-      summary: buildSummary(counts),
+      summary: buildSummary(counts, translator(locale)),
       violations,
       incomplete,
       bestPractice,
@@ -579,6 +701,10 @@ async function runScanAttempt(
     }
 
     let screenshot: string | null = null;
+    let overview: ScanOverview | undefined;
+    let pageMarkers: ScanMarker[] = markers;
+    let captures: ScanCapture[] = [];
+    let extraMarkers: ScanMarker[] = [];
     let audits: AuditsReport | undefined;
     let keyboard: KeyboardReport | undefined;
     let contexts: ContextReport | undefined;
@@ -592,9 +718,9 @@ async function runScanAttempt(
             "audits",
             async () => {
               const report: AuditsReport = {};
-              report.targetSize = await collectTargetSize(page);
-              report.reducedMotion = await collectReducedMotion(page);
-              report.liveRegions = await collectLiveRegions(page);
+              report.targetSize = await collectTargetSize(page, translator(locale));
+              report.reducedMotion = await collectReducedMotion(page, translator(locale));
+              report.liveRegions = await collectLiveRegions(page, translator(locale));
               return report;
             },
             undefined as AuditsReport | undefined,
@@ -625,13 +751,59 @@ async function runScanAttempt(
         );
         screenshot = shot.value;
         if (!screenshot) policy.skip("screenshot");
+
+        if (!screenshot) return;
+
+        const view = await track("overview", () =>
+          captureOverview(page, {
+            viewport: VIEWPORT,
+            quality: SCREENSHOT_QUALITY,
+            deadline:
+              Date.now() + Math.min(MAX_OVERVIEW_MS, Math.max(0, budget.remaining() - 6_000)),
+          }).catch(() => undefined),
+        );
+
+        const numbered = numberTargets(targets, rects);
+        pageMarkers = buildMarkers(targets, rects, VIEWPORT, numbered);
+
+        if (view && view.capturedHeight > 0) {
+          overview = view;
+          pageMarkers = overviewMarkers(
+            targets,
+            rects,
+            { width: view.pageWidth, height: view.capturedHeight },
+            numbered,
+          );
+        }
+
+        if (numbered.length > 0) {
+          const onOverview = new Set(
+            numbered.filter((_, position) =>
+              pageMarkers.some((marker) => marker.n === position + 1),
+            ),
+          );
+
+          const cropped = await track("captures", () =>
+            captureEvidenceCrops(
+              page,
+              targets,
+              numbered,
+              onOverview,
+              VIEWPORT,
+              Date.now() + Math.min(8_000, Math.max(0, budget.remaining() - 4_000)),
+            ).catch(() => ({ captures: [], markers: [] })),
+          );
+          captures = cropped.captures;
+          extraMarkers = cropped.markers;
+        }
       },
 
       keyboard: async () => {
         const collected = await track("keyboard", () =>
           policy.run<KeyboardReport | undefined>(
             "keyboard",
-            (allowanceMs) => collectKeyboard(page, VIEWPORT, { maxMs: allowanceMs * 0.75 }),
+            (allowanceMs) =>
+              collectKeyboard(page, VIEWPORT, translator(locale), { maxMs: allowanceMs * 0.75 }),
             undefined,
           ),
         );
@@ -647,6 +819,7 @@ async function runScanAttempt(
               collectContexts(
                 page,
                 violations.map((v) => v.id),
+                translator(locale),
                 { maxMs: allowanceMs * 0.8 },
               ),
             undefined,
@@ -692,12 +865,15 @@ async function runScanAttempt(
       ...core,
       durationMs: Date.now() - startedAt,
       screenshot,
+      markers: [...pageMarkers, ...extraMarkers],
+      captures,
+      overview,
       keyboard,
       contexts,
       audits,
       score: computeScore(scored),
       counts: finalCounts,
-      summary: buildSummary(finalCounts, { partial: policy.partial }),
+      summary: buildSummary(finalCounts, translator(locale), { partial: policy.partial }),
       fixFirst: buildFixFirst(scored),
       partial: policy.partial,
       warnings: policy.warnings().length > 0 ? policy.warnings() : undefined,

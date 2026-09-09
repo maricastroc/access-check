@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { ScanPhase, ScanResult } from "@/lib/scan/types";
-import { streamScan, ScanStreamError, SCAN_ERROR_HINT } from "@/lib/scan/stream";
+import { streamScan, ScanStreamError, scanErrorHint } from "@/lib/scan/stream";
+import { useLocale, useT } from "@/lib/i18n/provider";
 import { recallScan, rememberScan } from "@/lib/scan/result-cache";
 
 export type AuditStatus = "loading" | "done" | "error";
@@ -33,6 +34,8 @@ export function usePageAudit({
   fallbackError: string;
   incremental?: boolean;
 }): PageAudit {
+  const t = useT();
+  const locale = useLocale();
   const [url, setUrl] = useState(initialUrl);
   const [status, setStatus] = useState<AuditStatus>(initialResult ? "done" : "loading");
   const [streaming, setStreaming] = useState(false);
@@ -52,7 +55,7 @@ export function usePageAudit({
         setStatus("done");
       };
 
-      const cached = force ? null : recallScan(value);
+      const cached = force ? null : recallScan(value, locale);
       if (cached) {
         setError("");
         setErrorHint("");
@@ -81,20 +84,20 @@ export function usePageAudit({
                   }
                 : undefined,
             },
-            { force },
+            { force, t },
           );
           rememberScan(fresh, value);
           setStreaming(false);
           apply(fresh);
         } catch (e) {
           setError(e instanceof Error ? e.message : fallbackError);
-          setErrorHint(e instanceof ScanStreamError ? SCAN_ERROR_HINT[e.code] : "");
+          setErrorHint(e instanceof ScanStreamError ? scanErrorHint(e.code, t) : "");
           setStreaming(false);
           setStatus("error");
         }
       })();
     },
-    [fallbackError, incremental],
+    [fallbackError, incremental, locale, t],
   );
 
   useEffect(() => {

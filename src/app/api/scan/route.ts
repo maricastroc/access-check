@@ -10,12 +10,15 @@ import { SCORING_VERSION } from "@/lib/scan/scored";
 import { clientKey, scanRateLimit } from "@/lib/rate-limit";
 import { assertPublicUrl, BlockedUrlError } from "@/lib/scan/ssrf";
 import { logError } from "@/lib/observability/log";
+import { localeFromRequest, translateForRequest } from "@/lib/i18n/server";
+import type { ReportLocale } from "@/lib/i18n/locale";
+import type { Translate } from "@/lib/i18n/t";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-function scanCacheKey(url: string): string {
-  return `scan:v${SCORING_VERSION}:${url}`;
+function scanCacheKey(url: string, locale: ReportLocale): string {
+  return `scan:v${SCORING_VERSION}:${locale}:${url}`;
 }
 
 const SCAN_BUDGET_MS = 40_000;
@@ -27,6 +30,7 @@ function fail(error: string, code: ScanErrorCode, status: number) {
 
 function streamResponse(
   produce: (send: (event: ScanStreamEvent) => void) => void | Promise<void>,
+  t: Translate,
 ): Response {
   const encoder = new TextEncoder();
   const stream = new ReadableStream<Uint8Array>({
@@ -39,10 +43,7 @@ function streamResponse(
       try {
         await produce(send);
       } catch (err) {
-        const message =
-          err instanceof Error
-            ? err.message
-            : "Something went wrong on our side. Please try again.";
+        const message = err instanceof Error ? err.message : t("api.internal");
         send({ type: "error", error: message, code: "internal" });
       } finally {
         closed = true;
@@ -61,41 +62,31 @@ function streamResponse(
 }
 
 export async function POST(req: Request) {
+  const locale = localeFromRequest(req);
+  const t = translateForRequest(req);
   let body: { url?: string; force?: boolean };
   try {
     body = await req.json();
   } catch {
-    return fail(
-      "We couldn't read that request. Please reload the page and try again.",
-      "invalid-url",
-      400,
-    );
+    return fail(t("api.badRequest"), "invalid-url", 400);
   }
 
   if (!body.url || typeof body.url !== "string") {
-    return fail(
-      "No web address was provided. Enter a page address and try again.",
-      "invalid-url",
-      400,
-    );
+    return fail(t("api.noAddress"), "invalid-url", 400);
   }
 
   if ((await scanRateLimit.check(clientKey(req))) === "limited") {
-    return fail(
-      "Too many audits in a short time. Please wait about a minute and try again.",
-      "rate-limited",
-      429,
-    );
+    return fail(t("api.rateLimited"), "rate-limited", 429);
   }
 
   const url = normalizeUrl(body.url);
 
   try {
-    await assertPublicUrl(url);
+    await assertPublicUrl(url, t);
   } catch (err) {
     const blocked = err instanceof BlockedUrlError;
     return fail(
-      blocked ? err.message : "That doesn't look like a valid web address. Check it and try again.",
+      blocked ? err.message : t("api.invalidAddress"),
       blocked ? err.code : "invalid-url",
       400,
     );
@@ -106,7 +97,7 @@ export async function POST(req: Request) {
   if (body.force !== true) {
     const reused = userId
       ? await findRecentScan(userId, url, SCAN_FRESH_MS)
-      : await cacheGet<ScanResult>(scanCacheKey(url));
+      : await cacheGet<ScanResult>(scanCacheKey(url, locale));
 
     if (reused) {
       const at = reused.scannedAt ? Date.parse(reused.scannedAt) : NaN;
@@ -121,7 +112,7 @@ export async function POST(req: Request) {
       );
       return streamResponse((send) => {
         send({ type: "result", result: reused });
-      });
+      }, t);
     }
   }
 
@@ -149,6 +140,7 @@ export async function POST(req: Request) {
     });
 
     const scan = runScan(url, {
+      locale,
       blockPrivateHosts: true,
       budgetMs: SCAN_BUDGET_MS,
       onPhase: (p) => send({ type: "phase", phase: p }),
@@ -181,7 +173,11 @@ export async function POST(req: Request) {
             logError("scan.history.failed", e);
           }
         } else if (!outcome.result.partial) {
-          await cacheSet(scanCacheKey(url), trimForCache(outcome.result), SCAN_FRESH_SECONDS);
+          await cacheSet(
+            scanCacheKey(url, locale),
+            trimForCache(outcome.result),
+            SCAN_FRESH_SECONDS,
+          );
         }
         return;
       }
@@ -196,8 +192,7 @@ export async function POST(req: Request) {
       if (outcome.kind === "expired") {
         send({
           type: "error",
-          error:
-            "This page took too long to finish. Try a single, lighter page instead of a large home page.",
+          error: t("api.tooSlow"),
           code: "timeout",
         });
         log("deadline");
@@ -206,14 +201,11 @@ export async function POST(req: Request) {
 
       const error = outcome.error;
       const code: ScanErrorCode = error instanceof ScanFailure ? error.code : "internal";
-      const message =
-        error instanceof ScanFailure
-          ? error.message
-          : "We couldn't audit this page. Please try another web address.";
+      const message = error instanceof ScanFailure ? error.message : t("api.auditFailed");
       send({ type: "error", error: message, code });
       log("error", { code, detail: error instanceof Error ? error.message : String(error) });
     } finally {
       if (timer) clearTimeout(timer);
     }
-  });
+  }, t);
 }

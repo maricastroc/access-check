@@ -1,5 +1,6 @@
 import type { WcagReadingModel } from "@/lib/report/wcag";
 import { cn } from "@/lib/cn";
+import type { Translate } from "@/lib/i18n/t";
 
 type Fill = "clean" | "fails" | "hollow";
 
@@ -24,7 +25,7 @@ function criteriaList(criteria: { sc: string; name: string | null }[]): string {
   return criteria.map((c) => (c.name ? `${c.sc} ${c.name}` : c.sc)).join(", ");
 }
 
-export function WcagReading({ model }: { model: WcagReadingModel }) {
+export function WcagReading({ model, t }: { model: WcagReadingModel; t: Translate }) {
   const aFill: Fill = model.a.fails ? "fails" : "clean";
   const aaFill: Fill = model.aa.fails ? "fails" : "clean";
 
@@ -36,13 +37,13 @@ export function WcagReading({ model }: { model: WcagReadingModel }) {
           <p className="text-[14px] leading-snug text-body">
             {model.a.fails ? (
               <>
-                Fails by{" "}
+                {t("wcagReading.failsBy")}{" "}
                 <span className="font-mono text-[12.5px] text-steel">
                   {criteriaList(model.a.criteria)}
                 </span>
               </>
             ) : (
-              "No automated level-A failures"
+              t("wcagReading.noA")
             )}
           </p>
         </li>
@@ -51,32 +52,37 @@ export function WcagReading({ model }: { model: WcagReadingModel }) {
           <p className="text-[14px] leading-snug text-body">
             {model.aa.fails ? (
               <>
-                Fails by{" "}
+                {t("wcagReading.failsBy")}{" "}
                 <span className="font-mono text-[12.5px] text-steel">
                   {criteriaList(model.aa.criteria)}
                 </span>
               </>
             ) : (
-              "No automated level-AA failures"
+              t("wcagReading.noAA")
             )}
           </p>
         </li>
         <li className="flex items-start gap-3 border-t border-hairline pt-3">
           <LevelSquare level="AAA" fill="hollow" />
-          <p className="text-[14px] leading-snug text-muted">
-            Not evaluated. AccessCheck runs A and AA
-          </p>
+          <p className="text-[14px] leading-snug text-muted">{t("wcagReading.notEvaluated")}</p>
         </li>
       </ul>
       <p className="mt-4 border-t border-hairline pt-3 text-[13px] leading-normal text-muted">
-        The score is an internal priority measure. WCAG conformance also depends on checks no
-        automated tool decides alone.
+        {t("wcagReading.internalNote")}
       </p>
     </div>
   );
 }
 
-export function WcagChips({ model, className }: { model: WcagReadingModel; className?: string }) {
+export function WcagChips({
+  model,
+  className,
+  t,
+}: {
+  model: WcagReadingModel;
+  className?: string;
+  t: Translate;
+}) {
   const chip = (level: string, fill: Fill, text: string) => (
     <span className="inline-flex items-center gap-2 border border-border bg-surface px-2.5 py-1.5">
       <LevelSquare level={level} fill={fill} size={16} />
@@ -88,14 +94,18 @@ export function WcagChips({ model, className }: { model: WcagReadingModel; class
       {chip(
         "A",
         model.a.fails ? "fails" : "clean",
-        model.a.fails ? `fails ${model.a.criteria[0]?.sc ?? ""}` : "no failures",
+        model.a.fails
+          ? t("chip.fails", { sc: model.a.criteria[0]?.sc ?? "" })
+          : t("chip.noFailures"),
       )}
       {chip(
         "AA",
         model.aa.fails ? "fails" : "clean",
-        model.aa.fails ? `fails ${model.aa.criteria[0]?.sc ?? ""}` : "no failures",
+        model.aa.fails
+          ? t("chip.fails", { sc: model.aa.criteria[0]?.sc ?? "" })
+          : t("chip.noFailures"),
       )}
-      {chip("AAA", "hollow", "not evaluated")}
+      {chip("AAA", "hollow", t("chip.notEvaluated"))}
     </div>
   );
 }

@@ -9,7 +9,15 @@ import { usePageAudit } from "@/hooks/use-page-audit";
 import { ColorBlindFilters } from "./color-blind-filters";
 import { safeHost } from "./shared";
 import { type SimKey } from "./data";
-import { buildMarkerViews, type Layer } from "./report-ui";
+import {
+  buildMarkerViews,
+  captureById,
+  focusOnCapture,
+  captureForFinding,
+  markersOfCapture,
+  type Layer,
+} from "./report-ui";
+import { OVERVIEW_CAPTURE } from "@/lib/scan/types";
 import { buildReportView } from "./report-model";
 import { useFindingSelection } from "./use-finding-selection";
 import { TopBar } from "./top-bar";
@@ -19,6 +27,7 @@ import { EvidenceFrame } from "./evidence-frame";
 import { FindingsMargin } from "./findings-margin";
 import { MobileReport } from "./mobile-report";
 import { ScanningState, ErrorState, PartialNotice } from "./states";
+import { useT } from "@/lib/i18n/provider";
 
 const VIEWPORT_LABEL = "1200 × 800";
 const NO_FINDINGS: FindingView[] = [];
@@ -44,11 +53,12 @@ export function ResultsView({
   siteId: string | null;
   initialResult: ScanResult | null;
 }) {
+  const t = useT();
   const audit = usePageAudit({
     initialUrl,
     initialResult,
     incremental: true,
-    fallbackError: "The audit stopped before it could finish. Please try again.",
+    fallbackError: t("scanError.message.internal"),
   });
   const { status, streaming, result, phase, url, error, errorHint, scan } = audit;
 
@@ -69,6 +79,38 @@ export function ResultsView({
     () => (result ? buildMarkerViews(orderedMarkers(result), selection.selectedFinding) : []),
     [result, selection.selectedFinding],
   );
+
+  const [captureId, setCaptureId] = useState<string>(OVERVIEW_CAPTURE);
+  const wantedCapture = captureForFinding(selection.selectedFinding);
+  const [lastPick, setLastPick] = useState(selection.pick);
+
+  if (selection.pick !== lastPick) {
+    setLastPick(selection.pick);
+    setCaptureId(wantedCapture ?? OVERVIEW_CAPTURE);
+  }
+
+  const capture = useMemo(
+    () =>
+      captureById(
+        result ?? ({ markers: [], screenshot: null } as unknown as ScanResult),
+        captureId,
+      ),
+    [result, captureId],
+  );
+  const captureMarkers = useMemo(
+    () => markersOfCapture(markerViews, captureId),
+    [markerViews, captureId],
+  );
+  const focusPoints = useMemo(
+    () => (view ? focusOnCapture(view.focusPoints, capture) : []),
+    [view, capture],
+  );
+  const overviewTop = useMemo(() => {
+    const onColumn = markerViews.find(
+      (v) => v.state === "selected" && v.marker.captureId === OVERVIEW_CAPTURE,
+    );
+    return onColumn ? onColumn.marker.top : null;
+  }, [markerViews]);
   const host = view?.host ?? safeHost(url);
 
   const quickFromSite = Boolean(siteId) && result !== null && result === initialResult;
@@ -115,16 +157,14 @@ export function ResultsView({
               <div className="mx-auto w-full max-w-[1560px] px-4 pt-4 sm:px-6">
                 <div className="flex flex-col items-start gap-2 border border-border bg-surface px-4 py-3 text-[13px] sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-body">
-                    <span className="font-semibold text-ink">
-                      Quick result from the site audit.
-                    </span>{" "}
-                    Run the full audit to add the screenshot, keyboard checks and fix testing.
+                    <span className="font-semibold text-ink">{t("results.quickFromSite")}</span>{" "}
+                    {t("results.runFullAuditNote")}
                   </p>
                   <button
                     onClick={() => scan(url, { force: true })}
                     className="shrink-0 cursor-pointer bg-ink px-3.5 py-1.5 text-[13px] font-semibold text-surface hover:bg-ink-2"
                   >
-                    Run full audit
+                    {t("capture.runFull")}
                   </button>
                 </div>
               </div>
@@ -139,7 +179,7 @@ export function ResultsView({
 
             {desktop ? (
               <>
-                <SummaryBand result={result} breakdown={view.breakdown} wcag={view.wcag} />
+                <SummaryBand t={t} result={result} breakdown={view.breakdown} wcag={view.wcag} />
                 <div className="mx-auto grid w-full max-w-[1560px] grid-cols-[164px_minmax(0,1fr)_420px] items-start">
                   <div className="sticky top-15.5 self-start">
                     <VisionRail
@@ -154,14 +194,17 @@ export function ResultsView({
                   </div>
                   <div className="p-4">
                     <EvidenceFrame
+                      capture={capture}
+                      overviewTop={overviewTop}
+                      onBackToOverview={() => setCaptureId(OVERVIEW_CAPTURE)}
                       result={result}
                       host={host}
                       sim={sim}
                       layer={effectiveLayer}
                       collapsed={collapsed}
                       onToggleCollapse={() => setCollapsed((c) => !c)}
-                      markerViews={markerViews}
-                      focusPoints={view.focusPoints}
+                      markerViews={captureMarkers}
+                      focusPoints={focusPoints}
                       selectedFinding={selection.selectedFinding}
                       onSelectMarker={selection.selectMarker}
                       quickFromSite={quickFromSite}
@@ -171,17 +214,21 @@ export function ResultsView({
                   </div>
                   <div className="scroll-slim sticky top-15.5 max-h-[calc(100vh-62px)] self-start overflow-y-auto">
                     <FindingsMargin
+                      t={t}
                       findings={view.findings}
                       result={result}
                       host={host}
                       selectedId={selection.selectedId}
-                      onSelect={selection.selectFinding}
+                      onSelect={selection.toggleFinding}
+                      onOpenEvidence={selection.selectFinding}
                     />
                   </div>
                 </div>
               </>
             ) : (
               <MobileReport
+                capture={capture}
+                overviewTop={overviewTop}
                 result={result}
                 host={host}
                 breakdown={view.breakdown}
@@ -192,9 +239,10 @@ export function ResultsView({
                 findings={view.findings}
                 selectedFinding={selection.selectedFinding}
                 selectedId={selection.selectedId}
-                onSelect={selection.selectFinding}
-                markerViews={markerViews}
-                focusPoints={view.focusPoints}
+                onSelect={selection.toggleFinding}
+                onOpenEvidence={selection.selectFinding}
+                markerViews={captureMarkers}
+                focusPoints={focusPoints}
                 onSelectMarker={selection.selectMarker}
                 tab={mobileTab}
                 setTab={setMobileTab}

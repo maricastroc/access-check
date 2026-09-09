@@ -1,5 +1,6 @@
 import type { FixVerification } from "@/lib/scan/types";
 import type { ContrastMeasurement } from "./contrast";
+import { translator } from "../i18n/t";
 
 export type PreviewConfidence = "verified" | "calculated" | "inconclusive";
 
@@ -35,13 +36,12 @@ export function buildContrastPreview(
     confidence = "verified";
   } else if (locatedVerification === "failed") {
     confidence = "inconclusive";
-    reason =
-      "The calculated pair reaches the minimum, but the located element's live re-audit still flags it. The real background is probably an image, gradient or overlapping layer, so this sampled solid color isn't the true background.";
+    reason = translator()("preview.stillFlagged");
   } else if (passesCalc) {
     confidence = "calculated";
   } else {
     confidence = "inconclusive";
-    reason = "No color change alone reaches the minimum on this hue pair.";
+    reason = translator()("preview.noColorReaches");
   }
 
   return {

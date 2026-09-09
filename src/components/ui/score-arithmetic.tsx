@@ -1,22 +1,25 @@
 import type { ScoreBreakdown } from "@/lib/report/score";
 import { severityHatchClass, severityLabel } from "@/lib/report/severity";
 import { cn } from "@/lib/cn";
+import type { Translate } from "@/lib/i18n/t";
 
 export function ScoreArithmetic({
   breakdown,
   passed,
   manualReview,
+  t,
 }: {
   breakdown: ScoreBreakdown;
   passed: number;
   manualReview: number;
+  t: Translate;
 }) {
   const { score, deductions } = breakdown;
   return (
     <div className="text-[13px]">
       <div className="flex items-center gap-2.5 text-body">
         <span aria-hidden className="h-3 w-3 shrink-0 bg-ink" />
-        <span>{passed} automated checks passed</span>
+        <span>{t("score.checksPassed", { count: passed })}</span>
         <span className="ml-auto font-mono text-[13px] font-semibold text-ink tabular-nums">
           {score}
           <span className="text-muted"> / 100</span>
@@ -26,7 +29,7 @@ export function ScoreArithmetic({
       {deductions.length > 0 && (
         <div className="mt-2.5 border-t border-hairline pt-2.5">
           <p className="font-cond text-[11px] tracking-widest text-muted uppercase">
-            If you fix these, the score rises to
+            {t("score.ifYouFix")}
           </p>
           <div className="mt-2 space-y-1.5">
             {deductions.map((d) => (
@@ -39,7 +42,7 @@ export function ScoreArithmetic({
                   )}
                 />
                 <span className="text-body">
-                  {d.issues} {severityLabel[d.severity].toLowerCase()} · {d.elements} element
+                  {d.issues} {severityLabel(d.severity, t).toLowerCase()} · {d.elements} element
                   {d.elements === 1 ? "" : "s"}
                 </span>
                 <span className="ml-auto flex items-baseline gap-1.5">
@@ -57,10 +60,8 @@ export function ScoreArithmetic({
       )}
 
       <p className="mt-2.5 border-t border-hairline pt-2.5 text-[11.5px] leading-normal text-muted">
-        {manualReview} manual-review item{manualReview === 1 ? "" : "s"} sit outside the score.
-        {deductions.length > 1
-          ? " Each line is the score after fixing that severity on its own. The score is non-linear, so fixing more than one recovers less than the lines added together."
-          : ""}
+        {t("md.manualOutside", { count: manualReview })}
+        {deductions.length > 1 ? ` ${t("score.nonLinearNote")}` : ""}
       </p>
     </div>
   );

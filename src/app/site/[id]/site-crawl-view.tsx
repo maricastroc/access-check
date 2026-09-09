@@ -5,10 +5,12 @@ import { aggregateScore } from "@/lib/scan/site-aggregate";
 import { CrawlShell } from "../chrome";
 import type { CrawlSnapshot } from "../shared";
 import { PageRow, ProgressHeader, SiteSummary } from "./crawl-parts";
+import { useT } from "@/lib/i18n/provider";
 
 const POLL_MS = 2000;
 
 export function SiteCrawlView({ initial }: { initial: CrawlSnapshot }) {
+  const t = useT();
   const [snap, setSnap] = useState<CrawlSnapshot>(initial);
 
   const refresh = useCallback(async () => {
@@ -36,16 +38,16 @@ export function SiteCrawlView({ initial }: { initial: CrawlSnapshot }) {
   const pending = snap.pages.filter((p) => p.status === "pending" || p.status === "running").length;
 
   return (
-    <CrawlShell>
+    <CrawlShell t={t}>
       <ProgressHeader snap={snap} />
 
       {(hasResults || snap.status !== "running") && (
-        <SiteSummary snap={snap} score={displayScore} />
+        <SiteSummary t={t} snap={snap} score={displayScore} />
       )}
 
       <ul className="mt-6 flex flex-col gap-2">
         {snap.pages.map((page) => (
-          <PageRow key={page.id} page={page} siteId={snap.id} />
+          <PageRow t={t} key={page.id} page={page} siteId={snap.id} />
         ))}
       </ul>
 

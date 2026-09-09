@@ -10,10 +10,12 @@ import { SummaryPage } from "../summary-page";
 import { FindingsPage } from "../findings-page";
 import { ProgressPage } from "../progress-page";
 import { ComparisonCard } from "./comparison-card";
+import { getTranslate } from "@/lib/i18n/server";
 
 export const runtime = "nodejs";
 
 export default async function SavedReportPage({ params }: { params: Promise<{ id: string }> }) {
+  const t = await getTranslate();
   const { id } = await params;
 
   const userId = (await auth())?.user?.id;
@@ -35,13 +37,15 @@ export default async function SavedReportPage({ params }: { params: Promise<{ id
           className="text-ink-soft flex h-8.5 items-center gap-2 rounded-[9px] px-2.5 text-[13px] font-medium transition-colors hover:bg-[#f6f7f9] hover:text-ink"
         >
           <FontAwesomeIcon icon={faArrowLeft} className="text-xs" />
-          Back to history
+          {t("history.backToHistory")}
         </Link>
-        <span className="text-[13px] font-medium">Saved report · {result.title}</span>
+        <span className="text-[13px] font-medium">
+          {t("history.savedReport")} · {result.title}
+        </span>
       </header>
 
       <main id="main" className="flex flex-col items-center gap-8 overflow-x-auto px-5 py-10">
-        {diff && previous && <ComparisonCard diff={diff} previousAt={previous.at} />}
+        {diff && previous && <ComparisonCard t={t} diff={diff} previousAt={previous.at} />}
         <SummaryPage result={result} />
         <FindingsPage result={result} />
         <ProgressPage result={result} />

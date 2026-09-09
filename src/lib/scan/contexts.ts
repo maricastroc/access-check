@@ -1,6 +1,7 @@
 import type { Page } from "playwright-core";
 import type { Severity } from "./types";
 import { criterionFromTags } from "./wcag";
+import type { Translate } from "../i18n/t";
 
 export type ContextIssue = {
   id: string;
@@ -41,19 +42,23 @@ export type RawRule = {
 
 const MAX_ISSUE_SELECTORS = 5;
 
-export function toContextIssue(r: RawRule): ContextIssue {
+export function toContextIssue(r: RawRule, t: Translate): ContextIssue {
   return {
     id: r.id,
     title: r.help,
-    criterion: criterionFromTags(r.tags) ?? r.id,
+    criterion: criterionFromTags(r.tags, t) ?? r.id,
     severity: (r.impact ?? "minor") as Severity,
     nodes: r.nodeCount,
     selectors: r.selectors.slice(0, MAX_ISSUE_SELECTORS),
   };
 }
 
-export function newIssues(baselineIds: Set<string>, rules: RawRule[]): ContextIssue[] {
-  return rules.filter((r) => !baselineIds.has(r.id)).map(toContextIssue);
+export function newIssues(
+  baselineIds: Set<string>,
+  rules: RawRule[],
+  t: Translate,
+): ContextIssue[] {
+  return rules.filter((r) => !baselineIds.has(r.id)).map((r) => toContextIssue(r, t));
 }
 
 const MOBILE = { width: 375, height: 812 };
@@ -78,6 +83,7 @@ type PageAxe = {
 export async function collectContexts(
   page: Page,
   baselineIdsArr: string[],
+  t: Translate,
   opts: { maxMs?: number } = {},
 ): Promise<ContextReport> {
   const baseline = new Set(baselineIdsArr);
@@ -138,14 +144,14 @@ export async function collectContexts(
 
     dynamicRan = true;
 
-    for (const t of triggers) {
+    for (const toggle of triggers) {
       if (Date.now() >= dynamicDeadline) break;
       const state = await page.evaluate(
-        async ({ t, tags }) => {
+        async ({ toggle, tags }) => {
           const firstTarget = (x: unknown): string | null =>
             Array.isArray(x) && typeof x[0] === "string" ? x[0] : typeof x === "string" ? x : null;
 
-          const el = document.querySelector(t.selector) as HTMLElement | null;
+          const el = document.querySelector(toggle.selector) as HTMLElement | null;
           if (!el) return null;
           const hrefBefore = location.href;
 
@@ -153,7 +159,7 @@ export async function collectContexts(
           let scope: Element | null = null;
           let restore = () => {};
 
-          if (t.kind === "details") {
+          if (toggle.kind === "details") {
             const d = el.closest("details") as HTMLDetailsElement | null;
             if (!d) return null;
             if (!d.open) {
@@ -167,7 +173,7 @@ export async function collectContexts(
           } else {
             el.click();
             opened = el.getAttribute("aria-expanded") === "true";
-            scope = t.controls ? document.getElementById(t.controls) : null;
+            scope = toggle.controls ? document.getElementById(toggle.controls) : null;
             restore = () => {
               if (opened && el.getAttribute("aria-expanded") === "true") el.click();
             };
@@ -202,18 +208,18 @@ export async function collectContexts(
           restore();
           return { opened: true, rules: mapped };
         },
-        { t, tags: CONTEXT_TAGS },
+        { toggle, tags: CONTEXT_TAGS },
       );
 
       if (!state) continue;
       if ("navigated" in state && state.navigated) break;
       if ("opened" in state && state.opened) {
         opened++;
-        const issues = newIssues(baseline, state.rules);
+        const issues = newIssues(baseline, state.rules, t);
         if (issues.length > 0) {
           dynamicStates.push({
-            label: `Opened “${t.label}”`,
-            selector: t.selector,
+            label: `Opened “${toggle.label}”`,
+            selector: toggle.selector,
             newIssues: issues,
           });
         }
@@ -247,7 +253,7 @@ export async function collectContexts(
       }));
     }, CONTEXT_TAGS);
     mobileRan = true;
-    onlyOnMobile = newIssues(baseline, rules);
+    onlyOnMobile = newIssues(baseline, rules, t);
   } catch {
     //
   }

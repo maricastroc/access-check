@@ -6,8 +6,10 @@ import { faArrowLeft, faPrint } from "@fortawesome/free-solid-svg-icons";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { Logo } from "@/components/ui";
 import type { Status } from "./shared";
+import { useT } from "@/lib/i18n/provider";
 
 export function Toolbar({ url, status }: { url: string; status: Status }) {
+  const t = useT();
   return (
     <header className="ac-toolbar sticky top-0 z-30 flex h-[58px] items-center justify-between gap-2 border-b border-border bg-surface px-4 sm:px-7">
       <div className="flex min-w-0 items-center gap-4">
@@ -18,7 +20,7 @@ export function Toolbar({ url, status }: { url: string; status: Status }) {
           className="flex h-9 items-center gap-2 px-2 text-[13px] font-medium text-steel transition-colors hover:underline"
         >
           <FontAwesomeIcon icon={faArrowLeft} className="text-xs" />
-          <span className="hidden sm:inline">Back to results</span>
+          <span className="hidden sm:inline">{t("report.backToResults")}</span>
         </Link>
       </div>
       <button
@@ -27,8 +29,8 @@ export function Toolbar({ url, status }: { url: string; status: Status }) {
         className="flex h-9 shrink-0 cursor-pointer items-center gap-2 bg-ink px-4 text-[13px] font-semibold text-surface transition-colors hover:bg-ink-2 disabled:cursor-default disabled:bg-canvas disabled:text-disabled"
       >
         <FontAwesomeIcon icon={faPrint} className="text-xs" />
-        <span className="hidden sm:inline">Print / Save as PDF</span>
-        <span className="sm:hidden">Save PDF</span>
+        <span className="hidden sm:inline">{t("report.printOrSavePdf")}</span>
+        <span className="sm:hidden">{t("report.savePdf")}</span>
       </button>
     </header>
   );

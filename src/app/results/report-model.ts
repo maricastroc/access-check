@@ -5,7 +5,15 @@ import { scoreBreakdown, type ScoreBreakdown } from "../../lib/report/score";
 import { buildWcagReading, type WcagReadingModel } from "../../lib/report/wcag";
 import { clamp, safeHost } from "./shared";
 
-export type FocusPoint = { n: number; cx: number; cy: number; visible: boolean; label: string };
+export type FocusPoint = {
+  n: number;
+  cx: number;
+  cy: number;
+  visible: boolean;
+  label: string;
+  docX?: number;
+  docY?: number;
+};
 
 export type ReportView = {
   findings: FindingView[];
@@ -24,6 +32,9 @@ export function buildReportView(result: ScanResult): ReportView {
       cy: clamp(s.top! + (s.height ?? 0) / 2, 2, 98),
       visible: s.focusVisible,
       label: s.label,
+      ...(s.docX != null && s.docY != null
+        ? { docX: s.docX + (s.rect?.w ?? 0) / 2, docY: s.docY + (s.rect?.h ?? 0) / 2 }
+        : null),
     }));
 
   return {

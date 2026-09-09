@@ -3,7 +3,7 @@ import { cn } from "@/lib/cn";
 
 type SectionKickerProps = {
   children: ReactNode;
-  tone?: "muted" | "steel" | "ink";
+  tone?: "muted" | "steel" | "ink" | "band";
   as?: "span" | "div" | "h2" | "h3" | "h4";
   className?: string;
   id?: string;
@@ -13,6 +13,7 @@ const toneClass = {
   muted: "text-muted",
   steel: "text-steel",
   ink: "text-ink",
+  band: "text-band",
 } as const;
 
 export function SectionKicker({

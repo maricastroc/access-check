@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { FindingView } from "@/lib/report/findings";
+import { locatedMarkers, type FindingView } from "@/lib/report/findings";
 import type { Verdict } from "@/lib/report/verdict";
 import { verdictLabel, verdictMessage } from "@/lib/report/verdict";
 import { ratioPosition } from "@/lib/report/contrast";
@@ -10,6 +10,7 @@ import { severityColorVar } from "@/lib/report/severity";
 import { SectionKicker } from "./section-kicker";
 import { CodeBlock } from "./code-block";
 import { cn } from "@/lib/cn";
+import type { Translate } from "@/lib/i18n/t";
 
 const SEAL: Record<Verdict["kind"], { cls: string; glyph: string }> = {
   verified: { cls: "border-solid border-verified bg-verified/[0.08] text-verified", glyph: "✓" },
@@ -22,7 +23,7 @@ const SEAL: Record<Verdict["kind"], { cls: string; glyph: string }> = {
   complementary: { cls: "border-dashed border-border text-muted", glyph: "·" },
 };
 
-function VerdictSeal({ verdict }: { verdict: Verdict }) {
+function VerdictSeal({ verdict, t }: { verdict: Verdict; t: Translate }) {
   const s = SEAL[verdict.kind];
   return (
     <span
@@ -34,7 +35,7 @@ function VerdictSeal({ verdict }: { verdict: Verdict }) {
       <span aria-hidden className="font-cond text-[13px]">
         {s.glyph}
       </span>
-      {verdictLabel(verdict)}
+      {verdictLabel(verdict, t)}
     </span>
   );
 }
@@ -70,54 +71,56 @@ function RatioBar({
   );
 }
 
-function Chip({ fg, bg, large }: { fg: string; bg: string; large: boolean }) {
+function Chip({ fg, bg, large, t }: { fg: string; bg: string; large: boolean; t: Translate }) {
   return (
     <div
       className="flex h-16 items-center justify-center px-3 text-center"
       style={{ background: bg, color: fg }}
     >
-      <span className={large ? "text-[19px] font-semibold" : "text-[15px]"}>Sample text</span>
+      <span className={large ? "text-[19px] font-semibold" : "text-[15px]"}>
+        {t("detail.sampleText")}
+      </span>
     </div>
   );
 }
 
-function CONF_META(preview: ContrastPreview) {
+function CONF_META(preview: ContrastPreview, t: Translate) {
   if (preview.confidence === "verified")
     return {
-      label: "Verified on this element",
+      label: t("detail.verifiedOnElement"),
       cls: "text-verified",
       accent: "var(--color-verified)",
-      result: "Passes WCAG AA, confirmed by re-audit of the located element",
+      result: t("detail.verifiedOnElementNote"),
     };
   if (preview.confidence === "calculated")
     return {
-      label: "Calculated",
+      label: t("detail.calculated"),
       cls: "text-steel",
       accent: "var(--color-steel)",
-      result: `Would reach ${preview.simulated.ratio.toFixed(2)}:1, calculated from the detected colors, not verified live`,
+      result: t("detail.calculatedNote", { ratio: preview.simulated.ratio.toFixed(2) }),
     };
   return {
-    label: "Result uncertain",
+    label: t("detail.uncertain"),
     cls: "text-moderate-text",
     accent: "var(--color-moderate)",
-    result: "Can't confirm this reaches the minimum on the real background",
+    result: t("detail.uncertainNote"),
   };
 }
 
-function ContrastFixPreview({ preview }: { preview: ContrastPreview }) {
+function ContrastFixPreview({ preview, t }: { preview: ContrastPreview; t: Translate }) {
   const [view, setView] = useState<"original" | "suggested">("suggested");
   const shown = view === "original" ? preview.original : preview.simulated;
   const large = preview.required <= 3;
-  const meta = CONF_META(preview);
+  const meta = CONF_META(preview, t);
 
   return (
     <div className="mt-2">
       <p className="font-cond text-[11px] tracking-[0.08em] text-muted uppercase">
-        Contrast preview
+        {t("detail.contrastPreview")}
       </p>
       <div
         role="group"
-        aria-label="Contrast preview"
+        aria-label={t("detail.contrastPreview")}
         className="mt-1.5 inline-flex border border-border text-[12.5px]"
       >
         {(["original", "suggested"] as const).map((v, i) => (
@@ -138,7 +141,7 @@ function ContrastFixPreview({ preview }: { preview: ContrastPreview }) {
       </div>
 
       <div className="mt-2 border border-border">
-        <Chip fg={shown.fg} bg={shown.bg} large={large} />
+        <Chip t={t} fg={shown.fg} bg={shown.bg} large={large} />
         <div className="flex items-center justify-between border-t border-hairline px-3 py-1.5">
           <span
             className="font-cond text-[15px] tabular-nums"
@@ -163,30 +166,37 @@ function ContrastFixPreview({ preview }: { preview: ContrastPreview }) {
       </div>
 
       <dl className="mt-2.5 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[12.5px]">
-        <dt className="text-muted">Property</dt>
+        <dt className="text-muted">{t("detail.property")}</dt>
         <dd className="font-mono text-ink">{preview.prop}</dd>
-        <dt className="text-muted">Detected</dt>
+        <dt className="text-muted">{t("detail.detected")}</dt>
         <dd className="font-mono text-ink">{preview.originalValue.toUpperCase()}</dd>
-        <dt className="text-muted">Suggested</dt>
+        <dt className="text-muted">{t("detail.suggested")}</dt>
         <dd className="font-mono text-ink">{preview.suggestedValue.toUpperCase()}</dd>
-        <dt className="text-muted">Result</dt>
+        <dt className="text-muted">{t("detail.result")}</dt>
         <dd className={meta.cls}>{meta.result}</dd>
       </dl>
 
       {preview.reason && <p className="mt-2 text-[12px] text-moderate-text">{preview.reason}</p>}
       <p className="mt-2 text-[11.5px] text-muted">
-        Preview uses the detected foreground and background colors. Typography and page context are
-        not reproduced.
-        {preview.shared
-          ? ` ${preview.sharedCount} occurrences share this detected color pair.`
-          : ""}
+        {t("detail.previewNote")}
+        {preview.shared ? ` ${t("detail.sharedColorPair", { count: preview.sharedCount })}` : ""}
       </p>
     </div>
   );
 }
 
-export function FindingDetail({ finding, host }: { finding: FindingView; host: string }) {
-  const located = finding.markers.length;
+export function FindingDetail({
+  finding,
+  host,
+  t,
+  onOpenEvidence,
+}: {
+  finding: FindingView;
+  host: string;
+  t: Translate;
+  onOpenEvidence?: () => void;
+}) {
+  const located = locatedMarkers(finding);
   const affectedShown = finding.affectedSelectors.slice(0, 6);
   const affectedExtra = finding.affectedSelectors.length - affectedShown.length;
   const railColor = finding.severity ? severityColorVar[finding.severity] : "var(--color-steel)";
@@ -197,31 +207,44 @@ export function FindingDetail({ finding, host }: { finding: FindingView; host: s
       style={{ borderLeft: `4px solid ${railColor}` }}
     >
       <section className="p-3.5">
-        <SectionKicker>Impact on users</SectionKicker>
+        <SectionKicker>{t("detail.impactOnUsers")}</SectionKicker>
         <p className="mt-2 text-[14px] leading-normal text-ink-2">{finding.impact}</p>
       </section>
 
       <section className="border-t border-hairline p-3.5">
-        <SectionKicker>Affected element</SectionKicker>
+        <SectionKicker>{t("detail.affectedElement")}</SectionKicker>
         {finding.affectedSelectors.length > 0 ? (
           <>
-            <p className="mt-2 flex items-center gap-2 text-[13px]">
-              {located > 0 && (
+            {located > 0 && onOpenEvidence ? (
+              <button
+                type="button"
+                onClick={onOpenEvidence}
+                className="mt-2 flex w-full cursor-pointer items-center gap-2 border border-hairline bg-code px-2 py-1.5 text-left text-[13px] transition-colors hover:border-ink hover:bg-band"
+              >
                 <span
                   aria-hidden
                   className="inline-flex size-4.5 shrink-0 items-center justify-center bg-ink font-cond text-[11px] font-semibold text-surface"
                 >
-                  1
+                  {finding.markers[0]?.n ?? 1}
                 </span>
-              )}
-              <code className="font-mono text-[12.5px] text-steel">
-                {finding.affectedSelectors[0]}
-              </code>
-              {located > 0 && <span className="text-[11.5px] text-muted">· on the screenshot</span>}
-            </p>
+                <code className="min-w-0 flex-1 truncate font-mono text-[12.5px] text-steel">
+                  {finding.affectedSelectors[0]}
+                </code>
+                <span className="shrink-0 text-[11.5px] font-medium text-ink underline">
+                  {t("capture.openEvidence")}
+                </span>
+              </button>
+            ) : (
+              <p className="mt-2 flex items-center gap-2 text-[13px]">
+                <code className="font-mono text-[12.5px] text-steel">
+                  {finding.affectedSelectors[0]}
+                </code>
+              </p>
+            )}
             <p className="mt-1.5 text-[12.5px] text-muted">
-              <span className="font-medium text-ink tabular-nums">{finding.elements}</span> element
-              {finding.elements === 1 ? "" : "s"} affected · {located} shown on the screenshot
+              <span className="font-medium text-ink tabular-nums">{finding.elements}</span>{" "}
+              {t("detail.elementsAffected", { count: finding.elements })} ·{" "}
+              {t("capture.shownOnScreenshot", { count: located })}
             </p>
             {finding.affectedSelectors.length > 1 && (
               <ul className="mt-2 flex flex-wrap gap-1.5">
@@ -234,13 +257,17 @@ export function FindingDetail({ finding, host }: { finding: FindingView; host: s
                   </li>
                 ))}
                 {affectedExtra > 0 && (
-                  <li className="px-1 py-0.5 text-[11px] text-muted">+{affectedExtra} more</li>
+                  <li className="px-1 py-0.5 text-[11px] text-muted">
+                    {t("detail.moreSelectors", { count: affectedExtra })}
+                  </li>
                 )}
               </ul>
             )}
           </>
         ) : (
-          <p className="mt-2 text-[13px] text-body">{finding.elements} affected</p>
+          <p className="mt-2 text-[13px] text-body">
+            {t("detail.elementsAffected", { count: finding.elements })}
+          </p>
         )}
         {located === 0 && (
           <p className="mt-2 flex items-start gap-2 text-[12px] text-muted">
@@ -254,9 +281,9 @@ export function FindingDetail({ finding, host }: { finding: FindingView; host: s
       </section>
 
       <section className="border-t border-hairline p-3.5">
-        <SectionKicker>How to fix</SectionKicker>
+        <SectionKicker>{t("detail.howToFix")}</SectionKicker>
         {finding.preview ? (
-          <ContrastFixPreview preview={finding.preview} />
+          <ContrastFixPreview t={t} preview={finding.preview} />
         ) : finding.guidance ? (
           <>
             <p className="mt-2 text-[13.5px] leading-normal text-body">{finding.guidance.action}</p>
@@ -294,17 +321,15 @@ export function FindingDetail({ finding, host }: { finding: FindingView; host: s
       </section>
 
       <section className="border-t border-hairline p-3.5">
-        <SectionKicker>Verification result</SectionKicker>
+        <SectionKicker>{t("detail.verificationResult")}</SectionKicker>
         <div className="mt-2">
-          <VerdictSeal verdict={finding.verdict} />
+          <VerdictSeal verdict={finding.verdict} t={t} />
         </div>
         <p className="mt-2 text-[12.5px] leading-normal text-body">
-          {verdictMessage(finding.verdict, finding.measurement)}
+          {verdictMessage(finding.verdict, t, finding.measurement)}
         </p>
         {finding.verdict.kind !== "best-practice" && finding.verdict.kind !== "complementary" && (
-          <p className="mt-1.5 text-[11.5px] text-muted">
-            Fixes are applied and reverted in a sandbox copy. {host} was not altered.
-          </p>
+          <p className="mt-1.5 text-[11.5px] text-muted">{t("detail.sandboxNote", { host })}</p>
         )}
       </section>
     </div>

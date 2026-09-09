@@ -3,8 +3,10 @@ import { violationsBehindScore } from "@/lib/scan/scored";
 import type { ScanResult, Severity } from "@/lib/scan/types";
 import { safeHost, sevHex } from "./shared";
 import { MiniHeader, PageShell, SectionKicker, SectionKickerMuted } from "./primitives";
+import { translator } from "@/lib/i18n/t";
 
 export function ProgressPage({ result }: { result: ScanResult }) {
+  const t = translator(result.locale);
   const host = safeHost(result.finalUrl);
   const scored = violationsBehindScore(result);
   const moderate = scored.filter((v) => v.severity === "moderate");
@@ -27,33 +29,33 @@ export function ProgressPage({ result }: { result: ScanResult }) {
   const recs = [
     {
       color: sevHex.critical,
-      term: "Immediate · 0–1 week",
-      title: "Resolve critical findings",
-      body: `Clear the ${result.counts.critical} critical finding${result.counts.critical === 1 ? "" : "s"} first. They weigh the most in the score.`,
+      term: t("report.roadmap.immediateTerm"),
+      title: t("report.roadmap.immediateTitle"),
+      body: t("report.roadmap.immediateBody", { count: result.counts.critical }),
     },
     {
       color: sevHex.serious,
-      term: "Short term · 2–4 weeks",
-      title: "Address serious findings",
-      body: `Work through the ${result.counts.serious} serious finding${result.counts.serious === 1 ? "" : "s"} across templates and shared components.`,
+      term: t("report.roadmap.shortTerm"),
+      title: t("report.roadmap.shortTitle"),
+      body: t("report.roadmap.shortBody", { count: result.counts.serious }),
     },
     {
       color: "var(--color-steel)",
-      term: "Long term · 1–3 months",
-      title: "Refine and re-audit",
-      body: "Clear remaining moderate items, do the manual-review checks, and run the audit again.",
+      term: t("report.roadmap.longTerm"),
+      title: t("report.roadmap.longTitle"),
+      body: t("report.roadmap.longBody"),
     },
   ];
 
   return (
-    <PageShell page={3} host={host}>
-      <MiniHeader host={host} />
+    <PageShell t={t} page={3} host={host}>
+      <MiniHeader t={t} host={host} />
 
       <div className="mt-5 grid grid-cols-2 gap-4">
         <div className="border border-hairline">
           <div className="flex items-center gap-2.5 border-b border-hairline px-4 py-3">
             <span aria-hidden className="hatch-moderate size-2.5" />
-            <span className="text-[13px] font-semibold text-ink">Moderate</span>
+            <span className="text-[13px] font-semibold text-ink">{t("severity.moderate")}</span>
             <span className="font-cond text-[11px] tracking-[0.06em] text-moderate-text uppercase tabular-nums">
               {result.counts.moderate} finding{result.counts.moderate === 1 ? "" : "s"}
             </span>
@@ -83,7 +85,7 @@ export function ProgressPage({ result }: { result: ScanResult }) {
               </div>
             )}
             {moderate.length === 0 && (
-              <div className="py-3 text-[11px] text-muted">No moderate findings.</div>
+              <div className="py-3 text-[11px] text-muted">{t("report.noModerate")}</div>
             )}
           </div>
         </div>
@@ -91,7 +93,7 @@ export function ProgressPage({ result }: { result: ScanResult }) {
         <div className="border border-hairline">
           <div className="flex items-center gap-2.5 border-b border-hairline px-4 py-3">
             <span aria-hidden className="size-2.5 bg-verified" />
-            <span className="text-[13px] font-semibold text-ink">Passed checks</span>
+            <span className="text-[13px] font-semibold text-ink">{t("report.passedChecks")}</span>
             <span className="font-cond text-[11px] tracking-[0.06em] text-verified uppercase tabular-nums">
               {result.counts.passed}
             </span>
@@ -111,16 +113,16 @@ export function ProgressPage({ result }: { result: ScanResult }) {
 
       <div className="mt-5 border border-border p-5">
         <div className="border-b border-hairline pb-2">
-          <SectionKicker>Priority projection</SectionKicker>
+          <SectionKicker>{t("report.priorityProjection")}</SectionKicker>
           <h2 className="mt-1 text-[22px] font-semibold tracking-[-0.015em] text-ink">
-            Where the score could go
+            {t("report.whereScoreCouldGo")}
           </h2>
         </div>
 
         <div className="mt-4 grid grid-cols-[2.9in_1fr] items-center gap-6">
           <div className="flex items-center justify-between border border-hairline px-4 py-3.5">
             <div className="text-center">
-              <SectionKickerMuted>Current</SectionKickerMuted>
+              <SectionKickerMuted>{t("report.current")}</SectionKickerMuted>
               <div className="mt-1 font-cond text-[38px] leading-none text-muted tabular-nums">
                 {result.score}
               </div>
@@ -129,7 +131,7 @@ export function ProgressPage({ result }: { result: ScanResult }) {
               +{delta}
             </span>
             <div className="text-center">
-              <SectionKicker>Estimated</SectionKicker>
+              <SectionKicker>{t("report.estimated")}</SectionKicker>
               <div className="mt-1 font-cond text-[38px] leading-none text-ink tabular-nums">
                 {estimated}
               </div>
@@ -176,17 +178,15 @@ export function ProgressPage({ result }: { result: ScanResult }) {
         </div>
 
         <p className="mt-3.5 border-t border-hairline pt-3 text-[11px] leading-normal text-body">
-          If the critical and serious findings were resolved, the internal priority score would rise
-          to an estimated <b className="text-ink">{estimated} / 100</b>. This is only a projection
-          of the score, not a pass for WCAG. Meeting WCAG also depends on the moderate items and on
-          manual review.
+          {t("report.projectionBody")} <b className="text-ink">{estimated} / 100</b>
+          {t("report.projectionCaveat")}
         </p>
       </div>
 
       <div className="mt-5">
-        <SectionKickerMuted>Action plan</SectionKickerMuted>
+        <SectionKickerMuted>{t("report.actionPlan")}</SectionKickerMuted>
         <h2 className="mt-1 text-[22px] font-semibold tracking-[-0.015em] text-ink">
-          Recommendations
+          {t("report.recommendations")}
         </h2>
         <div className="mt-3.5 grid grid-cols-3 gap-3">
           {recs.map((r) => (
@@ -206,10 +206,7 @@ export function ProgressPage({ result }: { result: ScanResult }) {
       </div>
 
       <p className="mt-4 max-w-[6.8in] text-[9.5px] leading-normal text-muted">
-        AccessCheck runs axe-core against WCAG levels A and AA (2.0, 2.1 and 2.2). Automated testing
-        covers only part of the WCAG checkpoints. The rest need a person to review, often with a
-        screen reader or other assistive technology. Level AAA is not checked, and this report is
-        not a statement of conformance.
+        {t("report.wcagDisclaimer")}
       </p>
     </PageShell>
   );

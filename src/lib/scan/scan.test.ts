@@ -3,7 +3,9 @@ import type { AddressInfo, Socket } from "net";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { runScan, ScanFailure } from "./scan";
 import { scoredViolations } from "./scored";
+import { buildFindings } from "@/lib/report/findings";
 import { closeSharedBrowser, getBrowserExecutor, setBrowserExecutor } from "./browser";
+import { OVERVIEW_FALLBACK_SCALE, OVERVIEW_MIME, OVERVIEW_SCALE } from "./overview-plan";
 import type { Browser, BrowserContext } from "playwright-core";
 
 const TALL_BODY = Array.from(
@@ -115,6 +117,74 @@ const PAGES: Record<string, { status?: number; html: string }> = {
           '<main><h1>Rendered later</h1><img src="/logo.png"><button></button></main>';
       }, 400);
     </script>
+  </body>
+</html>`,
+  },
+  "/overview": {
+    html: `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" /><title>Overview fixture</title>
+    <style>
+      body { margin: 0 }
+      header { position: sticky; top: 0; height: 90px; background: #ffffff }
+      .badge { position: fixed; right: 12px; bottom: 12px; background: #ffffff }
+      section { height: 2600px; background: #ffffff }
+    </style>
+  </head>
+  <body>
+    <header><h1>Sticky header</h1></header>
+    <main>
+      <section><img id="above" src="/logo.png" /></section>
+      <section><img id="below" src="/logo.png" /></section>
+      <section id="lazy"></section>
+      <section><p style="color:#bbbbbb;background:#ffffff;font-size:16px">rodapé</p></section>
+    </main>
+    <a class="badge" id="pinned" href="#"><img src="/logo.png" /></a>
+    <script>
+      addEventListener("scroll", function () {
+        var host = document.getElementById("lazy");
+        if (window.scrollY > 300 && !host.firstChild) {
+          host.innerHTML = '<img id="late" src="/logo.png">';
+        }
+      });
+    </script>
+  </body>
+</html>`,
+  },
+  "/grows": {
+    html: `<!doctype html>
+<html lang="en">
+  <head><meta charset="utf-8" /><title>Growing fixture</title>
+    <style>body{margin:0} section{height:1800px;background:#ffffff}</style>
+  </head>
+  <body>
+    <main><section><h1>Grows</h1><img src="/logo.png" /></section><section></section></main>
+    <script>
+      setTimeout(function () {
+        var extra = document.createElement("section");
+        extra.style.height = "5000px";
+        document.querySelector("main").appendChild(extra);
+      }, 1200);
+    </script>
+  </body>
+</html>`,
+  },
+  "/beyond": {
+    html: `<!doctype html>
+<html lang="en">
+  <head><meta charset="utf-8" /><title>Beyond fixture</title>
+    <style>body{margin:0;background:#ffffff} .gap{height:20000px} .gap2{height:9000px}</style>
+  </head>
+  <body>
+    <main>
+      <h1>Beyond the overview</h1>
+      <div class="gap"></div>
+      <p><img id="n1" src="/logo.png" /></p>
+      <p><button id="n2"></button></p>
+      <div class="gap2"></div>
+      <p><a id="far" href="#"><span style="display:inline-block;width:48px;height:24px;background:#eeeeee"></span></a></p>
+    </main>
   </body>
 </html>`,
   },
@@ -699,4 +769,199 @@ describe("score and counts cover this project's own rules", () => {
     const ids = scored.map((v) => v.id);
     expect(new Set(ids).size).toBe(ids.length);
   });
+});
+
+describe("the scrollable overview of a long page", () => {
+  it("photographs the page in continuous blocks that meet edge to edge", async () => {
+    const result = await runScan(`${base}/overview`, {
+      screenshot: true,
+      keyboard: false,
+      contexts: false,
+      verifyFixes: false,
+    });
+
+    const overview = result.overview!;
+    expect(overview.tiles.length).toBeGreaterThan(1);
+    expect([OVERVIEW_SCALE, OVERVIEW_FALLBACK_SCALE]).toContain(overview.scale);
+
+    let reach = 0;
+    for (const tile of overview.tiles) {
+      expect(tile.docY).toBe(reach);
+      expect(tile.image.startsWith(`data:${OVERVIEW_MIME};base64,`)).toBe(true);
+      expect(tile.width).toBe(Math.round(1200 * overview.scale));
+      expect(tile.height).toBe(Math.round(tile.docHeight * overview.scale));
+      reach += tile.docHeight;
+    }
+    expect(overview.capturedHeight).toBe(reach);
+  }, 60_000);
+
+  it("gives every marker a sharp crop of its own, not just the overview column", async () => {
+    const result = await runScan(`${base}/overview`, {
+      screenshot: true,
+      keyboard: false,
+      contexts: false,
+      verifyFixes: false,
+    });
+
+    const onColumn = result.markers.filter((m) => m.captureId === "overview");
+    const onCrops = result.markers.filter(
+      (m) => m.captureId !== "overview" && m.evidence !== "unavailable",
+    );
+
+    expect(onColumn.length).toBeGreaterThan(0);
+    expect(onCrops.length).toBeGreaterThan(0);
+    expect(result.captures!.length).toBeGreaterThan(0);
+
+    for (const marker of onCrops) {
+      const capture = result.captures!.find((c) => c.id === marker.captureId);
+      expect(capture).toBeDefined();
+      expect([capture!.width, capture!.height]).toEqual([1200, 800]);
+    }
+  }, 60_000);
+
+  it("keeps one number for a problem, whether it is read on the column or on its crop", async () => {
+    const result = await runScan(`${base}/overview`, {
+      screenshot: true,
+      keyboard: false,
+      contexts: false,
+      verifyFixes: false,
+    });
+
+    for (const marker of result.markers) {
+      const twins = result.markers.filter((m) => m.n === marker.n);
+      expect(new Set(twins.map((m) => m.label)).size).toBe(1);
+      expect(new Set(twins.map((m) => m.captureId)).size).toBe(twins.length);
+    }
+  }, 60_000);
+
+  it("marks findings above and below the fold on the same column", async () => {
+    const result = await runScan(`${base}/overview`, {
+      screenshot: true,
+      keyboard: false,
+      contexts: false,
+      verifyFixes: false,
+    });
+
+    const onColumn = result.markers.filter((m) => m.captureId === "overview" && m.doc);
+    expect(onColumn.length).toBeGreaterThan(0);
+    expect(onColumn.some((m) => m.doc!.y > 800)).toBe(true);
+    for (const marker of onColumn) {
+      expect(marker.top).toBeGreaterThanOrEqual(0);
+      expect(marker.top + marker.height).toBeLessThanOrEqual(100.01);
+      expect(marker.doc!.y).toBeGreaterThanOrEqual(0);
+    }
+  }, 60_000);
+
+  it("keeps a fixed element in the report even though no page-flow image can hold it", async () => {
+    const result = await runScan(`${base}/overview`, {
+      screenshot: true,
+      keyboard: false,
+      contexts: false,
+      verifyFixes: false,
+    });
+
+    const pinned = result.violations.find((v) => v.id === "link-name");
+    expect(pinned?.where).toBe("#pinned");
+
+    const marker = result.markers.find((m) => m.label === "Links must have discernible text");
+    expect(marker).toBeDefined();
+    expect(marker!.doc).toBeUndefined();
+    expect(marker!.evidence).toBe("unavailable");
+  }, 60_000);
+
+  it("photographs the sticky header once, at the top, instead of on every block", async () => {
+    const result = await runScan(`${base}/overview`, {
+      screenshot: true,
+      keyboard: false,
+      contexts: false,
+      verifyFixes: false,
+    });
+
+    expect(result.overview!.documentHeight).toBeGreaterThan(9_000);
+    expect(result.overview!.capturedHeight).toBe(result.overview!.documentHeight);
+  }, 60_000);
+
+  it("audits content that only loads once the page is scrolled", async () => {
+    const result = await runScan(`${base}/overview`, {
+      screenshot: true,
+      keyboard: false,
+      contexts: false,
+      verifyFixes: false,
+    });
+
+    const alt = result.violations.find((v) => v.id === "image-alt");
+    expect(alt).toBeDefined();
+    expect(alt!.nodes).toBeGreaterThanOrEqual(3);
+  }, 60_000);
+
+  it("keeps reporting when the page grows taller while it is being photographed", async () => {
+    const result = await runScan(`${base}/grows`, {
+      screenshot: true,
+      keyboard: false,
+      contexts: false,
+      verifyFixes: false,
+    });
+
+    const overview = result.overview!;
+    expect(overview.tiles.length).toBeGreaterThan(0);
+    expect(overview.documentHeight).toBeGreaterThanOrEqual(overview.capturedHeight);
+    if (!overview.complete) expect(overview.stoppedBy).not.toBe("complete");
+  }, 60_000);
+});
+
+describe("findings past the end of a partial overview", () => {
+  const audit = () =>
+    runScan(`${base}/beyond`, {
+      screenshot: true,
+      keyboard: false,
+      contexts: false,
+      verifyFixes: false,
+    });
+
+  it("declares the overview partial and says how far it reached", async () => {
+    const overview = (await audit()).overview!;
+
+    expect(overview.complete).toBe(false);
+    expect(overview.stoppedBy).toBe("height");
+    expect(overview.capturedHeight).toBe(16_000);
+    expect(overview.documentHeight).toBeGreaterThan(28_000);
+  }, 90_000);
+
+  it("still shows every finding below that point, on its own full-resolution crop", async () => {
+    const result = await audit();
+
+    const beyond = result.markers.filter((m) => m.captureId !== "overview");
+    expect(beyond.length).toBeGreaterThanOrEqual(3);
+    expect(beyond.every((m) => m.evidence !== "unavailable")).toBe(true);
+
+    for (const marker of beyond) {
+      const capture = result.captures!.find((c) => c.id === marker.captureId);
+      expect(capture).toBeDefined();
+      expect(capture!.width).toBe(1200);
+      expect(capture!.height).toBe(800);
+    }
+  }, 90_000);
+
+  it("puts neighbours on one crop and distant elements on different ones", async () => {
+    const result = await audit();
+
+    const by = (label: string) => result.markers.find((m) => m.label.startsWith(label));
+    const image = by("Images must have alternative text");
+    const button = by("Buttons must have discernible text");
+    const link = by("Links must have discernible text");
+
+    expect(image?.captureId).toBe(button?.captureId);
+    expect([image?.evidence, button?.evidence].sort()).toEqual(["captured", "shared"]);
+    expect(link?.captureId).not.toBe(image?.captureId);
+    expect(link?.evidence).toBe("captured");
+  }, 90_000);
+
+  it("keeps every violation in the reader's list, whatever the overview could reach", async () => {
+    const result = await audit();
+    const listed = new Set(buildFindings(result).map((f) => f.title));
+
+    for (const violation of result.violations) {
+      expect(listed.has(violation.title)).toBe(true);
+    }
+  }, 90_000);
 });

@@ -2,16 +2,20 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FindingView } from "@/lib/report/findings";
+import { scrollBehavior } from "@/lib/motion";
 
 export type FindingSelection = {
   selectedId: string | null;
   selectedFinding: FindingView | null;
+  pick: number;
   selectFinding: (id: string) => void;
+  toggleFinding: (id: string) => void;
   selectMarker: (markerN: number) => void;
 };
 
 export function useFindingSelection(findings: FindingView[]): FindingSelection {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [pick, setPick] = useState(0);
 
   const [prevFindings, setPrevFindings] = useState(findings);
   if (findings !== prevFindings) {
@@ -30,12 +34,22 @@ export function useFindingSelection(findings: FindingView[]): FindingSelection {
     [findings, selectedId],
   );
 
-  const selectFinding = useCallback((id: string) => setSelectedId(id), []);
+  const selectFinding = useCallback((id: string) => {
+    setSelectedId(id);
+    setPick((n) => n + 1);
+  }, []);
+
+  const toggleFinding = useCallback((id: string) => {
+    setSelectedId((current) => (current === id ? null : id));
+    setPick((n) => n + 1);
+  }, []);
 
   const selectMarker = useCallback(
     (markerN: number) => {
       const ownerId = markerOwner.get(markerN);
-      if (ownerId) setSelectedId(ownerId);
+      if (!ownerId) return;
+      setSelectedId(ownerId);
+      setPick((n) => n + 1);
     },
     [markerOwner],
   );
@@ -43,7 +57,9 @@ export function useFindingSelection(findings: FindingView[]): FindingSelection {
   useEffect(() => {
     if (!selectedId) return;
     const id = window.setTimeout(() => {
-      document.getElementById(`finding-${selectedId}`)?.scrollIntoView({ block: "center" });
+      document
+        .getElementById(`finding-${selectedId}`)
+        ?.scrollIntoView({ block: "center", behavior: scrollBehavior() });
     }, 20);
     return () => window.clearTimeout(id);
   }, [selectedId]);
@@ -56,5 +72,5 @@ export function useFindingSelection(findings: FindingView[]): FindingSelection {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  return { selectedId, selectedFinding, selectFinding, selectMarker };
+  return { selectedId, selectedFinding, pick, selectFinding, toggleFinding, selectMarker };
 }

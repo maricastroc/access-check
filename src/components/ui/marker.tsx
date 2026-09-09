@@ -61,6 +61,7 @@ export function Marker({
       onClick={onSelect}
       className={cn(
         "inline-flex cursor-pointer items-center justify-center font-cond text-[15px] font-semibold tabular-nums",
+        onSelect && "transition-transform hover:scale-110 focus-visible:scale-110",
         !onSelect && "cursor-default",
       )}
       style={style}

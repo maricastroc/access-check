@@ -2,10 +2,11 @@ import type { ScanResult } from "@/lib/scan/types";
 import { parseContrastFix } from "@/lib/report/contrast";
 import { toFixStatus } from "@/lib/report/severity";
 import { ColorSwatch, StatusSeal } from "@/components/ui";
-import { sevHex, sevLabel } from "./shared";
+import { sevHex, sevLabelKey } from "./shared";
 import { FieldLabel } from "./primitives";
+import type { Translate } from "@/lib/i18n/t";
 
-export function DetailedCard({ v }: { v: ScanResult["violations"][number] }) {
+export function DetailedCard({ v, t }: { v: ScanResult["violations"][number]; t: Translate }) {
   const measurement = parseContrastFix(v.fix, v.fixCode);
   const status = toFixStatus(v.verification);
 
@@ -22,7 +23,7 @@ export function DetailedCard({ v }: { v: ScanResult["violations"][number] }) {
               className="px-1.5 py-0.5 font-cond text-[10px] font-medium tracking-[0.08em] uppercase"
               style={{ color: sevHex[v.severity] }}
             >
-              {sevLabel[v.severity]}
+              {t(sevLabelKey[v.severity])}
             </span>
             <span className="border border-border bg-canvas px-1.5 py-0.5 font-mono text-[9.5px] text-steel">
               {v.criterion.replace(/^WCAG\s/, "").split(" · ")[0]}
@@ -32,7 +33,7 @@ export function DetailedCard({ v }: { v: ScanResult["violations"][number] }) {
           <p className="mt-2 text-[11.5px] leading-[1.45] text-body">{v.desc}</p>
 
           <div className="mt-2.5">
-            <FieldLabel>Suggested fix</FieldLabel>
+            <FieldLabel>{t("report.suggestedFix")}</FieldLabel>
             {measurement ? (
               <div className="mt-1 text-[11.5px] text-body">
                 Measured {measurement.measured.toFixed(2)}:1 · minimum AA{" "}
@@ -69,22 +70,20 @@ export function DetailedCard({ v }: { v: ScanResult["violations"][number] }) {
             )}
 
             <div className="mt-2">
-              <StatusSeal status={status} />
+              <StatusSeal t={t} status={status} />
             </div>
-            <p className="mt-1.5 text-[9.5px] text-muted">
-              Applied and re-checked on a copy of the page. The audited site was not altered.
-            </p>
+            <p className="mt-1.5 text-[9.5px] text-muted">{t("report.sandboxApplied")}</p>
           </div>
         </div>
 
         <div className="flex flex-col gap-2.5 bg-band p-3.5">
-          <FieldLabel>Selector</FieldLabel>
+          <FieldLabel>{t("report.selector")}</FieldLabel>
           <code className="-mt-1.5 truncate bg-surface px-2 py-1 font-mono text-[10px] text-steel">
             {v.where}
           </code>
-          <FieldLabel>Elements affected</FieldLabel>
+          <FieldLabel>{t("report.elementsAffected")}</FieldLabel>
           <span className="-mt-1.5 font-cond text-[20px] text-ink tabular-nums">{v.nodes}</span>
-          <FieldLabel>Criterion</FieldLabel>
+          <FieldLabel>{t("report.criterion")}</FieldLabel>
           <span className="-mt-1.5 text-[11px] text-body">{v.criterion}</span>
         </div>
       </div>

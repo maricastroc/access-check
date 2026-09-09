@@ -4,8 +4,6 @@ export type ReportLocale = (typeof REPORT_LOCALES)[number];
 
 export const DEFAULT_REPORT_LOCALE: ReportLocale = "en";
 
-export const UI_LOCALE = "en";
-
 const AXE_LOCALE_FILE: Record<ReportLocale, string | null> = {
   en: null,
   "pt-BR": "pt_BR",
@@ -54,7 +52,10 @@ export function htmlLang(locale: ReportLocale): string {
   return locale;
 }
 
-export function langAttrs(locale: ReportLocale | undefined): { lang?: string } {
-  const resolved = locale ?? DEFAULT_REPORT_LOCALE;
-  return resolved === UI_LOCALE ? {} : { lang: htmlLang(resolved) };
+export function langAttrs(
+  content: ReportLocale | undefined,
+  ui: ReportLocale = DEFAULT_REPORT_LOCALE,
+): { lang?: string } {
+  const resolved = content ?? DEFAULT_REPORT_LOCALE;
+  return resolved === ui ? {} : { lang: htmlLang(resolved) };
 }

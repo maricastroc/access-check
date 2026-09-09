@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { FixGroup } from "@/lib/scan/types";
 import { buildVerdict, verdictLabel, verdictMessage, type VerdictInput } from "./verdict";
+import { translator } from "../i18n/t";
+
+const t = translator();
 
 function group(count: number, verification: FixGroup["verification"]): FixGroup {
   return { text: "t", count, selectors: [], verification };
@@ -22,7 +25,7 @@ describe("buildVerdict — never extrapolates one representative to a whole clus
     expect(v.reaudited).toBe(1);
     expect(v.sampledCleared).toBe(1);
     expect(v.fullyCovered).toBe(false);
-    const msg = verdictMessage(v);
+    const msg = verdictMessage(v, t);
     expect(msg).toContain("The sampled element passed");
     expect(msg).toContain("other 6");
     expect(msg).toContain("not individually verified");
@@ -44,7 +47,7 @@ describe("buildVerdict — never extrapolates one representative to a whole clus
     expect(v.reaudited).toBe(4);
     expect(v.sampledCleared).toBe(2);
     expect(v.sampledFailed).toBe(2);
-    const msg = verdictMessage(v);
+    const msg = verdictMessage(v, t);
     expect(msg).toContain("Re-audited 4 of 7");
     expect(msg).toContain("2 passed");
     expect(msg).toContain("2 still flag");
@@ -60,7 +63,7 @@ describe("buildVerdict — never extrapolates one representative to a whole clus
     });
     expect(v.kind).toBe("verified");
     expect(v.fullyCovered).toBe(true);
-    expect(verdictMessage(v)).toContain("each of the 3 occurrences");
+    expect(verdictMessage(v, t)).toContain("each of the 3 occurrences");
   });
 
   it("partial — full individual coverage, mixed results, keeps the precise M of N", () => {
@@ -73,21 +76,21 @@ describe("buildVerdict — never extrapolates one representative to a whole clus
     expect(v.fullyCovered).toBe(true);
     expect(v.sampledCleared).toBe(2);
     expect(v.sampledFailed).toBe(1);
-    expect(verdictMessage(v)).toContain("2 of 3 cleared");
+    expect(verdictMessage(v, t)).toContain("2 of 3 cleared");
   });
 
   it("verified — a genuine single element", () => {
     const v = buildVerdict({ ...base, fixVerification: "verified" });
     expect(v.kind).toBe("verified");
     expect(v.fullyCovered).toBe(true);
-    expect(verdictMessage(v)).toContain("the rule stopped flagging the element");
+    expect(verdictMessage(v, t)).toContain("the rule stopped flagging the element");
   });
 
   it("failed — applied but the rule still flags, with a contrast reason", () => {
     const v = buildVerdict({ ...base, fixVerification: "failed", fixGroups: null });
     expect(v.kind).toBe("failed");
     expect(
-      verdictMessage(v, {
+      verdictMessage(v, t, {
         measured: 2.4,
         required: 4.5,
         fixed: 3.01,
@@ -102,7 +105,7 @@ describe("buildVerdict — never extrapolates one representative to a whole clus
   it("failed — a multi-element sample that only failed says the rest were not verified", () => {
     const v = buildVerdict({ ...base, elements: 5, fixGroups: [group(5, "failed")] });
     expect(v.kind).toBe("failed");
-    expect(verdictMessage(v)).toContain("not individually verified");
+    expect(verdictMessage(v, t)).toContain("not individually verified");
   });
 
   it("unverifiable — an auto fix exists but nothing was re-audited", () => {
@@ -114,7 +117,7 @@ describe("buildVerdict — never extrapolates one representative to a whole clus
   it("no-auto-fix — no applicable correction", () => {
     const v = buildVerdict({ ...base, fixVerification: "unchecked", hasAutoFix: false });
     expect(v.kind).toBe("no-auto-fix");
-    expect(verdictMessage(v)).toContain("no automatic fix");
+    expect(verdictMessage(v, t)).toContain("no automatic fix");
   });
 
   it("best-practice and complementary never claim a WCAG fix", () => {
@@ -125,16 +128,16 @@ describe("buildVerdict — never extrapolates one representative to a whole clus
   });
 
   it("labels stay honest — verified is the only 'Verified fix'", () => {
-    expect(verdictLabel(buildVerdict({ ...base, fixVerification: "verified" }))).toBe(
+    expect(verdictLabel(buildVerdict({ ...base, fixVerification: "verified" }), t)).toBe(
       "Verified fix",
     );
     expect(
-      verdictLabel(buildVerdict({ ...base, elements: 7, fixGroups: [group(7, "verified")] })),
+      verdictLabel(buildVerdict({ ...base, elements: 7, fixGroups: [group(7, "verified")] }), t),
     ).toBe("One example checked");
-    expect(verdictLabel(buildVerdict({ ...base, fixVerification: "failed" }))).not.toContain(
+    expect(verdictLabel(buildVerdict({ ...base, fixVerification: "failed" }), t)).not.toContain(
       "Verified",
     );
-    expect(verdictLabel(buildVerdict({ ...base, kind: "best-practice", isWcag: false }))).toBe(
+    expect(verdictLabel(buildVerdict({ ...base, kind: "best-practice", isWcag: false }), t)).toBe(
       "Best practice",
     );
   });

@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import { useT } from "@/lib/i18n/provider";
 import Link from "next/link";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -22,8 +23,9 @@ export function UserMenu({
   user: UserData;
   signOutAction: () => Promise<void>;
 }) {
+  const t = useT();
   const [, startTransition] = useTransition();
-  const firstName = user.name?.trim().split(/\s+/)[0] ?? user.email ?? "Account";
+  const firstName = user.name?.trim().split(/\s+/)[0] ?? user.email ?? t("nav.account");
 
   return (
     <DropdownMenu.Root>
@@ -48,7 +50,9 @@ export function UserMenu({
           className="border-line bg-card shadow-card data-[side=bottom]:slide-in-from-top-2 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 z-50 w-56 overflow-hidden rounded-xl border duration-150"
         >
           <div className="border-line border-b px-4 py-3">
-            <div className="truncate text-sm font-semibold text-ink">{user.name ?? "Account"}</div>
+            <div className="truncate text-sm font-semibold text-ink">
+              {user.name ?? t("nav.account")}
+            </div>
             {user.email && <div className="truncate text-xs text-muted">{user.email}</div>}
           </div>
 
@@ -56,7 +60,7 @@ export function UserMenu({
             <DropdownMenu.Item asChild>
               <Link href="/history" className={itemClasses}>
                 <FontAwesomeIcon icon={faClockRotateLeft} className="w-4 text-muted" />
-                History
+                {t("nav.history")}
               </Link>
             </DropdownMenu.Item>
 
@@ -65,7 +69,7 @@ export function UserMenu({
               className={itemClasses}
             >
               <FontAwesomeIcon icon={faArrowRightFromBracket} className="w-4 text-muted" />
-              Sign out
+              {t("nav.signOut")}
             </DropdownMenu.Item>
           </div>
         </DropdownMenu.Content>

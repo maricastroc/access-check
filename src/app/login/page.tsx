@@ -4,10 +4,12 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGithub, faGoogle } from "@fortawesome/free-brands-svg-icons";
 import { auth, signIn } from "@/auth";
 import { Logo } from "@/components/ui";
+import { getTranslate } from "@/lib/i18n/server";
 
 export const runtime = "nodejs";
 
 export default async function LoginPage() {
+  const t = await getTranslate();
   if (await auth()) redirect("/");
 
   return (
@@ -18,21 +20,16 @@ export default async function LoginPage() {
         </div>
 
         <div className="mt-8 text-center">
-          <h1 className="text-2xl font-bold tracking-tight text-ink">Sign in to AccessCheck</h1>
-          <p className="mt-2 text-sm text-muted">
-            Save your audits and track each site’s score over time.
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight text-ink">{t("login.title")}</h1>
+          <p className="mt-2 text-sm text-muted">{t("login.subtitle")}</p>
         </div>
 
         <div className="mt-8 flex flex-col gap-3">
-          <ProviderButton provider="github" icon={faGithub} label="Sign in with GitHub" />
-          <ProviderButton provider="google" icon={faGoogle} label="Sign in with Google" />
+          <ProviderButton provider="github" icon={faGithub} label={t("login.github")} />
+          <ProviderButton provider="google" icon={faGoogle} label={t("login.google")} />
         </div>
 
-        <p className="text-faint mt-6 text-center text-xs leading-relaxed">
-          No passwords. We use GitHub or Google only to confirm who you are. AccessCheck stays free
-          without an account.
-        </p>
+        <p className="text-faint mt-6 text-center text-xs leading-relaxed">{t("login.note")}</p>
 
         <p className="mt-6 text-center text-sm">
           <Link href="/" className="text-ink-soft font-medium transition-colors hover:text-ink">

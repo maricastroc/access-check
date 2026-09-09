@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Ruler } from "./ruler";
+import { useT } from "@/lib/i18n/provider";
 
 export function useElapsed(tickMs = 100): number {
   const [elapsed, setElapsed] = useState(0);
@@ -32,6 +33,7 @@ export function ProgressCard({
   status: string;
   children: React.ReactNode;
 }) {
+  const t = useT();
   const secs = (elapsedMs / 1000).toFixed(1);
   const budget = Math.round(budgetMs / 1000);
 
@@ -45,6 +47,7 @@ export function ProgressCard({
         </div>
         <div className="mt-3">
           <Ruler
+            t={t}
             variant="progress"
             elapsedMs={elapsedMs}
             budgetMs={budgetMs}
