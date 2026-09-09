@@ -29,6 +29,8 @@ const pt = translator("pt-BR");
 
 const panel = file("./panel.tsx");
 const audit = file("./audit.ts");
+const background = file("./background.ts");
+const preference = file("./locale-preference.ts");
 const manifest = JSON.parse(file("../manifest.json")) as {
   permissions: string[];
   host_permissions?: string[];
@@ -65,7 +67,7 @@ describe("the panel reuses the product's own report", () => {
     expect(panel).toContain("{scope.kicker}");
     expect(panel).not.toContain("Expanded audit score");
     expect(panel).not.toContain("Quick audit score");
-    expect(panel).toContain("const t = translator(UI_LOCALE)");
+    expect(panel).toContain("translator(UI_LOCALE)");
   });
 
   it("shows no score at all while the audit is still running", () => {
@@ -224,11 +226,10 @@ describe("assets the audit is not allowed to fetch", () => {
   });
 
   it("hands axe the locale the background resolved, rather than picking one itself", () => {
-    const background = file("./background.ts");
     expect(audit).toMatch(/dom\.runAxe\(dom\.AXE_TAGS, \{[\s\S]{0,80}locale: context\.axeLocale/);
     expect(audit).not.toContain("getUILanguage");
-    expect(background).toContain("normalizeReportLocale(chrome.i18n.getUILanguage())");
-    expect(background).toContain("axeLocaleFor(LOCALE)");
+    expect(background).toContain("axeLocaleFor(locale)");
+    expect(preference).toContain("normalizeReportLocale(chrome.i18n.getUILanguage())");
   });
 
   it("adds the warning only when it turned the preload off", () => {
@@ -762,7 +763,7 @@ describe("the panel reads as a document, not a stack of boxes", () => {
   });
 
   it("wraps every screen in that one shell, and heads each with the sticky bar", () => {
-    expect(panel.match(/<Shell>/g)).toHaveLength(1);
+    expect(panel.match(/<Shell[\s>]/g)).toHaveLength(1);
     for (const screen of ["function Running(", "function Message(", "function Report("]) {
       const body = panel.slice(panel.indexOf(screen), panel.indexOf(screen) + 2400);
       expect(body).not.toContain("<main");
@@ -846,5 +847,56 @@ describe("the panel reads as a document, not a stack of boxes", () => {
 
     expect(row).toContain("severity");
     expect(panel).not.toContain("severity");
+  });
+});
+
+describe("choosing the report language from the panel", () => {
+  it("offers every language the report ships in, plus the browser's own", () => {
+    expect(panel).toContain("REPORT_LOCALES.map");
+    expect(panel).toContain("value={FOLLOW_BROWSER}");
+    expect(panel).toContain('t("language.followBrowser")');
+  });
+
+  it("names the control instead of leaving a bare menu", () => {
+    expect(panel).toContain('htmlFor="panel-language"');
+    expect(panel).toContain('id="panel-language"');
+    expect(panel).toContain('t("language.label")');
+  });
+
+  it("no longer pins the panel to whatever language Chrome runs in", () => {
+    expect(panel).not.toContain("const UI_LOCALE = normalizeReportLocale");
+    expect(panel).toContain("localeOf(preference)");
+  });
+
+  it("rebuilds the whole panel so no half-translated report is left behind", () => {
+    expect(panel).toContain("location.reload()");
+  });
+
+  it("keeps the choice reachable from every state, not only a finished report", () => {
+    expect(between(panel, "function Shell(", "function StickyBar(")).toContain("<LanguageChoice");
+  });
+
+  it("translates its own section headings instead of leaving one in English", () => {
+    expect(panel).not.toContain("Findings · {findings.length}");
+    expect(panel).toContain('{t("panel.findings")} · {findings.length}');
+  });
+
+  it("says so when the reading on screen was produced in another language", () => {
+    const notice = between(panel, "function ReadingLanguage(", "function Findings(");
+    expect(notice).toContain("locale === UI_LOCALE) return null");
+    expect(notice).toContain('t("panel.readingLanguage"');
+    expect(notice).toContain("onReaudit");
+  });
+});
+
+describe("the service worker follows the same choice", () => {
+  it("re-reads it per audit, since the worker outlives no decision", () => {
+    expect(background).not.toContain("const LOCALE =");
+    expect(background).toContain("await syncLocale();");
+  });
+
+  it("hears about a change made while it was already awake", () => {
+    expect(background).toContain("chrome.storage.onChanged.addListener");
+    expect(background).toContain("LOCALE_KEY in changes");
   });
 });

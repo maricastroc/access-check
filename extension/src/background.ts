@@ -5,8 +5,8 @@ import type { AuditContext } from "./audit";
 import { walkChangedPage, warningsAfterDeepAudit } from "./coverage";
 import { CONTENT_SIGNATURE } from "../../src/lib/scan/page-ready";
 import { axeLocaleFor } from "../../src/lib/i18n/axe-locale";
-import { normalizeReportLocale } from "../../src/lib/i18n/locale";
 import { translator } from "../../src/lib/i18n/t";
+import { browserLocale, LOCALE_KEY, readLocale } from "./locale-preference";
 import { DeepAuditCancelled, DeepAuditError, runDeepAudit } from "./deep";
 import {
   unsupportedReason,
@@ -21,8 +21,17 @@ const SCREENSHOT_QUALITY = 72;
 
 const STORE = "panelState";
 
-const LOCALE = normalizeReportLocale(chrome.i18n.getUILanguage());
-const t = translator(LOCALE);
+let locale = browserLocale();
+let t = translator(locale);
+
+async function syncLocale(): Promise<void> {
+  locale = await readLocale();
+  t = translator(locale);
+}
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "local" && LOCALE_KEY in changes) void syncLocale();
+});
 
 let state: PanelState = { kind: "idle" };
 let auditedTabId: number | null = null;
@@ -39,6 +48,7 @@ function publish(next: PanelState): void {
 type Stored = { state: PanelState; auditedTabId: number | null; deepTabId?: number | null };
 
 async function restore(): Promise<PanelState> {
+  await syncLocale();
   if (state.kind !== "idle") return state;
   const stored = await chrome.storage.session.get(STORE).catch(() => ({}));
   const saved = (stored as Record<string, Stored>)[STORE];
@@ -117,6 +127,7 @@ async function runAudit(tab: chrome.tabs.Tab, opts: { deep: boolean }): Promise<
   if (!tab.id || !tab.windowId) return;
   if (running) return;
   running = true;
+  await syncLocale();
 
   const mode: AuditMode = opts.deep ? "expanded" : "quick";
   const url = tab.url ?? "";
@@ -143,16 +154,16 @@ async function runAudit(tab: chrome.tabs.Tab, opts: { deep: boolean }): Promise<
     });
     if (!settled) throw new Error(t("background.pageUnreadable"));
 
-    const axeLocale = axeLocaleFor(LOCALE);
+    const axeLocale = axeLocaleFor(locale);
 
-    let context: AuditContext = { readiness: settled, primed: false, axeLocale, locale: LOCALE };
+    let context: AuditContext = { readiness: settled, primed: false, axeLocale, locale };
     if (opts.deep) {
       const [{ result: primed }] = await chrome.scripting.executeScript({
         target: { tabId: tab.id },
         func: (before: typeof settled) => window.__accessCheckPrime!(before),
         args: [settled],
       });
-      context = { readiness: primed?.readiness, primed: true, axeLocale, locale: LOCALE };
+      context = { readiness: primed?.readiness, primed: true, axeLocale, locale };
     }
 
     stage(url, mode, "rules");

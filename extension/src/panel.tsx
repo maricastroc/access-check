@@ -9,25 +9,32 @@ import { buildFindings, type FindingView } from "../../src/lib/report/findings";
 import type { KeyboardOccurrence } from "../../src/lib/scan/keyboard";
 import type { OverlayMark } from "../../src/lib/scan/dom/overlay";
 import type { ScanResult } from "../../src/lib/scan/types";
-import { langAttrs, normalizeReportLocale } from "../../src/lib/i18n/locale";
+import { langAttrs, REPORT_LOCALES } from "../../src/lib/i18n/locale";
 import type { ReportLocale } from "../../src/lib/i18n/locale";
 import { translator } from "../../src/lib/i18n/t";
 import { auditScope, focusPathLines } from "./coverage";
+import {
+  browserLocale,
+  FOLLOW_BROWSER,
+  localeOf,
+  markLanguageChanged,
+  readPreference,
+  takeLanguageChanged,
+  writePreference,
+  type LocalePreference,
+} from "./locale-preference";
 import type { AuditStage, HighlightReply, PanelMessage, PanelState } from "./state";
 
-const UI_LOCALE = normalizeReportLocale(chrome.i18n.getUILanguage());
-const t = translator(UI_LOCALE);
+let UI_LOCALE: ReportLocale = browserLocale();
+let t = translator(UI_LOCALE);
 
-document.documentElement.lang = UI_LOCALE;
+let STAGES: readonly string[] = [];
+let QUICK_STAGES: readonly string[] = [];
 
-const STAGES = [
-  t("stage.structure"),
-  t("stage.rules"),
-  t("stage.focus"),
-  t("stage.report"),
-] as const;
-
-const QUICK_STAGES = [t("stage.structure"), t("stage.rules"), t("stage.report")] as const;
+const NATIVE_NAME: Record<ReportLocale, string> = {
+  en: "English",
+  "pt-BR": "Português",
+};
 
 const STAGE_INDEX: Record<AuditStage, number> = {
   structure: 0,
@@ -40,8 +47,47 @@ function send(message: PanelMessage): Promise<unknown> {
   return chrome.runtime.sendMessage(message).catch(() => undefined);
 }
 
-function Shell({ children }: { children: React.ReactNode }) {
-  return <main className="min-h-screen bg-canvas pb-4 font-sans text-ink">{children}</main>;
+function LanguageChoice({ preference }: { preference: LocalePreference }) {
+  return (
+    <div className="mt-5 flex items-center gap-2 border-t border-hairline px-3 pt-3">
+      <label htmlFor="panel-language">
+        <SectionKicker>{t("language.label")}</SectionKicker>
+      </label>
+      <select
+        id="panel-language"
+        value={preference}
+        onChange={(e) => {
+          const chosen = e.target.value as LocalePreference;
+          void writePreference(chosen)
+            .then(markLanguageChanged)
+            .then(() => location.reload());
+        }}
+        className="ml-auto cursor-pointer border border-border bg-surface px-2 py-1 text-[12.5px] text-ink"
+      >
+        <option value={FOLLOW_BROWSER}>{t("language.followBrowser")}</option>
+        {REPORT_LOCALES.map((option) => (
+          <option key={option} value={option} lang={option}>
+            {NATIVE_NAME[option]}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+function Shell({
+  preference,
+  children,
+}: {
+  preference: LocalePreference;
+  children: React.ReactNode;
+}) {
+  return (
+    <main className="min-h-screen bg-canvas pb-4 font-sans text-ink">
+      {children}
+      <LanguageChoice preference={preference} />
+    </main>
+  );
 }
 
 function StickyBar({ title, score, onTop }: { title: string; score?: number; onTop?: () => void }) {
@@ -334,6 +380,27 @@ function Occurrences({
   );
 }
 
+function ReadingLanguage({
+  locale,
+  onReaudit,
+}: {
+  locale: ReportLocale | undefined;
+  onReaudit: () => void;
+}) {
+  if (!locale || locale === UI_LOCALE) return null;
+
+  return (
+    <div className="mt-2 border border-moderate bg-surface px-3 py-2.5">
+      <p lang={UI_LOCALE} className="text-[12.5px] leading-normal text-body">
+        {t("panel.readingLanguage", { language: NATIVE_NAME[locale] })}
+      </p>
+      <button type="button" onClick={onReaudit} className={`${SMALL_BUTTON} mt-2`}>
+        {t("panel.auditAgain")}
+      </button>
+    </div>
+  );
+}
+
 function Findings({
   findings,
   locale,
@@ -358,7 +425,7 @@ function Findings({
     <section className="mt-3 border border-border bg-surface" aria-labelledby="findings-heading">
       <div className="border-b border-border px-3 py-2">
         <SectionKicker as="h2" id="findings-heading">
-          Findings · {findings.length}
+          {t("panel.findings")} · {findings.length}
         </SectionKicker>
       </div>
       {findings.length === 0 ? (
@@ -676,6 +743,7 @@ function Report({
       />
       <div className="px-3">
         <p className="mt-2 truncate font-mono text-[12px] text-muted">{result.finalUrl}</p>
+        <ReadingLanguage locale={result.locale} onReaudit={onReaudit} />
         <Header result={result} />
         <Findings
           findings={buildFindings(result)}
@@ -772,7 +840,13 @@ function Message({
   );
 }
 
-function Panel() {
+function Panel({
+  preference,
+  retranslate,
+}: {
+  preference: LocalePreference;
+  retranslate: boolean;
+}) {
   const [state, setState] = useState<PanelState>({ kind: "idle" });
   const port = useRef<chrome.runtime.Port | null>(null);
 
@@ -793,7 +867,11 @@ function Panel() {
     keepPort();
     chrome.runtime.sendMessage({ type: "panel:hello" } satisfies PanelMessage).then(
       (current: PanelState | undefined) => {
-        if (current) setState(current);
+        if (!current) return;
+        setState(current);
+        if (retranslate && current.kind === "done" && current.result.locale !== UI_LOCALE) {
+          void send({ type: "panel:audit", deep: true });
+        }
       },
       () => {},
     );
@@ -801,7 +879,7 @@ function Panel() {
       chrome.runtime.onMessage.removeListener(listener);
       port.current?.disconnect();
     };
-  }, []);
+  }, [retranslate]);
 
   const draw = async (
     marks: OverlayMark[],
@@ -843,7 +921,7 @@ function Panel() {
   const running = state.kind === "running";
 
   return (
-    <Shell>
+    <Shell preference={preference}>
       <div role="status" aria-live="polite" className="sr-only">
         {running
           ? t("panel.announceStep", {
@@ -899,4 +977,18 @@ function Panel() {
   );
 }
 
-createRoot(document.getElementById("root")!).render(<Panel />);
+async function boot(): Promise<void> {
+  const [preference, retranslate] = await Promise.all([readPreference(), takeLanguageChanged()]);
+
+  UI_LOCALE = localeOf(preference);
+  t = translator(UI_LOCALE);
+  STAGES = [t("stage.structure"), t("stage.rules"), t("stage.focus"), t("stage.report")];
+  QUICK_STAGES = [t("stage.structure"), t("stage.rules"), t("stage.report")];
+  document.documentElement.lang = UI_LOCALE;
+
+  createRoot(document.getElementById("root")!).render(
+    <Panel preference={preference} retranslate={retranslate} />,
+  );
+}
+
+void boot();

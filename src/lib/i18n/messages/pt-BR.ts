@@ -32,6 +32,7 @@ export const ptBR: Catalog = {
     "Nenhum marcador cabe nesta captura: todos os elementos afetados estão fora da área capturada ou não têm caixa visível.",
   "nav.signIn": "Entrar",
   "language.label": "Idioma",
+  "language.followBrowser": "Padrão do navegador",
 
   "api.site.noAddress":
     "Nenhum endereço da web foi informado. Digite um endereço de site e tente de novo.",
@@ -1350,6 +1351,8 @@ export const ptBR: Catalog = {
   "panel.problem": "Problema",
   "panel.suggestedFix": "Correção sugerida",
   "panel.findings": "Problemas",
+  "panel.readingLanguage":
+    "Esta leitura foi gerada em {language}. Audite a página de novo para recebê-la neste idioma.",
   "panel.noFailures": "Nenhuma das verificações desta versão encontrou falhas.",
 
   "panel.checksPerformed": "Verificações executadas",

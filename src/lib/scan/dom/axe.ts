@@ -23,7 +23,13 @@ export async function runAxeInPage(
   tags: string[],
   options: { preload?: boolean; locale?: Locale | null } = {},
 ): Promise<AxeResults> {
-  if (options.locale) window.axe.configure({ locale: options.locale });
+  if (options.locale) {
+    try {
+      window.axe.configure({ locale: options.locale });
+    } catch {
+      void 0;
+    }
+  }
 
   return await window.axe.run(document, {
     runOnly: { type: "tag", values: tags },

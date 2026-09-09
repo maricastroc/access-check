@@ -2,11 +2,11 @@ import type { ScanWarning } from "@/lib/scan/types";
 
 export function WarningList({
   warnings,
-  title = "Partial report",
+  title,
   note,
 }: {
   warnings: ScanWarning[];
-  title?: string;
+  title: string;
   note?: string;
 }) {
   if (warnings.length === 0) return null;

@@ -56,7 +56,17 @@ for (const file of files) {
   );
 }
 check(!/prototype/i.test(JSON.stringify(manifest)), 'the shipped manifest says "prototype"');
-check(manifest.name === "AccessCheck", `the shipped name is "${manifest.name}"`);
+if (manifest.name === "__MSG_extName__") {
+  const fallback = `_locales/${manifest.default_locale}/messages.json`;
+  check(Boolean(manifest.default_locale), "the archive localizes its name with no default_locale");
+  check(files.includes(fallback), `${fallback} is missing from the archive`);
+  const named = files.includes(fallback)
+    ? JSON.parse(readFileSync(join(unpacked, fallback), "utf8")).extName?.message
+    : null;
+  check(named === "AccessCheck", `${fallback} names the extension "${named}"`);
+} else {
+  check(manifest.name === "AccessCheck", `the shipped name is "${manifest.name}"`);
+}
 check(/^\d+\.\d+\.\d+$/.test(manifest.version), `version is not x.y.z: ${manifest.version}`);
 check((manifest.description ?? "").length <= 132, "the description is over 132 characters");
 check(manifest.host_permissions === undefined, "the archive asks for host permissions");

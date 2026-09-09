@@ -28,6 +28,7 @@ export const en = {
     "No marker fits this screenshot: every affected element sits outside the captured area, or has no visible box.",
   "nav.signIn": "Sign in",
   "language.label": "Language",
+  "language.followBrowser": "Browser default",
 
   "api.site.noAddress": "No web address was provided. Enter a site address and try again.",
   "api.site.rateLimited":
@@ -1316,6 +1317,8 @@ export const en = {
   "panel.problem": "Problem",
   "panel.suggestedFix": "Suggested fix",
   "panel.findings": "Findings",
+  "panel.readingLanguage":
+    "This reading was produced in {language}. Audit the page again to get it in this one.",
   "panel.noFailures": "None of the checks this build runs found a failure.",
 
   "panel.checksPerformed": "Checks performed",

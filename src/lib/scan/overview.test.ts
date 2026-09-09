@@ -62,7 +62,10 @@ describe("photographing the page block by block", () => {
     const { tiles } = planTiles(16_000);
     const heavy = Math.floor(MAX_OVERVIEW_BYTES / 3);
 
-    const result = await pass(tiles, stub([heavy, heavy, heavy, heavy, heavy, heavy, heavy, heavy]));
+    const result = await pass(
+      tiles,
+      stub([heavy, heavy, heavy, heavy, heavy, heavy, heavy, heavy]),
+    );
 
     expect(result.tiles).toHaveLength(3);
     expect(result.bytes).toBeLessThanOrEqual(MAX_OVERVIEW_BYTES);
