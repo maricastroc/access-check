@@ -4,7 +4,7 @@ import type { MarkerState } from "@/components/ui";
 import type { FindingView } from "@/lib/report/findings";
 import type { FocusPoint } from "./report-model";
 import type { SimKey } from "./data";
-import type { MessageKey } from "@/lib/i18n/t";
+import type { MessageKey, Translate } from "@/lib/i18n/t";
 
 export type Layer = "markers" | "focus" | "none";
 
@@ -23,9 +23,12 @@ export const LAYER_RAIL: { key: Layer; label: MessageKey; title: MessageKey }[] 
   { key: "none", label: "layer.none", title: "layer.noneTitle" },
 ];
 
-export function markerLabel(finding: FindingView): string | undefined {
+export function markerLabel(finding: FindingView, t: Translate): string | undefined {
   if (finding.measurement) {
-    return `${finding.measurement.measured.toFixed(1)}:1 · needs ${finding.measurement.required.toFixed(1)}:1`;
+    return t("results.measuredNeeds", {
+      measured: finding.measurement.measured.toFixed(1),
+      required: finding.measurement.required.toFixed(1),
+    });
   }
   if (finding.criterionSc) return finding.criterionSc;
   return undefined;
@@ -42,6 +45,7 @@ export type MarkerView = {
 export function buildMarkerViews(
   markers: ScanMarker[],
   selected: FindingView | null,
+  t: Translate,
 ): MarkerView[] {
   const selectedNs = new Set((selected?.markers ?? []).map((m) => m.n));
 
@@ -54,7 +58,7 @@ export function buildMarkerViews(
       marker,
       state: belongs ? ("selected" as MarkerState) : ("idle" as MarkerState),
       dimmed: !belongs,
-      label: belongs ? markerLabel(selected) : undefined,
+      label: belongs ? markerLabel(selected, t) : undefined,
       findingId: belongs ? selected.id : null,
     };
   });

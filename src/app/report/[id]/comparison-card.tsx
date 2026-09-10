@@ -10,22 +10,27 @@ import type { ScanDiff, ViolationRef } from "@/lib/scan/diff";
 import type { Severity } from "@/lib/scan/types";
 import { sevHex, sevLabelKey } from "../shared";
 import type { Translate } from "@/lib/i18n/t";
+import type { ReportLocale } from "@/lib/i18n/locale";
 
 const MAX_LISTED = 6;
 
-const dateFmt = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-});
+function formatDate(date: Date, locale: ReportLocale): string {
+  return new Intl.DateTimeFormat(locale, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+}
 
 export function ComparisonCard({
   diff,
   previousAt,
+  locale,
   t,
 }: {
   diff: ScanDiff;
   previousAt: Date;
+  locale: ReportLocale;
   t: Translate;
 }) {
   const up = diff.scoreDelta > 0;
@@ -40,7 +45,7 @@ export function ComparisonCard({
             {t("report.changesSinceLast")}
           </span>
           <h2 className="mt-1.5 text-xl font-bold tracking-tight text-ink">
-            What moved since {dateFmt.format(previousAt)}
+            {t("report.whatMoved", { date: formatDate(previousAt, locale) })}
           </h2>
         </div>
 
@@ -102,13 +107,15 @@ export function ComparisonCard({
 
       <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <DiffList
-          title="Fixed"
+          t={t}
+          title={t("diff.cleared")}
           items={diff.fixed}
           icon={faCheck}
           tone="#16764f"
           empty={t("diff.noneCleared")}
         />
         <DiffList
+          t={t}
           title={t("diff.newOrWorse")}
           items={diff.regressed}
           icon={faTriangleExclamation}
@@ -126,12 +133,14 @@ function DiffList({
   icon,
   tone,
   empty,
+  t,
 }: {
   title: string;
   items: ViolationRef[];
   icon: typeof faCheck;
   tone: string;
   empty: string;
+  t: Translate;
 }) {
   return (
     <div className="border-line rounded-xl border p-4">
@@ -160,7 +169,9 @@ function DiffList({
             </li>
           ))}
           {items.length > MAX_LISTED && (
-            <li className="text-[11px] text-muted">+ {items.length - MAX_LISTED} more</li>
+            <li className="text-[11px] text-muted">
+              {t("diff.andMore", { count: items.length - MAX_LISTED })}
+            </li>
           )}
         </ul>
       )}

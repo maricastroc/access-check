@@ -150,8 +150,9 @@ function ContrastFixPreview({ preview, t }: { preview: ContrastPreview; t: Trans
             {shown.ratio.toFixed(2)}:1
           </span>
           <span className="text-[11.5px] text-muted">
-            {view === "original" ? "current" : meta.label} · min AA {preview.required.toFixed(1)}:1
-            {large ? " (large text)" : ""}
+            {view === "original" ? t("detail.currentView") : meta.label} ·{" "}
+            {t("ratio.minAAShort", { required: preview.required.toFixed(1) })}
+            {large ? t("detail.largeText") : ""}
           </span>
         </div>
       </div>

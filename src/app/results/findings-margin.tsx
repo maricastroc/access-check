@@ -64,10 +64,9 @@ export function FindingsMargin({
       <div className="flex flex-col gap-2 p-4">
         {findings.length === 0 ? (
           <p className="text-[13.5px] leading-normal text-body">
-            <span className="font-semibold text-ink">No automated failures on this page.</span>{" "}
-            {result.counts.passed} checks passed. This is not the same as WCAG conformance:{" "}
-            {result.counts.manualReview} item{result.counts.manualReview === 1 ? "" : "s"} still
-            {t("results.needPersonReview")}
+            <span className="font-semibold text-ink">{t("results.noAutomatedFailures")}</span>{" "}
+            {t("results.checksPassedNote", { passed: result.counts.passed })}{" "}
+            {t("results.manualReviewPending", { count: result.counts.manualReview })}
           </p>
         ) : (
           findings.map((f) => (
@@ -138,7 +137,7 @@ export function FindingsMargin({
                 <span className="min-w-0 truncate">{s.label}</span>
                 {!s.focusVisible && (
                   <span className="ml-auto shrink-0 text-[11px] text-critical">
-                    no visible focus
+                    {t("results.noVisibleFocus")}
                   </span>
                 )}
               </li>

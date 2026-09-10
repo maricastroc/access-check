@@ -42,8 +42,10 @@ export function ScoreArithmetic({
                   )}
                 />
                 <span className="text-body">
-                  {d.issues} {severityLabel(d.severity, t).toLowerCase()} · {d.elements} element
-                  {d.elements === 1 ? "" : "s"}
+                  {t("results.findingsAndElements", {
+                    findings: `${d.issues} ${severityLabel(d.severity, t).toLowerCase()}`,
+                    elements: t("unit.element", { count: d.elements }),
+                  })}
                 </span>
                 <span className="ml-auto flex items-baseline gap-1.5">
                   <span className="font-mono text-[13px] font-semibold text-ink tabular-nums">

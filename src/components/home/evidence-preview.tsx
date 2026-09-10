@@ -76,6 +76,8 @@ export function demoFinding(t: Translate): FindingView {
 export function CapturePreview({ height = 240, t }: { height?: number; t: Translate }) {
   return (
     <div
+      aria-hidden
+      inert
       className="relative overflow-hidden border-b border-ink"
       style={{ height, background: "#FBFAF7" }}
     >
@@ -130,7 +132,10 @@ export function CapturePreview({ height = 240, t }: { height?: number; t: Transl
             <Marker
               n={1}
               state="selected"
-              label="2.1:1 · needs 4.5:1"
+              label={t("results.measuredNeeds", {
+                measured: exampleFinding.measured.toFixed(1),
+                required: exampleFinding.required.toFixed(1),
+              })}
               ariaLabel={t("home.lens.locatedElement")}
             />
           </span>
@@ -180,13 +185,15 @@ export function HeroEvidencePreview({ t }: { t: Translate }) {
             ·
           </span>
           <span>
-            measured <span className="font-cond text-serious">2.1:1</span> vs min{" "}
-            <span className="font-cond text-ink">4.5:1</span>
+            {t("home.lens.measuredLabel")}{" "}
+            <span className="font-cond text-serious">{exampleFinding.measured.toFixed(1)}:1</span>{" "}
+            {t("home.lens.minLabel")}{" "}
+            <span className="font-cond text-ink">{exampleFinding.required.toFixed(1)}:1</span>
           </span>
           <span aria-hidden className="text-border">
             ·
           </span>
-          <span>7 elements share this color</span>
+          <span>{t("home.lens.shareThisColor", { count: exampleFinding.elements })}</span>
         </div>
         <div className="mt-2.5 flex flex-wrap items-center gap-2 border-t border-hairline pt-2.5 text-[12.5px]">
           <ColorSwatch hex={exampleFinding.fromHex} size={14} />

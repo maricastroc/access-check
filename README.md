@@ -63,6 +63,7 @@ A tool that measures contrast shouldn't have questionable contrast of its own, s
 | **🔍 Beyond Violations**  | Surfaces axe's "best practice" recommendations and flags items that need manual review — the two buckets most tools silently discard.                                                                                          |
 | **⌨️ Keyboard Path**      | Tabs through the page in a real browser and maps the focus order — flagging invisible focus, keyboard traps, positive `tabindex`, and controls that can't be reached by keyboard.                                              |
 | **📱 Context-Aware Scan** | Re-audits at a mobile viewport and after opening menus / disclosures, catching violations that only surface on small screens or once the UI is expanded.                                                                       |
+| **📈 Change Over Time**   | Signed-in audits are saved, and each new one is diffed rule by rule against the last — which barriers cleared, which came back, and how the score moved. A page that passes today can fail after the next deploy.              |
 | **🧩 Chrome Extension**   | A Manifest V3 side panel that audits the tab you are already on — including a keyboard focus path walked with real `Tab` presses — and points at the offending element in the live page.                                       |
 
 <br/>
@@ -83,6 +84,12 @@ A tool that measures contrast shouldn't have questionable contrast of its own, s
   </tr>
 </table>
 
+<p align="center"><em>Change tracking, as explained on the landing page — an example audit moving 53 → 84, with two rules cleared and one regression.</em></p>
+
+<p align="center">
+  <img src="docs/track-over-time.png" alt="AccessCheck's change-over-time section: a previous audit scoring 53 and the current one scoring 84, listing two cleared rules and one new regression" width="820" />
+</p>
+
 <p align="center"><em>The side panel: the score for the current tab, and the focus path drawn over the live page.</em></p>
 
 <p align="center">
@@ -90,7 +97,7 @@ A tool that measures contrast shouldn't have questionable contrast of its own, s
 </p>
 
 <p align="center">
-  <img src="docs/extension-2.png" alt="AccessCheck's side panel showing the score and the findings list foralt="The side panel stepping through the keyboard focus path, with the stops numbered over the page" width="820" />
+  <img src="docs/extension-2.png" alt="The side panel stepping through the keyboard focus path, with the stops numbered over the page" width="820" />
 </p>
 
 <br/>

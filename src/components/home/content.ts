@@ -74,6 +74,19 @@ export const exampleScore = {
   ],
 };
 
+export type TimelineEntry = { sc: string; label: MessageKey; severity: Severity };
+
+export const exampleTimeline = {
+  fromScore: exampleScore.score,
+  toScore: 84,
+  daysApart: 7,
+  fixed: [
+    { sc: "1.4.3", label: "home.rule.contrast", severity: "serious" },
+    { sc: "1.3.1", label: "home.rule.headings", severity: "moderate" },
+  ] as TimelineEntry[],
+  regressed: [{ sc: "1.1.1", label: "home.rule.alt", severity: "serious" }] as TimelineEntry[],
+};
+
 export const exampleSummary: MessageKey = "home.example.summary";
 
 export const exampleMarkdownKeys: MessageKey[] = [

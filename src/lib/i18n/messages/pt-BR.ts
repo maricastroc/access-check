@@ -161,7 +161,7 @@ export const ptBR: Catalog = {
   "md.wcagReading": "Leitura WCAG",
   "md.failsBy": "reprova em {criteria}",
   "md.noAFailures": "nenhuma falha de nível A detectada automaticamente",
-  "md.noAAFailures": "nenhuma falha de nível A detectada automaticamenteA",
+  "md.noAAFailures": "nenhuma falha de nível AA detectada automaticamente",
   "md.aaaNote": "não avaliado. O AccessCheck cobre os níveis A e AA (WCAG 2.0/2.1/2.2)",
   "md.findings": "Problemas encontrados",
   "md.needsManualReview": "Precisa de revisão manual",
@@ -228,7 +228,9 @@ export const ptBR: Catalog = {
     "O teste automatizado não conseguiu decidir estes, então confirme à mão. Eles ficam fora da nota.",
 
   "diff.noneCleared": "Nenhuma regra foi resolvida desde a última auditoria.",
+  "diff.cleared": "Resolvidos",
   "diff.newOrWorse": "Novas ou piores",
+  "diff.andMore": "+ {count} a mais",
   "diff.noneWorse": "Nenhuma regra nova sinalizada. Nada piorou.",
 
   "preview.stillFlagged":
@@ -701,9 +703,16 @@ export const ptBR: Catalog = {
   "home.lens.locatedOccurrence": "Ocorrência localizada",
   "home.lens.verifiedInSandbox": "Verificado em cópia da página",
   "home.lens.measurement": "Medição",
+  "home.lens.measuredLabel": "medido",
+  "home.lens.minLabel": "vs. mínimo",
+  "home.lens.shareThisColor": {
+    one: "{count} elemento usa esta cor",
+    other: "{count} elementos usam esta cor",
+  },
   "home.lens.suggestedFix": "Correção sugerida",
   "home.lens.sandbox": "Cópia da página",
   "home.lens.before": "Antes",
+  "home.lens.after": "Depois",
   "home.lens.locate": "Localizar",
   "home.lens.verify": "Verificar",
 
@@ -788,6 +797,8 @@ export const ptBR: Catalog = {
     "Nenhuma falha crítica ou grave detectada automaticamente nesta página. Itens moderados e revisão manual estão na página 3.",
   "report.changesSinceLast": "Mudanças desde a última auditoria",
   "report.scoringModelUpdated": "Modelo de pontuação atualizado",
+  "report.whatMoved": "O que mudou desde {date}",
+  "report.sectionTwo": "Seção 02",
 
   "login.subtitle": "Salve suas auditorias e acompanhe a nota de cada site ao longo do tempo.",
   "login.note":
@@ -796,6 +807,10 @@ export const ptBR: Catalog = {
   "wcagReading.notEvaluated": "Não avaliado. O AccessCheck cobre os níveis A e AA",
   "wcagReading.internalNote":
     "A nota serve para priorizar o trabalho, não para atestar conformidade. A WCAG também depende de verificações que nenhuma ferramenta automática resolve sozinha.",
+  "ratio.minAA": "{value} mín. AA",
+  "ratio.fixedAt": "{value} corrigido",
+  "ratio.minAAWithFix": "mín. AA {required}:1 \u00b7 corrigido {fixed}:1",
+  "ratio.minAAShort": "mín. AA {required}:1",
   "ratio.ariaLabel": "Contraste de {found} para 1, mínimo de {required} para 1",
   "ratio.ariaLabelFixed": ", a correção alcança {fixed} para 1",
   "score.ariaLabel": "Nota interna de prioridade: {score} de 100",
@@ -852,6 +867,15 @@ export const ptBR: Catalog = {
   "results.checksPassedLabel": "verificações automáticas aprovadas",
   "results.manualReviewLabel": "itens de revisão manual, com o passo a passo",
   "results.needPersonReview": "precisam da conferência de uma pessoa, listados abaixo.",
+  "results.noAutomatedFailures": "Nenhuma falha detectada automaticamente nesta página.",
+  "results.checksPassedNote":
+    "{passed} verificações passaram. Isso não é o mesmo que conformidade com a WCAG:",
+  "results.manualReviewPending": {
+    one: "{count} item ainda precisa da conferência de uma pessoa, listado abaixo.",
+    other: "{count} itens ainda precisam da conferência de uma pessoa, listados abaixo.",
+  },
+  "results.noVisibleFocus": "sem foco visível",
+  "results.measuredNeeds": "{measured}:1 \u00b7 mínimo {required}:1",
   "results.fixArrow": "corrigir \u2192 {score}",
   "results.outsideScore": "fora da nota",
   "results.runFullAuditNote":
@@ -873,6 +897,7 @@ export const ptBR: Catalog = {
   "home.sandbox.title": "Cada correção é testada em uma cópia. Seu site permanece intacto.",
   "home.sandbox.body":
     "Aplicamos a mudança em uma cópia da página, executamos a verificação novamente e depois a desfazemos. Se o problema deixa de ser detectado, marcamos a correção como verificada. Isso não garante conformidade, e o site original nunca é alterado.",
+  "home.sandbox.nearestPassing": "a luminosidade aprovada mais próxima, no mesmo matiz",
   "home.sandbox.measurement": "Medição de contraste \u00b7 1.4.3 AA",
   "home.sandbox.found": "encontrado \u00b7 o mínimo para texto normal é {required}:1",
   "home.export.kicker": "Exportação",
@@ -885,6 +910,16 @@ export const ptBR: Catalog = {
   "home.export.mdTitle": "Seletor, trecho e status de verificação",
   "home.export.mdBody":
     "Tabela de severidade e lista priorizada, prontas para colar em um ticket ou pull request, já com as correções verificadas marcadas.",
+  "home.track.kicker": "Ao longo do tempo",
+  "home.track.title": "Audite de novo depois e veja exatamente o que mudou",
+  "home.track.body":
+    "Uma página que passa hoje pode falhar no próximo deploy. Cada auditoria feita com login fica salva, e a seguinte é comparada regra a regra com ela \u2014 não só um número novo, mas quais barreiras foram resolvidas e quais voltaram.",
+  "home.track.previousAudit": "Auditoria anterior",
+  "home.track.thisAudit": "Esta auditoria",
+  "home.track.daysLater": { one: "{count} dia depois", other: "{count} dias depois" },
+  "home.track.note":
+    "O histórico é salvo quando você entra com GitHub ou Google. Todo o resto desta página \u2014 a auditoria, as correções e as exportações \u2014 funciona sem cadastro.",
+
   "home.cta.measured": "Medido",
   "home.cta.located": "Localizado",
   "home.cta.verified": "Verificado",
@@ -1127,7 +1162,7 @@ export const ptBR: Catalog = {
   "sim.grayscaleDesc": "Toda a cor removida. Verifica se o significado sobrevive sem matiz.",
 
   "wcagReading.noA": "Nenhuma falha de nível A detectada automaticamente",
-  "wcagReading.noAA": "Nenhuma falha de nível A detectada automaticamenteA",
+  "wcagReading.noAA": "Nenhuma falha de nível AA detectada automaticamente",
   "provenance.title": "Procedência",
   "provenance.complementary":
     "Passagens complementares: teclado, viewport de celular, UI expandida, visão, movimento, regiões dinâmicas.",
@@ -1137,6 +1172,8 @@ export const ptBR: Catalog = {
   "seal.needsReview": "Precisa de revisão: a sugestão sozinha não resolve",
   "seal.notReaudited": "Não reauditado",
 
+  "history.kicker": "Histórico",
+  "history.scoreLabel": "Nota",
   "history.title": "Histórico de auditorias",
   "history.noMatches": "Nenhuma auditoria corresponde aos seus filtros",
   "history.empty": "Nenhuma auditoria ainda",
@@ -1167,6 +1204,8 @@ export const ptBR: Catalog = {
   "cue.sampled": "· um exemplo conferido",
   "cue.failed": "· precisa de revisão",
 
+  "detail.currentView": "atual",
+  "detail.largeText": " (texto grande)",
   "detail.sampleText": "Texto de exemplo",
   "detail.verifiedOnElement": "Verificado neste elemento",
   "detail.verifiedOnElementNote":

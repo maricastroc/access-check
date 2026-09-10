@@ -221,7 +221,9 @@ export const en = {
     "Automated testing couldn't decide these, so confirm them by hand. They stay outside the score.",
 
   "diff.noneCleared": "No rules cleared since the last audit.",
+  "diff.cleared": "Cleared",
   "diff.newOrWorse": "New or worse",
+  "diff.andMore": "+ {count} more",
   "diff.noneWorse": "No new rules flagged. Nothing got worse.",
 
   "preview.stillFlagged":
@@ -676,9 +678,16 @@ export const en = {
   "home.lens.locatedOccurrence": "Located occurrence",
   "home.lens.verifiedInSandbox": "Verified in sandbox",
   "home.lens.measurement": "Measurement",
+  "home.lens.measuredLabel": "measured",
+  "home.lens.minLabel": "vs min",
+  "home.lens.shareThisColor": {
+    one: "{count} element shares this color",
+    other: "{count} elements share this color",
+  },
   "home.lens.suggestedFix": "Suggested fix",
   "home.lens.sandbox": "Sandbox",
   "home.lens.before": "Before",
+  "home.lens.after": "After",
   "home.lens.locate": "Locate",
   "home.lens.verify": "Verify",
 
@@ -762,6 +771,8 @@ export const en = {
     "No critical or serious automated failures on this page. Moderate items and manual review are on page 3.",
   "report.changesSinceLast": "Changes since last audit",
   "report.scoringModelUpdated": "Scoring model updated",
+  "report.whatMoved": "What moved since {date}",
+  "report.sectionTwo": "Section 02",
 
   "login.subtitle": "Save your audits and track each site\u2019s score over time.",
   "login.note":
@@ -770,6 +781,10 @@ export const en = {
   "wcagReading.notEvaluated": "Not evaluated. AccessCheck runs A and AA",
   "wcagReading.internalNote":
     "The score is an internal priority measure. WCAG conformance also depends on checks no automated tool decides alone.",
+  "ratio.minAA": "{value} min AA",
+  "ratio.fixedAt": "{value} fixed",
+  "ratio.minAAWithFix": "min AA {required}:1 \u00b7 corrected {fixed}:1",
+  "ratio.minAAShort": "min AA {required}:1",
   "ratio.ariaLabel": "Contrast {found} to 1, minimum {required} to 1",
   "ratio.ariaLabelFixed": ", fix reaches {fixed} to 1",
   "score.ariaLabel": "Internal priority score {score} out of 100",
@@ -826,6 +841,14 @@ export const en = {
   "results.checksPassedLabel": "automated checks passed",
   "results.manualReviewLabel": "manual-review items, with how to check",
   "results.needPersonReview": "need a person to review, listed below.",
+  "results.noAutomatedFailures": "No automated failures on this page.",
+  "results.checksPassedNote": "{passed} checks passed. This is not the same as WCAG conformance:",
+  "results.manualReviewPending": {
+    one: "{count} item still needs a person to review, listed below.",
+    other: "{count} items still need a person to review, listed below.",
+  },
+  "results.noVisibleFocus": "no visible focus",
+  "results.measuredNeeds": "{measured}:1 \u00b7 needs {required}:1",
   "results.fixArrow": "fix \u2192 {score}",
   "results.outsideScore": "outside the score",
   "results.runFullAuditNote":
@@ -846,6 +869,7 @@ export const en = {
   "home.sandbox.title": "Every fix is proved on a copy, so your site is never touched",
   "home.sandbox.body":
     "We apply the change to a copy of the page, run the check again, then undo it. If the issue stops showing up, we mark the fix as verified. It is never a guarantee, and it never touches your real site.",
+  "home.sandbox.nearestPassing": "nearest passing lightness, same hue",
   "home.sandbox.measurement": "Contrast measurement \u00b7 1.4.3 AA",
   "home.sandbox.found": "found \u00b7 minimum for normal text is {required}:1",
   "home.export.kicker": "Export",
@@ -859,6 +883,16 @@ export const en = {
   "home.export.mdTitle": "Selector, snippet and verification status",
   "home.export.mdBody":
     "A severity table and a prioritized list, ready to paste into a ticket or a pull request, with the verified fixes already marked.",
+  "home.track.kicker": "Over time",
+  "home.track.title": "Audit again later and see exactly what moved",
+  "home.track.body":
+    "A page that passes today can fail after the next deploy. Every audit you run signed in is saved, and the next one is compared rule by rule against it \u2014 not just a new number, but which barriers cleared and which came back.",
+  "home.track.previousAudit": "Previous audit",
+  "home.track.thisAudit": "This audit",
+  "home.track.daysLater": { one: "{count} day later", other: "{count} days later" },
+  "home.track.note":
+    "History is saved when you sign in with GitHub or Google. Everything else on this page \u2014 the audit, the fixes and the exports \u2014 works without an account.",
+
   "home.cta.measured": "Measured",
   "home.cta.located": "Located",
   "home.cta.verified": "Verified",
@@ -1106,6 +1140,8 @@ export const en = {
   "seal.notReaudited": "Not re-audited",
 
   "history.title": "Audit history",
+  "history.kicker": "History",
+  "history.scoreLabel": "Score",
   "history.noMatches": "No audits match your filters",
   "history.empty": "No audits yet",
   "history.emptyBody":
@@ -1136,6 +1172,8 @@ export const en = {
   "cue.failed": "· needs review",
 
   "detail.sampleText": "Sample text",
+  "detail.currentView": "current",
+  "detail.largeText": " (large text)",
   "detail.verifiedOnElement": "Verified on this element",
   "detail.verifiedOnElementNote": "Passes WCAG AA, confirmed by re-audit of the located element",
   "detail.uncertain": "Result uncertain",

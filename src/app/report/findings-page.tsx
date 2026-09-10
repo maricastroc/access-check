@@ -14,7 +14,7 @@ export function FindingsPage({ result }: { result: ScanResult }) {
       <MiniHeader t={t} host={host} />
 
       <div className="mt-5 border-b border-ink pb-2">
-        <SectionKicker>Section 02</SectionKicker>
+        <SectionKicker>{t("report.sectionTwo")}</SectionKicker>
         <h2 className="mt-1 text-[28px] font-semibold tracking-[-0.015em] text-ink">
           {t("report.detailedFindings")}
         </h2>

@@ -5,11 +5,14 @@ import {
   exampleFinding,
   exampleMarkdownKeys,
   exampleScore,
+  exampleTimeline,
   steps,
+  type TimelineEntry,
 } from "./content";
 import { UrlForm } from "./url-form";
 import { CapturePreview } from "./evidence-preview";
 import type { MessageKey, Translate } from "@/lib/i18n/t";
+import type { Severity } from "@/lib/scan/types";
 
 function SectionHead({
   kicker,
@@ -53,6 +56,8 @@ function StageArtifact({ i, t }: { i: number; t: Translate }) {
   if (i === 1) {
     return (
       <div
+        aria-hidden
+        inert
         className="relative h-17.5 overflow-hidden border border-hairline"
         style={{ background: "#FBFAF7" }}
       >
@@ -284,7 +289,7 @@ export function EvidenceLensSection({ t }: { t: Translate }) {
 
             <div className="mt-3 flex items-center gap-2">
               <span className="font-cond text-[11px] tracking-widest text-serious uppercase">
-                Serious
+                {t("severity.serious")}
               </span>
               <span className="ml-auto font-mono text-[12px] text-steel">1.4.3 AA</span>
             </div>
@@ -299,7 +304,12 @@ export function EvidenceLensSection({ t }: { t: Translate }) {
                 <span className="font-cond text-[30px] leading-none text-serious tabular-nums">
                   2.1:1
                 </span>
-                <span className="pb-1 text-[12px] text-muted">min AA 4.5:1 · corrected 4.62:1</span>
+                <span className="pb-1 text-[12px] text-muted">
+                  {t("ratio.minAAWithFix", {
+                    required: exampleFinding.required.toFixed(1),
+                    fixed: exampleFinding.fixed.toFixed(2),
+                  })}
+                </span>
               </div>
               <div className="mt-2">
                 <Ruler
@@ -362,6 +372,8 @@ function BeatButton({
   return (
     <div>
       <div
+        aria-hidden
+        inert
         className="flex h-11 items-center justify-center text-[13px] font-semibold text-white"
         style={{ background: hex }}
       >
@@ -431,13 +443,13 @@ export function SandboxSection({ t }: { t: Translate }) {
                   →
                 </span>
                 <span className="max-w-[16ch] text-center text-[11px] leading-tight">
-                  nearest passing lightness, same hue
+                  {t("home.sandbox.nearestPassing")}
                 </span>
               </div>
               <div>
                 <div className="flex items-center justify-between">
                   <SectionKicker tone="steel" className="text-verified!">
-                    After
+                    {t("home.lens.after")}
                   </SectionKicker>
                   <StatusSeal t={t} status="verified">
                     {t("home.cta.verified")}
@@ -498,7 +510,7 @@ function MiniPdf({ t }: { t: Translate }) {
         <div className="border-l-2 border-moderate bg-band px-2 py-1">
           <div className="flex items-center justify-between text-[9px]">
             <span className="font-cond tracking-[0.08em] text-moderate-text uppercase">
-              Moderate
+              {t("severity.moderate")}
             </span>
             <span className="font-mono text-steel">1.3.1</span>
           </div>
@@ -572,6 +584,162 @@ export function ExportSection({ t }: { t: Translate }) {
             </div>
           </div>
         </div>
+      </div>
+    </section>
+  );
+}
+
+const TIMELINE_DOT: Record<Severity, string> = {
+  critical: "bg-critical",
+  serious: "bg-serious",
+  moderate: "bg-moderate",
+  minor: "bg-steel",
+};
+
+function AuditStamp({
+  label,
+  score,
+  dim,
+  delta,
+}: {
+  label: string;
+  score: number;
+  dim?: boolean;
+  delta?: number;
+}) {
+  return (
+    <div className="px-5 py-5">
+      <SectionKicker tone="steel">{label}</SectionKicker>
+      <div className="mt-1.5 flex items-end gap-2.5">
+        <span
+          className={`font-cond text-[44px] leading-[0.8] tabular-nums ${dim ? "text-muted" : "text-ink"}`}
+        >
+          {score}
+        </span>
+        <span className="pb-1 font-cond text-[13px] text-muted">/100</span>
+        {delta !== undefined && (
+          <span className="mb-0.5 ml-auto inline-flex items-center gap-1.5 border border-verified bg-verified/[0.08] px-2 py-1 font-cond text-[13px] tracking-[0.04em] text-verified tabular-nums">
+            <span aria-hidden>▲</span>
+            {delta > 0 ? `+${delta}` : delta}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function TimelineList({
+  kicker,
+  glyph,
+  tone,
+  items,
+  empty,
+  className,
+  t,
+}: {
+  kicker: string;
+  glyph: string;
+  tone: "verified" | "critical";
+  items: TimelineEntry[];
+  empty: string;
+  className?: string;
+  t: Translate;
+}) {
+  const toneClass =
+    tone === "verified" ? "border-verified text-verified" : "border-critical text-critical";
+
+  return (
+    <div className={className}>
+      <div className="flex items-center gap-2.5 border-b border-hairline px-5 py-3">
+        <span
+          aria-hidden
+          className={`inline-flex size-5 items-center justify-center border font-cond text-[12px] ${toneClass}`}
+        >
+          {glyph}
+        </span>
+        <SectionKicker tone="ink">{kicker}</SectionKicker>
+        <span className="ml-auto font-cond text-[15px] text-muted tabular-nums">
+          {items.length}
+        </span>
+      </div>
+
+      {items.length === 0 ? (
+        <p className="px-5 py-4 text-[13px] text-muted">{empty}</p>
+      ) : (
+        <ul className="grid grid-cols-1 gap-y-2.5 px-5 py-4">
+          {items.map((v) => (
+            <li key={v.sc} className="grid grid-cols-[52px_1fr] items-center gap-3">
+              <span className="font-mono text-[13px] text-steel tabular-nums">{v.sc}</span>
+              <span className="flex items-center gap-2 text-[13.5px] text-body">
+                <span aria-hidden className={`size-1.5 shrink-0 ${TIMELINE_DOT[v.severity]}`} />
+                <span>{t(v.label)}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+export function TrackOverTimeSection({ t }: { t: Translate }) {
+  const { fromScore, toScore, daysApart, fixed, regressed } = exampleTimeline;
+
+  return (
+    <section id="track" className="bg-canvas">
+      <div className="mx-auto w-full max-w-300 px-6 py-12">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <SectionHead kicker={t("home.track.kicker")} title={t("home.track.title")} />
+          <p className="max-w-[46ch] text-[14px] leading-normal text-body">
+            {t("home.track.body")}
+          </p>
+        </div>
+
+        <div className="mt-9 border border-ink bg-surface">
+          <div className="grid grid-cols-1 border-b border-ink sm:grid-cols-[1fr_auto_1fr]">
+            <AuditStamp label={t("home.track.previousAudit")} score={fromScore} dim />
+            <div className="flex items-center justify-center gap-2 border-y border-hairline px-5 py-3 sm:flex-col sm:gap-1 sm:border-x sm:border-y-0 sm:px-6">
+              <span
+                aria-hidden
+                className="rotate-90 font-cond text-[22px] leading-none text-steel sm:rotate-0"
+              >
+                →
+              </span>
+              <span className="text-center text-[11px] leading-tight text-muted">
+                {t("home.track.daysLater", { count: daysApart })}
+              </span>
+            </div>
+            <AuditStamp
+              label={t("home.track.thisAudit")}
+              score={toScore}
+              delta={toScore - fromScore}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2">
+            <TimelineList
+              t={t}
+              kicker={t("diff.cleared")}
+              glyph="✓"
+              tone="verified"
+              items={fixed}
+              empty={t("diff.noneCleared")}
+            />
+            <TimelineList
+              t={t}
+              kicker={t("diff.newOrWorse")}
+              glyph="!"
+              tone="critical"
+              items={regressed}
+              empty={t("diff.noneWorse")}
+              className="border-t border-hairline md:border-t-0 md:border-l"
+            />
+          </div>
+        </div>
+
+        <p className="mt-4 max-w-[70ch] text-[13px] leading-normal text-muted">
+          {t("home.track.note")}
+        </p>
       </div>
     </section>
   );

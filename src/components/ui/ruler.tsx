@@ -163,14 +163,14 @@ function RatioRuler({
           className="absolute top-0 -translate-x-1/2 font-medium text-ink tabular-nums"
           style={{ left: `${requiredPos}%` }}
         >
-          {required.toFixed(1)} min AA
+          {t("ratio.minAA", { value: required.toFixed(1) })}
         </span>
         {fixedPos != null && fixed != null && (
           <span
             className="absolute top-3.25 -translate-x-1/2 font-medium text-verified tabular-nums"
             style={{ left: `${fixedPos}%` }}
           >
-            {fixed.toFixed(2)} fixed
+            {t("ratio.fixedAt", { value: fixed.toFixed(2) })}
           </span>
         )}
       </div>

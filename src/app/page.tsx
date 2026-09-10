@@ -8,6 +8,7 @@ import {
   FinalCta,
   HowItWorks,
   SandboxSection,
+  TrackOverTimeSection,
 } from "@/components/home/landing-sections";
 
 export default async function Home() {
@@ -24,6 +25,7 @@ export default async function Home() {
         <EvidenceLensSection t={t} />
         <SandboxSection t={t} />
         <ExportSection t={t} />
+        <TrackOverTimeSection t={t} />
         <FinalCta t={t} />
       </main>
     </div>

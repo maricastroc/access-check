@@ -10,12 +10,13 @@ import { SummaryPage } from "../summary-page";
 import { FindingsPage } from "../findings-page";
 import { ProgressPage } from "../progress-page";
 import { ComparisonCard } from "./comparison-card";
-import { getTranslate } from "@/lib/i18n/server";
+import { getTranslate, resolveLocale } from "@/lib/i18n/server";
 
 export const runtime = "nodejs";
 
 export default async function SavedReportPage({ params }: { params: Promise<{ id: string }> }) {
   const t = await getTranslate();
+  const locale = await resolveLocale();
   const { id } = await params;
 
   const userId = (await auth())?.user?.id;
@@ -45,7 +46,9 @@ export default async function SavedReportPage({ params }: { params: Promise<{ id
       </header>
 
       <main id="main" className="flex flex-col items-center gap-8 overflow-x-auto px-5 py-10">
-        {diff && previous && <ComparisonCard t={t} diff={diff} previousAt={previous.at} />}
+        {diff && previous && (
+          <ComparisonCard t={t} locale={locale} diff={diff} previousAt={previous.at} />
+        )}
         <SummaryPage result={result} />
         <FindingsPage result={result} />
         <ProgressPage result={result} />

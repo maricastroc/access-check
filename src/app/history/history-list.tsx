@@ -73,7 +73,7 @@ export function HistoryList({ scans }: { scans: ScanListItem[] }) {
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-[11px] font-semibold tracking-[0.14em] text-muted uppercase">
-                History
+                {t("history.kicker")}
               </p>
               <div className="mt-0.5 flex items-center gap-2.5">
                 <h1 className="text-2xl font-bold tracking-tight text-ink">{t("history.title")}</h1>

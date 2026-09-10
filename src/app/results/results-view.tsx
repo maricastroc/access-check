@@ -76,8 +76,8 @@ export function ResultsView({
 
   const effectiveLayer: Layer = result?.screenshot ? layer : "none";
   const markerViews = useMemo(
-    () => (result ? buildMarkerViews(orderedMarkers(result), selection.selectedFinding) : []),
-    [result, selection.selectedFinding],
+    () => (result ? buildMarkerViews(orderedMarkers(result), selection.selectedFinding, t) : []),
+    [result, selection.selectedFinding, t],
   );
 
   const [captureId, setCaptureId] = useState<string>(OVERVIEW_CAPTURE);

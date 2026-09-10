@@ -41,7 +41,7 @@ export function ScanCard({ scan, delta }: { scan: ScanListItem; delta: number | 
             className="shadow-card absolute top-3 right-3 flex size-11 items-center justify-center rounded-full text-sm font-bold text-white"
             style={{ background: scoreColor(scan.score) }}
           >
-            <span className="sr-only">Score </span>
+            <span className="sr-only">{t("history.scoreLabel")} </span>
             {scan.score}
           </span>
         </div>
