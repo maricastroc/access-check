@@ -14,6 +14,8 @@ import {
   fixLabel,
   fixMetaViewport,
   type ElementInfo,
+  type FixApply,
+  type FixResult,
 } from "./remediate";
 
 function hex(h: string) {
@@ -29,6 +31,21 @@ const el = (over: Partial<ElementInfo>): ElementInfo => ({
   tag: "input",
   ...over,
 });
+
+function rendered(apply: FixApply): string {
+  switch (apply.kind) {
+    case "attr":
+      return `${apply.name}="${apply.value}"`;
+    case "style":
+      return `${apply.prop}: ${apply.value};`;
+    case "doc":
+      return apply.target === "lang"
+        ? `<html lang="${apply.value}">`
+        : `<title>${apply.value}</title>`;
+    case "viewport":
+      return `<meta name="viewport" content="${apply.value}">`;
+  }
+}
 
 describe("contrastRatio", () => {
   it("black on white is the maximum (21:1)", () => {
@@ -93,7 +110,7 @@ describe("fixContrast", () => {
             },
             t,
           );
-          const m = fix?.code?.match(/color: (#[0-9a-f]{6});/);
+          const m = fix?.code?.match(/^color: (#[0-9a-f]{6});$/);
           if (!m) continue;
           expect(contrastRatio(hex(m[1]), hex(bg))).toBeGreaterThanOrEqual(target);
         }
@@ -143,10 +160,34 @@ describe("fixContrast", () => {
       },
       t,
     );
-    expect(fix!.code).toMatch(/^background: #[0-9a-f]{6};$/);
+    expect(fix!.code).toMatch(/^background-color: #[0-9a-f]{6};$/);
     expect(fix!.apply).toMatchObject({ kind: "style", prop: "background-color" });
-    const m = fix!.code!.match(/background: (#[0-9a-f]{6});/)!;
+    const m = fix!.code!.match(/background-color: (#[0-9a-f]{6});/)!;
     expect(contrastRatio(hex("#e0e0e0"), hex(m[1]))).toBeGreaterThanOrEqual(7);
+  });
+
+  it("is deterministic: the code shows exactly the declaration the verifier applies", () => {
+    const fg = fixContrast(
+      { fgColor: "#999999", bgColor: "#ffffff", contrastRatio: 2.85, expectedContrastRatio: 4.5 },
+      t,
+    );
+    const bg = fixContrast(
+      { fgColor: "#e0e0e0", bgColor: "#8a8a8a", contrastRatio: 1.6, expectedContrastRatio: 7 },
+      t,
+    );
+    for (const fix of [fg, bg]) {
+      expect(fix?.confidence).toBe("deterministic");
+      expect(fix!.code).toBe(rendered(fix!.apply!));
+    }
+  });
+
+  it("is only a suggestion when neither color can reach the target", () => {
+    const fix = fixContrast(
+      { fgColor: "#808080", bgColor: "#7a7a7a", contrastRatio: 1.1, expectedContrastRatio: 21 },
+      t,
+    );
+    expect(fix?.confidence).toBe("suggested");
+    expect(fix?.apply).toBeUndefined();
   });
 
   it("returns null when the colors are not parseable", () => {
@@ -169,19 +210,19 @@ describe("fixLabel", () => {
     expect(fixLabel(el({ ariaLabel: "Email" }), t)).toBeNull();
   });
 
-  it("uses <label for> when there is an id, with aria-label as the validation mutation", () => {
+  it("with an id, shows <label for> and carries no different transformation to verify", () => {
     const fix = fixLabel(el({ id: "email", name: "email" }), t);
+    expect(fix?.confidence).toBe("contextual");
     expect(fix?.code).toBe('<label for="email">Email</label>');
-    expect(fix?.apply).toEqual({
-      kind: "attr",
-      name: "aria-label",
-      value: "Email",
-    });
+    expect(fix?.apply).toBeUndefined();
   });
 
-  it("falls back to aria-label when there is no id", () => {
+  it("without an id, applies exactly the aria-label it shows", () => {
     const fix = fixLabel(el({ placeholder: "Your name" }), t);
+    expect(fix?.confidence).toBe("contextual");
     expect(fix?.code).toBe('aria-label="Your name"');
+    expect(fix?.apply).toEqual({ kind: "attr", name: "aria-label", value: "Your name" });
+    expect(fix!.code).toBe(rendered(fix!.apply!));
   });
 
   it("prioritizes placeholder over name and humanizes the name", () => {
@@ -190,11 +231,19 @@ describe("fixLabel", () => {
       '<label for="x">Amount to send</label>',
     );
   });
+
+  it("without any clue, keeps the placeholder text as guidance and applies nothing", () => {
+    const fix = fixLabel(el({}), t);
+    expect(fix?.confidence).toBe("suggested");
+    expect(fix?.code).toBe('aria-label="Describe this field"');
+    expect(fix?.apply).toBeUndefined();
+  });
 });
 
 describe("fixImageAlt", () => {
-  it("uses the title when it exists", () => {
+  it("uses the title when it exists, as a contextual guess", () => {
     const fix = fixImageAlt(el({ tag: "img", title: "Company logo" }), t);
+    expect(fix.confidence).toBe("contextual");
     expect(fix.code).toBe('alt="Company logo"');
     expect(fix.apply).toEqual({
       kind: "attr",
@@ -204,19 +253,24 @@ describe("fixImageAlt", () => {
   });
 
   it("infers from the file name, stripping @2x and the extension", () => {
-    expect(fixImageAlt(el({ tag: "img", src: "/assets/euro-flag@2x.png" }), t).code).toBe(
-      'alt="Euro flag"',
-    );
+    const fix = fixImageAlt(el({ tag: "img", src: "/assets/euro-flag@2x.png" }), t);
+    expect(fix.code).toBe('alt="Euro flag"');
+    expect(fix.confidence).toBe("contextual");
   });
 
-  it("falls back to empty alt when nothing is inferable", () => {
-    expect(fixImageAlt(el({ tag: "img" }), t).code).toBe('alt=""');
+  it('never proposes alt="" as a transformation when nothing shows the image is decorative', () => {
+    const fix = fixImageAlt(el({ tag: "img" }), t);
+    expect(fix.confidence).toBe("suggested");
+    expect(fix.apply).toBeUndefined();
+    expect(fix.code).toBe('alt="…"');
+    expect(fix.text).toContain('alt ("")');
   });
 });
 
 describe("fixAriaName", () => {
-  it("uses the visible text of the control", () => {
+  it("uses the visible text of the control, as a contextual guess", () => {
     const fix = fixAriaName(el({ tag: "button", text: "Submit" }), t);
+    expect(fix.confidence).toBe("contextual");
     expect(fix.code).toBe('aria-label="Submit"');
     expect(fix.apply).toEqual({
       kind: "attr",
@@ -225,33 +279,43 @@ describe("fixAriaName", () => {
     });
   });
 
-  it("falls back to a generic placeholder without clues", () => {
-    expect(fixAriaName(el({ tag: "a" }), t).code).toBe('aria-label="Describe this control"');
+  it("without clues, keeps a placeholder as guidance and applies nothing", () => {
+    const fix = fixAriaName(el({ tag: "a" }), t);
+    expect(fix.confidence).toBe("suggested");
+    expect(fix.code).toBe('aria-label="Describe this control"');
+    expect(fix.apply).toBeUndefined();
   });
 });
 
 describe("document-level fixes", () => {
-  it("html lang", () => {
-    expect(fixHtmlLang(t).apply).toEqual({
-      kind: "doc",
-      target: "lang",
-      value: "en",
-    });
+  it("html lang never invents a language", () => {
+    for (const locale of ["en", "pt-BR"] as const) {
+      const fix = fixHtmlLang(translator(locale));
+      expect(fix.confidence).toBe("suggested");
+      expect(fix.apply).toBeUndefined();
+      expect(fix.code).toBe('<html lang="…">');
+      expect(fix.code).not.toMatch(/lang="(en|pt)/);
+    }
   });
-  it("document title", () => {
-    expect(fixDocumentTitle(t).apply).toMatchObject({
-      kind: "doc",
-      target: "title",
-    });
+
+  it("document title is guidance, not a placeholder applied to the page", () => {
+    const fix = fixDocumentTitle(t);
+    expect(fix.confidence).toBe("suggested");
+    expect(fix.apply).toBeUndefined();
   });
-  it("viewport", () => {
-    expect(fixMetaViewport(t).apply?.kind).toBe("viewport");
+
+  it("viewport replaces the whole content, so it stays contextual", () => {
+    const fix = fixMetaViewport(t);
+    expect(fix.confidence).toBe("contextual");
+    expect(fix.apply?.kind).toBe("viewport");
+    expect(fix.code).toBe(rendered(fix.apply!));
   });
 });
 
 describe("ARIA attribute fixes", () => {
   it("lists the missing required attributes", () => {
     const fix = fixAriaRequiredAttr(["aria-valuenow", "aria-valuemin"], t);
+    expect(fix?.confidence).toBe("suggested");
     expect(fix?.code).toContain('aria-valuenow="…"');
     expect(fix?.code).toContain('aria-valuemin="…"');
     expect(fix?.apply).toBeUndefined();
@@ -263,6 +327,53 @@ describe("ARIA attribute fixes", () => {
   });
 
   it("extracts only the name of the forbidden attribute", () => {
-    expect(fixAriaAllowedAttr(['aria-foo="bar"'], t)!.code).toBe("Remove: aria-foo");
+    const fix = fixAriaAllowedAttr(['aria-foo="bar"'], t);
+    expect(fix!.code).toBe("Remove: aria-foo");
+    expect(fix!.confidence).toBe("suggested");
+    expect(fix!.apply).toBeUndefined();
+  });
+});
+
+describe("every fix keeps what it shows and what it applies in step", () => {
+  const all: FixResult[] = [
+    fixContrast(
+      { fgColor: "#999999", bgColor: "#ffffff", contrastRatio: 2.85, expectedContrastRatio: 4.5 },
+      t,
+    )!,
+    fixContrast(
+      { fgColor: "#e0e0e0", bgColor: "#8a8a8a", contrastRatio: 1.6, expectedContrastRatio: 7 },
+      t,
+    )!,
+    fixLabel(el({ id: "email" }), t)!,
+    fixLabel(el({ placeholder: "Search" }), t)!,
+    fixLabel(el({}), t)!,
+    fixImageAlt(el({ tag: "img", title: "Logo" }), t),
+    fixImageAlt(el({ tag: "img" }), t),
+    fixAriaName(el({ tag: "button", text: "Go" }), t),
+    fixAriaName(el({ tag: "button" }), t),
+    fixHtmlLang(t),
+    fixDocumentTitle(t),
+    fixMetaViewport(t),
+    fixAriaRequiredAttr(["aria-checked"], t)!,
+    fixAriaAllowedAttr(["aria-foo"], t)!,
+  ];
+
+  it("a deterministic fix always carries the transformation it shows", () => {
+    for (const fix of all.filter((f) => f.confidence === "deterministic")) {
+      expect(fix.apply).toBeDefined();
+      expect(fix.code).toBe(rendered(fix.apply!));
+    }
+  });
+
+  it("any transformation that is carried renders to the exact code shown", () => {
+    for (const fix of all) {
+      if (fix.apply) expect(fix.code).toBe(rendered(fix.apply));
+    }
+  });
+
+  it("a suggestion never carries a transformation", () => {
+    for (const fix of all.filter((f) => f.confidence === "suggested")) {
+      expect(fix.apply).toBeUndefined();
+    }
   });
 });

@@ -18,6 +18,7 @@ const SEAL: Record<Verdict["kind"], { cls: string; glyph: string }> = {
   sampled: { cls: "border-dashed border-steel text-steel", glyph: "◐" },
   failed: { cls: "border-dashed border-moderate text-moderate-text", glyph: "?" },
   unverifiable: { cls: "border-dashed border-border text-muted", glyph: "·" },
+  contextual: { cls: "border-dashed border-border text-muted", glyph: "·" },
   "no-auto-fix": { cls: "border-dashed border-border text-muted", glyph: "·" },
   "best-practice": { cls: "border-solid border-steel text-steel", glyph: "◇" },
   complementary: { cls: "border-dashed border-border text-muted", glyph: "·" },
@@ -329,7 +330,7 @@ export function FindingDetail({
         <p className="mt-2 text-[12.5px] leading-normal text-body">
           {verdictMessage(finding.verdict, t, finding.measurement)}
         </p>
-        {finding.verdict.kind !== "best-practice" && finding.verdict.kind !== "complementary" && (
+        {finding.verdict.reaudited > 0 && (
           <p className="mt-1.5 text-[11.5px] text-muted">{t("detail.sandboxNote", { host })}</p>
         )}
       </section>

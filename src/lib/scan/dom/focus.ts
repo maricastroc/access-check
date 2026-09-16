@@ -121,7 +121,8 @@ function tabbableCandidates(): Element[] {
     const tabindex = el.getAttribute("tabindex");
     if (tabindex !== null && parseInt(tabindex, 10) < 0) return false;
     if ((el as HTMLButtonElement).disabled) return false;
-    if (el.getAttribute("aria-hidden") === "true") return false;
+    if (el.matches(":disabled")) return false;
+    if (el.closest('[inert], [aria-hidden="true"]')) return false;
     return isVisible(el);
   });
 }

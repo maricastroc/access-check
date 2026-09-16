@@ -22,8 +22,7 @@ const demoVerdict = buildVerdict({
   elements: exampleFinding.elements,
   fixGroups: null,
   fixVerification: "verified",
-  hasAutoFix: true,
-  verifySkipped: false,
+  fixConfidence: "deterministic",
 });
 
 export function demoFinding(t: Translate): FindingView {

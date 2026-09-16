@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clusterFixes, MAX_GROUP_SELECTORS } from "./group";
+import { clusterFixes, isVerifiable, MAX_GROUP_SELECTORS } from "./group";
 import type { FixResult } from "./remediate";
 
 const node = (selector: string | null, result: FixResult | null) => ({
@@ -7,6 +7,7 @@ const node = (selector: string | null, result: FixResult | null) => ({
   result,
 });
 const contrast = (color: string): FixResult => ({
+  confidence: "deterministic",
   text: `Use ${color}`,
   code: `color: ${color};`,
   apply: { kind: "style", prop: "color", value: color },
@@ -52,10 +53,45 @@ describe("clusterFixes", () => {
   });
 
   it("uses the text as the signature when there is no code", () => {
-    const textOnly: FixResult = { text: "Darken the background instead." };
+    const textOnly: FixResult = { confidence: "suggested", text: "Darken the background instead." };
     const groups = clusterFixes([node("a", textOnly), node("b", textOnly)]);
     expect(groups).toHaveLength(1);
     expect(groups[0].count).toBe(2);
     expect(groups[0].code).toBeUndefined();
+  });
+
+  it("carries the confidence and never merges fixes that differ in confidence", () => {
+    const guessed: FixResult = {
+      confidence: "contextual",
+      text: "Use the title",
+      code: 'alt="Logo"',
+      apply: { kind: "attr", name: "alt", value: "Logo" },
+    };
+    const hinted: FixResult = { confidence: "suggested", text: "Describe it", code: 'alt="Logo"' };
+    const groups = clusterFixes([node("a", guessed), node("b", hinted), node("c", guessed)]);
+    expect(groups.map((g) => [g.confidence, g.count])).toEqual([
+      ["contextual", 2],
+      ["suggested", 1],
+    ]);
+  });
+});
+
+describe("isVerifiable", () => {
+  it("accepts only a deterministic fix that carries a transformation", () => {
+    const [deterministic] = clusterFixes([node(".a", contrast("#111"))]);
+    const [contextual] = clusterFixes([
+      node(".b", {
+        confidence: "contextual",
+        text: "Name it",
+        code: 'aria-label="Submit"',
+        apply: { kind: "attr", name: "aria-label", value: "Submit" },
+      }),
+    ]);
+    const [suggested] = clusterFixes([
+      node(".c", { confidence: "suggested", text: "Set the language", code: '<html lang="…">' }),
+    ]);
+    expect(isVerifiable(deterministic)).toBe(true);
+    expect(isVerifiable(contextual)).toBe(false);
+    expect(isVerifiable(suggested)).toBe(false);
   });
 });

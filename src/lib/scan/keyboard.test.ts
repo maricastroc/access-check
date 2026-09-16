@@ -57,6 +57,20 @@ describe("readingOrderInversions", () => {
     expect(readingOrderInversions(stops).count).toBe(1);
   });
 
+  it("controls on the same header row are not a jump when they are centred differently", () => {
+    const stops = [
+      stop(1, 100, 23, { height: 20 }),
+      stop(2, 200, 17, { height: 32 }),
+      stop(3, 300, 15, { height: 36 }),
+    ];
+    expect(readingOrderInversions(stops).count).toBe(0);
+  });
+
+  it("still flags a move back to the left across overlapping rows", () => {
+    const stops = [stop(1, 200, 20, { height: 32 }), stop(2, 40, 23, { height: 20 })];
+    expect(readingOrderInversions(stops).count).toBe(1);
+  });
+
   it("micro-misalignment within the band does not count", () => {
     const stops = [stop(1, 30, 20), stop(2, 28, 19)];
     expect(readingOrderInversions(stops).count).toBe(0);

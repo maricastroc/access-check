@@ -78,6 +78,37 @@ describe("buildMarkdown", () => {
     expect(md).toContain("Verified");
   });
 
+  it("tags only deterministic groups as verified", () => {
+    const md = buildMarkdown(
+      result({
+        violations: [
+          violation({
+            id: "image-alt",
+            fixGroups: [
+              {
+                text: "Confirm the description",
+                code: 'alt="Logo"',
+                count: 1,
+                selectors: ["img"],
+                confidence: "contextual",
+                verification: "verified",
+              },
+              {
+                text: "Stored before confidence existed",
+                code: 'alt=""',
+                count: 1,
+                selectors: ["img.b"],
+                verification: "verified",
+              },
+            ],
+          }),
+        ],
+      }),
+    );
+    expect(md).toContain('alt="Logo"');
+    expect(md).not.toContain("Verified");
+  });
+
   it("falls back to the simple fix when there are no groups", () => {
     expect(buildMarkdown(result())).toContain("Use #1a1a1a");
   });

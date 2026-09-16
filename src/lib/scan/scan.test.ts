@@ -282,6 +282,33 @@ describe("runScan (integration — real browser)", () => {
     expect(verified.length).toBeGreaterThan(0);
   }, 60_000);
 
+  it("re-audits only deterministic fixes, and never certifies an invented lang or a guessed alt", async () => {
+    const result = await runScan(`${base}/broken`, {
+      screenshot: false,
+      keyboard: false,
+      contexts: false,
+      audits: false,
+      verifyFixes: true,
+    });
+
+    const byId = Object.fromEntries(result.violations.map((v) => [v.id, v]));
+    expect(byId["color-contrast"].fixConfidence).toBe("deterministic");
+    expect(byId["color-contrast"].verification).toBe("verified");
+
+    expect(byId["html-has-lang"].fixConfidence).toBe("suggested");
+    expect(byId["html-has-lang"].fixCode).not.toMatch(/lang="[a-z]/);
+    expect(byId["html-has-lang"].verification).toBe("unchecked");
+
+    expect(byId["image-alt"].fixConfidence).toBe("contextual");
+    expect(byId["image-alt"].verification).toBe("unchecked");
+
+    for (const v of result.violations) {
+      for (const g of v.fixGroups ?? []) {
+        if (g.verification !== "unchecked") expect(g.confidence).toBe("deterministic");
+      }
+    }
+  }, 60_000);
+
   it("emits progress phases in order for streaming", async () => {
     const phases: string[] = [];
     await runScan(`${base}/clean`, {

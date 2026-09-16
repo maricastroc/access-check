@@ -40,11 +40,14 @@ export type Effort = "Quick" | "Moderate" | "Involved";
 
 export type FixVerification = "verified" | "failed" | "unchecked";
 
+export type FixConfidence = "deterministic" | "contextual" | "suggested";
+
 export type FixGroup = {
   text: string;
   code?: string;
   count: number;
   selectors: string[];
+  confidence?: FixConfidence;
   verification: FixVerification;
 };
 
@@ -57,6 +60,7 @@ export type ScanViolation = {
   desc: string;
   fix: string;
   fixCode?: string;
+  fixConfidence?: FixConfidence;
   nodes: number;
   fixGroups?: FixGroup[];
   verification?: FixVerification;

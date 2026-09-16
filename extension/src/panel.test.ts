@@ -55,6 +55,13 @@ describe("the panel reuses the product's own report", () => {
     expect(panel).not.toContain("buildSummary");
   });
 
+  it("takes fixes and their confidence from the shared enrichment, and never re-audits them", () => {
+    expect(audit).toContain("enrichViolations(wcagViolations, elementInfos, t)");
+    expect(audit).toContain("attachFixGroups(enriched)");
+    expect(audit).not.toContain("planVerification");
+    expect(manifest.permissions).not.toContain("<all_urls>");
+  });
+
   it("never puts page content into innerHTML", () => {
     for (const source of [panel, audit]) {
       expect(source).not.toContain("innerHTML");

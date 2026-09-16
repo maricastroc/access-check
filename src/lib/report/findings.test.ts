@@ -387,3 +387,137 @@ describe("the list and the header describe the same reading", () => {
     expect(bp.occurrences).toEqual([]);
   });
 });
+
+describe("buildFindings: the Verified fix seal needs a deterministic fix", () => {
+  const lang: ScanViolation = {
+    id: "html-has-lang",
+    severity: "serious",
+    title: "<html> element must have a lang attribute",
+    criterion: "WCAG 3.1.1 · Language of Page",
+    where: "html",
+    desc: "d",
+    fix: "Set it to the page's primary language.",
+    fixCode: '<html lang="…">',
+    fixConfidence: "suggested",
+    nodes: 1,
+    verification: "unchecked",
+  };
+
+  const guessedAlt: ScanViolation = {
+    id: "image-alt",
+    severity: "critical",
+    title: "Images must have alternative text",
+    criterion: "WCAG 1.1.1 · Non-text Content",
+    where: "img.logo",
+    desc: "d",
+    fix: "Confirm the suggested description.",
+    fixCode: 'alt="Logo"',
+    fixConfidence: "contextual",
+    nodes: 1,
+    fixGroups: [
+      {
+        text: "t",
+        code: 'alt="Logo"',
+        count: 1,
+        selectors: ["img.logo"],
+        confidence: "contextual",
+        verification: "verified",
+      },
+    ],
+    verification: "verified",
+  };
+
+  const singleContrast: ScanViolation = {
+    ...contrast,
+    nodes: 1,
+    fixConfidence: "deterministic",
+    fixGroups: [
+      {
+        text: "t",
+        code: "color: #2f6b57;",
+        count: 1,
+        selectors: ["a.hero__cta"],
+        confidence: "deterministic",
+        verification: "verified",
+      },
+    ],
+  };
+
+  it("keeps Verified fix for a deterministic fix the verifier confirmed", () => {
+    const f = buildFindings(baseResult({ violations: [singleContrast] }))[0];
+    expect(f.verdict.kind).toBe("verified");
+    expect(f.preview?.confidence).toBe("verified");
+  });
+
+  it("does not certify a contextual guess, even when the stored re-audit passed", () => {
+    const f = buildFindings(baseResult({ violations: [guessedAlt] }))[0];
+    expect(f.verdict.kind).toBe("contextual");
+    expect(f.verdict.reaudited).toBe(0);
+  });
+
+  it("keeps a suggestion as human review", () => {
+    const f = buildFindings(baseResult({ violations: [lang] }))[0];
+    expect(f.verdict.kind).toBe("no-auto-fix");
+  });
+
+  it("gives the extension the same verdicts, with no re-audit and verification skipped", () => {
+    const unverified = (v: ScanViolation): ScanViolation => ({
+      ...v,
+      verification: "unchecked",
+      fixGroups: v.fixGroups?.map((g) => ({ ...g, verification: "unchecked" as const })),
+    });
+    const findings = buildFindings(
+      baseResult({
+        partial: true,
+        warnings: [{ code: "verification-skipped", message: "not tested here" }],
+        violations: [unverified(singleContrast), unverified(guessedAlt), lang, heading],
+      }),
+    );
+    const kinds = Object.fromEntries(findings.map((f) => [f.ruleId, f.verdict.kind]));
+    expect(kinds).toEqual({
+      "color-contrast": "unverifiable",
+      "image-alt": "contextual",
+      "html-has-lang": "no-auto-fix",
+      "heading-order": "no-auto-fix",
+    });
+  });
+
+  it('stops a stored report from certifying lang="en", while its contrast evidence still stands', () => {
+    const storedLang: ScanViolation = {
+      ...lang,
+      fixCode: '<html lang="en">',
+      fixConfidence: undefined,
+      verification: "verified",
+    };
+    const storedAlt: ScanViolation = {
+      ...guessedAlt,
+      fixCode: 'alt=""',
+      fixConfidence: undefined,
+      fixGroups: [
+        { text: "t", code: 'alt=""', count: 1, selectors: ["img"], verification: "verified" },
+      ],
+    };
+    const storedContrast: ScanViolation = {
+      ...singleContrast,
+      fixConfidence: undefined,
+      fixGroups: [
+        {
+          text: "t",
+          code: "color: #2f6b57;",
+          count: 1,
+          selectors: ["a.hero__cta"],
+          verification: "verified",
+        },
+      ],
+    };
+    const findings = buildFindings(
+      baseResult({ violations: [storedLang, storedAlt, storedContrast] }),
+    );
+    const kinds = Object.fromEntries(findings.map((f) => [f.ruleId, f.verdict.kind]));
+    expect(kinds).toEqual({
+      "html-has-lang": "no-auto-fix",
+      "image-alt": "no-auto-fix",
+      "color-contrast": "verified",
+    });
+  });
+});

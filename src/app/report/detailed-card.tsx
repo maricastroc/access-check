@@ -1,6 +1,7 @@
 import type { ScanResult } from "@/lib/scan/types";
 import { parseContrastFix } from "@/lib/report/contrast";
 import { toFixStatus } from "@/lib/report/severity";
+import { certifiedVerification, fixConfidenceOf } from "@/lib/scan/confidence";
 import { ColorSwatch, StatusSeal } from "@/components/ui";
 import { sevHex, sevLabelKey } from "./shared";
 import { FieldLabel } from "./primitives";
@@ -8,7 +9,7 @@ import type { Translate } from "@/lib/i18n/t";
 
 export function DetailedCard({ v, t }: { v: ScanResult["violations"][number]; t: Translate }) {
   const measurement = parseContrastFix(v.fix, v.fixCode);
-  const status = toFixStatus(v.verification);
+  const status = toFixStatus(certifiedVerification(fixConfidenceOf(v), v.verification));
 
   return (
     <div
@@ -72,7 +73,9 @@ export function DetailedCard({ v, t }: { v: ScanResult["violations"][number]; t:
             <div className="mt-2">
               <StatusSeal t={t} status={status} />
             </div>
-            <p className="mt-1.5 text-[9.5px] text-muted">{t("report.sandboxApplied")}</p>
+            {status !== "unchecked" && (
+              <p className="mt-1.5 text-[9.5px] text-muted">{t("report.sandboxApplied")}</p>
+            )}
           </div>
         </div>
 

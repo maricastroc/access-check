@@ -121,6 +121,14 @@ export function readingOrderInversions(stops: FocusStop[]): {
     (s): s is FocusStop & { top: number; left: number } => s.top !== null && s.left !== null,
   );
 
+  const sameRow = (a: FocusStop & { top: number }, b: FocusStop & { top: number }) => {
+    const ah = a.height;
+    const bh = b.height;
+    if (ah === null || bh === null) return Math.abs(a.top - b.top) <= BAND;
+    const overlap = Math.min(a.top + ah, b.top + bh) - Math.max(a.top, b.top);
+    return overlap > Math.min(ah, bh) / 2;
+  };
+
   const jumps: OrderJump[] = [];
   const seen = new Set<string>();
   for (let i = 1; i < positioned.length; i++) {
@@ -129,8 +137,9 @@ export function readingOrderInversions(stops: FocusStop[]): {
     const dy = cur.top - prev.top;
 
     let direction: OrderJump["direction"] | null = null;
-    if (dy < -BAND) direction = "up";
-    else if (Math.abs(dy) <= BAND && cur.left < prev.left - BAND) direction = "back";
+    if (sameRow(prev, cur)) {
+      if (cur.left < prev.left - BAND) direction = "back";
+    } else if (dy < -BAND) direction = "up";
     if (direction === null) continue;
 
     if (seen.has(cur.selector)) continue;

@@ -12,7 +12,10 @@ export type FixApply =
   | { kind: "doc"; target: "lang" | "title"; value: string }
   | { kind: "viewport"; value: string };
 
-export type FixResult = { text: string; code?: string; apply?: FixApply };
+export type FixResult =
+  | { confidence: "deterministic"; text: string; code: string; apply: FixApply }
+  | { confidence: "contextual"; text: string; code: string; apply?: FixApply }
+  | { confidence: "suggested"; text: string; code?: string; apply?: never };
 
 export type ElementInfo = {
   tag: string;
@@ -58,43 +61,47 @@ export function fixLabel(el: ElementInfo, t: Translate): FixResult | null {
     (el.placeholder && el.placeholder.trim()) ||
     (el.name && humanize(el.name)) ||
     (el.id && humanize(el.id)) ||
-    t("fix.describeField");
-
-  const apply = { kind: "attr", name: "aria-label", value: guess } as const;
+    "";
 
   if (el.id) {
-    return {
-      text: t("fix.labelWithId", { tag: el.tag, id: el.id }),
-      code: `<label for="${el.id}">${guess}</label>`,
-      apply,
-    };
+    const text = t("fix.labelWithId", { tag: el.tag, id: el.id });
+    const code = `<label for="${el.id}">${guess || t("fix.describeField")}</label>`;
+    return guess
+      ? { confidence: "contextual", text, code }
+      : { confidence: "suggested", text, code };
   }
 
+  const text = t("fix.labelNoId", { tag: el.tag });
+  if (!guess) {
+    return { confidence: "suggested", text, code: `aria-label="${t("fix.describeField")}"` };
+  }
   return {
-    text: t("fix.labelNoId", { tag: el.tag }),
+    confidence: "contextual",
+    text,
     code: `aria-label="${guess}"`,
-    apply,
+    apply: { kind: "attr", name: "aria-label", value: guess },
   };
 }
 
 export function fixHtmlLang(t: Translate): FixResult {
   return {
+    confidence: "suggested",
     text: t("fix.htmlLang"),
-    code: `<html lang="en">`,
-    apply: { kind: "doc", target: "lang", value: "en" },
+    code: `<html lang="…">`,
   };
 }
 
 export function fixDocumentTitle(t: Translate): FixResult {
   return {
+    confidence: "suggested",
     text: t("fix.documentTitle"),
     code: `<title>${t("fix.descriptivePageTitle")}</title>`,
-    apply: { kind: "doc", target: "title", value: t("fix.descriptivePageTitle") },
   };
 }
 
 export function fixMetaViewport(t: Translate): FixResult {
   return {
+    confidence: "contextual",
     text: t("fix.metaViewport"),
     code: `<meta name="viewport" content="width=device-width, initial-scale=1">`,
     apply: {
@@ -110,12 +117,17 @@ export function fixAriaName(el: ElementInfo, t: Translate): FixResult {
     (el.ariaLabel && el.ariaLabel.trim()) ||
     (el.name && humanize(el.name)) ||
     (el.id && humanize(el.id)) ||
-    t("fix.describeControl");
+    "";
 
   const noun =
     el.tag === "a" ? t("fix.nounLink") : el.tag === "button" ? t("fix.nounButton") : el.tag;
+  const text = t("fix.ariaName", { noun });
+  if (!guess) {
+    return { confidence: "suggested", text, code: `aria-label="${t("fix.describeControl")}"` };
+  }
   return {
-    text: t("fix.ariaName", { noun }),
+    confidence: "contextual",
+    text,
     code: `aria-label="${guess}"`,
     apply: { kind: "attr", name: "aria-label", value: guess },
   };
@@ -125,6 +137,7 @@ export function fixAriaRequiredAttr(missing: string[], t: Translate): FixResult 
   const attrs = missing.filter(Boolean);
   if (attrs.length === 0) return null;
   return {
+    confidence: "suggested",
     text: t("fix.ariaRequired", { attrs: attrs.join(", ") }),
     code: attrs.map((a) => `${a}="…"`).join(" "),
   };
@@ -134,6 +147,7 @@ export function fixAriaAllowedAttr(invalid: string[], t: Translate): FixResult |
   const names = invalid.map((s) => s.split("=")[0].trim()).filter(Boolean);
   if (names.length === 0) return null;
   return {
+    confidence: "suggested",
     text: t("fix.ariaNotAllowed", { names: names.join(", ") }),
     code: t("fix.ariaRemove", { names: names.join(", ") }),
   };
@@ -150,15 +164,16 @@ export function fixImageAlt(el: ElementInfo, t: Translate): FixResult {
 
   if (guess) {
     return {
+      confidence: "contextual",
       text: t("fix.imageAltGuess"),
       code: `alt="${guess}"`,
       apply: { kind: "attr", name: "alt", value: guess },
     };
   }
   return {
+    confidence: "suggested",
     text: t("fix.imageAltNoGuess"),
-    code: `alt=""`,
-    apply: { kind: "attr", name: "alt", value: "" },
+    code: `alt="…"`,
   };
 }
 
@@ -332,6 +347,7 @@ export function fixContrast(data: ContrastData, t: Translate): FixResult | null 
     });
     if (bgFix) text += t("fix.contrastAlsoBackground", { bg: toHex(bgFix) });
     return {
+      confidence: "deterministic",
       text,
       code: `color: ${newHex};`,
       apply: { kind: "style", prop: "color", value: newHex },
@@ -342,6 +358,7 @@ export function fixContrast(data: ContrastData, t: Translate): FixResult | null 
     const bgHex = toHex(bgFix);
     const ratio = contrastRatio(fg, bgFix);
     return {
+      confidence: "deterministic",
       text: t("fix.contrastBackground", {
         fg: toHex(fg),
         required: target.toFixed(1),
@@ -350,12 +367,13 @@ export function fixContrast(data: ContrastData, t: Translate): FixResult | null 
         ratio: ratio.toFixed(2),
         was,
       }),
-      code: `background: ${bgHex};`,
+      code: `background-color: ${bgHex};`,
       apply: { kind: "style", prop: "background-color", value: bgHex },
     };
   }
 
   return {
+    confidence: "suggested",
     text: t("fix.contrastNeither", {
       fg: toHex(fg),
       bg: toHex(bg),

@@ -1200,6 +1200,7 @@ export const en = {
   "verdict.label.sampledOne": "One example checked",
   "verdict.label.failed": "Needs human review",
   "verdict.label.unverifiable": "Could not verify",
+  "verdict.label.contextual": "Confirm before applying",
   "verdict.label.noAutoFix": "Needs human review",
   "verdict.label.bestPractice": "Best practice",
   "verdict.label.complementary": "Not re-audited",
@@ -1228,6 +1229,8 @@ export const en = {
     "{subject} still fails after the change was applied in a sandbox copy. Review it by hand.{tail}",
   "verdict.unverifiable":
     "The element couldn't be re-audited in the sandbox copy (it wasn't found, or verification was cut short for time). Confirm the change by hand.",
+  "verdict.contextual":
+    "This change is a valid way to clear the rule, but whether it is right depends on the content of the page, so only a person can confirm it. It was not re-audited in a sandbox copy.",
   "verdict.noAutoFix":
     "This finding has no automatic fix. A person needs to decide the right change for the page.",
   "verdict.bestPractice":

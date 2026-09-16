@@ -1,4 +1,5 @@
-import type { FixGroup, ScanViolation } from "@/lib/scan/types";
+import type { FixConfidence, FixGroup, ScanViolation } from "@/lib/scan/types";
+import { certifiedVerification } from "@/lib/scan/confidence";
 import type { ContrastMeasurement } from "./contrast";
 import type { Translate } from "../i18n/t";
 
@@ -8,6 +9,7 @@ export type VerdictKind =
   | "sampled"
   | "failed"
   | "unverifiable"
+  | "contextual"
   | "no-auto-fix"
   | "best-practice"
   | "complementary";
@@ -28,8 +30,7 @@ export type VerdictInput = {
   elements: number;
   fixGroups: FixGroup[] | null;
   fixVerification?: ScanViolation["verification"];
-  hasAutoFix: boolean;
-  verifySkipped: boolean;
+  fixConfidence: FixConfidence | null;
 };
 
 const COMPLEMENTARY = new Set([
@@ -59,15 +60,25 @@ export function buildVerdict(input: VerdictInput): Verdict {
 
   const groups =
     input.fixGroups && input.fixGroups.length > 0
-      ? input.fixGroups.map((g) => ({ count: g.count, verification: g.verification }))
-      : [{ count: totalElements, verification: input.fixVerification ?? "unchecked" }];
+      ? input.fixGroups.map((g) => ({
+          count: g.count,
+          verification: certifiedVerification(g.confidence ?? input.fixConfidence, g.verification),
+        }))
+      : [
+          {
+            count: totalElements,
+            verification: certifiedVerification(input.fixConfidence, input.fixVerification),
+          },
+        ];
 
   const sampledCleared = groups.filter((g) => g.verification === "verified").length;
   const sampledFailed = groups.filter((g) => g.verification === "failed").length;
   const reaudited = sampledCleared + sampledFailed;
 
   if (reaudited === 0) {
-    return input.hasAutoFix || input.verifySkipped ? seal("unverifiable") : seal("no-auto-fix");
+    if (input.fixConfidence === "deterministic") return seal("unverifiable");
+    if (input.fixConfidence === "contextual") return seal("contextual");
+    return seal("no-auto-fix");
   }
 
   const sumCounts = groups.reduce((n, g) => n + g.count, 0);
@@ -101,6 +112,8 @@ export function verdictLabel(v: Verdict, t: Translate): string {
       return t("verdict.label.failed");
     case "unverifiable":
       return t("verdict.label.unverifiable");
+    case "contextual":
+      return t("verdict.label.contextual");
     case "no-auto-fix":
       return t("verdict.label.noAutoFix");
     case "best-practice":
@@ -155,6 +168,8 @@ export function verdictMessage(
     }
     case "unverifiable":
       return t("verdict.unverifiable");
+    case "contextual":
+      return t("verdict.contextual");
     case "no-auto-fix":
       return t("verdict.noAutoFix");
     case "best-practice":

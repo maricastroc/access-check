@@ -1,4 +1,5 @@
 import type { FixGroup, FixVerification, ScanResult } from "./types";
+import { certifiedVerification, groupConfidenceOf } from "./confidence";
 import { severityOrder } from "./derive";
 import { reviewGuidance } from "./review";
 import { translator, type MessageKey, type Translate } from "../i18n/t";
@@ -23,13 +24,13 @@ function host(url: string): string {
   }
 }
 
-function fixGroupLines(g: FixGroup, t: Translate): string[] {
+function fixGroupLines(g: FixGroup, ruleId: string, t: Translate): string[] {
   const lines: string[] = [];
   lines.push(g.text);
   if (g.code) lines.push("", "```", g.code, "```");
   const meta: string[] = [];
   if (g.count > 1) meta.push(t("md.resolvesElements", { count: g.count }));
-  const tag = VERIFICATION_KEY[g.verification];
+  const tag = VERIFICATION_KEY[certifiedVerification(groupConfidenceOf(g, ruleId), g.verification)];
   if (tag) meta.push(t(tag));
   if (meta.length) lines.push("", `_${meta.join(" · ")}_`);
   return lines;
@@ -100,7 +101,7 @@ export function buildMarkdown(result: ScanResult): string {
         out.push(`**${t("md.suggestedFix")}:**`);
         out.push("");
         if (v.fixGroups && v.fixGroups.length > 0) {
-          for (const g of v.fixGroups) out.push(...fixGroupLines(g, t));
+          for (const g of v.fixGroups) out.push(...fixGroupLines(g, v.id, t));
         } else {
           out.push(v.fix);
         }

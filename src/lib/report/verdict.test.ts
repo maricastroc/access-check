@@ -5,8 +5,12 @@ import { translator } from "../i18n/t";
 
 const t = translator();
 
-function group(count: number, verification: FixGroup["verification"]): FixGroup {
-  return { text: "t", count, selectors: [], verification };
+function group(
+  count: number,
+  verification: FixGroup["verification"],
+  confidence: FixGroup["confidence"] = "deterministic",
+): FixGroup {
+  return { text: "t", count, selectors: [], confidence, verification };
 }
 
 const base: VerdictInput = {
@@ -14,8 +18,7 @@ const base: VerdictInput = {
   isWcag: true,
   elements: 1,
   fixGroups: null,
-  hasAutoFix: true,
-  verifySkipped: false,
+  fixConfidence: "deterministic",
 };
 
 describe("buildVerdict — never extrapolates one representative to a whole cluster", () => {
@@ -108,14 +111,14 @@ describe("buildVerdict — never extrapolates one representative to a whole clus
     expect(verdictMessage(v, t)).toContain("not individually verified");
   });
 
-  it("unverifiable — an auto fix exists but nothing was re-audited", () => {
-    const v = buildVerdict({ ...base, fixVerification: "unchecked", hasAutoFix: true });
+  it("unverifiable — a deterministic fix exists but nothing was re-audited", () => {
+    const v = buildVerdict({ ...base, fixVerification: "unchecked" });
     expect(v.kind).toBe("unverifiable");
     expect(v.reaudited).toBe(0);
   });
 
   it("no-auto-fix — no applicable correction", () => {
-    const v = buildVerdict({ ...base, fixVerification: "unchecked", hasAutoFix: false });
+    const v = buildVerdict({ ...base, fixVerification: "unchecked", fixConfidence: null });
     expect(v.kind).toBe("no-auto-fix");
     expect(verdictMessage(v, t)).toContain("no automatic fix");
   });
@@ -140,5 +143,69 @@ describe("buildVerdict — never extrapolates one representative to a whole clus
     expect(verdictLabel(buildVerdict({ ...base, kind: "best-practice", isWcag: false }), t)).toBe(
       "Best practice",
     );
+  });
+});
+
+describe("buildVerdict — only a deterministic fix can earn Verified fix", () => {
+  it("a deterministic fix whose re-audit passed is a Verified fix", () => {
+    const v = buildVerdict({ ...base, fixVerification: "verified" });
+    expect(v.kind).toBe("verified");
+    expect(verdictLabel(v, t)).toBe("Verified fix");
+  });
+
+  it("a contextual fix is never certified, even when the rule stopped flagging", () => {
+    const v = buildVerdict({ ...base, fixConfidence: "contextual", fixVerification: "verified" });
+    expect(v.kind).toBe("contextual");
+    expect(v.reaudited).toBe(0);
+    expect(verdictLabel(v, t)).toBe("Confirm before applying");
+    expect(verdictMessage(v, t)).toContain("only a person can confirm");
+  });
+
+  it("a suggestion without apply is never certified", () => {
+    for (const verification of ["verified", "failed", "unchecked"] as const) {
+      const v = buildVerdict({
+        ...base,
+        fixConfidence: "suggested",
+        fixVerification: verification,
+      });
+      expect(v.kind).toBe("no-auto-fix");
+      expect(verdictLabel(v, t)).not.toContain("Verified");
+    }
+  });
+
+  it("contextual groups do not count as re-audited occurrences", () => {
+    const v = buildVerdict({
+      ...base,
+      elements: 2,
+      fixConfidence: "contextual",
+      fixGroups: [group(1, "verified", "contextual"), group(1, "verified", "contextual")],
+    });
+    expect(v.kind).toBe("contextual");
+    expect(v.sampledCleared).toBe(0);
+  });
+
+  it("a deterministic group keeps its evidence next to a suggestion that was never applied", () => {
+    const v = buildVerdict({
+      ...base,
+      elements: 2,
+      fixGroups: [group(1, "verified"), group(1, "unchecked", "suggested")],
+    });
+    expect(v.kind).toBe("sampled");
+    expect(v.sampledCleared).toBe(1);
+    expect(v.fullyCovered).toBe(false);
+  });
+
+  it("a stored group without confidence inherits the finding's confidence", () => {
+    const legacy: FixGroup = { text: "t", count: 1, selectors: [], verification: "verified" };
+    expect(buildVerdict({ ...base, fixGroups: [legacy] }).kind).toBe("verified");
+    expect(buildVerdict({ ...base, fixConfidence: "suggested", fixGroups: [legacy] }).kind).toBe(
+      "no-auto-fix",
+    );
+  });
+
+  it("verification-skipped no longer turns a finding without a fix into Could not verify", () => {
+    expect(buildVerdict({ ...base, fixConfidence: null }).kind).toBe("no-auto-fix");
+    expect(buildVerdict({ ...base, fixConfidence: "contextual" }).kind).toBe("contextual");
+    expect(buildVerdict({ ...base }).kind).toBe("unverifiable");
   });
 });

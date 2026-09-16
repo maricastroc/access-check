@@ -5,6 +5,7 @@ import { SEVERITY_ORDER } from "./severity";
 import { parseContrastFix, type ContrastMeasurement } from "./contrast";
 import { buildVerdict, type Verdict } from "./verdict";
 import { buildContrastPreview, type ContrastPreview } from "./preview";
+import { certifiedVerification, fixConfidenceOf, groupConfidenceOf } from "@/lib/scan/confidence";
 import { translator, type MessageKey, type Translate } from "../i18n/t";
 import {
   fixGuidance,
@@ -75,21 +76,22 @@ function affectedFrom(v: ScanViolation): string[] {
 function wcagFinding(
   v: ScanViolation,
   markers: ScanMarker[],
-  verifySkipped: boolean,
   t: Translate,
 ): Omit<FindingView, "n"> {
   const { sc, name } = splitCriterion(v.criterion);
   const measurement = parseContrastFix(v.fix, v.fixCode);
-  const fixGroups = v.fixGroups && v.fixGroups.length > 0 ? v.fixGroups : null;
-  const hasAutoFix = Boolean(v.fixCode);
+  const fixGroups =
+    v.fixGroups && v.fixGroups.length > 0
+      ? v.fixGroups.map((g) => ({ ...g, confidence: groupConfidenceOf(g, v.id) ?? undefined }))
+      : null;
+  const fixConfidence = fixConfidenceOf(v);
   const verdict = buildVerdict({
     kind: "wcag",
     isWcag: true,
     elements: v.nodes,
     fixGroups,
     fixVerification: v.verification,
-    hasAutoFix,
-    verifySkipped,
+    fixConfidence,
   });
   const linked = linkMarkers(v, markers);
   const affected = affectedFrom(v);
@@ -111,7 +113,11 @@ function wcagFinding(
     fixGroups,
     guidance: v.fixCode || measurement ? null : fixGuidance(v.id, t),
     measurement,
-    preview: buildContrastPreview(measurement, v.verification, v.nodes),
+    preview: buildContrastPreview(
+      measurement,
+      certifiedVerification(fixConfidence, v.verification),
+      v.nodes,
+    ),
     verdict,
     affectedSelectors: affected,
     selectors: affected,
@@ -147,8 +153,7 @@ function complementaryFinding(
     isWcag: true,
     elements: f.count,
     fixGroups: null,
-    hasAutoFix: false,
-    verifySkipped: false,
+    fixConfidence: null,
   });
   const affected = distinct(f.selectors);
   return {
@@ -188,8 +193,7 @@ function contextFinding(issue: ContextIssue, where: string, t: Translate): Omit<
     isWcag: true,
     elements: issue.nodes,
     fixGroups: null,
-    hasAutoFix: false,
-    verifySkipped: false,
+    fixConfidence: null,
   });
   const affected = distinct(issue.selectors);
   return {
@@ -249,8 +253,7 @@ function bestPracticeFindings(result: ScanResult, t: Translate): Omit<FindingVie
         isWcag: false,
         elements: bp.nodes,
         fixGroups: null,
-        hasAutoFix: false,
-        verifySkipped: false,
+        fixConfidence: null,
       }),
       affectedSelectors: affected,
       selectors: affected,
@@ -280,7 +283,6 @@ function splitCriterion(criterion: string): { sc: string | null; name: string | 
 
 export function buildFindings(result: ScanResult): FindingView[] {
   const t = translator(result.locale);
-  const verifySkipped = (result.warnings ?? []).some((w) => w.code === "verification-skipped");
   const withSeverity: Omit<FindingView, "n">[] = [];
 
   const listed = new Map<string, Omit<FindingView, "n">>();
@@ -294,7 +296,7 @@ export function buildFindings(result: ScanResult): FindingView[] {
     withSeverity.push(finding);
   };
 
-  for (const v of result.violations) add(wcagFinding(v, result.markers, verifySkipped, t));
+  for (const v of result.violations) add(wcagFinding(v, result.markers, t));
 
   for (const f of result.keyboard?.findings ?? []) add(complementaryFinding(f, "keyboard", t));
 

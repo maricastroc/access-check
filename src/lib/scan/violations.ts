@@ -11,9 +11,10 @@ import {
   fixLabel,
   fixMetaViewport,
   type ElementInfo,
+  type FixApply,
   type FixResult,
 } from "./remediate";
-import { clusterFixes, type FixCluster } from "./group";
+import { clusterFixes, isVerifiable, type FixCluster } from "./group";
 import type { FixGroup, ScanBestPractice, ScanIncomplete, ScanViolation, Severity } from "./types";
 
 export type AxeCheck = { id: string; data?: unknown };
@@ -174,6 +175,7 @@ export function enrichViolations(
         desc: v.description,
         fix,
         fixCode: result?.code,
+        fixConfidence: result?.confidence,
         nodes: v.nodes.length,
       } satisfies ScanViolation,
     };
@@ -220,10 +222,33 @@ export function attachFixGroups(enriched: Enriched[]): void {
           code: c.code,
           count: c.count,
           selectors: c.selectors,
+          confidence: c.confidence,
           verification: c.verification ?? "unchecked",
         }) satisfies FixGroup,
     );
     const main = e.clusters.find((c) => c.selectors.includes(e.v.where)) ?? e.clusters[0];
     e.v.verification = main.verification ?? "unchecked";
   }
+}
+
+export type VerifyOp = { ruleId: string; selector: string | null; apply: FixApply };
+
+export function planVerification(
+  enriched: Enriched[],
+  maxOps: number,
+): { ops: VerifyOp[]; clusters: FixCluster[] } {
+  const ops: VerifyOp[] = [];
+  const clusters: FixCluster[] = [];
+  for (const e of enriched) {
+    for (const cluster of e.clusters) {
+      if (ops.length >= maxOps) break;
+      if (!isVerifiable(cluster)) continue;
+      const docLevel = cluster.apply.kind === "doc" || cluster.apply.kind === "viewport";
+      const selector = docLevel ? null : (cluster.selectors[0] ?? null);
+      if (!docLevel && !selector) continue;
+      ops.push({ ruleId: e.v.id, selector, apply: cluster.apply });
+      clusters.push(cluster);
+    }
+  }
+  return { ops, clusters };
 }

@@ -1,8 +1,7 @@
 import path from "path";
 import type { BrowserContext, Page } from "playwright-core";
 import { acquireBrowser, closeSharedBrowser } from "./browser";
-import { type ElementInfo, type FixApply } from "./remediate";
-import type { FixCluster } from "./group";
+import { type ElementInfo } from "./remediate";
 import { collectKeyboard, type KeyboardReport } from "./keyboard";
 import { collectContexts, type ContextReport } from "./contexts";
 import { collectTargetSize } from "./target-size";
@@ -37,7 +36,9 @@ import {
   buildIncomplete,
   elementSelectorsFor,
   enrichViolations,
+  planVerification,
   type AxeResults,
+  type VerifyOp,
 } from "./violations";
 import { captureScreenshot, SCREENSHOT_QUALITY } from "./screenshot";
 import { captureOverview, MAX_OVERVIEW_MS } from "./overview";
@@ -144,8 +145,6 @@ export function normalizeUrl(input: string): string {
 async function primeLazyContent(page: Page): Promise<void> {
   await page.evaluate(() => window.__accessCheckDom!.primeLazyContent()).catch(() => {});
 }
-
-type VerifyOp = { ruleId: string; selector: string | null; apply: FixApply };
 
 const VERIFY_IN_PAGE = async (ops: VerifyOp[]): Promise<FixVerification[]> => {
   const axe = window.axe;
@@ -605,19 +604,7 @@ async function runScanAttempt(
     const verifyFixes = async () => {
       if (!doVerify) return;
 
-      const verifyOps: VerifyOp[] = [];
-      const opClusters: FixCluster[] = [];
-      for (const e of enriched) {
-        for (const cluster of e.clusters) {
-          if (verifyOps.length >= MAX_VERIFY_OPS) break;
-          if (!cluster.apply) continue;
-          const docLevel = cluster.apply.kind === "doc" || cluster.apply.kind === "viewport";
-          const selector = docLevel ? null : (cluster.selectors[0] ?? null);
-          if (!docLevel && !selector) continue;
-          verifyOps.push({ ruleId: e.v.id, selector, apply: cluster.apply });
-          opClusters.push(cluster);
-        }
-      }
+      const { ops: verifyOps, clusters: opClusters } = planVerification(enriched, MAX_VERIFY_OPS);
       if (verifyOps.length === 0) return;
 
       const outcome = await track("verify", () =>

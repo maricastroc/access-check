@@ -1235,6 +1235,7 @@ export const ptBR: Catalog = {
   "verdict.label.sampledOne": "Um exemplo conferido",
   "verdict.label.failed": "Precisa de revisão humana",
   "verdict.label.unverifiable": "Não foi possível verificar",
+  "verdict.label.contextual": "Confirme antes de aplicar",
   "verdict.label.noAutoFix": "Precisa de revisão humana",
   "verdict.label.bestPractice": "Boa prática",
   "verdict.label.complementary": "Não reauditado",
@@ -1263,6 +1264,8 @@ export const ptBR: Catalog = {
     "{subject} continua falhando mesmo com a mudança aplicada em uma cópia da página. Revise esse caso manualmente.{tail}",
   "verdict.unverifiable":
     "Não foi possível reauditar o elemento na cópia da página — ele não foi encontrado ou a verificação foi interrompida por tempo. Confirme a mudança manualmente.",
+  "verdict.contextual":
+    "Esta mudança é um jeito válido de resolver a regra, mas se ela está certa depende do conteúdo da página, então só uma pessoa pode confirmar. Ela não foi reauditada em uma cópia da página.",
   "verdict.noAutoFix":
     "Este problema não tem correção automática. Uma pessoa precisa decidir a mudança certa para a página.",
   "verdict.bestPractice":
