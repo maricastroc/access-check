@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { capturePass, type TakeTile } from "./overview";
 import {
   MAX_OVERVIEW_BYTES,
+  MAX_TILE_BYTES,
   OVERVIEW_MIME,
   OVERVIEW_SCALE,
   planTiles,
@@ -58,18 +59,25 @@ describe("photographing the page block by block", () => {
     expect(result.tiles[0]).toMatchObject({ width: 600, height: 1000 });
   });
 
-  it("stops before it overshoots the weight a reading may carry", async () => {
+  it("leaves behind a block too heavy to carry on its own", async () => {
     const { tiles } = planTiles(16_000);
-    const heavy = Math.floor(MAX_OVERVIEW_BYTES / 3);
+    const fine = Math.floor(MAX_TILE_BYTES / 2);
 
-    const result = await pass(
-      tiles,
-      stub([heavy, heavy, heavy, heavy, heavy, heavy, heavy, heavy]),
-    );
+    const result = await pass(tiles, stub([fine, fine, MAX_TILE_BYTES + 1, fine]));
 
-    expect(result.tiles).toHaveLength(3);
-    expect(result.bytes).toBeLessThanOrEqual(MAX_OVERVIEW_BYTES);
+    expect(result.tiles).toHaveLength(2);
     expect(result.stoppedBy).toBe("bytes");
+  });
+
+  it("carries a full page of blocks that each stay under the ceiling", async () => {
+    const { tiles } = planTiles(16_000);
+    const fine = Math.floor(MAX_TILE_BYTES * 0.9);
+
+    const result = await pass(tiles, stub(Array.from({ length: 8 }, () => fine)));
+
+    expect(result.tiles).toHaveLength(8);
+    expect(result.bytes).toBeLessThanOrEqual(MAX_OVERVIEW_BYTES);
+    expect(result.stoppedBy).toBe("complete");
   });
 
   it("calls it an error when not even the first block comes back", async () => {

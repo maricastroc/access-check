@@ -7,7 +7,8 @@ export type LogEvent =
   | "queue.dispatch.failed"
   | "queue.unconfigured"
   | "scan.failed"
-  | "scan.history.failed";
+  | "scan.history.failed"
+  | "tile.write.failed";
 
 type Fields = Record<string, unknown>;
 

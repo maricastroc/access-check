@@ -5,6 +5,7 @@ import {
   emptyOverview,
   MAX_OVERVIEW_BYTES,
   MAX_OVERVIEW_MS,
+  MAX_TILE_BYTES,
   OVERVIEW_FALLBACK_SCALE,
   OVERVIEW_FORMAT,
   OVERVIEW_MIME,
@@ -66,7 +67,7 @@ export async function capturePass(
       break;
     }
 
-    if (bytes + shot.bytes > MAX_OVERVIEW_BYTES) {
+    if (shot.bytes > MAX_TILE_BYTES || bytes + shot.bytes > MAX_OVERVIEW_BYTES) {
       stoppedBy = "bytes";
       break;
     }

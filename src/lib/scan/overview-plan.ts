@@ -2,12 +2,13 @@ import type { OverviewStop, OverviewTile, ScanOverview } from "./types";
 
 export const OVERVIEW_FORMAT = "webp";
 export const OVERVIEW_MIME = "image/webp";
-export const OVERVIEW_SCALE = 0.75;
-export const OVERVIEW_FALLBACK_SCALE = 0.5;
+export const OVERVIEW_SCALE = 1;
+export const OVERVIEW_FALLBACK_SCALE = 0.75;
 export const OVERVIEW_TILE_HEIGHT = 2000;
 export const MAX_OVERVIEW_TILES = 8;
 export const MAX_OVERVIEW_HEIGHT = MAX_OVERVIEW_TILES * OVERVIEW_TILE_HEIGHT;
-export const MAX_OVERVIEW_BYTES = 700 * 1024;
+export const MAX_TILE_BYTES = 256 * 1024;
+export const MAX_OVERVIEW_BYTES = MAX_OVERVIEW_TILES * MAX_TILE_BYTES;
 export const MAX_OVERVIEW_MS = 4_000;
 
 export type TilePlan = { docY: number; docHeight: number };

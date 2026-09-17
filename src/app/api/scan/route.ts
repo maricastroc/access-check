@@ -6,6 +6,7 @@ import { auth } from "@/auth";
 import { findRecentScan, saveScan } from "@/lib/scans";
 import { cacheGet, cacheSet } from "@/lib/redis";
 import { SCAN_FRESH_MS, SCAN_FRESH_SECONDS, trimForCache } from "@/lib/scan/cache-policy";
+import { publishOverview } from "@/lib/scan/tile-store";
 import { SCORING_VERSION } from "@/lib/scan/scored";
 import { clientKey, scanRateLimit } from "@/lib/rate-limit";
 import { assertPublicUrl, BlockedUrlError } from "@/lib/scan/ssrf";
@@ -160,24 +161,24 @@ export async function POST(req: Request) {
       const outcome = await Promise.race([scan, deadline]);
 
       if (outcome.kind === "done") {
-        send({ type: "result", result: outcome.result });
-        log(outcome.result.partial ? "partial" : "ok", {
-          score: outcome.result.score,
-          warnings: outcome.result.warnings?.map((w) => w.code) ?? [],
+        const published = outcome.result.overview
+          ? { ...outcome.result, overview: await publishOverview(outcome.result.overview) }
+          : outcome.result;
+
+        send({ type: "result", result: published });
+        log(published.partial ? "partial" : "ok", {
+          score: published.score,
+          warnings: published.warnings?.map((w) => w.code) ?? [],
         });
 
         if (userId) {
           try {
-            await saveScan(userId, outcome.result);
+            await saveScan(userId, published);
           } catch (e) {
             logError("scan.history.failed", e);
           }
-        } else if (!outcome.result.partial) {
-          await cacheSet(
-            scanCacheKey(url, locale),
-            trimForCache(outcome.result),
-            SCAN_FRESH_SECONDS,
-          );
+        } else if (!published.partial) {
+          await cacheSet(scanCacheKey(url, locale), trimForCache(published), SCAN_FRESH_SECONDS);
         }
         return;
       }

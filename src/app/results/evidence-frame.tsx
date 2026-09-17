@@ -6,12 +6,20 @@ import { locatedMarkers, type FindingView } from "@/lib/report/findings";
 import { Button, CodeBlock, Marker, ProvenancePanel, SectionKicker } from "@/components/ui";
 import { modeDesc, previewFilters, type SimKey } from "./data";
 import { clamp } from "./shared";
-import { scrollTargetFor, type ActiveCapture, type Layer, type MarkerView } from "./report-ui";
+import {
+  focusPathShape,
+  scrollTargetFor,
+  type ActiveCapture,
+  type Layer,
+  type MarkerView,
+} from "./report-ui";
 import { OVERVIEW_CAPTURE } from "@/lib/scan/types";
 import type { OverviewStop } from "@/lib/scan/types";
 import { MAX_OVERVIEW_HEIGHT } from "@/lib/scan/overview-plan";
-import type { MessageKey } from "@/lib/i18n/t";
+import type { MessageKey, Translate } from "@/lib/i18n/t";
 import type { FocusPoint } from "./report-model";
+import { RegionInspector } from "./region-inspector";
+import type { InspectRegion } from "./report-ui";
 import { useT } from "@/lib/i18n/provider";
 import { scrollBehavior } from "@/lib/motion";
 
@@ -101,7 +109,19 @@ function MarkerLayer({
   );
 }
 
-function FocusLayer({ points }: { points: FocusPoint[] }) {
+function FocusLayer({
+  points,
+  selected,
+  onSelectStop,
+  t,
+}: {
+  points: FocusPoint[];
+  selected: number | null;
+  onSelectStop: (n: number) => void;
+  t: Translate;
+}) {
+  const { segments, breaks } = focusPathShape(points);
+
   return (
     <div className="pointer-events-none absolute inset-0">
       <svg
@@ -110,31 +130,65 @@ function FocusLayer({ points }: { points: FocusPoint[] }) {
         preserveAspectRatio="none"
         aria-hidden
       >
-        <polyline
-          points={points.map((p) => `${p.cx},${p.cy}`).join(" ")}
-          fill="none"
-          stroke="var(--color-steel)"
-          strokeWidth={1.2}
-          strokeDasharray="3 2"
-          strokeLinejoin="round"
-          vectorEffect="non-scaling-stroke"
-        />
+        {segments.map((s, i) => (
+          <line
+            key={i}
+            x1={s.x1}
+            y1={s.y1}
+            x2={s.x2}
+            y2={s.y2}
+            stroke="var(--color-steel)"
+            strokeWidth={1.2}
+            strokeDasharray="3 2"
+            strokeLinecap="round"
+            vectorEffect="non-scaling-stroke"
+          />
+        ))}
       </svg>
-      {points.map((p) => (
-        <span
-          key={p.n}
-          className="absolute flex size-5 -translate-x-1/2 -translate-y-1/2 items-center justify-center border font-cond text-[11px] font-semibold text-surface"
-          style={{
-            left: `${p.cx}%`,
-            top: `${p.cy}%`,
-            background: p.visible ? "var(--color-steel)" : "var(--color-critical)",
-            borderColor: "var(--color-surface)",
-          }}
-          title={`${p.n}. ${p.label}${p.visible ? "" : " (no visible focus indicator)"}`}
-        >
-          {p.n}
-        </span>
-      ))}
+      {points.map((p) => {
+        const away = breaks.filter((b) => b.at === p.n);
+        const isSelected = selected === p.n;
+
+        return (
+          <span
+            key={p.n}
+            className="absolute -translate-x-1/2 -translate-y-1/2"
+            style={{ left: `${p.cx}%`, top: `${p.cy}%` }}
+          >
+            <span className="relative flex items-center">
+              <span
+                className={`flex size-5 items-center justify-center border font-cond text-[11px] font-semibold text-surface ${
+                  isSelected ? "outline-2 outline-offset-2 outline-ink" : ""
+                }`}
+                style={{
+                  background: p.visible ? "var(--color-steel)" : "var(--color-critical)",
+                  borderColor: "var(--color-surface)",
+                }}
+                title={`${p.n}. ${p.label}${p.visible ? "" : ` (${t("results.noVisibleFocus")})`}`}
+              >
+                {p.n}
+              </span>
+              {away.map((b) => (
+                <button
+                  key={`${b.at}-${b.to}`}
+                  type="button"
+                  onClick={() => onSelectStop(b.to)}
+                  className="pointer-events-auto ml-0.5 flex h-5 cursor-pointer items-center gap-0.5 border border-surface bg-ink/85 px-1 font-cond text-[10px] font-semibold text-surface hover:bg-ink"
+                  aria-label={t(
+                    b.direction === "down" ? "focusPath.continuesDown" : "focusPath.continuesUp",
+                    { stop: b.to },
+                  )}
+                >
+                  <span aria-hidden>
+                    {b.direction === "down" ? "\u2193" : "\u2191"}
+                    {b.to}
+                  </span>
+                </button>
+              ))}
+            </span>
+          </span>
+        );
+      })}
     </div>
   );
 }
@@ -196,6 +250,8 @@ export function CaptureStage({
   onSelectMarker,
   capture,
   overviewTop = null,
+  selectedStop = null,
+  onSelectStop,
   height,
   onScale,
   quickFromSite = false,
@@ -211,6 +267,8 @@ export function CaptureStage({
   onSelectMarker: (markerN: number) => void;
   capture: ActiveCapture;
   overviewTop?: number | null;
+  selectedStop?: number | null;
+  onSelectStop: (n: number) => void;
   height: number;
   onScale?: (pct: number) => void;
   quickFromSite?: boolean;
@@ -224,10 +282,22 @@ export function CaptureStage({
   const parked = useRef<Record<string, number>>({});
   const lastSelected = useRef<number | null>(null);
   const tiles = capture.tiles ?? [];
+  const [missing, setMissing] = useState<number[]>([]);
+  const [missingFor, setMissingFor] = useState(capture.id);
+
+  if (missingFor !== capture.id) {
+    setMissingFor(capture.id);
+    setMissing([]);
+  }
+
   const native = tiles.length === 0 && capture.id !== OVERVIEW_CAPTURE;
   const scrolls = tiles.length > 0 || native;
   const selected = markerViews.find((v) => v.state === "selected")?.marker ?? null;
   const selectedN = selected?.n ?? null;
+  const stop =
+    selectedStop === null ? null : (focusPoints.find((p) => p.n === selectedStop) ?? null);
+  const stopTop = stop?.cy ?? null;
+  const lastStop = useRef<number | null>(null);
   const selectedTop = selected?.top ?? null;
   const selectedLeft = selected?.left ?? null;
 
@@ -281,6 +351,20 @@ export function CaptureStage({
     return () => ro.disconnect();
   }, [selectedN, selectedTop, selectedLeft, overviewTop, capture.id, ref]);
 
+  useEffect(() => {
+    const box = scroller.current;
+    const column = ref.current;
+    if (!box || !column) return;
+    if (lastStop.current === selectedStop) return;
+    if (stopTop === null) return;
+    lastStop.current = selectedStop;
+
+    box.scrollTo({
+      top: scrollTargetFor(stopTop, column.clientHeight, box.clientHeight),
+      behavior: scrollBehavior(),
+    });
+  }, [selectedStop, stopTop, ref]);
+
   if (!capture.image && pending) return <CaptureSkeleton height={height} />;
 
   if (!capture.image) {
@@ -331,23 +415,45 @@ export function CaptureStage({
         style={native ? { width: capture.width } : { width: "100%" }}
       >
         {tiles.length > 0 ? (
-          tiles.map((tile) => (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              key={tile.docY}
-              src={tile.image}
-              width={tile.width}
-              height={tile.height}
-              decoding="async"
-              alt={t("panel.tileAlt", {
-                url: host,
-                from: Math.round(tile.docY),
-                to: Math.round(tile.docY + tile.docHeight),
-              })}
-              className="block w-full align-top transition-[filter] duration-200"
-              style={{ filter: previewFilters[sim] }}
-            />
-          ))
+          tiles.map((tile) =>
+            missing.includes(tile.docY) ? (
+              <div
+                key={tile.docY}
+                className="hatch-outside flex w-full items-center justify-center"
+                style={{ aspectRatio: `${tile.width} / ${tile.height}` }}
+              >
+                <span className="border border-border bg-surface px-3 py-2 text-[12px] text-muted">
+                  {t("capture.tileUnavailable", {
+                    from: Math.round(tile.docY),
+                    to: Math.round(tile.docY + tile.docHeight),
+                  })}
+                </span>
+              </div>
+            ) : (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                key={tile.docY}
+                src={tile.image}
+                width={tile.width}
+                height={tile.height}
+                loading="lazy"
+                decoding="async"
+                onError={() =>
+                  setMissing((at) => (at.includes(tile.docY) ? at : [...at, tile.docY]))
+                }
+                alt={t("panel.tileAlt", {
+                  url: host,
+                  from: Math.round(tile.docY),
+                  to: Math.round(tile.docY + tile.docHeight),
+                })}
+                className="block w-full align-top transition-[filter] duration-200"
+                style={{
+                  aspectRatio: `${tile.width} / ${tile.height}`,
+                  filter: previewFilters[sim],
+                }}
+              />
+            ),
+          )
         ) : (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
@@ -383,7 +489,14 @@ export function CaptureStage({
             {t("capture.markerHint")}
           </p>
         )}
-        {layer === "focus" && focusPoints.length > 0 && <FocusLayer points={focusPoints} />}
+        {layer === "focus" && focusPoints.length > 0 && (
+          <FocusLayer
+            t={t}
+            points={focusPoints}
+            selected={selectedStop}
+            onSelectStop={onSelectStop}
+          />
+        )}
       </div>
       <p role="status" aria-live="polite" className="sr-only">
         {capture.id !== OVERVIEW_CAPTURE
@@ -441,6 +554,9 @@ export function EvidenceFrame({
   onSelectMarker,
   capture,
   overviewTop,
+  selectedStop = null,
+  onSelectStop,
+  inspect = null,
   onBackToOverview,
   quickFromSite = false,
   onRunFull,
@@ -458,6 +574,9 @@ export function EvidenceFrame({
   onSelectMarker: (markerN: number) => void;
   capture: ActiveCapture;
   overviewTop?: number | null;
+  selectedStop?: number | null;
+  onSelectStop: (n: number) => void;
+  inspect?: { region: InspectRegion; label: string; tone: string } | null;
   onBackToOverview?: () => void;
   quickFromSite?: boolean;
   onRunFull?: () => void;
@@ -510,6 +629,8 @@ export function EvidenceFrame({
           <CaptureStage
             capture={capture}
             overviewTop={overviewTop}
+            selectedStop={selectedStop}
+            onSelectStop={onSelectStop}
             host={host}
             sim={sim}
             layer={layer}
@@ -528,6 +649,11 @@ export function EvidenceFrame({
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="border-b border-ink p-4 lg:border-r lg:border-b-0">
+          {inspect && capture.tiles && capture.tiles.length > 0 && (
+            <div id="region-inspector" className="mb-4 scroll-mt-20">
+              <RegionInspector t={t} host={host} sim={sim} capture={capture} inspect={inspect} />
+            </div>
+          )}
           <SectionKicker>{t("capture.elementAndCode")}</SectionKicker>
           {selectedFinding ? (
             <div className="mt-3 space-y-2.5">

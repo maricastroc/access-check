@@ -6,6 +6,12 @@ const create = vi.fn().mockResolvedValue({ id: "scan-1" });
 vi.mock("@/lib/prisma", () => ({ prisma: { scan: { create } } }));
 vi.mock("@/generated/prisma/client", () => ({ Prisma: {} }));
 
+const readTile = vi.fn();
+vi.mock("@/lib/scan/tile-store", () => ({
+  readTile,
+  tileIdOf: (image: string) => (image.startsWith("/api/tile/") ? image.slice(10) : null),
+}));
+
 const { saveScan } = await import("./scans");
 
 function result(over: Partial<ScanResult>): ScanResult {
@@ -39,7 +45,27 @@ function result(over: Partial<ScanResult>): ScanResult {
 
 const stored = () => create.mock.calls[0][0].data.result as ScanResult;
 
-beforeEach(() => create.mockClear());
+beforeEach(() => {
+  create.mockClear();
+  readTile.mockReset();
+  readTile.mockResolvedValue({ mimeType: "image/webp", data: "dGlsZQ==" });
+});
+
+const overviewOf = (images: string[]) => ({
+  tiles: images.map((image, i) => ({
+    image,
+    docY: i * 2000,
+    docHeight: 2000,
+    width: 1200,
+    height: 2000,
+  })),
+  scale: 1,
+  pageWidth: 1200,
+  documentHeight: images.length * 2000,
+  capturedHeight: images.length * 2000,
+  complete: true,
+  stoppedBy: "complete" as const,
+});
 
 describe("what a saved scan keeps", () => {
   it("does not carry the page column into the history row", async () => {
@@ -59,6 +85,35 @@ describe("what a saved scan keeps", () => {
     });
 
     expect(stored().overview).toBeUndefined();
+  });
+
+  it("keeps the page column and stores each block alongside the row", async () => {
+    await saveScan("user-1", {
+      ...result({}),
+      overview: overviewOf(["/api/tile/one", "/api/tile/two"]),
+    });
+
+    const data = create.mock.calls[0][0].data;
+    expect(stored().overview?.tiles.map((t) => t.image)).toEqual([
+      "/api/tile/one",
+      "/api/tile/two",
+    ]);
+    expect(data.tiles.create).toEqual([
+      { id: "one", docY: 0, data: Buffer.from("dGlsZQ==", "base64"), mimeType: "image/webp" },
+      { id: "two", docY: 2000, data: Buffer.from("dGlsZQ==", "base64"), mimeType: "image/webp" },
+    ]);
+  });
+
+  it("drops the page column when the blocks can no longer be read", async () => {
+    readTile.mockResolvedValue(null);
+
+    await saveScan("user-1", {
+      ...result({}),
+      overview: overviewOf(["/api/tile/gone"]),
+    });
+
+    expect(stored().overview).toBeUndefined();
+    expect(create.mock.calls[0][0].data.tiles).toBeUndefined();
   });
 
   it("moves the screenshot out of the row, as it always did", async () => {

@@ -71,6 +71,36 @@ describe("readingOrderInversions", () => {
     expect(readingOrderInversions(stops).count).toBe(1);
   });
 
+  it("uses document position, so a scrolled walk down the page is not a jump", () => {
+    const stops = [
+      {
+        ...stop(1, 10, 80, { height: 3 }),
+        rect: { x: 120, y: 640, w: 60, h: 24, docX: 120, docY: 600 },
+      },
+      {
+        ...stop(2, 10, 20, { height: 3 }),
+        rect: { x: 120, y: 160, w: 60, h: 24, docX: 120, docY: 5100 },
+      },
+    ];
+    expect(readingOrderInversions(stops).count).toBe(0);
+  });
+
+  it("flags a document-order inversion even when the viewport says otherwise", () => {
+    const stops = [
+      {
+        ...stop(1, 10, 20, { height: 3 }),
+        rect: { x: 120, y: 160, w: 60, h: 24, docX: 120, docY: 5100 },
+      },
+      {
+        ...stop(2, 10, 80, { height: 3 }),
+        rect: { x: 120, y: 640, w: 60, h: 24, docX: 120, docY: 600 },
+      },
+    ];
+    const inv = readingOrderInversions(stops);
+    expect(inv.count).toBe(1);
+    expect(inv.jumps[0].direction).toBe("up");
+  });
+
   it("micro-misalignment within the band does not count", () => {
     const stops = [stop(1, 30, 20), stop(2, 28, 19)];
     expect(readingOrderInversions(stops).count).toBe(0);

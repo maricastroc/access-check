@@ -1,6 +1,16 @@
 import { describe, expect, it } from "vitest";
 import type { ScanOverview, ScanResult } from "@/lib/scan/types";
-import { captureById, captureForFinding, focusOnCapture, scrollTargetFor } from "./report-ui";
+import {
+  captureById,
+  captureForFinding,
+  focusOnCapture,
+  focusPathShape,
+  inspectionOrigin,
+  locatedOnOverview,
+  regionOnOverview,
+  scrollTargetFor,
+  stepFocusStop,
+} from "./report-ui";
 import { locatedMarkers } from "@/lib/report/findings";
 
 function result(over: Partial<ScanResult>): ScanResult {
@@ -140,6 +150,30 @@ describe("which image a finding opens", () => {
     ).toBe("overview");
   });
 
+  it("keeps the whole page open when the finding is placed on it", () => {
+    const placed = {
+      markers: [
+        { n: 1, captureId: "overview", evidence: "captured", doc: { x: 10, y: 20, w: 30, h: 40 } },
+        { n: 1, captureId: "c2", evidence: "captured" },
+      ],
+    } as unknown as Parameters<typeof captureForFinding>[0];
+
+    expect(locatedOnOverview(placed)).toBe(true);
+    expect(captureForFinding(placed)).toBe("overview");
+  });
+
+  it("still opens the crop when the page column never placed the finding", () => {
+    const unplaced = {
+      markers: [
+        { n: 1, captureId: "overview", evidence: "unavailable", doc: { x: 1, y: 2, w: 3, h: 4 } },
+        { n: 1, captureId: "c2", evidence: "captured" },
+      ],
+    } as unknown as Parameters<typeof captureForFinding>[0];
+
+    expect(locatedOnOverview(unplaced)).toBe(false);
+    expect(captureForFinding(unplaced)).toBe("c2");
+  });
+
   it("ignores a marker whose evidence was dropped", () => {
     expect(
       captureForFinding(
@@ -214,5 +248,136 @@ describe("where the focus path is drawn", () => {
     expect(focusOnCapture([{ n: 1, cx: 30, cy: 40, visible: true, label: "s" }], column)).toEqual(
       [],
     );
+  });
+});
+
+describe("the focus path shape", () => {
+  const p = (n: number, cx: number, cy: number, docY: number) => ({
+    n,
+    cx,
+    cy,
+    visible: true,
+    label: `s${n}`,
+    docX: (cx / 100) * 1200,
+    docY,
+  });
+
+  it("draws a line between stops that sit close together on the page", () => {
+    const { segments, breaks } = focusPathShape([p(1, 10, 1, 40), p(2, 40, 1.4, 60)]);
+
+    expect(segments).toEqual([{ x1: 10, y1: 1, x2: 40, y2: 1.4 }]);
+    expect(breaks).toEqual([]);
+  });
+
+  it("draws no line at all across a jump of thousands of pixels", () => {
+    const { segments } = focusPathShape([p(1, 20, 11, 600), p(2, 30, 92, 5100)]);
+
+    expect(segments).toEqual([]);
+  });
+
+  it("marks continuity at both ends of a jump, each pointing at the other stop", () => {
+    const { breaks } = focusPathShape([p(1, 20, 11, 600), p(2, 30, 92, 5100)]);
+
+    expect(breaks).toEqual([
+      { at: 1, to: 2, direction: "down" },
+      { at: 2, to: 1, direction: "up" },
+    ]);
+  });
+
+  it("points continuity upward when the tab order goes back up the page", () => {
+    const { breaks } = focusPathShape([p(1, 20, 92, 5100), p(2, 30, 11, 600)]);
+
+    expect(breaks).toEqual([
+      { at: 1, to: 2, direction: "up" },
+      { at: 2, to: 1, direction: "down" },
+    ]);
+  });
+
+  it("falls back to distance on the capture when a report has no document coordinates", () => {
+    const flat = (n: number, cy: number) => ({ n, cx: 10, cy, visible: true, label: `s${n}` });
+
+    expect(focusPathShape([flat(1, 10), flat(2, 25)]).segments).toHaveLength(1);
+    expect(focusPathShape([flat(1, 10), flat(2, 80)]).breaks).toHaveLength(2);
+  });
+
+  it("has nothing to draw for a single stop", () => {
+    expect(focusPathShape([p(1, 10, 10, 100)])).toEqual({ segments: [], breaks: [] });
+  });
+});
+
+describe("stepFocusStop", () => {
+  const p = (n: number) => ({ n, cx: 10, cy: 10, visible: true, label: `s${n}` });
+  const stops = [p(1), p(4), p(9)];
+
+  it("starts at the first stop going forward and the last going back", () => {
+    expect(stepFocusStop(stops, null, 1)).toBe(1);
+    expect(stepFocusStop(stops, null, -1)).toBe(9);
+  });
+
+  it("walks the located stops in order, skipping the ones that never landed", () => {
+    expect(stepFocusStop(stops, 1, 1)).toBe(4);
+    expect(stepFocusStop(stops, 4, 1)).toBe(9);
+    expect(stepFocusStop(stops, 4, -1)).toBe(1);
+  });
+
+  it("stops at the ends instead of wrapping around", () => {
+    expect(stepFocusStop(stops, 9, 1)).toBeNull();
+    expect(stepFocusStop(stops, 1, -1)).toBeNull();
+  });
+
+  it("has nowhere to go when no stop landed on the page", () => {
+    expect(stepFocusStop([], null, 1)).toBeNull();
+  });
+});
+
+describe("framing a region for a closer look", () => {
+  const page = { width: 1200, height: 16000 };
+  const box = { width: 700, height: 260 };
+
+  it("centres the region in the window", () => {
+    const origin = inspectionOrigin({ x: 500, y: 5000, w: 100, h: 40 }, box, page);
+
+    expect(origin).toEqual({ x: 200, y: 4890 });
+  });
+
+  it("does not scroll past the top or the left of the page", () => {
+    expect(inspectionOrigin({ x: 10, y: 20, w: 40, h: 20 }, box, page)).toEqual({ x: 0, y: 0 });
+  });
+
+  it("does not scroll past the bottom or the right of the page", () => {
+    const origin = inspectionOrigin({ x: 1180, y: 15980, w: 20, h: 20 }, box, page);
+
+    expect(origin).toEqual({ x: 500, y: 15740 });
+  });
+
+  it("sits flush when the window is wider than the page", () => {
+    const origin = inspectionOrigin(
+      { x: 600, y: 300, w: 20, h: 20 },
+      { width: 1400, height: 260 },
+      page,
+    );
+
+    expect(origin.x).toBe(0);
+  });
+
+  it("frames a region that straddles the seam between two blocks", () => {
+    const origin = inspectionOrigin({ x: 100, y: 1980, w: 200, h: 40 }, box, page);
+
+    expect(origin.y).toBe(1870);
+    expect(origin.y).toBeLessThan(2000);
+    expect(origin.y + box.height).toBeGreaterThan(2000);
+  });
+
+  it("starts at the top of an element taller than the window instead of its middle", () => {
+    const origin = inspectionOrigin({ x: 0, y: 8, w: 1200, h: 6633 }, box, page);
+
+    expect(origin.y).toBe(8);
+    expect(origin.x).toBe(0);
+  });
+
+  it("knows a region below the captured page cannot be framed", () => {
+    expect(regionOnOverview({ x: 0, y: 15999, w: 10, h: 10 }, page)).toBe(true);
+    expect(regionOnOverview({ x: 0, y: 16000, w: 10, h: 10 }, page)).toBe(false);
+    expect(regionOnOverview({ x: 0, y: 100, w: 0, h: 10 }, page)).toBe(false);
   });
 });
