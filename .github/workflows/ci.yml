@@ -36,7 +36,10 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
-      # 268 tests. No secret is needed: the suite serves its own fixtures over a
+      - name: Build the audit engine
+        run: npm run build:engine
+
+      # 688 tests. No secret is needed: the suite serves its own fixtures over a
       # local HTTP server and never reaches the database, the queue or the rate
       # limiter — those are only wired up in the API routes.
       - name: Unit tests
