@@ -3,20 +3,23 @@ import type { FindingView } from "@/lib/report/findings";
 import { reviewGuidance } from "@/lib/scan/review";
 import { FindingDetail, FindingRow, SectionKicker } from "@/components/ui";
 import { langAttrs } from "@/lib/i18n/locale";
+import { FocusPathList } from "./focus-path-list";
 import type { Translate } from "@/lib/i18n/t";
 
 function Secondary({
   label,
   count,
+  open = false,
   children,
 }: {
   label: string;
   count: number;
+  open?: boolean;
   children: React.ReactNode;
 }) {
   if (count === 0) return null;
   return (
-    <details className="border-t border-hairline py-3">
+    <details className="border-t border-hairline py-3" open={open}>
       <summary className="flex cursor-pointer list-none items-center gap-2 text-[13px] text-body">
         <span aria-hidden className="ac-chev font-cond text-muted transition-transform">
           ▸
@@ -36,6 +39,11 @@ export function FindingsMargin({
   selectedId,
   onSelect,
   onOpenEvidence,
+  locatedStops,
+  selectedStop,
+  onSelectStop,
+  onStepStop,
+  focusOpen,
   t,
 }: {
   findings: FindingView[];
@@ -44,6 +52,11 @@ export function FindingsMargin({
   selectedId: string | null;
   onSelect: (id: string) => void;
   onOpenEvidence: (id: string) => void;
+  locatedStops: Set<number>;
+  selectedStop: number | null;
+  onSelectStop: (n: number) => void;
+  onStepStop: (delta: 1 | -1) => void;
+  focusOpen: boolean;
   t: Translate;
 }) {
   const totalElements = findings.reduce((sum, f) => sum + f.elements, 0);
@@ -129,20 +142,15 @@ export function FindingsMargin({
           </ul>
         </Secondary>
 
-        <Secondary label={t("results.focusPathStops")} count={focusStops.length}>
-          <ol className="flex flex-col gap-1 text-[12.5px] text-body">
-            {focusStops.map((s) => (
-              <li key={s.n} className="flex items-baseline gap-2">
-                <span className="font-cond text-muted tabular-nums">{s.n}</span>
-                <span className="min-w-0 truncate">{s.label}</span>
-                {!s.focusVisible && (
-                  <span className="ml-auto shrink-0 text-[11px] text-critical">
-                    {t("results.noVisibleFocus")}
-                  </span>
-                )}
-              </li>
-            ))}
-          </ol>
+        <Secondary label={t("results.focusPathStops")} count={focusStops.length} open={focusOpen}>
+          <FocusPathList
+            t={t}
+            stops={focusStops}
+            located={locatedStops}
+            selected={selectedStop}
+            onSelect={onSelectStop}
+            onStep={onStepStop}
+          />
         </Secondary>
       </div>
     </section>

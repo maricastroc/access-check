@@ -517,6 +517,18 @@ export const en = {
   "home.md.line6": "1. color-contrast \u00b7 1.4.3 \u00b7 verified",
 
   "results.focusPathStops": "focus-path stops",
+  "focusPath.continuesDown": "Tab goes on to stop {stop}, further down the page",
+  "capture.tileUnavailable": "This strip of the page ({from}px to {to}px) could not be loaded.",
+  "inspect.nativeScale": "1:1 \u00b7 at {x}, {y} on the page",
+  "inspect.finding": "Finding {n}, at full resolution",
+  "inspect.stop": "Stop {n}, at full resolution",
+  "focusPath.continuesUp": "Tab goes on to stop {stop}, further up the page",
+  "focusPath.listTitle": "Tab order",
+  "focusPath.goToStop": "Show stop {stop} on the page",
+  "focusPath.previousStop": "Previous stop",
+  "focusPath.nextStop": "Next stop",
+  "focusPath.offCapture": "not on this capture",
+  "focusPath.selectedStop": "Stop {stop} of {total}",
   "results.manualReviewItems": {
     one: "{count} manual-review item \u00b7",
     other: "{count} manual-review items \u00b7",

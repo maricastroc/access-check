@@ -538,6 +538,18 @@ export const ptBR: Catalog = {
   "home.md.line6": "1. color-contrast \u00b7 1.4.3 \u00b7 verificada",
 
   "results.focusPathStops": "paradas no caminho do foco",
+  "focusPath.continuesDown": "O Tab segue para a parada {stop}, mais abaixo na página",
+  "capture.tileUnavailable": "Esta faixa da página ({from}px a {to}px) não pôde ser carregada.",
+  "inspect.nativeScale": "1:1 \u00b7 em {x}, {y} da página",
+  "inspect.finding": "Problema {n}, em resolução plena",
+  "inspect.stop": "Parada {n}, em resolução plena",
+  "focusPath.continuesUp": "O Tab segue para a parada {stop}, mais acima na página",
+  "focusPath.listTitle": "Ordem do Tab",
+  "focusPath.goToStop": "Mostrar a parada {stop} na página",
+  "focusPath.previousStop": "Parada anterior",
+  "focusPath.nextStop": "Próxima parada",
+  "focusPath.offCapture": "fora desta captura",
+  "focusPath.selectedStop": "Parada {stop} de {total}",
   "results.manualReviewItems": {
     one: "{count} item de revisão manual \u00b7",
     other: "{count} itens de revisão manual \u00b7",

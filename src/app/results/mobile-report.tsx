@@ -16,7 +16,9 @@ import { cn } from "@/lib/cn";
 import { langAttrs } from "@/lib/i18n/locale";
 import { modeList, type SimKey } from "./data";
 import { CaptureStage, PartialOverviewNote, type FocusPoint } from "./evidence-frame";
-import { type ActiveCapture, type Layer, type MarkerView } from "./report-ui";
+import { FocusPathList } from "./focus-path-list";
+import { type ActiveCapture, type InspectRegion, type Layer, type MarkerView } from "./report-ui";
+import { RegionInspector } from "./region-inspector";
 import { useT } from "@/lib/i18n/provider";
 
 const MOBILE_MODES: SimKey[] = ["normal", "deuteranopia", "grayscale"];
@@ -38,6 +40,11 @@ export function MobileReport({
   onOpenEvidence,
   markerViews,
   focusPoints,
+  selectedStop,
+  onSelectStop,
+  locatedStops,
+  onStepStop,
+  inspect,
   onSelectMarker,
   tab,
   setTab,
@@ -62,6 +69,11 @@ export function MobileReport({
   onOpenEvidence: (id: string) => void;
   markerViews: MarkerView[];
   focusPoints: FocusPoint[];
+  selectedStop: number | null;
+  onSelectStop: (n: number) => void;
+  locatedStops: Set<number>;
+  onStepStop: (delta: 1 | -1) => void;
+  inspect: { region: InspectRegion; label: string; tone: string } | null;
   onSelectMarker: (markerN: number) => void;
   tab: "capture" | "findings";
   setTab: (t: "capture" | "findings") => void;
@@ -71,6 +83,7 @@ export function MobileReport({
   pending?: boolean;
 }) {
   const t = useT();
+  const focusStops = result.keyboard?.focusPath ?? [];
   return (
     <div className="pb-20">
       <div className="sticky top-15.5 z-20 border-b border-border bg-surface px-4 py-3">
@@ -157,6 +170,8 @@ export function MobileReport({
               layer={layer}
               markerViews={markerViews}
               focusPoints={focusPoints}
+              selectedStop={selectedStop}
+              onSelectStop={onSelectStop}
               selectedFinding={selectedFinding}
               onSelectMarker={onSelectMarker}
               height={300}
@@ -165,6 +180,12 @@ export function MobileReport({
               pending={pending}
             />
           </div>
+
+          {inspect && capture.tiles && capture.tiles.length > 0 && (
+            <div className="mt-4">
+              <RegionInspector t={t} host={host} sim={sim} capture={capture} inspect={inspect} />
+            </div>
+          )}
 
           {selectedFinding ? (
             <div className="mt-4">
@@ -220,6 +241,24 @@ export function MobileReport({
                 )}
               </div>
             ))
+          )}
+          {focusStops.length > 0 && (
+            <div className="mt-2 border-t border-hairline pt-3">
+              <SectionKicker tone="steel">{t("results.focusPathStops")}</SectionKicker>
+              <div className="mt-2">
+                <FocusPathList
+                  t={t}
+                  stops={focusStops}
+                  located={locatedStops}
+                  selected={selectedStop}
+                  onSelect={(n) => {
+                    onSelectStop(n);
+                    setTab("capture");
+                  }}
+                  onStep={onStepStop}
+                />
+              </div>
+            </div>
           )}
           <div className="mt-2">
             <SectionKicker tone="steel">

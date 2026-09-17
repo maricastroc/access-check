@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ScanResult } from "@/lib/scan/types";
 import type { FindingView } from "@/lib/report/findings";
 import { orderedMarkers } from "@/lib/report/findings";
+import { severityColorVar } from "@/lib/report/severity";
 import { buildReportMarkdown, reportMarkdownFilename } from "@/lib/report/markdown";
 import { usePageAudit } from "@/hooks/use-page-audit";
 import { ColorBlindFilters } from "./color-blind-filters";
@@ -15,6 +16,9 @@ import {
   focusOnCapture,
   captureForFinding,
   markersOfCapture,
+  regionOnOverview,
+  stepFocusStop,
+  type InspectRegion,
   type Layer,
 } from "./report-ui";
 import { OVERVIEW_CAPTURE } from "@/lib/scan/types";
@@ -28,9 +32,11 @@ import { FindingsMargin } from "./findings-margin";
 import { MobileReport } from "./mobile-report";
 import { ScanningState, ErrorState, PartialNotice } from "./states";
 import { useT } from "@/lib/i18n/provider";
+import { scrollBehavior } from "@/lib/motion";
 
 const VIEWPORT_LABEL = "1200 × 800";
 const NO_FINDINGS: FindingView[] = [];
+const NO_RESULT = { markers: [], screenshot: null } as unknown as ScanResult;
 
 function useIsDesktop() {
   const [desktop, setDesktop] = useState(true);
@@ -89,14 +95,7 @@ export function ResultsView({
     setCaptureId(wantedCapture ?? OVERVIEW_CAPTURE);
   }
 
-  const capture = useMemo(
-    () =>
-      captureById(
-        result ?? ({ markers: [], screenshot: null } as unknown as ScanResult),
-        captureId,
-      ),
-    [result, captureId],
-  );
+  const capture = useMemo(() => captureById(result ?? NO_RESULT, captureId), [result, captureId]);
   const captureMarkers = useMemo(
     () => markersOfCapture(markerViews, captureId),
     [markerViews, captureId],
@@ -105,6 +104,84 @@ export function ResultsView({
     () => (view ? focusOnCapture(view.focusPoints, capture) : []),
     [view, capture],
   );
+
+  const [selectedStop, setSelectedStop] = useState<number | null>(null);
+  const [stopsFrom, setStopsFrom] = useState(result);
+
+  if (stopsFrom !== result) {
+    setStopsFrom(result);
+    setSelectedStop(null);
+  }
+
+  const overviewCapture = useMemo(
+    () => captureById(result ?? NO_RESULT, OVERVIEW_CAPTURE),
+    [result],
+  );
+  const overviewStops = useMemo(
+    () => (view ? focusOnCapture(view.focusPoints, overviewCapture) : []),
+    [view, overviewCapture],
+  );
+  const locatedStops = useMemo(() => new Set(overviewStops.map((p) => p.n)), [overviewStops]);
+
+  const selectStop = useCallback((n: number) => {
+    setCaptureId(OVERVIEW_CAPTURE);
+    setLayer("focus");
+    setSelectedStop(n);
+  }, []);
+
+  const stepStop = useCallback(
+    (delta: 1 | -1) => {
+      const next = stepFocusStop(overviewStops, selectedStop, delta);
+      if (next !== null) selectStop(next);
+    },
+    [overviewStops, selectedStop, selectStop],
+  );
+  const inspect = useMemo(() => {
+    const page = {
+      width: overviewCapture.width,
+      height: overviewCapture.capturedHeight ?? overviewCapture.height,
+    };
+    const frame = (region: InspectRegion, label: string, tone: string) =>
+      regionOnOverview(region, page) ? { region, label, tone } : null;
+
+    if (layer === "focus" && selectedStop !== null) {
+      const stop = (result?.keyboard?.focusPath ?? []).find((s) => s.n === selectedStop);
+      const rect = stop?.rect;
+      if (rect?.docX != null && rect.docY != null) {
+        return frame(
+          { x: rect.docX, y: rect.docY, w: rect.w, h: rect.h },
+          t("inspect.stop", { n: selectedStop }),
+          stop?.focusVisible ? "var(--color-steel)" : "var(--color-critical)",
+        );
+      }
+      return null;
+    }
+
+    const marker = (selection.selectedFinding?.markers ?? []).find(
+      (m) => m.captureId === OVERVIEW_CAPTURE && m.doc,
+    );
+    if (!marker?.doc) return null;
+
+    return frame(
+      marker.doc,
+      t("inspect.finding", { n: marker.n }),
+      severityColorVar[marker.severity] ?? "var(--color-steel)",
+    );
+  }, [layer, selectedStop, result, selection.selectedFinding, overviewCapture, t]);
+
+  const openEvidence = useCallback(
+    (id: string) => {
+      selection.selectFinding(id);
+      setMobileTab("capture");
+      window.setTimeout(() => {
+        document
+          .getElementById("region-inspector")
+          ?.scrollIntoView({ block: "center", behavior: scrollBehavior() });
+      }, 60);
+    },
+    [selection],
+  );
+
   const overviewTop = useMemo(() => {
     const onColumn = markerViews.find(
       (v) => v.state === "selected" && v.marker.captureId === OVERVIEW_CAPTURE,
@@ -205,6 +282,9 @@ export function ResultsView({
                       onToggleCollapse={() => setCollapsed((c) => !c)}
                       markerViews={captureMarkers}
                       focusPoints={focusPoints}
+                      selectedStop={selectedStop}
+                      onSelectStop={selectStop}
+                      inspect={inspect}
                       selectedFinding={selection.selectedFinding}
                       onSelectMarker={selection.selectMarker}
                       quickFromSite={quickFromSite}
@@ -220,7 +300,12 @@ export function ResultsView({
                       host={host}
                       selectedId={selection.selectedId}
                       onSelect={selection.toggleFinding}
-                      onOpenEvidence={selection.selectFinding}
+                      onOpenEvidence={openEvidence}
+                      locatedStops={locatedStops}
+                      selectedStop={selectedStop}
+                      onSelectStop={selectStop}
+                      onStepStop={stepStop}
+                      focusOpen={layer === "focus"}
                     />
                   </div>
                 </div>
@@ -240,9 +325,14 @@ export function ResultsView({
                 selectedFinding={selection.selectedFinding}
                 selectedId={selection.selectedId}
                 onSelect={selection.toggleFinding}
-                onOpenEvidence={selection.selectFinding}
+                onOpenEvidence={openEvidence}
                 markerViews={captureMarkers}
                 focusPoints={focusPoints}
+                selectedStop={selectedStop}
+                onSelectStop={selectStop}
+                locatedStops={locatedStops}
+                onStepStop={stepStop}
+                inspect={inspect}
                 onSelectMarker={selection.selectMarker}
                 tab={mobileTab}
                 setTab={setMobileTab}

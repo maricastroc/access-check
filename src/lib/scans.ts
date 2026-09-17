@@ -2,6 +2,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { ScanResult } from "@/lib/scan/types";
 import { SCORING_VERSION, scoringVersionOf } from "@/lib/scan/scored";
+import { readTile, tileIdOf } from "@/lib/scan/tile-store";
 
 function parseDataUrl(dataUrl: string): { mimeType: string; data: Uint8Array<ArrayBuffer> } | null {
   const m = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
@@ -12,9 +13,33 @@ function parseDataUrl(dataUrl: string): { mimeType: string; data: Uint8Array<Arr
   return { mimeType: m[1], data };
 }
 
+async function tileRows(result: ScanResult) {
+  const tiles = result.overview?.tiles ?? [];
+  const rows = await Promise.all(
+    tiles.map(async (tile) => {
+      const id = tileIdOf(tile.image);
+      if (!id) return null;
+      const stored = await readTile(id);
+      if (!stored) return null;
+      return {
+        id,
+        docY: Math.round(tile.docY),
+        data: Buffer.from(stored.data, "base64"),
+        mimeType: stored.mimeType,
+      };
+    }),
+  );
+  return rows.filter((row) => row !== null);
+}
+
 export async function saveScan(userId: string, result: ScanResult): Promise<string> {
   const img = result.screenshot ? parseDataUrl(result.screenshot) : null;
-  const storedResult = { ...result, screenshot: null, overview: undefined };
+  const rows = await tileRows(result);
+  const storedResult = {
+    ...result,
+    screenshot: null,
+    overview: rows.length > 0 ? result.overview : undefined,
+  };
 
   const scan = await prisma.scan.create({
     data: {
@@ -32,6 +57,7 @@ export async function saveScan(userId: string, result: ScanResult): Promise<stri
       scoringVersion: scoringVersionOf(result),
       result: storedResult as unknown as Prisma.InputJsonValue,
       ...(img && { screenshot: { create: { data: img.data, mimeType: img.mimeType } } }),
+      ...(rows.length > 0 && { tiles: { create: rows } }),
     },
     select: { id: true },
   });

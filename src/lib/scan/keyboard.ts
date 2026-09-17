@@ -116,17 +116,30 @@ export function readingOrderInversions(stops: FocusStop[]): {
   selectors: string[];
   jumps: OrderJump[];
 } {
-  const BAND = 3;
+  const BAND_PCT = 3;
+  const BAND_PX = 4;
+
   const positioned = stops.filter(
     (s): s is FocusStop & { top: number; left: number } => s.top !== null && s.left !== null,
   );
 
-  const sameRow = (a: FocusStop & { top: number }, b: FocusStop & { top: number }) => {
-    const ah = a.height;
-    const bh = b.height;
-    if (ah === null || bh === null) return Math.abs(a.top - b.top) <= BAND;
-    const overlap = Math.min(a.top + ah, b.top + bh) - Math.max(a.top, b.top);
-    return overlap > Math.min(ah, bh) / 2;
+  type Point = { x: number; y: number; h: number };
+
+  const docPoint = (s: FocusStop): Point | null =>
+    s.rect && s.rect.docX != null && s.rect.docY != null
+      ? { x: s.rect.docX, y: s.rect.docY, h: s.rect.h }
+      : null;
+
+  const viewportPoint = (s: FocusStop & { top: number; left: number }): Point => ({
+    x: s.left,
+    y: s.top,
+    h: s.height ?? 0,
+  });
+
+  const sameRow = (a: Point, b: Point, band: number) => {
+    if (a.h <= 0 || b.h <= 0) return Math.abs(a.y - b.y) <= band;
+    const overlap = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+    return overlap > Math.min(a.h, b.h) / 2;
   };
 
   const jumps: OrderJump[] = [];
@@ -134,12 +147,18 @@ export function readingOrderInversions(stops: FocusStop[]): {
   for (let i = 1; i < positioned.length; i++) {
     const prev = positioned[i - 1];
     const cur = positioned[i];
-    const dy = cur.top - prev.top;
+
+    const prevDoc = docPoint(prev);
+    const curDoc = docPoint(cur);
+    const inDoc = prevDoc !== null && curDoc !== null;
+    const a = inDoc ? prevDoc : viewportPoint(prev);
+    const b = inDoc ? curDoc : viewportPoint(cur);
+    const band = inDoc ? BAND_PX : BAND_PCT;
 
     let direction: OrderJump["direction"] | null = null;
-    if (sameRow(prev, cur)) {
-      if (cur.left < prev.left - BAND) direction = "back";
-    } else if (dy < -BAND) direction = "up";
+    if (sameRow(a, b, band)) {
+      if (b.x < a.x - band) direction = "back";
+    } else if (b.y - a.y < -band) direction = "up";
     if (direction === null) continue;
 
     if (seen.has(cur.selector)) continue;
