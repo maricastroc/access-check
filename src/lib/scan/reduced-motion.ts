@@ -44,6 +44,7 @@ export function analyzeReducedMotion(raw: RawReducedMotion, t: Translate): Reduc
     findings.push({
       id: "reduced-motion",
       severity: "moderate",
+      evidence: "measured",
       criterion: t("audit.motion.criterion"),
       title: t("audit.motion.title", { count: n }),
       desc: t("audit.motion.desc", { count: n }),

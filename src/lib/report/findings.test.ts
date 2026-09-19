@@ -137,6 +137,7 @@ describe("buildFindings", () => {
           {
             id: "focus-not-visible",
             severity: "serious",
+            evidence: "measured" as const,
             criterion: "WCAG 2.4.7 · Focus Visible",
             title: "Focus is not visible",
             desc: "d",
@@ -160,6 +161,7 @@ describe("buildFindings: one row per rule, whatever found it", () => {
   const targetSize = {
     id: "target-size",
     severity: "serious" as const,
+    evidence: "measured" as const,
     criterion: "WCAG 2.5.8 · Target Size (Minimum)",
     title: "144 touch targets are smaller than 24×24px",
     desc: "d",
@@ -322,6 +324,7 @@ describe("the list and the header describe the same reading", () => {
   const keyboardFinding = {
     id: "focus-not-visible" as const,
     severity: "serious" as const,
+    evidence: "measured" as const,
     criterion: "WCAG 2.4.7 · Focus Visible",
     title: "No visible focus indicator on 2 elements",
     desc: "d",
@@ -519,5 +522,74 @@ describe("buildFindings: the Verified fix seal needs a deterministic fix", () =>
       "image-alt": "no-auto-fix",
       "color-contrast": "verified",
     });
+  });
+});
+
+describe("how a reading-order guess reaches the report", () => {
+  const measured = {
+    id: "target-size",
+    severity: "serious" as const,
+    evidence: "measured" as const,
+    criterion: "WCAG 2.5.8 · Target Size (Minimum)",
+    title: "144 touch targets are smaller than 24×24px",
+    desc: "d",
+    fix: "Grow each control to at least 24×24px.",
+    count: 144,
+    selectors: [".tiny"],
+  };
+
+  const guess = {
+    id: "focus-order" as const,
+    severity: "moderate" as const,
+    evidence: "heuristic" as const,
+    criterion: "WCAG 2.4.3 · Focus Order",
+    title: "Focus order jumps out of sequence 2 times",
+    desc: "d",
+    fix: "f",
+    count: 2,
+    selectors: [".a"],
+    occurrences: [],
+  };
+
+  const walked = (findings: (typeof guess)[]) => ({
+    totalStops: 6,
+    totalInteractive: 6,
+    reachableInteractive: 6,
+    truncated: false,
+    cycleComplete: true,
+    startedAtTop: true,
+    stoppedBy: "cycle" as const,
+    focusPath: [],
+    findings,
+  });
+
+  it("arrives carrying the class the keyboard pass gave it", () => {
+    const rows = buildFindings(baseResult({ violations: [], keyboard: walked([guess]) }));
+    expect(rows.find((r) => r.ruleId === "focus-order")?.evidence).toBe("heuristic");
+  });
+
+  it("derives the class for a stored scan that predates the field", () => {
+    const stored = { ...guess, evidence: undefined } as unknown as typeof guess;
+    const rows = buildFindings(baseResult({ violations: [], keyboard: walked([stored]) }));
+    expect(rows.find((r) => r.ruleId === "focus-order")?.evidence).toBe("heuristic");
+  });
+
+  it("sits after the confirmed failures, whatever its severity", () => {
+    const rows = buildFindings(
+      baseResult({
+        violations: [],
+        keyboard: walked([guess]),
+        audits: { targetSize: { measured: 200, findings: [measured] } },
+      }),
+    );
+
+    expect(rows.map((r) => r.ruleId)).toEqual(["target-size", "focus-order"]);
+  });
+
+  it("leaves an objective failure alone", () => {
+    const rows = buildFindings(
+      baseResult({ audits: { targetSize: { measured: 200, findings: [measured] } } }),
+    );
+    expect(rows.find((r) => r.ruleId === "target-size")?.evidence).toBe("measured");
   });
 });

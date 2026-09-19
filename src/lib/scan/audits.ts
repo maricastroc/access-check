@@ -1,9 +1,10 @@
-import type { Severity } from "./types";
+import type { EvidenceClass, Severity } from "./types";
 import { severityOrder } from "./derive";
 
 export type AuditFinding = {
   id: string;
   severity: Severity;
+  evidence: EvidenceClass;
   criterion: string;
   title: string;
   desc: string;

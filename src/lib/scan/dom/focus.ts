@@ -1,4 +1,5 @@
 import { overlayClear } from "./overlay";
+import { flowOffsetOf } from "./rects";
 import { cssPath } from "./selector";
 
 export type FocusStyle = {
@@ -20,7 +21,18 @@ export type FocusProbe = {
   isIframe: boolean;
   hasShadowRoot: boolean;
   style: FocusStyle;
-  rect: { x: number; y: number; w: number; h: number; docX: number; docY: number } | null;
+  rect: {
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    docX: number;
+    docY: number;
+    flowX: number;
+    flowY: number;
+    scrolled: boolean;
+    flowContext: string;
+  } | null;
 };
 
 export type FocusReach = {
@@ -35,10 +47,33 @@ const INTERACTIVE =
   '[role="button"], [role="link"], [role="checkbox"], [role="radio"], ' +
   '[role="tab"], [role="menuitem"], [role="switch"], [contenteditable="true"], [onclick]';
 
+type ScrollMark = { el: Element; top: number; left: number };
+
 let visited: Element[] = [];
 let seeded: Element | null = null;
 let restoreTo: Element | null = null;
 let restoreScroll: { x: number; y: number } | null = null;
+let scrollMarks: ScrollMark[] = [];
+
+function rememberScrolls(): void {
+  const root = document.scrollingElement;
+  scrollMarks = [];
+
+  for (const el of Array.from(document.querySelectorAll("*"))) {
+    if (el === root) continue;
+    if (el.scrollHeight <= el.clientHeight && el.scrollWidth <= el.clientWidth) continue;
+    scrollMarks.push({ el, top: el.scrollTop, left: el.scrollLeft });
+  }
+}
+
+function restoreScrolls(): void {
+  for (const mark of scrollMarks) {
+    if (!document.contains(mark.el)) continue;
+    if (mark.el.scrollTop !== mark.top) mark.el.scrollTop = mark.top;
+    if (mark.el.scrollLeft !== mark.left) mark.el.scrollLeft = mark.left;
+  }
+  scrollMarks = [];
+}
 
 function styleOf(el: Element): FocusStyle {
   const cs = getComputedStyle(el);
@@ -146,6 +181,24 @@ export function focusFirstStop(): "focused" | "empty" | "failed" {
   return document.activeElement === first ? "focused" : "failed";
 }
 
+export function focusSelector(selector: string): boolean {
+  let el: Element | null = null;
+  try {
+    el = document.querySelector(selector);
+  } catch {
+    return false;
+  }
+  if (!el) return false;
+
+  const he = el as HTMLElement;
+  try {
+    he.focus({ preventScroll: false });
+  } catch {
+    he.focus?.();
+  }
+  return document.activeElement === he;
+}
+
 export function focusRelativeToSeed(): "before" | "at" | "after" | "unknown" {
   const el = document.activeElement;
   if (!seeded || !el || el === document.body || el === document.documentElement) return "unknown";
@@ -164,6 +217,7 @@ export function focusProbeStart(): void {
   const active = document.activeElement;
   restoreTo = active && active !== document.body ? active : null;
   restoreScroll = { x: window.scrollX, y: window.scrollY };
+  rememberScrolls();
   (active as HTMLElement | null)?.blur?.();
 }
 
@@ -185,6 +239,7 @@ export function readFocusedStop(record = true): FocusProbe {
 
   if (record) visited.push(el);
   const r = el.getBoundingClientRect();
+  const flow = flowOffsetOf(el);
   return {
     isBody: false,
     selector: cssPath(el),
@@ -203,6 +258,10 @@ export function readFocusedStop(record = true): FocusProbe {
             h: r.height,
             docX: r.left + window.scrollX,
             docY: r.top + window.scrollY,
+            flowX: r.left + window.scrollX + flow.x,
+            flowY: r.top + window.scrollY + flow.y,
+            scrolled: flow.scrolled,
+            flowContext: flow.context,
           }
         : null,
   };
@@ -251,6 +310,8 @@ export function focusProbeEnd(): { x: number; y: number } | null {
       el.focus?.();
     }
   }
+
+  restoreScrolls();
 
   const scroll = restoreScroll;
   if (scroll) window.scrollTo(scroll.x, scroll.y);

@@ -121,6 +121,8 @@ function FocusLayer({
   t: Translate;
 }) {
   const { segments, breaks } = focusPathShape(points);
+  const first = points[0]?.n;
+  const last = points[points.length - 1]?.n;
 
   return (
     <div className="pointer-events-none absolute inset-0">
@@ -130,39 +132,50 @@ function FocusLayer({
         preserveAspectRatio="none"
         aria-hidden
       >
-        {segments.map((s, i) => (
-          <line
-            key={i}
-            x1={s.x1}
-            y1={s.y1}
-            x2={s.x2}
-            y2={s.y2}
-            stroke="var(--color-steel)"
-            strokeWidth={1.2}
-            strokeDasharray="3 2"
-            strokeLinecap="round"
-            vectorEffect="non-scaling-stroke"
-          />
-        ))}
+        {segments.map((s) => {
+          const live = selected !== null && (s.from === selected || s.to === selected);
+          return (
+            <line
+              key={`${s.from}-${s.to}`}
+              x1={s.x1}
+              y1={s.y1}
+              x2={s.x2}
+              y2={s.y2}
+              stroke={live ? "var(--color-ink)" : "var(--color-steel)"}
+              strokeWidth={1}
+              strokeOpacity={live ? 0.8 : 0.32}
+              strokeLinecap="round"
+              vectorEffect="non-scaling-stroke"
+            />
+          );
+        })}
       </svg>
       {points.map((p) => {
         const away = breaks.filter((b) => b.at === p.n);
         const isSelected = selected === p.n;
+        const isEnd = p.n === first || p.n === last;
+        const fill = p.visible ? "var(--color-steel)" : "var(--color-critical)";
 
         return (
           <span
             key={p.n}
             className="absolute -translate-x-1/2 -translate-y-1/2"
-            style={{ left: `${p.cx}%`, top: `${p.cy}%` }}
+            style={{ left: `${p.cx}%`, top: `${p.cy}%`, zIndex: isSelected ? 2 : 1 }}
           >
             <span className="relative flex items-center">
               <span
-                className={`flex size-5 items-center justify-center border font-cond text-[11px] font-semibold text-surface ${
-                  isSelected ? "outline-2 outline-offset-2 outline-ink" : ""
-                }`}
+                className="flex items-center justify-center rounded-full font-cond font-semibold text-surface transition-[width,height] duration-150"
                 style={{
-                  background: p.visible ? "var(--color-steel)" : "var(--color-critical)",
-                  borderColor: "var(--color-surface)",
+                  width: isSelected ? 22 : 17,
+                  height: isSelected ? 22 : 17,
+                  fontSize: isSelected ? 11 : 10,
+                  background: isSelected ? "var(--color-ink)" : fill,
+                  border: "1px solid rgba(252, 251, 248, 0.9)",
+                  boxShadow: isSelected
+                    ? "0 0 0 2px var(--color-ink), 0 2px 8px rgba(23, 24, 26, 0.35)"
+                    : isEnd
+                      ? "0 0 0 2px rgba(252, 251, 248, 0.55), 0 0 0 3px rgba(60, 92, 122, 0.45)"
+                      : "0 1px 2px rgba(23, 24, 26, 0.25)",
                 }}
                 title={`${p.n}. ${p.label}${p.visible ? "" : ` (${t("results.noVisibleFocus")})`}`}
               >
@@ -173,7 +186,7 @@ function FocusLayer({
                   key={`${b.at}-${b.to}`}
                   type="button"
                   onClick={() => onSelectStop(b.to)}
-                  className="pointer-events-auto ml-0.5 flex h-5 cursor-pointer items-center gap-0.5 border border-surface bg-ink/85 px-1 font-cond text-[10px] font-semibold text-surface hover:bg-ink"
+                  className="pointer-events-auto ml-1 flex h-4.5 cursor-pointer items-center rounded-full border border-steel/40 bg-surface/95 px-1.5 font-cond text-[10px] font-semibold text-steel hover:border-ink hover:text-ink"
                   aria-label={t(
                     b.direction === "down" ? "focusPath.continuesDown" : "focusPath.continuesUp",
                     { stop: b.to },

@@ -265,7 +265,7 @@ describe("the focus path shape", () => {
   it("draws a line between stops that sit close together on the page", () => {
     const { segments, breaks } = focusPathShape([p(1, 10, 1, 40), p(2, 40, 1.4, 60)]);
 
-    expect(segments).toEqual([{ x1: 10, y1: 1, x2: 40, y2: 1.4 }]);
+    expect(segments).toEqual([{ from: 1, to: 2, x1: 10, y1: 1, x2: 40, y2: 1.4 }]);
     expect(breaks).toEqual([]);
   });
 
@@ -298,6 +298,15 @@ describe("the focus path shape", () => {
 
     expect(focusPathShape([flat(1, 10), flat(2, 25)]).segments).toHaveLength(1);
     expect(focusPathShape([flat(1, 10), flat(2, 80)]).breaks).toHaveLength(2);
+  });
+
+  it("names the stops a segment joins, so the live one can be told apart", () => {
+    const { segments } = focusPathShape([p(1, 10, 1, 40), p(2, 40, 1.4, 60), p(3, 60, 2, 90)]);
+
+    expect(segments.map((s) => [s.from, s.to])).toEqual([
+      [1, 2],
+      [2, 3],
+    ]);
   });
 
   it("has nothing to draw for a single stop", () => {

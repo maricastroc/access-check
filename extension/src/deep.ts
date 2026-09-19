@@ -45,7 +45,11 @@ async function inPage<T>(tabId: number, fn: () => T): Promise<T> {
   return frame.result as T;
 }
 
-export async function runDeepAudit(tabId: number, t: Translate): Promise<KeyboardReport> {
+export async function runDeepAudit(
+  tabId: number,
+  t: Translate,
+  resumeFrom?: KeyboardReport,
+): Promise<KeyboardReport> {
   const target = { tabId };
   let detachFailure: string | null = null;
   let report: KeyboardReport | null = null;
@@ -85,6 +89,14 @@ export async function runDeepAudit(tabId: number, t: Translate): Promise<Keyboar
       {
         start: () => inPage(tabId, () => window.__accessCheckDom!.focusProbeStart()),
         focusFirst: () => inPage(tabId, () => window.__accessCheckDom!.focusFirstStop()),
+        focusSelector: async (selector) => {
+          const [frame] = await chrome.scripting.executeScript({
+            target,
+            func: (sel: string) => window.__accessCheckDom!.focusSelector(sel),
+            args: [selector],
+          });
+          return frame.result as boolean;
+        },
         relativeToSeed: () => inPage(tabId, () => window.__accessCheckDom!.focusRelativeToSeed()),
         pressTab: () => tab(0),
         pressShiftTab: () => tab(SHIFT),
@@ -102,7 +114,7 @@ export async function runDeepAudit(tabId: number, t: Translate): Promise<Keyboar
         end: () => inPage(tabId, () => window.__accessCheckDom!.focusProbeEnd()),
       },
       viewport,
-      { maxMs: MAX_MS },
+      { maxMs: MAX_MS, resumeFrom },
     );
 
     report = buildKeyboardReport(raw, t);

@@ -2,16 +2,26 @@ import type { ScanResult } from "@/lib/scan/types";
 import { scoreBreakdown } from "@/lib/report/score";
 import { violationsBehindScore } from "@/lib/scan/scored";
 import { buildWcagReading } from "@/lib/report/wcag";
-import { Ruler, ScoreArithmetic, WcagChips } from "@/components/ui";
+import { WcagChips } from "@/components/ui";
+import { severityLabel } from "@/lib/report/severity";
+import { standingOf, STANDING_LABEL, STANDING_NOTE, type Standing } from "@/lib/report/standing";
 import { safeHost, sevHex, shortId } from "./shared";
 import { PageShell, SectionKicker, SectionKickerMuted } from "./primitives";
 import { translator } from "@/lib/i18n/t";
+
+const STANDING_HEX: Record<Standing, string> = {
+  blocked: sevHex.critical,
+  failing: sevHex.serious,
+  gaps: sevHex.moderate,
+  clean: "#16764f",
+};
 
 export function SummaryPage({ result }: { result: ScanResult }) {
   const t = translator(result.locale);
   const host = safeHost(result.finalUrl);
   const breakdown = scoreBreakdown(violationsBehindScore(result), result.score);
   const wcag = buildWcagReading(result.violations);
+  const standing = standingOf(result.counts);
   const at = result.scannedAt ? new Date(result.scannedAt) : new Date();
   const date = new Intl.DateTimeFormat("en-US", {
     month: "long",
@@ -67,22 +77,16 @@ export function SummaryPage({ result }: { result: ScanResult }) {
 
       <div className="mt-4 grid grid-cols-[2.5in_1fr] gap-4">
         <div className="border border-border p-4">
-          <SectionKickerMuted>{t("report.internalScore")}</SectionKickerMuted>
-          <div className="mt-1 flex items-end gap-1.5">
-            <span className="font-cond text-[52px] leading-[0.85] text-ink tabular-nums">
-              {result.score}
-            </span>
-            <span className="pb-1.5 font-cond text-[16px] text-muted">/100</span>
-          </div>
-          <div className="mt-2">
-            <Ruler
-              t={t}
-              variant="score"
-              score={result.score}
-              deductions={breakdown.deductions}
-              height={22}
-            />
-          </div>
+          <SectionKickerMuted>{t("standing.kicker")}</SectionKickerMuted>
+          <p
+            className="mt-1 font-cond text-[34px] leading-[1.05]"
+            style={{ color: STANDING_HEX[standing] }}
+          >
+            {t(STANDING_LABEL[standing])}
+          </p>
+          <p className="mt-1 text-[11.5px] leading-normal text-body">
+            {t(STANDING_NOTE[standing])}
+          </p>
           <div className="mt-3">
             <WcagChips t={t} model={wcag} />
           </div>
@@ -101,12 +105,29 @@ export function SummaryPage({ result }: { result: ScanResult }) {
             ))}
           </div>
           <div className="border border-hairline p-3">
-            <ScoreArithmetic
-              t={t}
-              breakdown={breakdown}
-              passed={result.counts.passed}
-              manualReview={result.counts.manualReview}
-            />
+            <SectionKickerMuted>{t("priority.kicker")}</SectionKickerMuted>
+            <p className="mt-1 text-[10.5px] leading-tight text-muted">{t("priority.note")}</p>
+            <ol className="mt-2 flex flex-col gap-1.5">
+              {breakdown.deductions.map((d) => (
+                <li key={d.severity} className="flex items-baseline gap-2 text-[11.5px] text-ink">
+                  <span
+                    aria-hidden
+                    className="inline-block h-2 w-2 shrink-0"
+                    style={{ background: sevHex[d.severity] }}
+                  />
+                  <span className="font-semibold">
+                    {d.issues} {severityLabel(d.severity, t).toLowerCase()}
+                  </span>
+                  <span className="text-muted tabular-nums">
+                    {t("priority.elements", { count: d.elements })} ·{" "}
+                    {t("priority.share", { share: d.share })}
+                  </span>
+                </li>
+              ))}
+              {breakdown.deductions.length === 0 && (
+                <li className="text-[11.5px] text-muted">{t("priority.nothing")}</li>
+              )}
+            </ol>
           </div>
         </div>
       </div>

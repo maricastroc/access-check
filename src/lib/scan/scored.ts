@@ -1,11 +1,14 @@
 import { buildCounts, buildFixFirst, buildSummary, computeScore } from "./derive";
 import type { ContextIssue } from "./contexts";
-import type { ScanResult, ScanViolation, Severity } from "./types";
+import type { EvidenceClass, ScanResult, ScanViolation, Severity } from "./types";
+import { concernOf } from "./concern";
+import { evidenceOf } from "./evidence";
 import { translator } from "../i18n/t";
 
 type RuleFinding = {
   id: string;
   severity: Severity;
+  evidence?: EvidenceClass;
   criterion: string;
   title: string;
   desc: string;
@@ -24,6 +27,7 @@ function asViolation(f: RuleFinding): ScanViolation {
     desc: f.desc,
     fix: f.fix,
     nodes: f.count,
+    evidence: evidenceOf(f),
   };
 }
 
@@ -40,7 +44,7 @@ export function ownRuleViolations(
   return findings.map(asViolation);
 }
 
-export const SCORING_VERSION = 2;
+export const SCORING_VERSION = 3;
 
 const LEGACY_SCORING_VERSION = 1;
 
@@ -66,6 +70,7 @@ function contextViolations(result: Pick<ScanResult, "contexts">): ScanViolation[
       title: issue.title,
       criterion: issue.criterion,
       where: issue.selectors[0] ?? "—",
+      evidence: "deterministic",
       desc: `Found only in this context (${where}). It does not fail on the first desktop load.`,
       fix: translator()("context.recheckShort"),
       nodes: issue.nodes,
@@ -83,11 +88,12 @@ function contextViolations(result: Pick<ScanResult, "contexts">): ScanViolation[
 export function scoredViolations(
   result: Pick<ScanResult, "violations" | "keyboard" | "audits" | "contexts">,
 ): ScanViolation[] {
-  const charged = new Set(result.violations.map((v) => v.id));
+  const charged = new Set(result.violations.map((v) => concernOf(v.id)));
   const take = (violations: ScanViolation[]) =>
     violations.filter((v) => {
-      if (charged.has(v.id)) return false;
-      charged.add(v.id);
+      const concern = concernOf(v.id);
+      if (charged.has(concern)) return false;
+      charged.add(concern);
       return true;
     });
 

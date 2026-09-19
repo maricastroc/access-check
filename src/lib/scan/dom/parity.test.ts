@@ -49,6 +49,38 @@ const FIXTURE = `<!doctype html>
   </body>
 </html>`;
 
+const ROWS = 8;
+const ROW_H = 120;
+
+const SCROLLER_FIXTURE = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Scrolling list fixture</title>
+    <style>
+      body { margin: 0; color: #111827; background: #ffffff; }
+      #lead { height: 400px; }
+      #list { height: ${ROW_H}px; overflow-y: auto; border: 1px solid #111827; }
+      .row { display: flex; align-items: center; gap: 24px; height: ${ROW_H}px; }
+      a, button { color: #111827; background: #ffffff; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Scrolling list</h1>
+      <div id="lead">Tall block above the list.</div>
+      <div id="list" tabindex="0" aria-label="Rows">
+        ${Array.from(
+          { length: ROWS },
+          (_, i) =>
+            `<div class="row"><a href="/row-${i}">Row ${i}</a><button type="button">Save ${i}</button></div>`,
+        ).join("")}
+      </div>
+      <a href="/after">After the list</a>
+    </main>
+  </body>
+</html>`;
+
 const repoFile = (rel: string) => fileURLToPath(new URL(`../../../../${rel}`, import.meta.url));
 
 const HOSTED_ENGINE = repoFile("dom-engine/dom-engine.js");
@@ -66,12 +98,12 @@ const sockets = new Set<Socket>();
 beforeAll(async () => {
   execFileSync("node", ["extension/build.mjs"], { stdio: "pipe" });
 
-  server = createServer((_req, res) => {
+  server = createServer((req, res) => {
     res.writeHead(200, {
       "content-type": "text/html; charset=utf-8",
       "content-security-policy": "default-src 'self'; script-src 'self'",
     });
-    res.end(FIXTURE);
+    res.end((req.url ?? "").startsWith("/scroller") ? SCROLLER_FIXTURE : FIXTURE);
   });
   server.on("connection", (socket) => {
     sockets.add(socket);
@@ -243,5 +275,102 @@ describe("a missing engine fails in the open", () => {
 
   it("still has the real engine in place for everyone else", () => {
     expect(existsSync(HOSTED_ENGINE)).toBe(true);
+  });
+});
+
+describe("a coordinate that survives a container scrolling under it", () => {
+  let scroller: Page;
+
+  beforeAll(async () => {
+    const context = await browser.newContext({
+      viewport: { width: 1200, height: 800 },
+      bypassCSP: true,
+    });
+    scroller = await context.newPage();
+    await scroller.goto(`${origin}/scroller`, { waitUntil: "domcontentloaded" });
+    await scroller.addScriptTag({ path: HOSTED_ENGINE });
+  }, 90_000);
+
+  const focusRow = (index: number) =>
+    scroller.evaluate((i) => {
+      document.querySelectorAll<HTMLElement>(".row a")[i].focus();
+      return window.__accessCheckDom!.readFocusedStop();
+    }, index);
+
+  const readFocused = () =>
+    scroller.evaluate(() => window.__accessCheckDom!.readFocusedStop(false));
+
+  const listTop = () => scroller.evaluate(() => document.getElementById("list")!.scrollTop);
+
+  it("keeps the flow position moving forward while the painted one stands still", async () => {
+    const first = await focusRow(0);
+    const last = await focusRow(ROWS - 1);
+
+    expect(first.rect?.flowY).toBeDefined();
+    expect(last.rect!.flowY! - first.rect!.flowY!).toBeCloseTo((ROWS - 1) * ROW_H, 0);
+    expect(Math.abs(last.rect!.docY - first.rect!.docY)).toBeLessThan(2);
+  });
+
+  it("reads the same flow position wherever the container happens to be scrolled", async () => {
+    const before = await focusRow(3);
+    await scroller.evaluate(() => {
+      document.getElementById("list")!.scrollTop = 0;
+    });
+    const after = await readFocused();
+
+    expect(after.rect!.flowY!).toBeCloseTo(before.rect!.flowY!, 0);
+    expect(after.rect!.docY).not.toBeCloseTo(before.rect!.docY, 0);
+  });
+
+  it("marks the stops that live inside a scrolling container", async () => {
+    const inside = await focusRow(2);
+    await scroller.evaluate(() => document.getElementById("list")!.focus());
+    const outside = await readFocused();
+
+    expect(inside.rect?.scrolled).toBe(true);
+    expect(outside.rect?.scrolled).toBe(false);
+    expect(inside.rect?.flowContext).toContain("list");
+    expect(outside.rect?.flowContext).toBe("");
+  });
+
+  it("gives every stop in one container the same context, and none to the rest", async () => {
+    const rows = await Promise.all([focusRow(0), focusRow(ROWS - 1)]);
+    await scroller.evaluate(() => document.querySelector<HTMLElement>('a[href="/after"]')!.focus());
+    const after = await readFocused();
+
+    expect(rows[0].rect!.flowContext).toBe(rows[1].rect!.flowContext);
+    expect(after.rect!.flowContext).not.toBe(rows[0].rect!.flowContext);
+  });
+
+  it("leaves the painted document rectangle exactly as it was", async () => {
+    await scroller.evaluate(() => {
+      document.getElementById("list")!.scrollTop = 240;
+      window.scrollTo(0, 120);
+    });
+
+    const measured = await scroller.evaluate(() =>
+      window.__accessCheckDom!.collectDocRects([".row a"]),
+    );
+    const painted = await scroller.evaluate(() => {
+      const r = document.querySelector(".row a")!.getBoundingClientRect();
+      return { docX: r.left + window.scrollX, docY: r.top + window.scrollY };
+    });
+
+    expect(measured[0]!.docX).toBe(painted.docX);
+    expect(measured[0]!.docY).toBe(painted.docY);
+  });
+
+  it("puts the container back where the reader had left it", async () => {
+    await scroller.evaluate(() => {
+      document.getElementById("list")!.scrollTop = 360;
+      window.scrollTo(0, 0);
+      window.__accessCheckDom!.focusProbeStart();
+    });
+
+    await focusRow(ROWS - 1);
+    expect(await listTop()).not.toBe(360);
+
+    await scroller.evaluate(() => window.__accessCheckDom!.focusProbeEnd());
+    expect(await listTop()).toBe(360);
   });
 });

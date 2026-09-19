@@ -4,6 +4,7 @@ import { reviewGuidance } from "@/lib/scan/review";
 import { FindingDetail, FindingRow, SectionKicker } from "@/components/ui";
 import { langAttrs } from "@/lib/i18n/locale";
 import { FocusPathList } from "./focus-path-list";
+import { focusPathLines } from "@/lib/report/focus-coverage";
 import type { Translate } from "@/lib/i18n/t";
 
 function Secondary({
@@ -61,6 +62,7 @@ export function FindingsMargin({
 }) {
   const totalElements = findings.reduce((sum, f) => sum + f.elements, 0);
   const focusStops = result.keyboard?.focusPath ?? [];
+  const coverage = result.keyboard ? focusPathLines(result.keyboard, t) : { line: "", notes: [] };
 
   return (
     <section className="border-l border-border bg-surface">
@@ -146,6 +148,7 @@ export function FindingsMargin({
           <FocusPathList
             t={t}
             stops={focusStops}
+            coverage={coverage}
             located={locatedStops}
             selected={selectedStop}
             onSelect={onSelectStop}

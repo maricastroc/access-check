@@ -177,6 +177,7 @@ export function enrichViolations(
         fixCode: result?.code,
         fixConfidence: result?.confidence,
         nodes: v.nodes.length,
+        evidence: "deterministic",
       } satisfies ScanViolation,
     };
   });

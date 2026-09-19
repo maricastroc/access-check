@@ -92,12 +92,13 @@ async function contentSignature(tabId: number): Promise<string | null> {
 async function withFocusPath(
   base: ScanResult,
   tabId: number,
+  resumeFrom?: ScanResult["keyboard"],
 ): Promise<{ result: ScanResult; deepError?: string }> {
   const warnings = base.warnings ?? [];
   try {
     deepTabId = tabId;
     const before = await contentSignature(tabId);
-    const keyboard = await runDeepAudit(tabId, t);
+    const keyboard = await runDeepAudit(tabId, t, resumeFrom);
     const after = await contentSignature(tabId);
 
     const kept = warningsAfterDeepAudit(warnings, t);
@@ -204,7 +205,7 @@ async function runAudit(tab: chrome.tabs.Tab, opts: { deep: boolean }): Promise<
   }
 }
 
-async function addFocusPath(): Promise<void> {
+async function addFocusPath(opts: { resume?: boolean } = {}): Promise<void> {
   if (running) return;
   if (state.kind !== "done") return;
   if (auditedTabId === null) return;
@@ -215,7 +216,11 @@ async function addFocusPath(): Promise<void> {
 
   try {
     stage(url, "expanded", "focus");
-    const walked = await withFocusPath(previous, auditedTabId);
+    const walked = await withFocusPath(
+      previous,
+      auditedTabId,
+      opts.resume ? previous.keyboard : undefined,
+    );
     stage(url, "expanded", "report");
     publish({ kind: "done", result: walked.result, deepError: walked.deepError });
   } finally {
@@ -292,6 +297,12 @@ chrome.runtime.onMessage.addListener((message: PanelMessage, _sender, sendRespon
     return;
   }
 
+  if (message.type === "panel:continue-walk") {
+    void restore().then(() => addFocusPath({ resume: true }));
+    sendResponse({ ok: true });
+    return;
+  }
+
   if (message.type === "panel:highlight") {
     void restore()
       .then(() =>
@@ -357,10 +368,12 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 const seams = globalThis as unknown as {
   __accessCheckAuditTab?: (tab: chrome.tabs.Tab, opts?: { deep: boolean }) => Promise<void>;
   __accessCheckDeepAudit?: typeof addFocusPath;
+  __accessCheckContinueWalk?: () => Promise<void>;
   __accessCheckForgetState?: () => void;
 };
 seams.__accessCheckAuditTab = (tab, opts) => runAudit(tab, { deep: opts?.deep ?? false });
 seams.__accessCheckDeepAudit = addFocusPath;
+seams.__accessCheckContinueWalk = () => addFocusPath({ resume: true });
 seams.__accessCheckForgetState = () => {
   state = { kind: "idle" };
   auditedTabId = null;

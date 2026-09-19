@@ -26,7 +26,18 @@ function stop(selector: string, style: FocusStyle = RING): FocusProbe {
     isIframe: false,
     hasShadowRoot: false,
     style,
-    rect: { x: 10, y: 10, w: 100, h: 30, docX: 10, docY: 10 },
+    rect: {
+      x: 10,
+      y: 10,
+      w: 100,
+      h: 30,
+      docX: 10,
+      docY: 10,
+      flowX: 10,
+      flowY: 10,
+      scrolled: false,
+      flowContext: "",
+    },
   };
 }
 
@@ -51,6 +62,7 @@ function io(stops: FocusProbe[], over: Partial<FocusPathIO> = {}) {
       calls.rewound += 1;
       return "focused" as const;
     }),
+    focusSelector: vi.fn(async () => false),
     pressTab: vi.fn(async () => {
       calls.tabs += 1;
     }),
@@ -74,6 +86,20 @@ function io(stops: FocusProbe[], over: Partial<FocusPathIO> = {}) {
     }),
   };
   return { io: { ...base, ...over }, calls };
+}
+
+function at(n: number) {
+  return {
+    n,
+    selector: `#b${n}`,
+    label: `#b${n}`,
+    tag: "button",
+    focusVisible: true,
+    left: 1,
+    top: 1,
+    width: 8,
+    height: 4,
+  };
 }
 
 describe("collectFocusPath", () => {
@@ -191,7 +217,18 @@ describe("what the walk keeps for later inspection", () => {
 
     const [only] = raw.focusPath;
     expect(only.html).toBe("<button>#a</button>");
-    expect(only.rect).toEqual({ x: 10, y: 10, w: 100, h: 30, docX: 10, docY: 10 });
+    expect(only.rect).toEqual({
+      x: 10,
+      y: 10,
+      w: 100,
+      h: 30,
+      docX: 10,
+      docY: 10,
+      flowX: 10,
+      flowY: 10,
+      scrolled: false,
+      flowContext: "",
+    });
     expect(only.onScreen).toBe(true);
     expect(only.focusStyle).toEqual(NO_RING);
     expect(only.baseStyle).toEqual(NO_RING);
@@ -200,7 +237,18 @@ describe("what the walk keeps for later inspection", () => {
   it("says a stop was off-screen instead of inventing a position for it", async () => {
     const offscreen: FocusProbe = {
       ...stop("#below"),
-      rect: { x: 10, y: 4000, w: 80, h: 20, docX: 10, docY: 4000 },
+      rect: {
+        x: 10,
+        y: 4000,
+        w: 80,
+        h: 20,
+        docX: 10,
+        docY: 4000,
+        flowX: 10,
+        flowY: 4000,
+        scrolled: false,
+        flowContext: "",
+      },
     };
     const { io: fake } = io([offscreen]);
 
@@ -208,7 +256,18 @@ describe("what the walk keeps for later inspection", () => {
 
     expect(raw.focusPath[0].onScreen).toBe(false);
     expect(raw.focusPath[0].top).toBeNull();
-    expect(raw.focusPath[0].rect).toEqual({ x: 10, y: 4000, w: 80, h: 20, docX: 10, docY: 4000 });
+    expect(raw.focusPath[0].rect).toEqual({
+      x: 10,
+      y: 4000,
+      w: 80,
+      h: 20,
+      docX: 10,
+      docY: 4000,
+      flowX: 10,
+      flowY: 4000,
+      scrolled: false,
+      flowContext: "",
+    });
   });
 
   it("records that no resting style could be read rather than guessing one", async () => {
@@ -310,5 +369,101 @@ describe("a page with a single control", () => {
 
     expect(raw.trapSelector).toBe("#trap");
     expect(raw.stoppedBy).toBe("trap");
+  });
+});
+
+describe("picking a walk up where it stopped", () => {
+  const many = (n: number) => Array.from({ length: n }, (_, i) => stop(`#b${i + 1}`));
+
+  it("caps the first round and says so", async () => {
+    const { io: fake } = io(many(8));
+    const first = await collectFocusPath(fake, VIEWPORT, { maxStops: 3 });
+
+    expect(first.focusPath.map((s) => s.selector)).toEqual(["#b1", "#b2", "#b3"]);
+    expect(first.truncated).toBe(true);
+    expect(first.stoppedBy).toBe("cap");
+    expect(first.cycleComplete).toBe(false);
+  });
+
+  it("continues from the last stop instead of walking the page again", async () => {
+    const all = many(8);
+    const { io: fake, calls } = io(all.slice(3), {
+      focusSelector: vi.fn(async () => true),
+    });
+
+    const second = await collectFocusPath(fake, VIEWPORT, {
+      maxStops: 3,
+      resumeFrom: { focusPath: [1, 2, 3].map((n) => at(n)), startedAtTop: true },
+    });
+
+    expect(fake.focusSelector).toHaveBeenCalledWith("#b3");
+    expect(calls.rewound).toBe(0);
+    expect(second.focusPath.map((s) => s.n)).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(second.focusPath.map((s) => s.selector)).toEqual([
+      "#b1",
+      "#b2",
+      "#b3",
+      "#b4",
+      "#b5",
+      "#b6",
+    ]);
+  });
+
+  it("keeps the first round's verdict on whether it started at the top", async () => {
+    const { io: fake } = io(many(8).slice(3), { focusSelector: vi.fn(async () => true) });
+
+    const second = await collectFocusPath(fake, VIEWPORT, {
+      maxStops: 2,
+      resumeFrom: { focusPath: [1, 2, 3].map((n) => at(n)), startedAtTop: false },
+    });
+
+    expect(second.startedAtTop).toBe(false);
+  });
+
+  it("closes the cycle when the walk comes back to the first stop of round one", async () => {
+    const { io: fake } = io([stop("#b4"), stop("#b1")], {
+      focusSelector: vi.fn(async () => true),
+    });
+
+    const second = await collectFocusPath(fake, VIEWPORT, {
+      maxStops: 10,
+      resumeFrom: { focusPath: [1, 2, 3].map((n) => at(n)), startedAtTop: true },
+    });
+
+    expect(second.cycleComplete).toBe(true);
+    expect(second.truncated).toBe(false);
+    expect(second.focusPath.map((s) => s.selector)).toEqual(["#b1", "#b2", "#b3", "#b4"]);
+  });
+
+  it("starts over when the stop it left off at is gone", async () => {
+    const { io: fake, calls } = io(many(3), { focusSelector: vi.fn(async () => false) });
+
+    const second = await collectFocusPath(fake, VIEWPORT, {
+      maxStops: 5,
+      resumeFrom: { focusPath: [at(1)], startedAtTop: true },
+    });
+
+    expect(calls.rewound).toBeGreaterThan(0);
+    expect(second.focusPath.map((s) => s.n)).toEqual([1, 2, 3]);
+  });
+
+  it("stops counting a control as unreached once the walk has been there", async () => {
+    const { io: fake } = io(many(8).slice(3), {
+      focusSelector: vi.fn(async () => true),
+      readReach: vi.fn(async () => ({
+        totalInteractive: 8,
+        reachableInteractive: 3,
+        unreachable: ["#b1", "#b2", "#b3", "#b7", "#b8"],
+        positiveTabindex: [],
+      })),
+    });
+
+    const second = await collectFocusPath(fake, VIEWPORT, {
+      maxStops: 3,
+      resumeFrom: { focusPath: [1, 2, 3].map((n) => at(n)), startedAtTop: true },
+    });
+
+    expect(second.unreachable).toEqual(["#b7", "#b8"]);
+    expect(second.reachableInteractive).toBe(6);
   });
 });

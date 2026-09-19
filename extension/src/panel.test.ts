@@ -332,6 +332,7 @@ describe("the deep audit reuses the shared focus analysis", () => {
     expect(branches.map(([name]) => name)).toEqual([
       '"panel:hello"',
       '"panel:focus-path"',
+      '"panel:continue-walk"',
       '"panel:highlight"',
       '"panel:restore-scroll"',
       '"panel:clear-highlight"',
@@ -778,14 +779,31 @@ describe("the panel reads as a document, not a stack of boxes", () => {
     }
   });
 
-  it("keeps the audited page and its score in reach while the reader scrolls", () => {
+  it("keeps the audited page and where it stands in reach while the reader scrolls", () => {
     const bar = panel.slice(
       panel.indexOf("function StickyBar("),
       panel.indexOf("function Header("),
     );
     expect(bar).toContain("sticky top-0");
     expect(bar).toContain("onTop");
-    expect(bar).toContain('t("panel.scoreOutOf")');
+    expect(bar).toContain("STANDING_LABEL[standing]");
+    expect(bar).toContain('t("panel.backToSummary")');
+  });
+
+  it("no longer leads the reading with a number out of a hundred", () => {
+    const header = panel.slice(
+      panel.indexOf("function Header("),
+      panel.indexOf("function Collapsed("),
+    );
+
+    expect(header).not.toContain("result.score");
+    expect(header).not.toContain('t("panel.perHundred")');
+    expect(header).toContain("STANDING_LABEL[standingOf(result.counts)]");
+  });
+
+  it("says when a stored reading came from an older scoring model", () => {
+    expect(panel).toContain("scoringIsCurrent(result)");
+    expect(panel).toContain("standing.staleTitle");
   });
 
   it("descends h1 → h2 → h3 → h4 without skipping a level", () => {
@@ -905,5 +923,23 @@ describe("the service worker follows the same choice", () => {
   it("hears about a change made while it was already awake", () => {
     expect(background).toContain("chrome.storage.onChanged.addListener");
     expect(background).toContain("LOCALE_KEY in changes");
+  });
+});
+
+describe("what the panel says about a reading-order guess", () => {
+  it("shows the shared explanation instead of presenting it as a settled failure", () => {
+    expect(panel).toContain('f.evidence === "heuristic"');
+    expect(panel).toContain("evidence.heuristic.title");
+    expect(panel).toContain("evidence.heuristic.body");
+  });
+
+  it("writes none of that wording itself", () => {
+    const block = between(panel, 'f.evidence === "heuristic"', "panel.problem");
+    expect(block).not.toMatch(/[Gg]eometric|[Rr]eading order|[Ss]core/);
+  });
+
+  it("counts what needs a human apart from the failures", () => {
+    expect(panel).toContain("panel.count.needsReview");
+    expect(panel).toContain("result.counts.needsReview");
   });
 });

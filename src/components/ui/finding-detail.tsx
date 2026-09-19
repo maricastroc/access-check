@@ -208,6 +208,27 @@ export function FindingDetail({
       className="-mt-px border border-t-0 border-ink bg-surface"
       style={{ borderLeft: `4px solid ${railColor}` }}
     >
+      {finding.evidence === "heuristic" && (
+        <section className="border-b border-hairline bg-band p-3.5">
+          <SectionKicker>{t("evidence.heuristic.title")}</SectionKicker>
+          <p className="mt-2 text-[13.5px] leading-normal text-ink-2">
+            {t("evidence.heuristic.body")}
+          </p>
+          {finding.occurrences.length > 0 && (
+            <ul className="mt-2.5 space-y-1.5">
+              {finding.occurrences.map((o) => (
+                <li
+                  key={`${o.from ?? o.stop}-${o.selector}`}
+                  className="text-[12.5px] leading-normal break-words text-muted"
+                >
+                  {o.reason}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
+
       <section className="p-3.5">
         <SectionKicker>{t("detail.impactOnUsers")}</SectionKicker>
         <p className="mt-2 text-[14px] leading-normal text-ink-2">{finding.impact}</p>

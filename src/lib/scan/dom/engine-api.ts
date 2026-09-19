@@ -7,7 +7,7 @@ import type { FocusProbe, FocusReach, FocusStyle } from "./focus";
 import type { OverlayMark, OverlayReport } from "./overlay";
 import type { PaintCalm, PrimeReport } from "./prime";
 
-export const DOM_ENGINE_VERSION = 10;
+export const DOM_ENGINE_VERSION = 12;
 
 export type DomEngine = {
   version: number;
@@ -32,6 +32,7 @@ export type DomEngine = {
   crossOriginAssets(): { styleSheets: number; media: number };
   focusProbeStart(): void;
   focusFirstStop(): "focused" | "empty" | "failed";
+  focusSelector(selector: string): boolean;
   focusRelativeToSeed(): "before" | "at" | "after" | "unknown";
   readFocusedStop(record?: boolean): FocusProbe;
   readBaseStyles(selectors: string[]): Record<string, FocusStyle>;

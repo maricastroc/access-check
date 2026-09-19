@@ -1,5 +1,6 @@
 import type { ScanViolation, Severity } from "@/lib/scan/types";
 import { computeScore } from "../scan/derive";
+import { chargeable } from "../scan/evidence";
 import { SEVERITY_ORDER } from "./severity";
 
 const severityWeight: Record<Severity, number> = {
@@ -17,6 +18,7 @@ export type ScoreDeduction = {
   elements: number;
   penalty: number;
   deduction: number;
+  share: number;
   ifFixed: number;
   gain: number;
 };
@@ -30,19 +32,17 @@ export type ScoreBreakdown = {
 
 export function scoreBreakdown(violations: ScanViolation[], score: number): ScoreBreakdown {
   const totalDeduction = Math.max(0, 100 - score);
+  const charged = chargeable(violations);
 
   const rows = SEVERITY_ORDER.map((severity) => {
-    const items = violations.filter((v) => v.severity === severity);
+    const items = charged.filter((v) => v.severity === severity);
     const elements = items.reduce((sum, v) => sum + v.nodes, 0);
     const penalty = items.reduce(
       (sum, v) => sum + severityWeight[severity] * Math.min(v.nodes, NODE_CAP),
       0,
     );
 
-    const ifFixed = Math.max(
-      score,
-      computeScore(violations.filter((v) => v.severity !== severity)),
-    );
+    const ifFixed = Math.max(score, computeScore(charged.filter((v) => v.severity !== severity)));
     return { severity, issues: items.length, elements, penalty, ifFixed, gain: ifFixed - score };
   }).filter((r) => r.penalty > 0);
 
@@ -62,6 +62,7 @@ export function scoreBreakdown(violations: ScanViolation[], score: number): Scor
   const deductions: ScoreDeduction[] = rows.map((r, i) => ({
     ...r,
     deduction: deductionByIndex[i],
+    share: penaltySum > 0 ? Math.round((r.penalty / penaltySum) * 100) : 0,
   }));
 
   return { base: 100, score, totalDeduction, deductions };

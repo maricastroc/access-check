@@ -17,6 +17,7 @@ function finding(id: string, severity: Severity, count: number) {
   return {
     id,
     severity,
+    evidence: "measured" as const,
     criterion: `WCAG 2.5.8 · Target Size (Minimum)`,
     title: `${count} touch targets are smaller than 24×24px`,
     desc: "desc",
@@ -303,13 +304,13 @@ describe("withScoring", () => {
     expect(after.fixFirst.map((f) => f.title)).toEqual([keyboard.findings[0].title]);
   });
 
-  it("leaves what sits outside the score exactly where it was", () => {
+  it("leaves what sits not counted here exactly where it was", () => {
     const after = withScoring({ ...base(), keyboard });
 
     expect(after.counts.passed).toBe(40);
     expect(after.counts.bestPractice).toBe(2);
     expect(after.counts.manualReview).toBe(3);
-    expect(after.summary).toContain("outside the score");
+    expect(after.summary).toContain("not counted here");
   });
 
   it("charges each rule once, however many places report it", () => {

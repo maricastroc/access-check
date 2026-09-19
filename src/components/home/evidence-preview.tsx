@@ -30,6 +30,7 @@ export function demoFinding(t: Translate): FindingView {
     id: "demo",
     n: 1,
     kind: "wcag",
+    evidence: "deterministic",
     isWcag: true,
     severity: "serious",
     passLabel: null,

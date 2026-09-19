@@ -96,19 +96,19 @@ describe("buildSummary tells the four kinds apart", () => {
 
     expect(text).not.toContain("Excellent");
     expect(text).toContain("No scored WCAG failures were found.");
-    expect(text).toContain("1 best-practice recommendation remains, outside the score.");
+    expect(text).toContain("1 best-practice recommendation remains, not counted here.");
   });
 
   it("names manual-review items left behind", () => {
     const text = buildSummary({ ...none, manualReview: 2 }, t);
 
     expect(text).toContain("No scored WCAG failures were found.");
-    expect(text).toContain("2 manual-review items remain, outside the score.");
+    expect(text).toContain("2 manual-review items remain, not counted here.");
   });
 
   it("names both when both are there", () => {
     expect(buildSummary({ ...none, bestPractice: 1, manualReview: 2 }, t)).toBe(
-      "No scored WCAG failures were found. 1 best-practice recommendation and 2 manual-review items remain, outside the score.",
+      "No scored WCAG failures were found. 1 best-practice recommendation and 2 manual-review items remain, not counted here.",
     );
   });
 

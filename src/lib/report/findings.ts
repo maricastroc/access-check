@@ -1,4 +1,13 @@
-import type { FixGroup, ScanMarker, ScanResult, ScanViolation, Severity } from "@/lib/scan/types";
+import type {
+  EvidenceClass,
+  FixGroup,
+  ScanMarker,
+  ScanResult,
+  ScanViolation,
+  Severity,
+} from "@/lib/scan/types";
+import { concernOf } from "@/lib/scan/concern";
+import { evidenceForRule, evidenceOf } from "@/lib/scan/evidence";
 import type { ContextIssue } from "@/lib/scan/contexts";
 import type { KeyboardOccurrence } from "@/lib/scan/keyboard";
 import { SEVERITY_ORDER } from "./severity";
@@ -37,6 +46,7 @@ export type FindingView = {
   id: string;
   n: number;
   kind: FindingKind;
+  evidence: EvidenceClass;
   isWcag: boolean;
   severity: Severity | null;
   passLabel: string | null;
@@ -98,6 +108,7 @@ function wcagFinding(
   return {
     id: `wcag:${v.id}`,
     kind: "wcag",
+    evidence: evidenceOf(v),
     isWcag: true,
     severity: v.severity,
     passLabel: null,
@@ -133,6 +144,7 @@ function wcagFinding(
 type PassFinding = {
   id: string;
   severity: Severity;
+  evidence?: EvidenceClass;
   criterion: string;
   title: string;
   desc: string;
@@ -159,6 +171,7 @@ function complementaryFinding(
   return {
     id: `${kind}:${f.id}`,
     kind,
+    evidence: f.evidence ?? evidenceForRule(f.id),
     isWcag: true,
     severity: f.severity,
     passLabel: PASS_LABEL_KEY[kind] ? t(PASS_LABEL_KEY[kind]) : null,
@@ -199,6 +212,7 @@ function contextFinding(issue: ContextIssue, where: string, t: Translate): Omit<
   return {
     id: `context:${where}:${issue.id}`,
     kind: "context",
+    evidence: "deterministic",
     isWcag: true,
     severity: issue.severity,
     passLabel: t("finding.kind.context"),
@@ -232,6 +246,7 @@ function bestPracticeFindings(result: ScanResult, t: Translate): Omit<FindingVie
     return {
       id: `best-practice:${bp.id}`,
       kind: "best-practice" as const,
+      evidence: "deterministic" as const,
       isWcag: false,
       severity: null,
       passLabel: t("finding.kind.bestPractice"),
@@ -287,12 +302,13 @@ export function buildFindings(result: ScanResult): FindingView[] {
 
   const listed = new Map<string, Omit<FindingView, "n">>();
   const add = (finding: Omit<FindingView, "n">, context?: string) => {
-    const seen = listed.get(finding.ruleId);
+    const concern = concernOf(finding.ruleId);
+    const seen = listed.get(concern);
     if (seen) {
       if (context && !seen.contexts.includes(context)) seen.contexts.push(context);
       return;
     }
-    listed.set(finding.ruleId, finding);
+    listed.set(concern, finding);
     withSeverity.push(finding);
   };
 
@@ -316,13 +332,16 @@ export function buildFindings(result: ScanResult): FindingView[] {
   }
 
   withSeverity.sort((a, b) => {
+    if (a.evidence !== b.evidence) return a.evidence === "heuristic" ? 1 : -1;
     const sa = SEVERITY_ORDER.indexOf(a.severity as Severity);
     const sb = SEVERITY_ORDER.indexOf(b.severity as Severity);
     if (sa !== sb) return sa - sb;
     return b.elements - a.elements;
   });
 
-  const bestPractice = bestPracticeFindings(result, t).filter((f) => !listed.has(f.ruleId));
+  const bestPractice = bestPracticeFindings(result, t).filter(
+    (f) => !listed.has(concernOf(f.ruleId)),
+  );
 
   const ordered = [...withSeverity, ...bestPractice];
   return ordered.map((f, i) => ({ ...f, n: i + 1 }));

@@ -5,6 +5,7 @@ import { scrollBehavior } from "@/lib/motion";
 
 export function FocusPathList({
   stops,
+  coverage,
   located,
   selected,
   onSelect,
@@ -12,6 +13,7 @@ export function FocusPathList({
   t,
 }: {
   stops: FocusStop[];
+  coverage: { line: string; notes: string[] };
   located: Set<number>;
   selected: number | null;
   onSelect: (n: number) => void;
@@ -56,6 +58,16 @@ export function FocusPathList({
           </button>
         </span>
       </div>
+
+      <p className="pb-2 text-[12px] leading-normal text-muted">
+        {coverage.line}
+        {coverage.notes.map((note) => (
+          <span key={note} className="mt-1 flex items-start gap-1.5 text-ink">
+            <span aria-hidden className="mt-1.5 inline-block size-1 shrink-0 bg-moderate" />
+            {note}
+          </span>
+        ))}
+      </p>
 
       <ol className="flex flex-col gap-0.5 text-[12.5px] text-body">
         {stops.map((s) => {

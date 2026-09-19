@@ -1,5 +1,6 @@
-import { computeScore } from "@/lib/scan/derive";
+import { chargeable } from "@/lib/scan/evidence";
 import { violationsBehindScore } from "@/lib/scan/scored";
+import { standingOf, STANDING_LABEL } from "@/lib/report/standing";
 import type { ScanResult, Severity } from "@/lib/scan/types";
 import { safeHost, sevHex } from "./shared";
 import { MiniHeader, PageShell, SectionKicker, SectionKickerMuted } from "./primitives";
@@ -9,11 +10,10 @@ export function ProgressPage({ result }: { result: ScanResult }) {
   const t = translator(result.locale);
   const host = safeHost(result.finalUrl);
   const scored = violationsBehindScore(result);
-  const moderate = scored.filter((v) => v.severity === "moderate");
+  const moderate = chargeable(scored).filter((v) => v.severity === "moderate");
 
-  const remaining = scored.filter((v) => v.severity !== "critical" && v.severity !== "serious");
-  const estimated = Math.max(result.score, computeScore(remaining));
-  const delta = estimated - result.score;
+  const standing = standingOf(result.counts);
+  const projected = standingOf({ ...result.counts, critical: 0, serious: 0 });
 
   const deltas = [
     { label: "Critical", from: result.counts.critical, to: 0, sev: "critical" as Severity },
@@ -123,17 +123,17 @@ export function ProgressPage({ result }: { result: ScanResult }) {
           <div className="flex items-center justify-between border border-hairline px-4 py-3.5">
             <div className="text-center">
               <SectionKickerMuted>{t("report.current")}</SectionKickerMuted>
-              <div className="mt-1 font-cond text-[38px] leading-none text-muted tabular-nums">
-                {result.score}
+              <div className="mt-1 font-cond text-[22px] leading-tight text-muted">
+                {t(STANDING_LABEL[standing])}
               </div>
             </div>
-            <span className="font-cond text-[12px] font-medium text-verified tabular-nums">
-              +{delta}
+            <span aria-hidden className="font-cond text-[14px] font-medium text-verified">
+              →
             </span>
             <div className="text-center">
               <SectionKicker>{t("report.estimated")}</SectionKicker>
-              <div className="mt-1 font-cond text-[38px] leading-none text-ink tabular-nums">
-                {estimated}
+              <div className="mt-1 font-cond text-[22px] leading-tight text-ink">
+                {t(STANDING_LABEL[projected])}
               </div>
             </div>
           </div>
@@ -178,7 +178,8 @@ export function ProgressPage({ result }: { result: ScanResult }) {
         </div>
 
         <p className="mt-3.5 border-t border-hairline pt-3 text-[11px] leading-normal text-body">
-          {t("report.projectionBody")} <b className="text-ink">{estimated} / 100</b>
+          {t("report.projectionBody")}{" "}
+          <b className="text-ink">{t(STANDING_LABEL[projected]).toLowerCase()}</b>
           {t("report.projectionCaveat")}
         </p>
       </div>

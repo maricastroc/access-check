@@ -13,7 +13,65 @@ const TALL_BODY = Array.from(
   (_, i) => `<p style="color:#111827;background:#ffffff">Row ${i} of a very long document.</p>`,
 ).join("");
 
+const SCROLL_ROWS = 8;
+const SCROLL_ROW_H = 120;
+
+const SCROLLING_LIST = Array.from(
+  { length: SCROLL_ROWS },
+  (_, i) =>
+    `<div class="row"><a href="/row-${i}">Row ${i}</a><button type="button">Save ${i}</button></div>`,
+).join("");
+
 const PAGES: Record<string, { status?: number; html: string }> = {
+  "/scroller": {
+    html: `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Scrolling list fixture</title>
+    <style>
+      body { margin: 0; color: #111827; background: #ffffff; }
+      #lead { height: 400px; }
+      #list { height: ${SCROLL_ROW_H}px; overflow-y: auto; border: 1px solid #111827; }
+      .row { display: flex; align-items: center; gap: 24px; height: ${SCROLL_ROW_H}px; }
+      a, button { color: #111827; background: #ffffff; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Scrolling list</h1>
+      <div id="lead">Tall block above the list.</div>
+      <div id="list" tabindex="0" aria-label="Rows">${SCROLLING_LIST}</div>
+      <a href="/after">After the list</a>
+    </main>
+  </body>
+</html>`,
+  },
+  "/inverted": {
+    html: `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Inverted order fixture</title>
+    <style>
+      body { margin: 0; color: #111827; background: #ffffff; }
+      .reversed { display: flex; flex-direction: row-reverse; gap: 24px; }
+      a { color: #111827; background: #ffffff; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Reversed row</h1>
+      <div class="reversed">
+        <a href="/one">First in the DOM, painted on the right</a>
+        <a href="/two">Second in the DOM, painted on the left</a>
+      </div>
+    </main>
+  </body>
+</html>`,
+  },
   "/broken": {
     html: `<!doctype html>
 <html>
@@ -371,7 +429,7 @@ describe("runScan (integration — real browser)", () => {
     const a = result.audits;
     expect(a).toBeDefined();
 
-    const target = a?.targetSize?.findings.find((f) => f.id === "target-size");
+    const target = a?.targetSize?.findings.find((f) => f.id === "target-size-crowding");
     expect(target?.count).toBe(2);
 
     const motion = a?.reducedMotion?.findings.find((f) => f.id === "reduced-motion");
@@ -990,5 +1048,43 @@ describe("findings past the end of a partial overview", () => {
     for (const violation of result.violations) {
       expect(listed.has(violation.title)).toBe(true);
     }
+  }, 90_000);
+});
+
+describe("what the keyboard pass concludes about reading order", () => {
+  const orderFindingOf = async (path: string) => {
+    const result = await runScan(`${base}${path}`, {
+      screenshot: false,
+      keyboard: true,
+      contexts: false,
+      audits: false,
+      verifyFixes: false,
+    });
+    return {
+      result,
+      order: result.keyboard?.findings.find((f) => f.id === "focus-order"),
+    };
+  };
+
+  it("a list that only scrolls inside its own container is not out of sequence", async () => {
+    const { result, order } = await orderFindingOf("/scroller");
+
+    expect(result.keyboard?.focusPath.length).toBeGreaterThan(SCROLL_ROWS);
+    expect(order).toBeUndefined();
+  }, 90_000);
+
+  it("a row painted in reverse is still reported", async () => {
+    const { order } = await orderFindingOf("/inverted");
+
+    expect(order?.count).toBe(1);
+    expect(order?.occurrences[0].reason).toContain("back to the left");
+  }, 90_000);
+
+  it("the scrolled list does not lose its stops to the correction", async () => {
+    const { result } = await orderFindingOf("/scroller");
+    const labels = result.keyboard?.focusPath.map((s) => s.label) ?? [];
+
+    expect(labels).toContain("Row 0");
+    expect(labels).toContain(`Save ${SCROLL_ROWS - 1}`);
   }, 90_000);
 });

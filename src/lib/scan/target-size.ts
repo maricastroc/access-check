@@ -61,8 +61,9 @@ export function analyzeTargetSize(raw: RawTargetSize, t: Translate): TargetSizeR
   if (offenders.length > 0) {
     const n = offenders.length;
     findings.push({
-      id: "target-size",
+      id: "target-size-crowding",
       severity: "serious",
+      evidence: "measured",
       criterion: t("audit.target.criterion"),
       title: t("audit.target.title", { count: n }),
       desc: t("audit.target.desc", { count: n }),

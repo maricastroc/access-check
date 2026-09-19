@@ -25,14 +25,14 @@ function result(locale: ReportLocale): ScanResult {
 }
 
 describe("Markdown exports follow the report locale", () => {
-  it("writes the priority-score report in Portuguese", () => {
+  it("writes the standing report in Portuguese", () => {
     const md = buildReportMarkdown(result("pt-BR"));
 
     expect(md).toContain("# Relatório de acessibilidade:");
-    expect(md).toContain("Nota interna de prioridade");
+    expect(md).toContain("Como esta página está");
     expect(md).toContain("## Leitura WCAG");
     expect(md).not.toContain("Accessibility report");
-    expect(md).not.toContain("Internal priority score");
+    expect(md).not.toContain("Where this page stands");
     expect(md).not.toContain("WCAG reading");
   });
 
@@ -40,7 +40,7 @@ describe("Markdown exports follow the report locale", () => {
     const md = buildReportMarkdown(result("en"));
 
     expect(md).toContain("# Accessibility report:");
-    expect(md).toContain("Internal priority score");
+    expect(md).toContain("Where this page stands");
     expect(md).toContain("## WCAG reading");
     expect(md).not.toContain("Relatório");
   });

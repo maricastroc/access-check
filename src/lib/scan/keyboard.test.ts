@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   buildKeyboardReport,
   readingOrderInversions,
+  type FocusRect,
   type FocusStop,
   type RawKeyboard,
 } from "./keyboard";
+import { computeScore } from "./derive";
+import { ownRuleViolations } from "./scored";
 import { translator } from "../i18n/t";
 
 const t = translator();
@@ -38,6 +41,19 @@ const rawBase: RawKeyboard = {
   truncated: false,
   cycleComplete: true,
 };
+
+const placed = (
+  n: number,
+  viewport: { left: number; top: number },
+  rect: FocusRect,
+  extra: Partial<FocusStop> = {},
+): FocusStop => ({
+  ...stop(n, viewport.left, viewport.top, extra),
+  height: 3,
+  rect,
+});
+
+const ROW = { w: 60, h: 24 };
 
 describe("readingOrderInversions", () => {
   it("a clean top-to-bottom order produces no inversions", () => {
@@ -101,6 +117,156 @@ describe("readingOrderInversions", () => {
     expect(inv.jumps[0].direction).toBe("up");
   });
 
+  it("prefers the flow position, so a list that only scrolled inside its container is no jump", () => {
+    const stops = [
+      placed(
+        1,
+        { left: 40, top: 82 },
+        { x: 480, y: 658, ...ROW, docX: 480, docY: 3666, flowX: 480, flowY: 3666, scrolled: true },
+      ),
+      placed(
+        2,
+        { left: 10, top: 65 },
+        { x: 120, y: 526, ...ROW, docX: 120, docY: 3534, flowX: 120, flowY: 3763, scrolled: true },
+      ),
+    ];
+
+    expect(readingOrderInversions(stops).count).toBe(0);
+  });
+
+  it("still flags an inversion that is real in the flow, not only in what was painted", () => {
+    const stops = [
+      placed(
+        1,
+        { left: 10, top: 65 },
+        { x: 120, y: 526, ...ROW, docX: 120, docY: 3534, flowX: 120, flowY: 3763, scrolled: true },
+      ),
+      placed(
+        2,
+        { left: 40, top: 82 },
+        { x: 480, y: 658, ...ROW, docX: 480, docY: 3666, flowX: 480, flowY: 3666, scrolled: true },
+      ),
+    ];
+
+    const inv = readingOrderInversions(stops);
+    expect(inv.count).toBe(1);
+    expect(inv.jumps[0].direction).toBe("up");
+    expect(inv.jumps[0].basis).toBe("flow");
+  });
+
+  it("flags a move back to the left inside one scrolled row", () => {
+    const stops = [
+      placed(
+        1,
+        { left: 40, top: 20 },
+        { x: 480, y: 160, ...ROW, docX: 480, docY: 160, flowX: 480, flowY: 900, scrolled: true },
+      ),
+      placed(
+        2,
+        { left: 10, top: 20 },
+        { x: 120, y: 160, ...ROW, docX: 120, docY: 160, flowX: 120, flowY: 900, scrolled: true },
+      ),
+    ];
+
+    const inv = readingOrderInversions(stops);
+    expect(inv.count).toBe(1);
+    expect(inv.jumps[0].direction).toBe("back");
+    expect(inv.jumps[0].basis).toBe("flow");
+  });
+
+  it("falls back to the painted position when no flow coordinate was measured", () => {
+    const stops = [
+      placed(1, { left: 10, top: 20 }, { x: 120, y: 160, ...ROW, docX: 120, docY: 5100 }),
+      placed(2, { left: 10, top: 80 }, { x: 120, y: 640, ...ROW, docX: 120, docY: 600 }),
+    ];
+
+    const inv = readingOrderInversions(stops);
+    expect(inv.count).toBe(1);
+    expect(inv.jumps[0].basis).toBe("document");
+  });
+
+  it("falls back to the viewport when neither page coordinate was measured", () => {
+    const inv = readingOrderInversions([stop(1, 10, 50), stop(2, 10, 10)]);
+    expect(inv.count).toBe(1);
+    expect(inv.jumps[0].basis).toBe("viewport");
+  });
+
+  it("does not mix bases when only one of the two stops carries a flow coordinate", () => {
+    const stops = [
+      placed(
+        1,
+        { left: 10, top: 20 },
+        { x: 120, y: 160, ...ROW, docX: 120, docY: 600, flowX: 120, flowY: 600, scrolled: true },
+      ),
+      placed(2, { left: 10, top: 80 }, { x: 120, y: 640, ...ROW, docX: 120, docY: 5100 }),
+    ];
+
+    const inv = readingOrderInversions(stops);
+    expect(inv.count).toBe(0);
+  });
+
+  it("will not compare two stops that live in different scrolling contexts", () => {
+    const stops = [
+      placed(
+        1,
+        { left: 90, top: 60 },
+        {
+          x: 1104,
+          y: 480,
+          w: 40,
+          h: 40,
+          docX: 1104,
+          docY: 3570,
+          flowX: 1104,
+          flowY: 3836,
+          scrolled: true,
+          flowContext: "#list",
+        },
+      ),
+      placed(
+        2,
+        { left: 37, top: 55 },
+        {
+          x: 451,
+          y: 440,
+          w: 200,
+          h: 44,
+          docX: 451,
+          docY: 3788,
+          flowX: 451,
+          flowY: 3788,
+          scrolled: false,
+          flowContext: "",
+        },
+      ),
+    ];
+
+    expect(readingOrderInversions(stops).count).toBe(0);
+  });
+
+  it("still compares two stops inside the same container", () => {
+    const inside = (n: number, flowY: number, flowX: number) =>
+      placed(
+        n,
+        { left: 10, top: 50 },
+        {
+          x: flowX,
+          y: 400,
+          w: 60,
+          h: 24,
+          docX: flowX,
+          docY: 400,
+          flowX,
+          flowY,
+          scrolled: true,
+          flowContext: "#list",
+        },
+      );
+
+    expect(readingOrderInversions([inside(1, 900, 120), inside(2, 1020, 120)]).count).toBe(0);
+    expect(readingOrderInversions([inside(1, 1020, 120), inside(2, 900, 120)]).count).toBe(1);
+  });
+
   it("micro-misalignment within the band does not count", () => {
     const stops = [stop(1, 30, 20), stop(2, 28, 19)];
     expect(readingOrderInversions(stops).count).toBe(0);
@@ -156,7 +322,7 @@ describe("buildKeyboardReport", () => {
     expect(f?.selectors).toEqual(["#hidden", "#hidden2"]);
   });
 
-  it("an unreachable control is only reported with a complete cycle and no truncation", () => {
+  it("only calls a control unreachable after a complete cycle with no truncation", () => {
     const withTruncation = buildKeyboardReport(
       {
         ...rawBase,
@@ -165,8 +331,10 @@ describe("buildKeyboardReport", () => {
         cycleComplete: false,
       },
       t,
-    );
-    expect(withTruncation.findings.find((f) => f.id === "unreachable-control")).toBeUndefined();
+    ).findings.find((f) => f.id === "unreachable-control");
+
+    expect(withTruncation?.evidence).toBe("heuristic");
+    expect(withTruncation?.severity).toBe("moderate");
 
     const complete = buildKeyboardReport(
       {
@@ -305,8 +473,8 @@ describe("what each finding lets you inspect", () => {
     expect(jump.to).toBe(2);
     expect(jump.reason).toContain("Stop 1 → Stop 2");
     expect(jump.reason).toContain("focus moved back up the page");
-    expect(jump.reason).toContain("near the bottom of the page");
-    expect(jump.reason).toContain("near the top of the page");
+    expect(jump.reason).toContain("near the bottom of the viewport");
+    expect(jump.reason).toContain("near the top of the viewport");
     expect(jump.reason).toContain("640px → 40px");
   });
 
@@ -397,7 +565,9 @@ describe("what a walk is allowed to conclude", () => {
       t,
     );
 
-    expect(midway.findings.find((f) => f.id === "unreachable-control")).toBeUndefined();
+    const reach = midway.findings.find((f) => f.id === "unreachable-control");
+    expect(reach?.evidence).toBe("heuristic");
+    expect(reach?.title).toContain("never reached");
     expect(midway.startedAtTop).toBe(false);
   });
 
@@ -415,5 +585,194 @@ describe("what a walk is allowed to conclude", () => {
     );
 
     expect(full.findings.find((f) => f.id === "unreachable-control")?.count).toBe(2);
+  });
+});
+
+describe("the evidence a focus-order jump shows", () => {
+  const reasonOf = (focusPath: FocusStop[]): string => {
+    const report = buildKeyboardReport({ ...rawBase, focusPath }, t);
+    const finding = report.findings.find((f) => f.id === "focus-order");
+    expect(finding).toBeDefined();
+    return finding!.occurrences[0].reason;
+  };
+
+  it("quotes the flow position, not the painted one, when the flow decided it", () => {
+    const reason = reasonOf([
+      placed(
+        1,
+        { left: 10, top: 65 },
+        { x: 120, y: 526, ...ROW, docX: 120, docY: 3534, flowX: 120, flowY: 3763, scrolled: true },
+      ),
+      placed(
+        2,
+        { left: 40, top: 82 },
+        { x: 480, y: 658, ...ROW, docX: 480, docY: 3666, flowX: 480, flowY: 3666, scrolled: true },
+      ),
+    ]);
+
+    expect(reason).toContain("3763");
+    expect(reason).toContain("3666");
+    expect(reason).not.toContain("526");
+    expect(reason).not.toContain("658");
+    expect(reason).not.toContain("viewport");
+  });
+
+  it("quotes the painted position when there was no flow coordinate", () => {
+    const reason = reasonOf([
+      placed(1, { left: 10, top: 20 }, { x: 120, y: 160, ...ROW, docX: 120, docY: 5100 }),
+      placed(2, { left: 10, top: 80 }, { x: 120, y: 640, ...ROW, docX: 120, docY: 600 }),
+    ]);
+
+    expect(reason).toContain("5100");
+    expect(reason).toContain("600");
+    expect(reason).not.toContain("viewport");
+  });
+
+  it("says viewport, and only viewport, when that is all it measured", () => {
+    const reason = reasonOf([stop(1, 10, 50), stop(2, 10, 10)]);
+
+    expect(reason).toContain("viewport");
+    expect(reason).not.toContain("of the page (");
+  });
+
+  it("never describes a stop's place on the page from its place in the viewport", () => {
+    const reason = reasonOf([
+      placed(1, { left: 10, top: 82 }, { x: 120, y: 658, ...ROW, docX: 120, docY: 3666 }),
+      placed(2, { left: 10, top: 65 }, { x: 120, y: 526, ...ROW, docX: 120, docY: 3534 }),
+    ]);
+
+    expect(reason).not.toContain("of the page");
+  });
+});
+
+describe("which axis a jump's evidence quotes", () => {
+  const reasonOf = (focusPath: FocusStop[]): string => {
+    const report = buildKeyboardReport({ ...rawBase, focusPath }, t);
+    return report.findings.find((f) => f.id === "focus-order")!.occurrences[0].reason;
+  };
+
+  const at = (n: number, x: number, y: number, viewport: { left: number; top: number }) =>
+    placed(n, viewport, {
+      x,
+      y,
+      w: 60,
+      h: 24,
+      docX: x,
+      docY: y,
+      flowX: x,
+      flowY: y,
+      scrolled: false,
+      flowContext: "",
+    });
+
+  it("quotes the sideways measure when focus went back to the left", () => {
+    const reason = reasonOf([
+      at(1, 880, 1533, { left: 70, top: 50 }),
+      at(2, 240, 1533, { left: 20, top: 50 }),
+    ]);
+
+    expect(reason).toContain("back to the left");
+    expect(reason).toContain("880");
+    expect(reason).toContain("240");
+    expect(reason).not.toContain("1533");
+  });
+
+  it("quotes the downward measure when focus went back up", () => {
+    const reason = reasonOf([
+      at(1, 240, 3800, { left: 20, top: 80 }),
+      at(2, 240, 1200, { left: 20, top: 20 }),
+    ]);
+
+    expect(reason).toContain("back up");
+    expect(reason).toContain("3800");
+    expect(reason).toContain("1200");
+  });
+
+  it("names the edge it measured from when all it had was the viewport", () => {
+    const onlyOnScreen = (n: number, x: number, y: number, left: number, top: number) =>
+      placed(n, { left, top }, { x, y, w: 60, h: 24 });
+
+    const sideways = reasonOf([
+      onlyOnScreen(1, 880, 320, 70, 40),
+      onlyOnScreen(2, 240, 320, 20, 40),
+    ]);
+    const downward = reasonOf([
+      onlyOnScreen(1, 240, 640, 20, 80),
+      onlyOnScreen(2, 240, 160, 20, 20),
+    ]);
+
+    expect(sideways).toContain("left of the viewport");
+    expect(sideways).toContain("880");
+    expect(downward).toContain("top of the viewport");
+    expect(downward).toContain("640");
+  });
+
+  it("says nothing about pixels when it never measured a rectangle", () => {
+    const reason = reasonOf([stop(1, 70, 40), stop(2, 20, 40)]);
+    expect(reason).not.toContain("px →");
+  });
+
+  it("never reports a horizontal move as two identical numbers", () => {
+    const reason = reasonOf([
+      at(1, 880, 1533, { left: 70, top: 50 }),
+      at(2, 240, 1533, { left: 20, top: 50 }),
+    ]);
+    const numbers = reason.match(/(\d+)px → (\d+)px/);
+
+    expect(numbers).not.toBeNull();
+    expect(numbers![1]).not.toBe(numbers![2]);
+  });
+});
+
+describe("what an incomplete walk is allowed to say about reach", () => {
+  const partial = {
+    ...rawBase,
+    unreachable: ["#ghost", "#phantom"],
+    truncated: true,
+    cycleComplete: false,
+    stoppedBy: "cap" as const,
+    focusPath: [stop(1, 10, 10)],
+  };
+
+  it("no longer goes silent when the walk stopped early", () => {
+    const f = buildKeyboardReport(partial, t).findings.find((x) => x.id === "unreachable-control");
+    expect(f).toBeDefined();
+    expect(f?.count).toBe(2);
+  });
+
+  it("is born heuristic there, so it costs no points", () => {
+    const f = buildKeyboardReport(partial, t).findings.find((x) => x.id === "unreachable-control");
+    expect(f?.evidence).toBe("heuristic");
+    expect(computeScore(ownRuleViolations({ keyboard: buildKeyboardReport(partial, t) }))).toBe(
+      100,
+    );
+  });
+
+  it("says the walk ended rather than calling them unreachable", () => {
+    const f = buildKeyboardReport(partial, t).findings.find((x) => x.id === "unreachable-control");
+    expect(f?.title).toContain("never reached");
+    expect(f?.desc).toContain("not proof");
+  });
+
+  it("keeps the conclusive reading measured and serious", () => {
+    const complete = buildKeyboardReport(
+      { ...partial, truncated: false, cycleComplete: true, stoppedBy: "cycle" },
+      t,
+    ).findings.find((x) => x.id === "unreachable-control");
+
+    expect(complete?.evidence).toBe("measured");
+    expect(complete?.severity).toBe("serious");
+    expect(complete?.title).not.toContain("never reached");
+  });
+
+  it("does not flood the report when a capped walk left many behind", () => {
+    const many = Array.from({ length: 60 }, (_, i) => `#c${i}`);
+    const f = buildKeyboardReport({ ...partial, unreachable: many }, t).findings.find(
+      (x) => x.id === "unreachable-control",
+    );
+
+    expect(f?.count).toBe(60);
+    expect(f?.occurrences.length).toBeLessThanOrEqual(24);
+    expect(f?.selectors).toHaveLength(8);
   });
 });

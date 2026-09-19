@@ -4,19 +4,21 @@ import type { ScanResult } from "@/lib/scan/types";
 import { locatedMarkers, type FindingView } from "@/lib/report/findings";
 import type { ScoreBreakdown } from "@/lib/report/score";
 import type { WcagReadingModel } from "@/lib/report/wcag";
-import {
-  Button,
-  FindingDetail,
-  FindingRow,
-  Ruler,
-  SectionKicker,
-  WcagChips,
-} from "@/components/ui";
+import { Button, FindingDetail, FindingRow, SectionKicker, WcagChips } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { langAttrs } from "@/lib/i18n/locale";
 import { modeList, type SimKey } from "./data";
 import { CaptureStage, PartialOverviewNote, type FocusPoint } from "./evidence-frame";
 import { FocusPathList } from "./focus-path-list";
+import { PriorityList, StaleScoringNotice } from "./summary-band";
+import {
+  scoringIsCurrent,
+  standingOf,
+  STANDING_LABEL,
+  STANDING_NOTE,
+  STANDING_TONE,
+} from "@/lib/report/standing";
+import { focusPathLines } from "@/lib/report/focus-coverage";
 import { type ActiveCapture, type InspectRegion, type Layer, type MarkerView } from "./report-ui";
 import { RegionInspector } from "./region-inspector";
 import { useT } from "@/lib/i18n/provider";
@@ -84,6 +86,7 @@ export function MobileReport({
 }) {
   const t = useT();
   const focusStops = result.keyboard?.focusPath ?? [];
+  const coverage = result.keyboard ? focusPathLines(result.keyboard, t) : { line: "", notes: [] };
   return (
     <div className="pb-20">
       <div className="sticky top-15.5 z-20 border-b border-border bg-surface px-4 py-3">
@@ -93,20 +96,25 @@ export function MobileReport({
             {(result.durationMs / 1000).toFixed(1)}s
           </span>
         </div>
-        <div className="mt-2 flex items-center gap-3">
-          <span className="font-cond text-[38px] leading-none text-ink tabular-nums">
-            {result.score}
-          </span>
-          <div className="flex-1">
-            <Ruler
-              t={t}
-              variant="score"
-              score={result.score}
-              deductions={breakdown.deductions}
-              height={20}
-            />
-          </div>
+        <div className="mt-2">
+          <p
+            className="font-cond text-[30px] leading-[1.05]"
+            style={{ color: STANDING_TONE[standingOf(result.counts)] }}
+          >
+            {t(STANDING_LABEL[standingOf(result.counts)])}
+          </p>
+          <p className="mt-0.5 text-[12.5px] leading-normal text-body">
+            {t(STANDING_NOTE[standingOf(result.counts)])}
+          </p>
         </div>
+        <div className="mt-2.5">
+          <PriorityList breakdown={breakdown} t={t} />
+        </div>
+        {!scoringIsCurrent(result) && (
+          <div className="mt-2.5">
+            <StaleScoringNotice t={t} />
+          </div>
+        )}
         <div className="mt-2.5">
           <WcagChips model={wcag} t={t} />
         </div>
@@ -249,6 +257,7 @@ export function MobileReport({
                 <FocusPathList
                   t={t}
                   stops={focusStops}
+                  coverage={coverage}
                   located={locatedStops}
                   selected={selectedStop}
                   onSelect={(n) => {

@@ -132,7 +132,14 @@ const NEAR_DOC_PX = 800;
 
 const NEAR_PCT = 20;
 
-export type FocusSegment = { x1: number; y1: number; x2: number; y2: number };
+export type FocusSegment = {
+  from: number;
+  to: number;
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+};
 
 export type FocusBreak = { at: number; to: number; direction: "down" | "up" };
 
@@ -152,7 +159,7 @@ export function focusPathShape(points: FocusPoint[], nearDocPx = NEAR_DOC_PX): F
     const to = points[i];
 
     if (near(from, to, nearDocPx)) {
-      segments.push({ x1: from.cx, y1: from.cy, x2: to.cx, y2: to.cy });
+      segments.push({ from: from.n, to: to.n, x1: from.cx, y1: from.cy, x2: to.cx, y2: to.cy });
       continue;
     }
 

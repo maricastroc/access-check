@@ -28,6 +28,7 @@ export type PanelMessage =
   | { type: "panel:audit"; deep: boolean }
   | { type: "panel:focus-path" }
   | HighlightRequest
+  | { type: "panel:continue-walk" }
   | { type: "panel:clear-highlight" }
   | { type: "panel:restore-scroll" }
   | { type: "panel:state"; state: PanelState };

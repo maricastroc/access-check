@@ -47,9 +47,10 @@ const contrast: ScanViolation = {
 describe("buildReportMarkdown", () => {
   const md = buildReportMarkdown(result({ violations: [contrast] }));
 
-  it("labels the score as internal priority, not conformance", () => {
-    expect(md).toContain("Internal priority score");
-    expect(md).toMatch(/71 \/ 100/);
+  it("leads with where the page stands, not with a grade", () => {
+    expect(md).toContain("Where this page stands");
+    expect(md).toContain("Failing");
+    expect(md).not.toMatch(/\d+ \/ 100/);
   });
 
   it("gives the separate WCAG reading with AAA not evaluated", () => {
@@ -75,5 +76,53 @@ describe("buildReportMarkdown", () => {
 
   it("slugifies the filename from the host", () => {
     expect(reportMarkdownFilename(result({}))).toBe("accesscheck-aurora-coffee-com.md");
+  });
+});
+
+describe("where a reading-order observation lands in the report", () => {
+  const withGuess = result({
+    violations: [contrast],
+    keyboard: {
+      totalStops: 12,
+      totalInteractive: 12,
+      reachableInteractive: 12,
+      truncated: false,
+      cycleComplete: true,
+      startedAtTop: true,
+      stoppedBy: "cycle",
+      focusPath: [],
+      findings: [
+        {
+          id: "focus-order",
+          severity: "moderate",
+          evidence: "heuristic",
+          criterion: "WCAG 2.4.3 · Focus Order",
+          title: "Focus order jumps out of sequence 2 times",
+          desc: "desc",
+          fix: "fix",
+          count: 2,
+          selectors: [".a"],
+          occurrences: [],
+        },
+      ],
+    },
+  });
+
+  const md = buildReportMarkdown(withGuess);
+
+  it("keeps it out of the list of failures", () => {
+    const failures = md.slice(md.indexOf("## Findings"), md.indexOf("## Observations"));
+    expect(failures).toContain("Text below the minimum contrast");
+    expect(failures).not.toContain("Focus order jumps out of sequence");
+  });
+
+  it("gives it its own section, said to be not counted here", () => {
+    const section = md.slice(md.indexOf("## Observations"));
+    expect(section).toContain("Focus order jumps out of sequence");
+    expect(section).toContain("not counted here");
+  });
+
+  it("puts the failures before the observations", () => {
+    expect(md.indexOf("## Findings")).toBeLessThan(md.indexOf("## Observations"));
   });
 });

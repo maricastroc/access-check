@@ -42,7 +42,7 @@ describe("analyzeTargetSize", () => {
       },
       t,
     );
-    const f = r.findings.find((x) => x.id === "target-size");
+    const f = r.findings.find((x) => x.id === "target-size-crowding");
     expect(f?.count).toBe(2);
     expect(f?.selectors).toEqual(expect.arrayContaining(["#a", "#b"]));
     expect(f?.severity).toBe("serious");
@@ -55,7 +55,7 @@ describe("analyzeTargetSize", () => {
       },
       t,
     );
-    const f = r.findings.find((x) => x.id === "target-size");
+    const f = r.findings.find((x) => x.id === "target-size-crowding");
     expect(f?.count).toBe(1);
     expect(f?.selectors).toEqual(["#small"]);
   });
@@ -77,7 +77,7 @@ describe("analyzeTargetSize", () => {
       },
       t,
     );
-    expect(r.findings.find((x) => x.id === "target-size")?.count).toBe(2);
+    expect(r.findings.find((x) => x.id === "target-size-crowding")?.count).toBe(2);
   });
 
   it("ignores zero-size targets", () => {
@@ -93,7 +93,9 @@ describe("analyzeTargetSize", () => {
   it("caps the reported selectors but keeps the full count", () => {
     const targets: TargetRect[] = [];
     for (let i = 0; i < 12; i++) targets.push(target(`#t-${i}`, i * 10, 0, 16, 16));
-    const f = analyzeTargetSize({ targets }, t).findings.find((x) => x.id === "target-size");
+    const f = analyzeTargetSize({ targets }, t).findings.find(
+      (x) => x.id === "target-size-crowding",
+    );
     expect(f?.count).toBe(12);
     expect(f?.selectors.length).toBe(8);
   });

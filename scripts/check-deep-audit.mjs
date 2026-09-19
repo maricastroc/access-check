@@ -85,6 +85,23 @@ const PAGES = {
       }, 100);
     </script>
   </main>`,
+  "/reversed": `<main>
+    <div class="reversed">
+      <a href="/one">First in the DOM, painted on the right</a>
+      <a href="/two">Second in the DOM, painted on the left</a>
+    </div>
+  </main>`,
+  "/scroller": `<main>
+    <div style="height:400px">Tall block above the list.</div>
+    <div id="list" tabindex="0" aria-label="Rows">
+      ${Array.from(
+        { length: 8 },
+        (_, i) =>
+          `<div class="row"><a href="/row-${i}">Row ${i}</a><button type="button">Save ${i}</button></div>`,
+      ).join("")}
+    </div>
+    <a href="/after">After the list</a>
+  </main>`,
   "/several": `<main>
     <a href="/one" style="outline:none">One</a>
     <a href="/two" style="outline:none">Two</a>
@@ -102,7 +119,10 @@ const server = createServer((req, res) => {
 main.dark { background: #101014; color: #f5f5f5; padding: 24px; }
 main.dark a { color: #9ecbff; display: block; margin: 8px 0; }
 @keyframes ac-in { from { opacity: 0 } to { opacity: 1 } }
-#late > * { animation: ac-in 700ms ease-out; }</style>
+#late > * { animation: ac-in 700ms ease-out; }
+#list { height: 120px; overflow-y: auto; border: 1px solid #111827; }
+.row { display: flex; align-items: center; gap: 24px; height: 120px; }
+.reversed { display: flex; flex-direction: row-reverse; gap: 24px; }</style>
 </head><body>${body}</body></html>`);
 });
 await new Promise((r) => server.listen(0, "127.0.0.1", r));
@@ -132,6 +152,7 @@ try {
       html: document.documentElement.outerHTML,
       scroll: { x: window.scrollX, y: window.scrollY },
       active: document.activeElement?.tagName ?? null,
+      listTop: document.getElementById("list")?.scrollTop ?? null,
     }));
 
     await sw.evaluate(async () => {
@@ -173,6 +194,7 @@ try {
       html: document.documentElement.outerHTML,
       scroll: { x: window.scrollX, y: window.scrollY },
       active: document.activeElement?.tagName ?? null,
+      listTop: document.getElementById("list")?.scrollTop ?? null,
     }));
 
     return { shallow: shallow.panelState?.state, deep: watched.state, before, after, watched };
@@ -246,6 +268,144 @@ try {
   check(
     order.deep?.result?.keyboard?.findings.some((f) => f.id === "positive-tabindex"),
     "a positive tabindex was not reported",
+  );
+
+  const reversed = await audit("/reversed");
+  const reversedKb = reversed.deep?.result?.keyboard;
+  const reversedPanel = await sw.evaluate(() => chrome.storage.session.get("panelState"));
+  const guess = reversedKb?.findings.find((f) => f.id === "focus-order");
+  console.log(
+    "a row painted in reverse:",
+    JSON.stringify({
+      findings: reversedKb?.findings.map((f) => f.id),
+      evidence: guess?.evidence,
+      counts: reversedPanel.panelState?.state?.result?.counts,
+      score: reversedPanel.panelState?.state?.result?.score,
+    }),
+  );
+  check(!!guess, "a genuinely reversed row was not reported at all");
+  check(
+    guess?.evidence === "heuristic",
+    `the reading-order guess is classed ${guess?.evidence} instead of heuristic`,
+  );
+  check(
+    reversedPanel.panelState?.state?.result?.counts?.moderate === 0,
+    "a reading-order guess was counted among the failures",
+  );
+  check(
+    reversedPanel.panelState?.state?.result?.counts?.needsReview === 1,
+    "a reading-order guess was not counted apart",
+  );
+  check(
+    reversedPanel.panelState?.state?.result?.score === 100,
+    `a reading-order guess moved the score to ${reversedPanel.panelState?.state?.result?.score}`,
+  );
+
+  const scroller = await audit("/scroller");
+  const scrollerKb = scroller.deep?.result?.keyboard;
+  console.log(
+    "list that scrolls inside itself:",
+    JSON.stringify({
+      stops: scrollerKb?.focusPath.length,
+      findings: scrollerKb?.findings.map((f) => f.id),
+      listTop: scroller.after.listTop,
+    }),
+  );
+  check(
+    scrollerKb?.focusPath.length >= 16,
+    `expected the walk to reach every row, got ${scrollerKb?.focusPath.length}`,
+  );
+  check(
+    !scrollerKb?.findings.some((f) => f.id === "focus-order"),
+    "a list in linear order was reported as out of sequence",
+  );
+  check(
+    scroller.before.listTop === scroller.after.listTop,
+    `the walk left the inner container at ${scroller.after.listTop}px instead of ${scroller.before.listTop}px`,
+  );
+
+  const capped = await audit("/many");
+  const cappedKb = capped.deep?.result?.keyboard;
+  const cappedReach = cappedKb?.findings.find((f) => f.id === "unreachable-control");
+  console.log(
+    "a walk that hit its cap:",
+    JSON.stringify({
+      stops: cappedKb?.focusPath.length,
+      interactive: cappedKb?.totalInteractive,
+      stoppedBy: cappedKb?.stoppedBy,
+      truncated: cappedKb?.truncated,
+      reach: cappedReach && { evidence: cappedReach.evidence, count: cappedReach.count },
+      score: capped.deep?.result?.score,
+    }),
+  );
+  check(cappedKb?.truncated === true, "the eighty-button page did not hit the cap");
+  check(!!cappedReach, "a capped walk said nothing about the controls it never reached");
+  check(
+    cappedReach?.evidence === "heuristic",
+    `an unfinished walk claims ${cappedReach?.evidence} evidence about reach`,
+  );
+  const cappedScore = capped.deep?.result?.score;
+  const cappedCounts = capped.deep?.result?.counts;
+
+  const rounds = [cappedKb];
+  for (let round = 0; round < 3 && rounds[rounds.length - 1]?.truncated; round++) {
+    await sw.evaluate(async () => {
+      await globalThis.__accessCheckContinueWalk();
+      await new Promise((r) => setTimeout(r, 400));
+    });
+    const stored = await sw.evaluate(() => chrome.storage.session.get("panelState"));
+    rounds.push(stored.panelState?.state?.result?.keyboard);
+  }
+  const finished = rounds[rounds.length - 1];
+  console.log(
+    "carrying the same walk on:",
+    JSON.stringify({
+      rounds: rounds.map((r) => r?.focusPath.length),
+      cycleComplete: finished?.cycleComplete,
+      truncated: finished?.truncated,
+      startedAtTop: finished?.startedAtTop,
+      stillUnreached: finished?.findings.some((f) => f.id === "unreachable-control"),
+      firstStop: finished?.focusPath[0]?.label,
+    }),
+  );
+  check(
+    finished?.focusPath.length > cappedKb?.focusPath.length,
+    "continuing the walk added no stops",
+  );
+  check(finished?.cycleComplete === true, "the walk never came round, even after continuing");
+  check(finished?.truncated === false, "the finished walk is still marked truncated");
+  check(finished?.startedAtTop === true, "continuing the walk lost the fact it started at the top");
+  check(
+    finished?.focusPath[0]?.label === "Button 0",
+    `the continued walk no longer starts at the first control, it starts at ${finished?.focusPath[0]?.label}`,
+  );
+  check(
+    finished?.focusPath.every((s, i) => s.n === i + 1),
+    "the continued walk numbers its stops out of sequence",
+  );
+  check(
+    !finished?.findings.some((f) => f.id === "unreachable-control"),
+    "a finished walk still says controls were never reached",
+  );
+
+  const finishedState = await sw.evaluate(() => chrome.storage.session.get("panelState"));
+  const finishedResult = finishedState.panelState?.state?.result;
+  console.log(
+    "what the unfinished reading charged:",
+    JSON.stringify({
+      cappedScore,
+      finishedScore: finishedResult?.score,
+      cappedNeedsReview: cappedCounts?.needsReview,
+      finishedNeedsReview: finishedResult?.counts?.needsReview,
+    }),
+  );
+  check(
+    cappedScore === finishedResult?.score,
+    `the unfinished walk charged points: ${cappedScore} while capped, ${finishedResult?.score} once finished`,
+  );
+  check(
+    cappedCounts?.needsReview > (finishedResult?.counts?.needsReview ?? 0),
+    "the capped walk did not count its unverified reach apart",
   );
 
   const many = await audit("/many");

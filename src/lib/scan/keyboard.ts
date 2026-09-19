@@ -1,8 +1,8 @@
 import type { Page } from "playwright-core";
-import type { Severity } from "./types";
+import type { EvidenceClass, Severity } from "./types";
 import type { FocusProbe, FocusReach, FocusStyle } from "./dom/focus";
 import { severityOrder } from "./derive";
-import type { Translate } from "../i18n/t";
+import type { MessageKey, Translate } from "../i18n/t";
 
 export type KeyboardIssueId =
   | "focus-not-visible"
@@ -18,6 +18,10 @@ export type FocusRect = {
   h: number;
   docX?: number;
   docY?: number;
+  flowX?: number;
+  flowY?: number;
+  scrolled?: boolean;
+  flowContext?: string;
 };
 
 export type FocusStop = {
@@ -60,6 +64,7 @@ export type KeyboardOccurrence = {
 export type KeyboardFinding = {
   id: KeyboardIssueId;
   severity: Severity;
+  evidence: EvidenceClass;
   criterion: string;
   title: string;
   desc: string;
@@ -104,11 +109,16 @@ const CRITERION: Record<KeyboardIssueId, string> = {
 
 const MAX_FINDING_SELECTORS = 8;
 
+const MAX_FINDING_OCCURRENCES = 24;
+
+export type OrderBasis = "flow" | "document" | "viewport";
+
 export type OrderJump = {
   from: number;
   to: number;
   selector: string;
   direction: "up" | "back";
+  basis: OrderBasis;
 };
 
 export function readingOrderInversions(stops: FocusStop[]): {
@@ -124,6 +134,12 @@ export function readingOrderInversions(stops: FocusStop[]): {
   );
 
   type Point = { x: number; y: number; h: number };
+  type Reading = { a: Point; b: Point; band: number; basis: OrderBasis };
+
+  const flowPoint = (s: FocusStop): Point | null =>
+    s.rect && s.rect.flowX != null && s.rect.flowY != null
+      ? { x: s.rect.flowX, y: s.rect.flowY, h: s.rect.h }
+      : null;
 
   const docPoint = (s: FocusStop): Point | null =>
     s.rect && s.rect.docX != null && s.rect.docY != null
@@ -136,6 +152,38 @@ export function readingOrderInversions(stops: FocusStop[]): {
     h: s.height ?? 0,
   });
 
+  const sameScrollContext = (a: FocusStop, b: FocusStop): boolean =>
+    (a.rect?.flowContext ?? "") === (b.rect?.flowContext ?? "");
+
+  const insideAContainer = (s: FocusStop): boolean => s.rect?.scrolled === true;
+
+  const readingOf = (
+    prev: FocusStop & { top: number; left: number },
+    cur: FocusStop & { top: number; left: number },
+  ): Reading | null => {
+    const prevFlow = flowPoint(prev);
+    const curFlow = flowPoint(cur);
+    if (prevFlow && curFlow) {
+      if (!sameScrollContext(prev, cur)) return null;
+      return { a: prevFlow, b: curFlow, band: BAND_PX, basis: "flow" };
+    }
+
+    if (insideAContainer(prev) || insideAContainer(cur)) return null;
+
+    const prevDoc = docPoint(prev);
+    const curDoc = docPoint(cur);
+    if (prevDoc && curDoc) {
+      return { a: prevDoc, b: curDoc, band: BAND_PX, basis: "document" };
+    }
+
+    return {
+      a: viewportPoint(prev),
+      b: viewportPoint(cur),
+      band: BAND_PCT,
+      basis: "viewport",
+    };
+  };
+
   const sameRow = (a: Point, b: Point, band: number) => {
     if (a.h <= 0 || b.h <= 0) return Math.abs(a.y - b.y) <= band;
     const overlap = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
@@ -147,13 +195,9 @@ export function readingOrderInversions(stops: FocusStop[]): {
   for (let i = 1; i < positioned.length; i++) {
     const prev = positioned[i - 1];
     const cur = positioned[i];
-
-    const prevDoc = docPoint(prev);
-    const curDoc = docPoint(cur);
-    const inDoc = prevDoc !== null && curDoc !== null;
-    const a = inDoc ? prevDoc : viewportPoint(prev);
-    const b = inDoc ? curDoc : viewportPoint(cur);
-    const band = inDoc ? BAND_PX : BAND_PCT;
+    const reading = readingOf(prev, cur);
+    if (reading === null) continue;
+    const { a, b, band, basis } = reading;
 
     let direction: OrderJump["direction"] | null = null;
     if (sameRow(a, b, band)) {
@@ -163,7 +207,7 @@ export function readingOrderInversions(stops: FocusStop[]): {
 
     if (seen.has(cur.selector)) continue;
     seen.add(cur.selector);
-    jumps.push({ from: prev.n, to: cur.n, selector: cur.selector, direction });
+    jumps.push({ from: prev.n, to: cur.n, selector: cur.selector, direction, basis });
   }
 
   return { count: jumps.length, selectors: jumps.map((j) => j.selector), jumps };
@@ -252,28 +296,53 @@ function invisibleReason(stop: FocusStop, t: Translate): string {
   return t("keyboard.invisible.nothingChanged", { unchanged: unchanged.join("; ") });
 }
 
+function measuredOn(
+  stop: FocusStop,
+  basis: OrderBasis,
+  axis: OrderJump["direction"],
+): number | null {
+  const rect = stop.rect;
+  if (!rect) return null;
+  const sideways = axis === "back";
+  if (basis === "flow") return (sideways ? rect.flowX : rect.flowY) ?? null;
+  if (basis === "document") return (sideways ? rect.docX : rect.docY) ?? null;
+  return sideways ? rect.x : rect.y;
+}
+
+const MEASURED_KEY: Record<OrderBasis, Record<OrderJump["direction"], MessageKey>> = {
+  flow: { back: "keyboard.jump.measuredAcross", up: "keyboard.jump.measuredDown" },
+  document: { back: "keyboard.jump.measuredAcross", up: "keyboard.jump.measuredDown" },
+  viewport: { back: "keyboard.jump.measuredFromLeft", up: "keyboard.jump.measured" },
+};
+
 function jumpReason(jump: OrderJump, byStop: Map<number, FocusStop>, t: Translate): string {
   const from = byStop.get(jump.from);
   const to = byStop.get(jump.to);
   const movement = jump.direction === "up" ? t("keyboard.jump.up") : t("keyboard.jump.back");
+  const onPage = jump.basis !== "viewport";
 
   const where =
-    from && to
-      ? t("keyboard.jump.where", {
-          fromRegion: region(from.top, t),
-          fromLabel: from.label,
-          toRegion: region(to.top, t),
-          toLabel: to.label,
-        })
-      : "";
+    !from || !to
+      ? ""
+      : onPage
+        ? t("keyboard.jump.whereLabels", { fromLabel: from.label, toLabel: to.label })
+        : t("keyboard.jump.where", {
+            fromRegion: region(from.top, t),
+            fromLabel: from.label,
+            toRegion: region(to.top, t),
+            toLabel: to.label,
+          });
+
+  const a = from ? measuredOn(from, jump.basis, jump.direction) : null;
+  const b = to ? measuredOn(to, jump.basis, jump.direction) : null;
 
   const measured =
-    from?.rect && to?.rect
-      ? t("keyboard.jump.measured", {
-          from: Math.round(from.rect.y),
-          to: Math.round(to.rect.y),
-        })
-      : "";
+    a === null || b === null
+      ? ""
+      : t(MEASURED_KEY[jump.basis][jump.direction], {
+          from: Math.round(a),
+          to: Math.round(b),
+        });
 
   return t("keyboard.jump.reason", { from: jump.from, to: jump.to, movement, where, measured });
 }
@@ -287,6 +356,7 @@ export function buildKeyboardReport(raw: RawKeyboard, t: Translate): KeyboardRep
     findings.push({
       id: "keyboard-trap",
       severity: "critical",
+      evidence: "measured",
       criterion: CRITERION["keyboard-trap"],
       title: t("keyboard.trap.title"),
       desc: t("keyboard.trap.desc"),
@@ -299,25 +369,33 @@ export function buildKeyboardReport(raw: RawKeyboard, t: Translate): KeyboardRep
     });
   }
 
-  if (raw.startedAtTop && raw.cycleComplete && !raw.truncated && raw.unreachable.length > 0) {
+  if (raw.unreachable.length > 0) {
     const n = raw.unreachable.length;
+    const conclusive = raw.startedAtTop && raw.cycleComplete && !raw.truncated;
     findings.push({
       id: "unreachable-control",
-      severity: "serious",
+      severity: conclusive ? "serious" : "moderate",
+      evidence: conclusive ? "measured" : "heuristic",
       criterion: CRITERION["unreachable-control"],
-      title: t("keyboard.unreachable.title", { count: n }),
-      desc: t("keyboard.unreachable.desc", { count: n }),
-      fix: t("keyboard.unreachable.fix"),
+      title: conclusive
+        ? t("keyboard.unreachable.title", { count: n })
+        : t("keyboard.notReached.title", { count: n }),
+      desc: conclusive
+        ? t("keyboard.unreachable.desc", { count: n })
+        : t("keyboard.notReached.desc", { count: n }),
+      fix: conclusive ? t("keyboard.unreachable.fix") : t("keyboard.notReached.fix"),
       count: n,
       selectors: raw.unreachable.slice(0, MAX_FINDING_SELECTORS),
-      occurrences: raw.unreachable.map((selector) =>
-        occurrenceForSelector(
-          selector,
-          stops,
-          t("keyboard.unreachable.occurrence"),
-          "needs-review",
+      occurrences: raw.unreachable
+        .slice(0, MAX_FINDING_OCCURRENCES)
+        .map((selector) =>
+          occurrenceForSelector(
+            selector,
+            stops,
+            conclusive ? t("keyboard.unreachable.occurrence") : t("keyboard.notReached.occurrence"),
+            "needs-review",
+          ),
         ),
-      ),
     });
   }
 
@@ -327,6 +405,7 @@ export function buildKeyboardReport(raw: RawKeyboard, t: Translate): KeyboardRep
     findings.push({
       id: "focus-not-visible",
       severity: "serious",
+      evidence: "measured",
       criterion: CRITERION["focus-not-visible"],
       title: t("keyboard.invisible.title", { count: n }),
       desc: t("keyboard.invisible.desc", { count: n }),
@@ -342,6 +421,7 @@ export function buildKeyboardReport(raw: RawKeyboard, t: Translate): KeyboardRep
     findings.push({
       id: "focus-order",
       severity: "moderate",
+      evidence: "heuristic",
       criterion: CRITERION["focus-order"],
       title: t("keyboard.order.title", { count: inv.count }),
       desc: t("keyboard.order.desc"),
@@ -367,6 +447,7 @@ export function buildKeyboardReport(raw: RawKeyboard, t: Translate): KeyboardRep
     findings.push({
       id: "positive-tabindex",
       severity: "moderate",
+      evidence: "measured",
       criterion: CRITERION["positive-tabindex"],
       title: t("keyboard.tabindex.title", { count: n }),
       desc: t("keyboard.tabindex.desc"),
@@ -413,6 +494,7 @@ function hasFocusIndicator(focused: FocusStyle, base: FocusStyle): boolean {
 export type FocusPathIO = {
   start(): Promise<void>;
   focusFirst(): Promise<"focused" | "empty" | "failed">;
+  focusSelector(selector: string): Promise<boolean>;
   relativeToSeed(): Promise<"before" | "at" | "after" | "unknown">;
   pressTab(): Promise<void>;
   pressShiftTab(): Promise<void>;
@@ -446,21 +528,38 @@ async function rewindToTop(io: FocusPathIO): Promise<Rewind> {
 export async function collectFocusPath(
   io: FocusPathIO,
   viewport: Viewport,
-  opts: { maxMs?: number; maxStops?: number } = {},
+  opts: {
+    maxMs?: number;
+    maxStops?: number;
+    resumeFrom?: Pick<RawKeyboard, "focusPath" | "startedAtTop">;
+  } = {},
 ): Promise<RawKeyboard> {
   const maxStops = opts.maxStops ?? MAX_TAB_STOPS;
   const deadline =
     opts.maxMs && opts.maxMs > 0 ? Date.now() + opts.maxMs * 0.6 : Number.POSITIVE_INFINITY;
 
   await io.start();
-  const rewind = await rewindToTop(io);
+
+  const earlier = opts.resumeFrom?.focusPath ?? [];
+  const lastEarlier = earlier[earlier.length - 1];
+  const resumed = lastEarlier ? await io.focusSelector(lastEarlier.selector) : false;
+  const rewind = resumed
+    ? { startedAtTop: opts.resumeFrom!.startedAtTop, startAtSeed: false }
+    : await rewindToTop(io);
+  const prior = resumed ? earlier : [];
+  const firstSelector = prior[0]?.selector ?? null;
 
   const stops: FocusProbe[] = [];
   let trapSelector: string | null = null;
   let cycleComplete = false;
   let truncated = false;
   let stoppedBy: WalkEnd = "cycle";
-  let prevSelector: string | null = null;
+  let prevSelector: string | null = resumed ? lastEarlier!.selector : null;
+
+  const seenFirst = (selector: string) =>
+    firstSelector !== null
+      ? selector === firstSelector
+      : stops.length > 0 && selector === stops[0].selector;
 
   try {
     for (let i = 0; i < maxStops; i++) {
@@ -479,7 +578,7 @@ export async function collectFocusPath(
       }
 
       if (prevSelector !== null && info.selector === prevSelector) {
-        if (stops.length === 1 && info.selector === stops[0].selector) {
+        if (prior.length === 0 && stops.length === 1 && info.selector === stops[0].selector) {
           cycleComplete = true;
           stoppedBy = "cycle";
           break;
@@ -495,7 +594,7 @@ export async function collectFocusPath(
         break;
       }
 
-      if (stops.length > 0 && info.selector === stops[0].selector) {
+      if ((prior.length > 0 || stops.length > 0) && seenFirst(info.selector)) {
         cycleComplete = true;
         break;
       }
@@ -513,14 +612,14 @@ export async function collectFocusPath(
     const baseStyles = unique.length === 0 ? {} : await io.readBaseStyles(unique);
     const reach = await io.readReach();
 
-    const focusPath: FocusStop[] = stops.map((s, i) => {
+    const walked: FocusStop[] = stops.map((s, i) => {
       const base = baseStyles[s.selector];
       const focusVisible = base ? hasFocusIndicator(s.style, base) : true;
       const r = s.rect;
       const onScreen =
         r !== null && r.y >= 0 && r.y <= viewport.height && r.x >= 0 && r.x <= viewport.width;
       return {
-        n: i + 1,
+        n: prior.length + i + 1,
         selector: s.selector,
         label: s.label,
         tag: s.tag,
@@ -539,15 +638,19 @@ export async function collectFocusPath(
       };
     });
 
+    const focusPath = [...prior, ...walked];
+    const visited = new Set(focusPath.map((s) => s.selector));
+    const unreachable = reach.unreachable.filter((selector) => !visited.has(selector));
+
     return {
       focusPath,
       startedAtTop: rewind.startedAtTop,
       stoppedBy,
       trapSelector,
       positiveTabindex: reach.positiveTabindex,
-      unreachable: reach.unreachable,
+      unreachable,
       totalInteractive: reach.totalInteractive,
-      reachableInteractive: reach.reachableInteractive,
+      reachableInteractive: Math.max(0, reach.totalInteractive - unreachable.length),
       truncated,
       cycleComplete,
     };
@@ -566,6 +669,8 @@ export async function collectKeyboard(
     {
       start: () => page.evaluate(() => window.__accessCheckDom!.focusProbeStart()),
       focusFirst: () => page.evaluate(() => window.__accessCheckDom!.focusFirstStop()),
+      focusSelector: (selector) =>
+        page.evaluate((sel) => window.__accessCheckDom!.focusSelector(sel), selector),
       relativeToSeed: () => page.evaluate(() => window.__accessCheckDom!.focusRelativeToSeed()),
       pressTab: () => page.keyboard.press("Tab"),
       pressShiftTab: () => page.keyboard.press("Shift+Tab"),

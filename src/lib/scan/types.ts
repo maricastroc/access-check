@@ -42,6 +42,8 @@ export type FixVerification = "verified" | "failed" | "unchecked";
 
 export type FixConfidence = "deterministic" | "contextual" | "suggested";
 
+export type EvidenceClass = "deterministic" | "measured" | "heuristic";
+
 export type FixGroup = {
   text: string;
   code?: string;
@@ -62,6 +64,7 @@ export type ScanViolation = {
   fixCode?: string;
   fixConfidence?: FixConfidence;
   nodes: number;
+  evidence?: EvidenceClass;
   fixGroups?: FixGroup[];
   verification?: FixVerification;
   contexts?: string[];
@@ -150,6 +153,7 @@ export type ScanResult = {
     passed: number;
     bestPractice: number;
     manualReview: number;
+    needsReview?: number;
   };
   summary: string;
   violations: ScanViolation[];

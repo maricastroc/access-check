@@ -80,6 +80,8 @@ const RULE_CATEGORY: Record<string, Category> = {
   "keyboard-trap": "keyboard-trap",
   "positive-tabindex": "tabindex",
   "unreachable-control": "reachable",
+  "target-size": "target-size",
+  "target-size-crowding": "target-size",
 };
 
 export function categoryOf(ruleId: string, kind?: string): Category {

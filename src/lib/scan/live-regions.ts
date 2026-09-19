@@ -36,6 +36,7 @@ function group(
   return {
     id,
     severity,
+    evidence: "measured",
     criterion: t("audit.live.criterion"),
     title: t(keys.title, { count }),
     desc: t(keys.desc, { count }),

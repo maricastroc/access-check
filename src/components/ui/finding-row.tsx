@@ -100,6 +100,12 @@ export function FindingRow({
         </span>
       </div>
 
+      {finding.evidence === "heuristic" && (
+        <p className="mt-2 inline-flex items-center gap-1.5 border border-dashed border-border px-1.5 py-0.5 font-cond text-[11px] tracking-widest text-muted uppercase">
+          {t("evidence.heuristic.tag")}
+        </p>
+      )}
+
       <h3 className="mt-2 text-[15.5px] leading-snug font-semibold text-ink">{finding.title}</h3>
 
       <p className="mt-1.5 flex flex-wrap items-center gap-x-1.5 text-[12.5px] leading-normal text-muted">

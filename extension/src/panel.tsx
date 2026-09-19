@@ -14,6 +14,14 @@ import type { ReportLocale } from "../../src/lib/i18n/locale";
 import { translator } from "../../src/lib/i18n/t";
 import { auditScope, focusPathLines } from "./coverage";
 import {
+  scoringIsCurrent,
+  standingOf,
+  STANDING_LABEL,
+  STANDING_NOTE,
+  STANDING_TONE,
+  type Standing,
+} from "../../src/lib/report/standing";
+import {
   browserLocale,
   FOLLOW_BROWSER,
   localeOf,
@@ -90,18 +98,27 @@ function Shell({
   );
 }
 
-function StickyBar({ title, score, onTop }: { title: string; score?: number; onTop?: () => void }) {
+function StickyBar({
+  title,
+  standing,
+  onTop,
+}: {
+  title: string;
+  standing?: Standing;
+  onTop?: () => void;
+}) {
   return (
     <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-canvas px-3 py-2">
       <h1 className="min-w-0 flex-1 truncate text-[13px] font-semibold text-ink">{title}</h1>
-      {typeof score === "number" && onTop && (
+      {standing && onTop && (
         <button
           type="button"
           onClick={onTop}
-          className="shrink-0 cursor-pointer border border-border bg-surface px-2 py-1 font-cond text-[13px] font-semibold text-ink tabular-nums hover:bg-band"
+          className="shrink-0 cursor-pointer border border-border bg-surface px-2 py-1 font-cond text-[12px] font-semibold hover:bg-band"
+          style={{ color: STANDING_TONE[standing] }}
         >
-          {score}
-          <span className="sr-only">{t("panel.scoreOutOf")}</span>
+          {t(STANDING_LABEL[standing])}
+          <span className="sr-only">{t("panel.backToSummary")}</span>
         </button>
       )}
     </div>
@@ -119,12 +136,15 @@ function Header({ result }: { result: ScanResult }) {
       {scope.lead && (
         <p className="mt-0.5 text-[12.5px] font-semibold text-moderate-text">{scope.lead}</p>
       )}
-      <div className="mt-1 flex items-baseline gap-2">
-        <span className="font-cond text-[40px] leading-none text-ink tabular-nums">
-          {result.score}
-        </span>
-        <span className="text-[12.5px] text-muted">{t("panel.perHundred")}</span>
-      </div>
+      <p
+        className="mt-1 font-cond text-[30px] leading-[1.05]"
+        style={{ color: STANDING_TONE[standingOf(result.counts)] }}
+      >
+        {t(STANDING_LABEL[standingOf(result.counts)])}
+      </p>
+      <p className="mt-0.5 text-[12.5px] leading-normal text-body">
+        {t(STANDING_NOTE[standingOf(result.counts)])}
+      </p>
 
       <p className="mt-1.5 text-[12.5px] leading-normal font-medium text-moderate-text">
         {scope.summary}
@@ -141,6 +161,7 @@ function Header({ result }: { result: ScanResult }) {
             ["panel.count.passed", result.counts.passed],
             ["panel.count.bestPractice", result.counts.bestPractice],
             ["panel.count.manualReview", result.counts.manualReview],
+            ["panel.count.needsReview", result.counts.needsReview ?? 0],
           ] as const
         ).map(([label, n]) => (
           <div key={label} className="whitespace-nowrap">
@@ -150,6 +171,12 @@ function Header({ result }: { result: ScanResult }) {
         ))}
       </dl>
       <p className="mt-2.5 text-[13px] leading-[1.55] text-body">{result.summary}</p>
+      {!scoringIsCurrent(result) && (
+        <div className="mt-2.5 border border-dashed border-border bg-canvas px-2.5 py-2">
+          <SectionKicker as="h3">{t("standing.staleTitle")}</SectionKicker>
+          <p className="mt-1 text-[12.5px] leading-normal text-body">{t("standing.staleBody")}</p>
+        </div>
+      )}
     </section>
   );
 }
@@ -446,6 +473,14 @@ function Findings({
                     {t("panel.alsoFailsIn", { contexts: f.contexts.join(", ") })}
                   </p>
                 )}
+                {f.evidence === "heuristic" && (
+                  <div className="mt-2 border border-dashed border-border bg-canvas px-2.5 py-2">
+                    <SectionKicker as="h4">{t("evidence.heuristic.title")}</SectionKicker>
+                    <p className="mt-1 text-[12.5px] leading-normal text-body">
+                      {t("evidence.heuristic.body")}
+                    </p>
+                  </div>
+                )}
                 <Field label={t("panel.problem")}>
                   <p className="text-[13px] leading-[1.55] break-words text-body">{f.desc}</p>
                 </Field>
@@ -531,6 +566,7 @@ function FocusPath({
   complete,
   moved,
   onWalk,
+  onContinue,
   onShow,
   onStep,
   onToggleComplete,
@@ -545,6 +581,7 @@ function FocusPath({
   complete: boolean;
   moved: boolean;
   onWalk: () => void;
+  onContinue: () => void;
   onShow: () => void;
   onStep: (delta: number) => void;
   onToggleComplete: () => void;
@@ -645,6 +682,22 @@ function FocusPath({
           {t("panel.walkNow")}
         </button>
       )}
+
+      {walked && walked.truncated && (
+        <>
+          <button
+            type="button"
+            onClick={onContinue}
+            aria-describedby="continue-walk-note"
+            className={`${PRIMARY_BUTTON} mt-3`}
+          >
+            {t("panel.continueWalk")}
+          </button>
+          <p id="continue-walk-note" className="mt-1.5 text-[12px] leading-normal text-muted">
+            {t("panel.continueWalkNote", { stops })}
+          </p>
+        </>
+      )}
     </section>
   );
 }
@@ -684,6 +737,7 @@ function Report({
   onReaudit,
   onQuick,
   onWalk,
+  onContinue,
   draw,
   clear,
   restoreScroll,
@@ -693,6 +747,7 @@ function Report({
   onReaudit: () => void;
   onQuick: () => void;
   onWalk: () => void;
+  onContinue: () => void;
   draw: (
     marks: OverlayMark[],
     focus: number | null,
@@ -738,7 +793,7 @@ function Report({
     <>
       <StickyBar
         title={result.title}
-        score={result.score}
+        standing={standingOf(result.counts)}
         onTop={() => window.scrollTo({ top: 0, behavior: "instant" })}
       />
       <div className="px-3">
@@ -760,6 +815,7 @@ function Report({
           complete={complete}
           moved={moved}
           onWalk={onWalk}
+          onContinue={onContinue}
           onShow={() => void showPath(at)}
           onStep={(delta) => void showPath(((at - 1 + delta + marks.length) % marks.length) + 1)}
           onToggleComplete={() => {
@@ -968,6 +1024,7 @@ function Panel({
           onReaudit={() => void send({ type: "panel:audit", deep: true })}
           onQuick={() => void send({ type: "panel:audit", deep: false })}
           onWalk={() => void send({ type: "panel:focus-path" })}
+          onContinue={() => void send({ type: "panel:continue-walk" })}
           draw={draw}
           clear={() => void send({ type: "panel:clear-highlight" })}
           restoreScroll={() => void send({ type: "panel:restore-scroll" })}

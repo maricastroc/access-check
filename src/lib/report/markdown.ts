@@ -5,6 +5,7 @@ import { violationsBehindScore } from "../scan/scored";
 import { scoreBreakdown } from "./score";
 import { buildWcagReading } from "./wcag";
 import { severityLabel } from "./severity";
+import { standingOf, STANDING_LABEL, STANDING_NOTE, scoringIsCurrent } from "./standing";
 import { verdictLabel, verdictMessage } from "./verdict";
 import { translator, type Translate } from "../i18n/t";
 
@@ -72,36 +73,43 @@ export function buildReportMarkdown(result: ScanResult): string {
   const breakdown = scoreBreakdown(violationsBehindScore(result), result.score);
   const wcag = buildWcagReading(result.violations);
   const findings = buildFindings(result);
+  const standing = standingOf(result.counts);
 
   out.push(`# ${t("md.reportTitle", { name: result.title || host(result.finalUrl) })}`);
   out.push("");
   out.push(`- **${t("md.url")}:** ${result.finalUrl}`);
-  out.push(`- **${t("md.priorityScore")}:** ${result.score} / 100 _${t("md.priorityNote")}_`);
+  out.push(
+    `- **${t("standing.kicker")}:** ${t(STANDING_LABEL[standing])} — ${t(STANDING_NOTE[standing])}`,
+  );
   out.push(`- **${t("md.elementsScanned")}:** ${result.scannedElements}`);
   out.push(`- **${t("md.generated")}:** ${new Date().toISOString().slice(0, 10)}`);
   out.push("");
   out.push(`> ${result.summary}`);
   out.push("");
 
-  out.push(`## ${t("md.whereScoreCanGo")}`);
+  out.push(`## ${t("priority.kicker")}`);
   out.push("");
-  out.push(t("md.currentScore", { score: result.score }));
+  out.push(t("priority.note"));
   out.push("");
   if (breakdown.deductions.length > 0) {
-    out.push(`| ${t("md.colIfYouFix")} | ${t("md.colElements")} | ${t("md.colScoreRises")} |`);
+    out.push(`| ${t("md.colIfYouFix")} | ${t("md.colElements")} | ${t("md.colShare")} |`);
     out.push("| --- | --- | --- |");
     for (const d of breakdown.deductions) {
       out.push(
-        `| ${d.issues} ${severityLabel(d.severity, t).toLowerCase()} | ${d.elements} | ${d.ifFixed} (+${d.gain}) |`,
+        `| ${d.issues} ${severityLabel(d.severity, t).toLowerCase()} | ${d.elements} | ${t("priority.share", { share: d.share })} |`,
       );
     }
     out.push("");
+  } else {
+    out.push(t("priority.nothing"));
+    out.push("");
   }
-  out.push(
-    t("md.manualOutside", { count: result.counts.manualReview }) +
-      (breakdown.deductions.length > 1 ? t("md.nonLinear") : ""),
-  );
+  out.push(t("md.manualOutside", { count: result.counts.manualReview }));
   out.push("");
+  if (!scoringIsCurrent(result)) {
+    out.push(`> ${t("standing.staleTitle")}. ${t("standing.staleBody")}`);
+    out.push("");
+  }
 
   out.push(`## ${t("md.wcagReading")}`);
   out.push("");
@@ -124,13 +132,24 @@ export function buildReportMarkdown(result: ScanResult): string {
   out.push(`- **AAA:** ${t("md.aaaNote")}`);
   out.push("");
 
+  const failures = findings.filter((f) => f.evidence !== "heuristic");
+  const observations = findings.filter((f) => f.evidence === "heuristic");
+
   out.push(`## ${t("md.findings")}`);
   out.push("");
-  if (findings.length === 0) {
+  if (failures.length === 0) {
     out.push(t("md.noFailures"));
     out.push("");
   } else {
-    for (const f of findings) findingBlock(f, out, t);
+    for (const f of failures) findingBlock(f, out, t);
+  }
+
+  if (observations.length > 0) {
+    out.push(`## ${t("md.needsHumanCheck")}`);
+    out.push("");
+    out.push(t("md.needsHumanCheckNote"));
+    out.push("");
+    for (const f of observations) findingBlock(f, out, t);
   }
 
   if (result.incomplete.length > 0) {

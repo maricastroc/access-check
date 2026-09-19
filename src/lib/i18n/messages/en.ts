@@ -146,10 +146,11 @@ export const en = {
   "md.currentScore": "Current internal priority score: **{score} / 100**.",
   "md.colIfYouFix": "If you fix",
   "md.colElements": "Elements",
+  "md.colShare": "Share of what is left",
   "md.colScoreRises": "Score rises to",
   "md.manualOutside": {
-    one: "{count} manual-review item sits outside the score.",
-    other: "{count} manual-review items sit outside the score.",
+    one: "{count} manual-review item is not counted here.",
+    other: "{count} manual-review items are not counted here.",
   },
   "md.nonLinear":
     " Each row is the score after fixing that severity on its own; the score is non-linear, so fixing more than one recovers less than the rows added together.",
@@ -165,7 +166,7 @@ export const en = {
   "md.checksPassed": "Automated checks passed ({count})",
   "md.passedChecks": "Passed checks ({count})",
   "md.footer":
-    "_Fixes are applied and re-audited in a sandbox copy; the audited site is not altered. The score is an internal priority measure, not a declaration of conformance._",
+    "_Fixes are applied and re-audited in a sandbox copy; the audited site is not altered. This standing covers what a tool can decide on its own; it is not a declaration of conformance._",
   "md.bestPracticeNote": "**Best practice** (not a WCAG success criterion)",
   "md.passLabel": "Pass",
   "md.affected": "Affected",
@@ -218,7 +219,7 @@ export const en = {
   "md.manualNote": "Automated testing couldn't determine these \u2014 confirm them by hand.",
   "md.noFailures": "No automated failures on this page. This is coverage, not WCAG conformance.",
   "md.manualOutsideScore":
-    "Automated testing couldn't decide these, so confirm them by hand. They stay outside the score.",
+    "Automated testing couldn't decide these, so confirm them by hand. They are not counted here.",
 
   "diff.noneCleared": "No rules cleared since the last audit.",
   "diff.cleared": "Cleared",
@@ -392,9 +393,47 @@ export const en = {
     one: "{count} manual-review item",
     other: "{count} manual-review items",
   },
+  "summary.needsReview": {
+    one: "{count} observation that needs a human check",
+    other: "{count} observations that need a human check",
+  },
+  "evidence.heuristic.tag": "Needs a human check",
+  "evidence.heuristic.title": "Why this is not counted as a failure",
+  "evidence.heuristic.body":
+    "This is an observation about how the page behaved, not a rule that passes or fails, so it is left out of the score. What it would take to settle it is in the description above.",
+  "evidence.heuristic.short": "Observation, not counted",
+  "md.needsHumanCheck": "Observations that need a human check",
+  "md.needsHumanCheckNote":
+    "Read from how the page behaved, not from a rule that passes or fails. These are not counted here, and each one says what would settle it.",
+  "standing.blocked": "Blocked",
+  "standing.blockedNote":
+    "At least one barrier stops people using assistive technology from getting through.",
+  "standing.failing": "Failing",
+  "standing.failingNote": "No blockers, but barriers that make real tasks harder remain.",
+  "standing.gaps": "Minor gaps",
+  "standing.gapsNote": "Nothing serious was found automatically; what is left is small.",
+  "standing.clean": "No rule failed",
+  "standing.cleanNote":
+    "No rule failed. A tool cannot see everything, so the items below still need a person.",
+  "standing.kicker": "Where this page stands",
+  "standing.issueCount": {
+    one: "{count} {severity} finding",
+    other: "{count} {severity} findings",
+  },
+  "standing.staleTitle": "Read by an earlier scoring model",
+  "standing.staleBody":
+    "This reading was produced before the current model, which leaves observations out of the arithmetic. Its counts and its ranking follow the older rules. Audit the page again to read it under the current one.",
+  "priority.kicker": "What to fix first",
+  "priority.note": "Ordered by how much of the page's remaining weight each group carries.",
+  "priority.share": "{share}% of what is left",
+  "priority.elements": {
+    one: "across {count} element",
+    other: "across {count} elements",
+  },
+  "priority.nothing": "Nothing is charged against this page.",
   "summary.remaining": {
-    one: " {parts} remains, outside the score.",
-    other: " {parts} remain, outside the score.",
+    one: " {parts} remains, not counted here.",
+    other: " {parts} remain, not counted here.",
   },
   "summary.critical": {
     one: "Strong foundation, but {count} critical finding blocks WCAG level AA. Fix it first.",
@@ -582,9 +621,9 @@ export const en = {
   "provenance.sandboxNote":
     "Fixes are applied and reverted on a copy, so the audited site is never altered.",
   "report.wcagDependsOn": {
-    one: "The score is our own priority measure, not a pass or fail for WCAG. Meeting WCAG also depends on the {count} manual-review item listed on page 3.",
+    one: "This standing covers what a tool can decide on its own. Meeting WCAG also depends on the {count} manual-review item listed on page 3.",
     other:
-      "The score is our own priority measure, not a pass or fail for WCAG. Meeting WCAG also depends on the {count} manual-review items listed on page 3.",
+      "This standing covers what a tool can decide on its own. Meeting WCAG also depends on the {count} manual-review items listed on page 3.",
   },
   "home.lens.frameLabelFull":
     "Evidence Lens \u00b7 aurora-coffee.com \u00b7 1200 \u00d7 800 \u00b7 scale 43%",
@@ -618,8 +657,8 @@ export const en = {
   "report.roadmap.immediateTerm": "Immediate \u00b7 0\u20131 week",
   "report.roadmap.immediateTitle": "Resolve critical findings",
   "report.roadmap.immediateBody": {
-    one: "Clear the {count} critical finding first. It weighs the most in the score.",
-    other: "Clear the {count} critical findings first. They weigh the most in the score.",
+    one: "Clear the {count} critical finding first. It weighs the most.",
+    other: "Clear the {count} critical findings first. They weigh the most.",
   },
   "report.roadmap.shortTerm": "Short term \u00b7 2\u20134 weeks",
   "report.roadmap.shortTitle": "Address serious findings",
@@ -646,7 +685,7 @@ export const en = {
   "report.buildingStatus": "Building the report for {url}. {detail}",
 
   "report.wcagLevelsChecked": "WCAG levels checked",
-  "report.internalScoreFooter": "Internal score \u00b7 not a conformance statement",
+  "report.internalScoreFooter": "Automated reading \u00b7 not a conformance statement",
   "report.pageOf": "WCAG A & AA \u00b7 Page {page} / 3",
   "report.headerTitle": "Accessibility report \u00b7 {host}",
   "report.pagePassed": "The page passed",
@@ -772,11 +811,11 @@ export const en = {
 
   "report.sandboxApplied":
     "Applied and re-checked on a copy of the page. The audited site was not altered.",
-  "report.whereScoreCouldGo": "Where the score could go",
+  "report.whereScoreCouldGo": "Where this page could stand",
   "report.projectionBody":
-    "If the critical and serious findings were resolved, the internal priority score would rise to an estimated",
+    "With the critical and serious findings resolved, this page would read as",
   "report.projectionTail":
-    ". This is only a projection of the score, not a pass for WCAG. Meeting WCAG also depends on the moderate items and on",
+    ". This is only a projection, not a pass for WCAG. Meeting WCAG also depends on the moderate items and on",
   "report.accessibilityReport": "Accessibility report",
   "report.detailedFindings": "Detailed findings",
   "report.noSeriousOnPage":
@@ -792,7 +831,7 @@ export const en = {
 
   "wcagReading.notEvaluated": "Not evaluated. AccessCheck runs A and AA",
   "wcagReading.internalNote":
-    "The score is an internal priority measure. WCAG conformance also depends on checks no automated tool decides alone.",
+    "This reading covers the rules a tool can decide. WCAG conformance also depends on checks no automated tool decides alone.",
   "ratio.minAA": "{value} min AA",
   "ratio.fixedAt": "{value} fixed",
   "ratio.minAAWithFix": "min AA {required}:1 \u00b7 corrected {fixed}:1",
@@ -862,7 +901,7 @@ export const en = {
   "results.noVisibleFocus": "no visible focus",
   "results.measuredNeeds": "{measured}:1 \u00b7 needs {required}:1",
   "results.fixArrow": "fix \u2192 {score}",
-  "results.outsideScore": "outside the score",
+  "results.outsideScore": " not counted here",
   "results.runFullAuditNote":
     "the full audit to add the screenshot, keyboard checks and fix testing.",
   "results.siteAuditPassNote":
@@ -1121,7 +1160,7 @@ export const en = {
   "sim.tritanopiaDesc": "Blue-yellow color blindness, missing blue cones. Rare, about 0.01%.",
 
   "report.projectionCaveat":
-    ". This is only a projection of the score, not a pass for WCAG. Meeting WCAG also depends on the moderate items and on manual review.",
+    ". This is only a projection, not a pass for WCAG. Meeting WCAG also depends on the moderate items and on manual review.",
   "report.recommendations": "Recommendations",
   "report.wcagDisclaimer":
     "AccessCheck runs axe-core against WCAG levels A and AA (2.0, 2.1 and 2.2). Automated testing covers only part of the WCAG checkpoints. The rest need a person to review, often with a screen reader or other assistive technology. Level AAA is not checked, and this report is not a statement of conformance.",
@@ -1251,9 +1290,9 @@ export const en = {
     "Found by a complementary pass (keyboard, mobile, vision or dynamic state); it isn't re-audited in a sandbox copy. Fix and re-run to confirm.",
 
   "keyboard.region.offscreen": "outside the visible viewport",
-  "keyboard.region.top": "near the top of the page",
-  "keyboard.region.middle": "in the middle of the page",
-  "keyboard.region.bottom": "near the bottom of the page",
+  "keyboard.region.top": "near the top of the viewport",
+  "keyboard.region.middle": "in the middle of the viewport",
+  "keyboard.region.bottom": "near the bottom of the viewport",
 
   "keyboard.invisible.noStyles":
     "Focus reached this element and produced no detectable outline, box-shadow, border or background change.",
@@ -1279,7 +1318,11 @@ export const en = {
   "keyboard.jump.up": "focus moved back up the page",
   "keyboard.jump.back": "focus moved back to the left on the same line",
   "keyboard.jump.where": ', from {fromRegion} ("{fromLabel}") to {toRegion} ("{toLabel}")',
+  "keyboard.jump.whereLabels": ', from "{fromLabel}" to "{toLabel}"',
   "keyboard.jump.measured": " Measured from the top of the viewport: {from}px → {to}px.",
+  "keyboard.jump.measuredDown": " Measured down the document: {from}px → {to}px.",
+  "keyboard.jump.measuredAcross": " Measured across the document: {from}px → {to}px.",
+  "keyboard.jump.measuredFromLeft": " Measured from the left of the viewport: {from}px → {to}px.",
   "keyboard.jump.reason":
     "Stop {from} → Stop {to}: {movement}{where}.{measured} This is geometric evidence, not proof: check whether it matches the reading order you intend.",
 
@@ -1291,6 +1334,18 @@ export const en = {
   "keyboard.trap.occurrence":
     "Tab was pressed here and focus stayed on this same element, so the walk could go no further.",
 
+  "keyboard.notReached.title": {
+    one: "{count} control the walk never reached",
+    other: "{count} controls the walk never reached",
+  },
+  "keyboard.notReached.desc": {
+    one: "The walk stopped before it came round, so this control was never focused. That is not proof it cannot be reached by keyboard.",
+    other:
+      "The walk stopped before it came round, so these controls were never focused. That is not proof they cannot be reached by keyboard.",
+  },
+  "keyboard.notReached.fix":
+    "Continue the walk, or run it again with more room, before treating any of these as unreachable.",
+  "keyboard.notReached.occurrence": "The walk ended before focus arrived here.",
   "keyboard.unreachable.title": {
     one: "{count} interactive control is not keyboard-reachable",
     other: "{count} interactive controls are not keyboard-reachable",
@@ -1331,6 +1386,7 @@ export const en = {
   "stage.report": "Preparing the report",
 
   "panel.scoreOutOf": " out of 100 — back to the summary",
+  "panel.backToSummary": " — back to the summary",
   "panel.scoreHeading": "Audit score",
   "panel.perHundred": "/100",
   "panel.count.critical": "critical",
@@ -1340,6 +1396,7 @@ export const en = {
   "panel.count.passed": "passed",
   "panel.count.bestPractice": "best practice",
   "panel.count.manualReview": "manual review",
+  "panel.count.needsReview": "need a human check",
 
   "panel.evidence": "Evidence",
   "panel.evidenceNote": "viewport screenshot",
@@ -1404,6 +1461,8 @@ export const en = {
   "panel.drawingWindow":
     "Drawing the current stop and {neighbours} either side, so the page stays readable.",
   "panel.walkNow": "Walk the focus path now",
+  "panel.continueWalk": "Continue the walk",
+  "panel.continueWalkNote": "Picks up at stop {stops} and keeps going, without starting over.",
 
   "panel.quickAudit": "Quick audit",
   "panel.auditingTab": "Auditing this tab",

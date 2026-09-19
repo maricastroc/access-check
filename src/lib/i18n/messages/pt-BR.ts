@@ -151,10 +151,11 @@ export const ptBR: Catalog = {
   "md.currentScore": "Nota interna de prioridade hoje: **{score} / 100**.",
   "md.colIfYouFix": "Se corrigir",
   "md.colElements": "Elementos",
+  "md.colShare": "Fatia do que resta",
   "md.colScoreRises": "Nota sobe para",
   "md.manualOutside": {
-    one: "{count} item de revisão manual fica fora da nota.",
-    other: "{count} itens de revisão manual ficam fora da nota.",
+    one: "{count} item de revisão manual não entra nesta contagem.",
+    other: "{count} itens de revisão manual não entram nesta contagem.",
   },
   "md.nonLinear":
     " Cada linha mostra como a pontuação ficaria se você corrigisse apenas os problemas daquela severidade. Como o cálculo não é linear, corrigir problemas de diferentes severidades pode recuperar menos pontos do que a soma apresentada nas linhas.",
@@ -170,7 +171,7 @@ export const ptBR: Catalog = {
   "md.checksPassed": "Verificações automáticas aprovadas ({count})",
   "md.passedChecks": "Verificações aprovadas ({count})",
   "md.footer":
-    "_A nota ajuda a priorizar as correções, mas não atesta conformidade. A avaliação completa da WCAG também inclui aspectos que exigem análise humana._",
+    "_As correções são aplicadas e reauditadas numa cópia da página; o site auditado não é alterado. Este veredito cobre o que uma ferramenta decide sozinha; não atesta conformidade._",
   "md.bestPracticeNote": "**Boa prática** (não é um critério de sucesso da WCAG)",
   "md.passLabel": "Análise",
   "md.affected": "Afetados",
@@ -225,7 +226,7 @@ export const ptBR: Catalog = {
   "md.noFailures":
     "Nenhuma falha detectada automaticamente nesta página. Isto é cobertura, não conformidade WCAG.",
   "md.manualOutsideScore":
-    "O teste automatizado não conseguiu decidir estes, então confirme à mão. Eles ficam fora da nota.",
+    "O teste automatizado não conseguiu decidir estes, então confirme à mão. Eles não entram nesta contagem.",
 
   "diff.noneCleared": "Nenhuma regra foi resolvida desde a última auditoria.",
   "diff.cleared": "Resolvidos",
@@ -407,9 +408,47 @@ export const ptBR: Catalog = {
     one: "{count} item de revisão manual",
     other: "{count} itens de revisão manual",
   },
+  "summary.needsReview": {
+    one: "{count} observação que precisa de conferência humana",
+    other: "{count} observações que precisam de conferência humana",
+  },
+  "evidence.heuristic.tag": "Precisa de conferência humana",
+  "evidence.heuristic.title": "Por que isto não conta como falha",
+  "evidence.heuristic.body":
+    "É uma observação sobre como a página se comportou, não uma regra que passa ou falha, então não entra nesta contagem. O que resolveria a dúvida está na descrição acima.",
+  "evidence.heuristic.short": "Observação, não contabilizada",
+  "md.needsHumanCheck": "Observações que precisam de conferência humana",
+  "md.needsHumanCheckNote":
+    "Lido a partir do comportamento da página, não de uma regra que passa ou falha. Não entram nesta contagem, e cada um diz o que resolveria a dúvida.",
+  "standing.blocked": "Bloqueada",
+  "standing.blockedNote":
+    "Pelo menos uma barreira impede que quem usa tecnologia assistiva consiga passar.",
+  "standing.failing": "Com falhas",
+  "standing.failingNote": "Sem bloqueios, mas restam barreiras que dificultam tarefas reais.",
+  "standing.gaps": "Lacunas pequenas",
+  "standing.gapsNote": "Nada sério foi encontrado automaticamente; o que restou é pequeno.",
+  "standing.clean": "Nenhuma regra falhou",
+  "standing.cleanNote":
+    "Nenhuma regra falhou. Uma ferramenta não enxerga tudo, então os itens abaixo ainda precisam de uma pessoa.",
+  "standing.kicker": "Como esta página está",
+  "standing.issueCount": {
+    one: "{count} problema {severity}",
+    other: "{count} problemas {severity}",
+  },
+  "standing.staleTitle": "Lida por um modelo de pontuação anterior",
+  "standing.staleBody":
+    "Esta leitura foi produzida antes do modelo atual, que deixa observações fora da aritmética. As contagens e a ordenação dela seguem as regras antigas. Audite a página de novo para lê-la sob o modelo atual.",
+  "priority.kicker": "O que corrigir primeiro",
+  "priority.note": "Ordenado por quanto do peso restante da página cada grupo carrega.",
+  "priority.share": "{share}% do que resta",
+  "priority.elements": {
+    one: "em {count} elemento",
+    other: "em {count} elementos",
+  },
+  "priority.nothing": "Nada é cobrado desta página.",
   "summary.remaining": {
-    one: " Resta {parts}, fora da nota.",
-    other: " Restam {parts}, fora da nota.",
+    one: " Resta {parts}, não contabilizado.",
+    other: " Restam {parts}, não contabilizados.",
   },
   "summary.critical": {
     one: "Base sólida, mas {count} problema crítico barra o nível AA da WCAG. Corrija ele primeiro.",
@@ -604,9 +643,9 @@ export const ptBR: Catalog = {
   "provenance.sandboxNote":
     "As correções são aplicadas e revertidas em uma cópia, então o site auditado nunca é alterado.",
   "report.wcagDependsOn": {
-    one: "A nota é a nossa própria medida de prioridade, não uma aprovação ou reprovação na WCAG. Atender à WCAG depende também do {count} item de revisão manual listado na página 3.",
+    one: "Este veredito cobre o que uma ferramenta decide sozinha. Atender à WCAG depende também do {count} item de revisão manual listado na página 3.",
     other:
-      "A nota é a nossa própria medida de prioridade, não uma aprovação ou reprovação na WCAG. Atender à WCAG depende também dos {count} itens de revisão manual listados na página 3.",
+      "Este veredito cobre o que uma ferramenta decide sozinha. Atender à WCAG depende também dos {count} itens de revisão manual listados na página 3.",
   },
   "home.lens.frameLabelFull":
     "Evidência \u00b7 aurora-coffee.com \u00b7 1200 \u00d7 800 \u00b7 escala 43%",
@@ -640,8 +679,8 @@ export const ptBR: Catalog = {
   "report.roadmap.immediateTerm": "Imediato \u00b7 0\u20131 semana",
   "report.roadmap.immediateTitle": "Resolver os problemas críticos",
   "report.roadmap.immediateBody": {
-    one: "Elimine primeiro o {count} problema crítico. Ele pesa mais na nota.",
-    other: "Elimine primeiro os {count} problemas críticos. Eles pesam mais na nota.",
+    one: "Elimine primeiro o {count} problema crítico. Ele pesa mais.",
+    other: "Elimine primeiro os {count} problemas críticos. Eles pesam mais.",
   },
   "report.roadmap.shortTerm": "Curto prazo \u00b7 2\u20134 semanas",
   "report.roadmap.shortTitle": "Tratar os problemas graves",
@@ -670,7 +709,7 @@ export const ptBR: Catalog = {
   "report.buildingStatus": "Construindo o relatório de {url}. {detail}",
 
   "report.wcagLevelsChecked": "Níveis WCAG verificados",
-  "report.internalScoreFooter": "Nota interna \u00b7 não é uma declaração de conformidade",
+  "report.internalScoreFooter": "Leitura automatizada · não é uma declaração de conformidade",
   "report.pageOf": "WCAG A e AA \u00b7 Página {page} / 3",
   "report.headerTitle": "Relatório de acessibilidade \u00b7 {host}",
   "report.pagePassed": "A página passou em",
@@ -798,9 +837,9 @@ export const ptBR: Catalog = {
 
   "report.sandboxApplied":
     "Aplicada e reconferida em uma cópia da página. O site auditado não foi alterado.",
-  "report.whereScoreCouldGo": "Até onde a nota pode chegar",
+  "report.whereScoreCouldGo": "Até onde esta página pode chegar",
   "report.projectionBody":
-    "Se os problemas críticos e graves fossem resolvidos, a nota interna de prioridade subiria para um valor estimado de",
+    "Com os problemas críticos e graves resolvidos, esta página passaria a ser lida como",
   "report.projectionTail":
     ". Isto é só uma projeção da nota, não uma aprovação na WCAG. Atender à WCAG também depende dos itens moderados e de",
   "report.accessibilityReport": "Relatório de acessibilidade",
@@ -818,7 +857,7 @@ export const ptBR: Catalog = {
 
   "wcagReading.notEvaluated": "Não avaliado. O AccessCheck cobre os níveis A e AA",
   "wcagReading.internalNote":
-    "A nota serve para priorizar o trabalho, não para atestar conformidade. A WCAG também depende de verificações que nenhuma ferramenta automática resolve sozinha.",
+    "Esta leitura cobre as regras que uma ferramenta decide. A WCAG também depende de verificações que nenhuma ferramenta automática resolve sozinha.",
   "ratio.minAA": "{value} mín. AA",
   "ratio.fixedAt": "{value} corrigido",
   "ratio.minAAWithFix": "mín. AA {required}:1 \u00b7 corrigido {fixed}:1",
@@ -889,7 +928,7 @@ export const ptBR: Catalog = {
   "results.noVisibleFocus": "sem foco visível",
   "results.measuredNeeds": "{measured}:1 \u00b7 mínimo {required}:1",
   "results.fixArrow": "corrigir \u2192 {score}",
-  "results.outsideScore": "fora da nota",
+  "results.outsideScore": " não contabilizado",
   "results.runFullAuditNote":
     "a auditoria completa para incluir a captura de tela, as verificações de teclado e o teste das correções.",
   "results.siteAuditPassNote":
@@ -1154,7 +1193,7 @@ export const ptBR: Catalog = {
     "Daltonismo azul-amarelo por ausência dos cones azuis. Raro, cerca de 0,01%.",
 
   "report.projectionCaveat":
-    ". É apenas uma projeção da nota, não uma aprovação na WCAG. Atender à WCAG depende também dos itens moderados e da revisão manual.",
+    ". É apenas uma projeção, não uma aprovação na WCAG. Atender à WCAG depende também dos itens moderados e da revisão manual.",
   "report.recommendations": "Recomendações",
   "report.wcagDisclaimer":
     "O AccessCheck roda o axe-core contra os níveis A e AA da WCAG (2.0, 2.1 e 2.2). O teste automático cobre apenas parte dos critérios da WCAG; o restante exige a revisão de uma pessoa, muitas vezes com leitor de tela ou outra tecnologia assistiva. O nível AAA não é verificado, e este relatório não é uma declaração de conformidade.",
@@ -1286,9 +1325,9 @@ export const ptBR: Catalog = {
     "Encontrado por uma análise complementar (teclado, celular, visão ou estado dinâmico); não é reauditado em uma cópia da página. Corrija e rode de novo para confirmar.",
 
   "keyboard.region.offscreen": "fora do viewport visível",
-  "keyboard.region.top": "perto do topo da página",
-  "keyboard.region.middle": "no meio da página",
-  "keyboard.region.bottom": "perto do fim da página",
+  "keyboard.region.top": "perto do topo do viewport",
+  "keyboard.region.middle": "no meio do viewport",
+  "keyboard.region.bottom": "perto do fim do viewport",
 
   "keyboard.invisible.noStyles":
     "O foco chegou a este elemento e não produziu nenhuma mudança detectável de outline, box-shadow, borda ou fundo.",
@@ -1314,7 +1353,11 @@ export const ptBR: Catalog = {
   "keyboard.jump.up": "o foco voltou para cima na página",
   "keyboard.jump.back": "o foco voltou para a esquerda na mesma linha",
   "keyboard.jump.where": ', de {fromRegion} ("{fromLabel}") para {toRegion} ("{toLabel}")',
+  "keyboard.jump.whereLabels": ', de "{fromLabel}" para "{toLabel}"',
   "keyboard.jump.measured": " Medido a partir do topo do viewport: {from}px → {to}px.",
+  "keyboard.jump.measuredDown": " Medido ao longo do documento: {from}px → {to}px.",
+  "keyboard.jump.measuredAcross": " Medido ao largo do documento: {from}px → {to}px.",
+  "keyboard.jump.measuredFromLeft": " Medido a partir da esquerda do viewport: {from}px → {to}px.",
   "keyboard.jump.reason":
     "Parada {from} → Parada {to}: {movement}{where}.{measured} Isto é evidência geométrica, não prova: confira se corresponde à ordem de leitura que você pretende.",
 
@@ -1326,6 +1369,18 @@ export const ptBR: Catalog = {
   "keyboard.trap.occurrence":
     "O Tab foi pressionado aqui e o foco continuou neste mesmo elemento, então o percurso não pôde seguir.",
 
+  "keyboard.notReached.title": {
+    one: "{count} controle que a caminhada não alcançou",
+    other: "{count} controles que a caminhada não alcançou",
+  },
+  "keyboard.notReached.desc": {
+    one: "A caminhada parou antes de completar a volta, então este controle nunca recebeu foco. Isso não prova que ele seja inalcançável pelo teclado.",
+    other:
+      "A caminhada parou antes de completar a volta, então estes controles nunca receberam foco. Isso não prova que sejam inalcançáveis pelo teclado.",
+  },
+  "keyboard.notReached.fix":
+    "Continue a caminhada, ou repita com mais folga, antes de tratar qualquer um deles como inalcançável.",
+  "keyboard.notReached.occurrence": "A caminhada terminou antes de o foco chegar aqui.",
   "keyboard.unreachable.title": {
     one: "{count} controle interativo não é alcançável por teclado",
     other: "{count} controles interativos não são alcançáveis por teclado",
@@ -1366,6 +1421,7 @@ export const ptBR: Catalog = {
   "stage.report": "Preparando o relatório",
 
   "panel.scoreOutOf": " de 100 — voltar para o resumo",
+  "panel.backToSummary": " — voltar ao resumo",
   "panel.scoreHeading": "Nota da auditoria",
   "panel.perHundred": "/100",
   "panel.count.critical": "críticos",
@@ -1375,6 +1431,7 @@ export const ptBR: Catalog = {
   "panel.count.passed": "aprovados",
   "panel.count.bestPractice": "boas práticas",
   "panel.count.manualReview": "revisão manual",
+  "panel.count.needsReview": "precisam de conferência humana",
 
   "panel.evidence": "Evidências",
   "panel.evidenceNote": "captura do viewport",
@@ -1441,6 +1498,8 @@ export const ptBR: Catalog = {
   "panel.drawingWindow":
     "Desenhando a parada atual e {neighbours} de cada lado, para a página seguir legível.",
   "panel.walkNow": "Percorrer o caminho do foco agora",
+  "panel.continueWalk": "Continuar a caminhada",
+  "panel.continueWalkNote": "Retoma na parada {stops} e segue adiante, sem recomeçar.",
 
   "panel.quickAudit": "Auditoria rápida",
   "panel.auditingTab": "Auditando esta aba",
