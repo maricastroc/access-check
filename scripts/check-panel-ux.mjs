@@ -99,16 +99,28 @@ try {
     await panel.close();
   }
 
-  const zoomed = await openPanel(400);
-  await zoomed.evaluate(() => {
-    document.documentElement.style.zoom = "200%";
-  });
-  const atZoom = await zoomed.evaluate(() => ({
-    overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
-  }));
-  console.log("at 200% zoom:", JSON.stringify(atZoom));
-  check(atZoom.overflow <= 1, `the panel overflows at 200% zoom by ${atZoom.overflow}px`);
-  await zoomed.close();
+  for (const width of [320, 400]) {
+    const zoomed = await openPanel(width);
+    await zoomed.evaluate(() => {
+      document.documentElement.style.zoom = "200%";
+    });
+    const atZoom = await zoomed.evaluate(() => {
+      const doc = document.documentElement;
+      const limit = doc.clientWidth;
+      const past = [...document.querySelectorAll("*")]
+        .filter((el) => el.getBoundingClientRect().right > limit + 0.5)
+        .map(
+          (el) => `${el.tagName.toLowerCase()}.${(el.className || "").toString().split(" ")[0]}`,
+        );
+      return { overflow: doc.scrollWidth - limit, past: [...new Set(past)].slice(0, 4) };
+    });
+    console.log(`at ${width}px and 200% zoom:`, JSON.stringify(atZoom));
+    check(
+      atZoom.overflow <= 1,
+      `the panel overflows ${width}px at 200% zoom by ${atZoom.overflow}px (${atZoom.past.join(", ")})`,
+    );
+    await zoomed.close();
+  }
 
   const panel = await openPanel(400);
   const keyboard = await panel.evaluate(() => {

@@ -1,4 +1,5 @@
 import { BrandMark, ColorSwatch, Marker, Ruler, SectionKicker, StatusSeal } from "@/components/ui";
+import { STANDING_LABEL, STANDING_NOTE, STANDING_TONE, type Standing } from "@/lib/report/standing";
 import {
   axeRules,
   complementaryPasses,
@@ -256,17 +257,6 @@ export function EvidenceLensSection({ t }: { t: Translate }) {
           <div className="border border-ink bg-surface">
             <div className="flex items-center justify-between gap-3 border-b border-ink px-4 py-2.5">
               <SectionKicker>{t("home.lens.frameLabelFull")}</SectionKicker>
-              <div className="hidden items-stretch border border-border text-[12px] sm:flex">
-                <span className="bg-ink px-2.5 py-1 font-medium text-surface">
-                  {t("vision.normal")}
-                </span>
-                <span className="border-l border-border px-2.5 py-1 text-muted">
-                  {t("vision.deuteranopia")}
-                </span>
-                <span className="border-l border-border px-2.5 py-1 text-muted">
-                  {t("vision.grayscale")}
-                </span>
-              </div>
             </div>
             <CapturePreview t={t} height={340} />
           </div>
@@ -479,23 +469,17 @@ function MiniPdf({ t }: { t: Translate }) {
       </div>
       <div className="mt-3">
         <span className="font-cond text-[8.5px] tracking-[0.12em] text-muted uppercase">
-          {t("report.internalScore")}
+          {t("standing.kicker")}
         </span>
-        <div className="mt-0.5 flex items-end gap-1.5">
-          <span className="font-cond text-[34px] leading-[0.8] text-ink tabular-nums">
-            {exampleScore.score}
-          </span>
-          <span className="pb-1 font-cond text-[11px] text-muted">/100</span>
-        </div>
-        <div className="mt-2">
-          <Ruler
-            t={t}
-            variant="score"
-            score={exampleScore.score}
-            deductions={exampleScore.deductions}
-            height={14}
-          />
-        </div>
+        <p
+          className="mt-0.5 font-cond text-[24px] leading-[1.02]"
+          style={{ color: STANDING_TONE[exampleScore.standing] }}
+        >
+          {t(STANDING_LABEL[exampleScore.standing])}
+        </p>
+        <p className="mt-1 text-[9px] leading-tight text-muted">
+          {t(STANDING_NOTE[exampleScore.standing])}
+        </p>
       </div>
       <div className="mt-3 space-y-1.5">
         <div className="border-l-2 border-serious bg-band px-2 py-1">
@@ -598,32 +582,37 @@ const TIMELINE_DOT: Record<Severity, string> = {
 
 function AuditStamp({
   label,
-  score,
+  standing,
   dim,
-  delta,
+  cleared,
+  t,
 }: {
   label: string;
-  score: number;
+  standing: Standing;
   dim?: boolean;
-  delta?: number;
+  cleared?: number;
+  t: Translate;
 }) {
   return (
     <div className="px-5 py-5">
       <SectionKicker tone="steel">{label}</SectionKicker>
-      <div className="mt-1.5 flex items-end gap-2.5">
-        <span
-          className={`font-cond text-[44px] leading-[0.8] tabular-nums ${dim ? "text-muted" : "text-ink"}`}
+      <div className="mt-1.5 flex items-start gap-2.5">
+        <p
+          className="font-cond text-[30px] leading-[1.02]"
+          style={{ color: dim ? "var(--color-muted)" : STANDING_TONE[standing] }}
         >
-          {score}
-        </span>
-        <span className="pb-1 font-cond text-[13px] text-muted">/100</span>
-        {delta !== undefined && (
-          <span className="mb-0.5 ml-auto inline-flex items-center gap-1.5 border border-verified bg-verified/[0.08] px-2 py-1 font-cond text-[13px] tracking-[0.04em] text-verified tabular-nums">
-            <span aria-hidden>▲</span>
-            {delta > 0 ? `+${delta}` : delta}
+          {t(STANDING_LABEL[standing])}
+        </p>
+        {cleared !== undefined && (
+          <span className="ml-auto inline-flex items-center gap-1.5 border border-verified bg-verified/[0.08] px-2 py-1 font-cond text-[12px] tracking-[0.04em] text-verified tabular-nums">
+            <span aria-hidden>✓</span>
+            {t("home.track.cleared", { count: cleared })}
           </span>
         )}
       </div>
+      <p className={`mt-1 text-[12px] leading-normal ${dim ? "text-muted" : "text-body"}`}>
+        {t(STANDING_NOTE[standing])}
+      </p>
     </div>
   );
 }
@@ -683,7 +672,7 @@ function TimelineList({
 }
 
 export function TrackOverTimeSection({ t }: { t: Translate }) {
-  const { fromScore, toScore, daysApart, fixed, regressed } = exampleTimeline;
+  const { fromStanding, toStanding, daysApart, fixed, regressed } = exampleTimeline;
 
   return (
     <section id="track" className="bg-canvas">
@@ -697,7 +686,7 @@ export function TrackOverTimeSection({ t }: { t: Translate }) {
 
         <div className="mt-9 border border-ink bg-surface">
           <div className="grid grid-cols-1 border-b border-ink sm:grid-cols-[1fr_auto_1fr]">
-            <AuditStamp label={t("home.track.previousAudit")} score={fromScore} dim />
+            <AuditStamp t={t} label={t("home.track.previousAudit")} standing={fromStanding} dim />
             <div className="flex items-center justify-center gap-2 border-y border-hairline px-5 py-3 sm:flex-col sm:gap-1 sm:border-x sm:border-y-0 sm:px-6">
               <span
                 aria-hidden
@@ -710,9 +699,10 @@ export function TrackOverTimeSection({ t }: { t: Translate }) {
               </span>
             </div>
             <AuditStamp
+              t={t}
               label={t("home.track.thisAudit")}
-              score={toScore}
-              delta={toScore - fromScore}
+              standing={toStanding}
+              cleared={fixed.length}
             />
           </div>
 

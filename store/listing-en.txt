@@ -11,7 +11,7 @@ WHAT IT CHECKS
 
 WHAT IT DOES NOT DO
 
-It is not a compliance seal. Automated testing proves a minority of WCAG, and AccessCheck says so: the score covers what the checks could prove, and everything that needs a human is listed separately as manual review rather than folded into a number. When a check could not run, the panel names it instead of quietly passing.
+It is not a compliance seal. Automated testing proves a minority of WCAG, and AccessCheck says so: the verdict covers what the checks could prove, and everything that needs a human is listed separately as manual review rather than folded into a number. When a check could not run, the panel names it instead of quietly passing.
 
 HOW IT TREATS YOUR BROWSER
 

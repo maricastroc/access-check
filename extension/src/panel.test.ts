@@ -73,7 +73,7 @@ describe("the panel reuses the product's own report", () => {
     expect(panel).toContain("auditScope(result, t)");
     expect(panel).toContain("{scope.kicker}");
     expect(panel).not.toContain("Expanded audit score");
-    expect(panel).not.toContain("Quick audit score");
+    expect(panel).not.toContain("Quick audit");
     expect(panel).toContain("translator(UI_LOCALE)");
   });
 
@@ -402,7 +402,7 @@ describe("how much of the audit is behind the number", () => {
   it("calls a reading without a focus path preliminary, and says why", () => {
     const scope = auditScope(result(), t);
 
-    expect(scope.kicker).toBe("Quick audit score");
+    expect(scope.kicker).toBe("Quick audit");
     expect(scope.lead).toBe("Preliminary result");
     expect(scope.focusPath).toBe("skipped");
     expect(scope.note).toContain("not verified");
@@ -412,7 +412,7 @@ describe("how much of the audit is behind the number", () => {
   it("never calls a reading complete, even with the focus path walked", () => {
     const scope = auditScope(result({ keyboard: report(), warnings: [] }), t);
 
-    expect(scope.kicker).toBe("Current-tab audit score");
+    expect(scope.kicker).toBe("This tab");
     expect(scope.lead).toBeNull();
     expect(scope.focusPath).toBe("walked");
     expect(scope.badge).toBe("Includes keyboard focus path");
@@ -468,7 +468,7 @@ describe("how much of the audit is behind the number", () => {
     const scope = auditScope(result({ keyboard: report({ truncated: true }), warnings: [] }), t);
 
     expect(scope.focusPath).toBe("truncated");
-    expect(scope.kicker).toBe("Current-tab audit score");
+    expect(scope.kicker).toBe("This tab");
     expect(scope.badge).toBe("Includes keyboard focus path · stopped at 12");
     expect(scope.note).toContain("stopped early after 12 stops");
   });

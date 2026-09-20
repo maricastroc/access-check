@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { buildReportMarkdown } from "../report/markdown";
-import { buildMarkdown } from "../scan/markdown";
 import { withScoring } from "../scan/scored";
 import type { ReportLocale } from "./locale";
 import type { ScanResult } from "../scan/types";
@@ -43,24 +42,6 @@ describe("Markdown exports follow the report locale", () => {
     expect(md).toContain("Where this page stands");
     expect(md).toContain("## WCAG reading");
     expect(md).not.toContain("Relatório");
-  });
-
-  it("writes the scan export in Portuguese", () => {
-    const md = buildMarkdown(result("pt-BR"));
-
-    expect(md).toContain("## Resumo");
-    expect(md).toContain("## Violações");
-    expect(md).toContain("| Críticos | Graves | Moderados | Leves | Aprovadas |");
-    expect(md).not.toContain("## Summary");
-    expect(md).not.toContain("| Critical | Serious |");
-  });
-
-  it("keeps the English scan export untouched", () => {
-    const md = buildMarkdown(result("en"));
-
-    expect(md).toContain("## Summary");
-    expect(md).toContain("| Critical | Serious | Moderate | Minor | Passed |");
-    expect(md).not.toContain("## Resumo");
   });
 
   it("localizes the score summary that opens both exports", () => {

@@ -33,8 +33,8 @@ order, highlighting an element on the page — serves that one purpose.
 > Click the toolbar icon and the audit runs in four steps, shown as it goes:
 > it waits for the page to stop changing, walks the page so anything that only
 > renders on scroll has rendered, runs the accessibility rules, and then walks
-> the real keyboard focus order with genuine Tab keystrokes. The score appears
-> only when all of that has finished, so it never drops later because a check
+> the real keyboard focus order with genuine Tab keystrokes. The verdict appears
+> only when all of that has finished, so it never changes later because a check
 > ran late.
 >
 > Each finding opens into the elements it came from: what failed and why, the
@@ -51,7 +51,7 @@ order, highlighting an element on the page — serves that one purpose.
 > **What it does not check.** The mobile viewport, reduced-motion preferences
 > and fixes verified against a live copy of the page are not covered here, and
 > neither are cross-origin iframes or shadow roots. The report says so on every
-> reading, and the score is labelled a current-tab audit score rather than a
+> reading, and the panel says it is reading this tab rather than claiming a
 > full audit.
 >
 > **Quick audit.** A secondary action runs the rules without attaching the

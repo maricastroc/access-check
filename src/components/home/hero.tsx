@@ -1,6 +1,7 @@
 import type { ScoreBreakdown } from "@/lib/report/score";
 import type { WcagReadingModel } from "@/lib/report/wcag";
-import { Ruler, ScoreArithmetic, SectionKicker, WcagReading } from "@/components/ui";
+import { PriorityList, SectionKicker, WcagReading } from "@/components/ui";
+import { STANDING_LABEL, STANDING_NOTE, STANDING_TONE } from "@/lib/report/standing";
 import { UrlForm } from "./url-form";
 import { HeroEvidencePreview } from "./evidence-preview";
 import { exampleScore, exampleSummary } from "./content";
@@ -57,32 +58,48 @@ export function Hero({ t }: { t: Translate }) {
           <div>
             <span aria-hidden className="mb-2.5 block h-0.75 w-10 bg-steel" />
             <SectionKicker>{t("home.mostRecent")}</SectionKicker>
-            <div className="mt-1 flex items-end gap-2">
-              <span className="font-cond text-[64px] leading-[0.85] text-ink tabular-nums">
-                {exampleScore.score}
+            <p
+              className="mt-1 font-cond text-[48px] leading-[1.02]"
+              style={{ color: STANDING_TONE[exampleScore.standing] }}
+            >
+              {t(STANDING_LABEL[exampleScore.standing])}
+            </p>
+            <p className="mt-1 max-w-[48ch] text-[14px] leading-normal text-body">
+              {t(STANDING_NOTE[exampleScore.standing])}
+            </p>
+            <div className="mt-3.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[13px] text-body">
+              <span className="font-semibold text-serious">
+                {t("standing.issueCount", {
+                  count: exampleScore.serious,
+                  severity: t("severity.serious").toLowerCase(),
+                })}
               </span>
-              <span className="pb-2 font-cond text-[18px] text-muted">/100</span>
+              <span aria-hidden className="text-border">
+                ·
+              </span>
+              <span className="font-semibold text-moderate-text">
+                {t("standing.issueCount", {
+                  count: exampleScore.moderate,
+                  severity: t("severity.moderate").toLowerCase(),
+                })}
+              </span>
+              <span aria-hidden className="text-border">
+                ·
+              </span>
+              <span>
+                <span className="font-semibold text-ink tabular-nums">{exampleScore.passed}</span>{" "}
+                {t("report.passedLabel").toLowerCase()}
+              </span>
             </div>
-            <p className="mt-2.5 max-w-[48ch] text-[14px] leading-normal text-body">
+            <p className="mt-3 max-w-[48ch] text-[14px] leading-normal text-body">
               {t(exampleSummary)}
             </p>
-            <div className="mt-3 max-w-130">
-              <Ruler
-                t={t}
-                variant="score"
-                score={exampleScore.score}
-                deductions={breakdown.deductions}
-                height={30}
-                ticks
-              />
-            </div>
-            <div className="mt-5 max-w-115">
-              <ScoreArithmetic
-                t={t}
-                breakdown={breakdown}
-                passed={exampleScore.passed}
-                manualReview={exampleScore.manualReview}
-              />
+            <div className="mt-5 max-w-115 border-t border-hairline pt-4">
+              <SectionKicker>{t("priority.kicker")}</SectionKicker>
+              <p className="mt-1 mb-2.5 text-[12.5px] leading-normal text-muted">
+                {t("priority.note")}
+              </p>
+              <PriorityList breakdown={breakdown} t={t} />
             </div>
           </div>
           <WcagReading t={t} model={wcag} />

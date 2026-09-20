@@ -72,7 +72,7 @@ export function FindingRow({
         borderLeftWidth: selected ? 5 : 3,
       }}
     >
-      <div className="flex items-center gap-2.5">
+      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
         <span
           aria-hidden
           className={cn(
@@ -88,7 +88,7 @@ export function FindingRow({
           {finding.n}
         </span>
         <span
-          className="font-cond text-[11px] tracking-widest uppercase"
+          className="min-w-0 font-cond text-[11px] tracking-widest uppercase"
           style={{
             color: finding.severity ? severityColorVar[finding.severity] : "var(--color-steel)",
           }}

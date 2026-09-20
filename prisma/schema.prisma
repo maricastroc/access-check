@@ -90,7 +90,6 @@ model Scan {
   createdAt DateTime @default(now())
 
   screenshot Screenshot?
-  tiles      Tile[]
 
   @@index([userId, createdAt])
   @@index([userId, url, createdAt])
@@ -106,18 +105,6 @@ model Screenshot {
   @@map("screenshots")
 }
 
-model Tile {
-  id     String @id
-  scanId String
-  scan   Scan   @relation(fields: [scanId], references: [id], onDelete: Cascade)
-
-  docY     Int
-  data     Bytes
-  mimeType String @default("image/webp")
-
-  @@index([scanId])
-  @@map("tiles")
-}
 
 model SiteScan {
   id     String  @id @default(cuid())

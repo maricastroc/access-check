@@ -13,22 +13,9 @@ import { Budget } from "./budget";
 import { OPTIONAL_ORDER, ScanPolicy, STAGES, type StageId } from "./policy";
 import { CONTENT_SIGNATURE, waitForContentReady } from "./page-ready";
 import { AXE_TAGS } from "./dom/axe";
-import type { DocRect } from "./dom/rects";
+import type { DomRect } from "./dom/rects";
 import { DOM_ENGINE_VERSION } from "./dom/engine-api";
-import {
-  buildMarkers,
-  centeredMargin,
-  numberTargets,
-  overviewMarkers,
-  markerTargets,
-  orderByDocument,
-  fitsViewport,
-  markerFromCrop,
-  unavailableMarker,
-  MAX_CAPTURE_CHARS,
-  MAX_EXTRA_CAPTURES,
-  type MarkerTarget,
-} from "./markers";
+import { buildMarkers, markerTargets } from "./markers";
 import { SCORING_VERSION, scoredViolations } from "./scored";
 import {
   attachFixGroups,
@@ -41,12 +28,8 @@ import {
   type VerifyOp,
 } from "./violations";
 import { captureScreenshot, SCREENSHOT_QUALITY } from "./screenshot";
-import { captureOverview, MAX_OVERVIEW_MS } from "./overview";
 import { installNetworkGuard } from "./ssrf";
 import type {
-  ScanCapture,
-  ScanOverview,
-  ScanMarker,
   FixVerification,
   ScanErrorCode,
   ScanPhase,
@@ -278,105 +261,6 @@ async function sessionIsGone(page: Page): Promise<boolean> {
   } finally {
     if (timer) clearTimeout(timer);
   }
-}
-
-const CROP_SETTLE_MS = 250;
-
-async function captureEvidenceCrops(
-  page: Page,
-  targets: MarkerTarget[],
-  numbered: number[],
-  onOverview: Set<number>,
-  viewport: { width: number; height: number },
-  deadline: number,
-): Promise<{ captures: ScanCapture[]; markers: ScanMarker[] }> {
-  const captures: ScanCapture[] = [];
-  const markers: ScanMarker[] = [];
-  const pending = new Set(numbered);
-  const numberOf = new Map(numbered.map((index, position) => [index, position + 1]));
-  let budget = MAX_CAPTURE_CHARS;
-
-  const docRects = await page.evaluate(
-    (sels) => window.__accessCheckDom!.collectDocRects(sels),
-    targets.map((t) => t.selector),
-  );
-
-  for (const index of orderByDocument(numbered, docRects)) {
-    if (!pending.has(index)) continue;
-    if (captures.length >= MAX_EXTRA_CAPTURES || Date.now() > deadline) break;
-
-    const anchor = docRects[index];
-    if (!anchor) continue;
-
-    const inset = await page.evaluate(() => window.__accessCheckDom!.stickyInset());
-    const topMargin = centeredMargin(anchor.h, viewport, inset);
-    const scrolledTo = await page.evaluate(
-      ([docY, margin]) => window.__accessCheckDom!.scrollToDocY(docY, margin),
-      [anchor.docY, topMargin] as const,
-    );
-    await page.waitForTimeout(CROP_SETTLE_MS);
-
-    const atEnd = scrolledTo < Math.round(anchor.docY - topMargin);
-
-    const members = [...pending];
-    const rects = await page.evaluate(
-      (sels) => window.__accessCheckDom!.collectRects(sels),
-      members.map((i) => targets[i].selector),
-    );
-
-    const placed = members
-      .map((i, k) => ({ index: i, rect: rects[k] }))
-      .filter((x) => x.rect && fitsViewport(x.rect, viewport, atEnd))
-      .sort((a, b) => a.rect!.y - b.rect!.y);
-
-    if (placed.length === 0) continue;
-
-    const shot = await page
-      .screenshot({
-        type: "jpeg",
-        quality: SCREENSHOT_QUALITY,
-        clip: { x: 0, y: 0, ...viewport },
-        animations: "disabled",
-        timeout: Math.max(1_000, Math.min(6_000, deadline - Date.now())),
-      })
-      .catch(() => null);
-
-    if (!shot) continue;
-
-    const image = `data:image/jpeg;base64,${shot.toString("base64")}`;
-    if (image.length > budget) break;
-    budget -= image.length;
-
-    const captureId = `c${captures.length + 1}`;
-    captures.push({
-      id: captureId,
-      image,
-      width: viewport.width,
-      height: viewport.height,
-      docY: scrolledTo,
-    });
-
-    for (const { index: i, rect } of placed) {
-      markers.push(
-        markerFromCrop(
-          targets[i],
-          rect!,
-          viewport,
-          numberOf.get(i)!,
-          captureId,
-          i === index ? "captured" : "shared",
-        ),
-      );
-      pending.delete(i);
-    }
-  }
-
-  for (const index of pending) {
-    if (onOverview.has(index)) continue;
-    markers.push(unavailableMarker(targets[index], numberOf.get(index)!));
-  }
-
-  return { captures, markers };
 }
 
 export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<ScanResult> {
@@ -631,11 +515,11 @@ async function runScanAttempt(
     const targets = markerTargets(wcagViolations);
 
     const rects = (
-      await policy.run<(DocRect | null)[]>(
+      await policy.run<(DomRect | null)[]>(
         "markers",
         () =>
           page.evaluate(
-            (selectors) => window.__accessCheckDom!.collectDocRects(selectors),
+            (selectors) => window.__accessCheckDom!.collectRects(selectors),
             targets.map((t) => t.selector),
           ),
         targets.map(() => null),
@@ -688,10 +572,6 @@ async function runScanAttempt(
     }
 
     let screenshot: string | null = null;
-    let overview: ScanOverview | undefined;
-    let pageMarkers: ScanMarker[] = markers;
-    let captures: ScanCapture[] = [];
-    let extraMarkers: ScanMarker[] = [];
     let audits: AuditsReport | undefined;
     let keyboard: KeyboardReport | undefined;
     let contexts: ContextReport | undefined;
@@ -738,51 +618,6 @@ async function runScanAttempt(
         );
         screenshot = shot.value;
         if (!screenshot) policy.skip("screenshot");
-
-        if (!screenshot) return;
-
-        const view = await track("overview", () =>
-          captureOverview(page, {
-            viewport: VIEWPORT,
-            quality: SCREENSHOT_QUALITY,
-            deadline:
-              Date.now() + Math.min(MAX_OVERVIEW_MS, Math.max(0, budget.remaining() - 6_000)),
-          }).catch(() => undefined),
-        );
-
-        const numbered = numberTargets(targets, rects);
-        pageMarkers = buildMarkers(targets, rects, VIEWPORT, numbered);
-
-        if (view && view.capturedHeight > 0) {
-          overview = view;
-          pageMarkers = overviewMarkers(
-            targets,
-            rects,
-            { width: view.pageWidth, height: view.capturedHeight },
-            numbered,
-          );
-        }
-
-        if (numbered.length > 0) {
-          const onOverview = new Set(
-            numbered.filter((_, position) =>
-              pageMarkers.some((marker) => marker.n === position + 1),
-            ),
-          );
-
-          const cropped = await track("captures", () =>
-            captureEvidenceCrops(
-              page,
-              targets,
-              numbered,
-              onOverview,
-              VIEWPORT,
-              Date.now() + Math.min(8_000, Math.max(0, budget.remaining() - 4_000)),
-            ).catch(() => ({ captures: [], markers: [] })),
-          );
-          captures = cropped.captures;
-          extraMarkers = cropped.markers;
-        }
       },
 
       keyboard: async () => {
@@ -852,9 +687,6 @@ async function runScanAttempt(
       ...core,
       durationMs: Date.now() - startedAt,
       screenshot,
-      markers: [...pageMarkers, ...extraMarkers],
-      captures,
-      overview,
       keyboard,
       contexts,
       audits,

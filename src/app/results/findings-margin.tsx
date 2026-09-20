@@ -40,11 +40,9 @@ export function FindingsMargin({
   selectedId,
   onSelect,
   onOpenEvidence,
-  locatedStops,
   selectedStop,
   onSelectStop,
   onStepStop,
-  focusOpen,
   t,
 }: {
   findings: FindingView[];
@@ -53,11 +51,9 @@ export function FindingsMargin({
   selectedId: string | null;
   onSelect: (id: string) => void;
   onOpenEvidence: (id: string) => void;
-  locatedStops: Set<number>;
   selectedStop: number | null;
   onSelectStop: (n: number) => void;
   onStepStop: (delta: 1 | -1) => void;
-  focusOpen: boolean;
   t: Translate;
 }) {
   const totalElements = findings.reduce((sum, f) => sum + f.elements, 0);
@@ -144,12 +140,11 @@ export function FindingsMargin({
           </ul>
         </Secondary>
 
-        <Secondary label={t("results.focusPathStops")} count={focusStops.length} open={focusOpen}>
+        <Secondary label={t("results.focusPathStops")} count={focusStops.length} open={false}>
           <FocusPathList
             t={t}
             stops={focusStops}
             coverage={coverage}
-            located={locatedStops}
             selected={selectedStop}
             onSelect={onSelectStop}
             onStep={onStepStop}

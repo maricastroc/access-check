@@ -720,8 +720,8 @@ try {
   const layout = await panel.evaluate(() => {
     const text = document.body.textContent;
     const names = [
-      "Current-tab audit score",
-      "Quick audit score",
+      "This tab",
+      "Quick audit",
       "Findings",
       "Focus path",
       "Coverage limitations",
@@ -740,17 +740,17 @@ try {
       details,
       shortSummary: /Partial coverage · \d+ check/.test(text),
       badge: text.includes("Includes keyboard focus path"),
-      claimsExpanded: text.includes("Expanded audit score"),
+      claimsExpanded: text.includes("Expanded audit"),
       overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
     };
   });
   console.log("panel layout:", JSON.stringify(layout));
 
   const place = (name) => layout.order.indexOf(name);
-  check(place("Current-tab audit score") === 0, `the score does not lead: ${layout.order}`);
+  check(place("This tab") === 0, `the standing does not lead: ${layout.order}`);
   check(
     place("Findings") === 1,
-    `findings must come straight after the score, got ${JSON.stringify(layout.order)}`,
+    `findings must come straight after the standing, got ${JSON.stringify(layout.order)}`,
   );
   check(place("Focus path") > place("Findings"), "the focus path must come after the findings");
   for (const later of ["Coverage limitations", "Checks performed", "Evidence"]) {

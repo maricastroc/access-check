@@ -1,4 +1,5 @@
 import type { Severity } from "@/lib/scan/types";
+import type { Standing } from "@/lib/report/standing";
 import type { MessageKey } from "@/lib/i18n/t";
 
 export type AxeRule = { sc: string; label: MessageKey };
@@ -49,9 +50,13 @@ export const exampleFinding = {
 };
 
 export const exampleScore = {
+  standing: "failing" as Standing,
   score: 53,
   passed: 39,
   manualReview: 4,
+  needsReview: 1,
+  serious: 1,
+  moderate: 2,
   deductions: [
     {
       severity: "serious" as Severity,
@@ -79,6 +84,8 @@ export const exampleScore = {
 export type TimelineEntry = { sc: string; label: MessageKey; severity: Severity };
 
 export const exampleTimeline = {
+  fromStanding: "failing" as Standing,
+  toStanding: "gaps" as Standing,
   fromScore: exampleScore.score,
   toScore: 84,
   daysApart: 7,
@@ -86,7 +93,9 @@ export const exampleTimeline = {
     { sc: "1.4.3", label: "home.rule.contrast", severity: "serious" },
     { sc: "1.3.1", label: "home.rule.headings", severity: "moderate" },
   ] as TimelineEntry[],
-  regressed: [{ sc: "1.1.1", label: "home.rule.alt", severity: "serious" }] as TimelineEntry[],
+  regressed: [
+    { sc: "2.4.4", label: "home.rule.linkPurpose", severity: "moderate" },
+  ] as TimelineEntry[],
 };
 
 export const exampleSummary: MessageKey = "home.example.summary";

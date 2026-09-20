@@ -142,23 +142,16 @@ export const ptBR: Catalog = {
   "md.reportTitle": "Relatório de acessibilidade: {name}",
   "md.reportTitleDash": "Relatório de acessibilidade \u2014 {name}",
   "md.url": "URL",
-  "md.scoreLabel": "Nota",
-  "md.priorityScore": "Nota interna de prioridade",
   "md.priorityNote": "(serve para priorizar, não atesta conformidade com a WCAG)",
   "md.elementsScanned": "Elementos analisados",
   "md.generated": "Gerado em",
-  "md.whereScoreCanGo": "Até onde a nota pode chegar",
-  "md.currentScore": "Nota interna de prioridade hoje: **{score} / 100**.",
   "md.colIfYouFix": "Se corrigir",
   "md.colElements": "Elementos",
   "md.colShare": "Fatia do que resta",
-  "md.colScoreRises": "Nota sobe para",
   "md.manualOutside": {
     one: "{count} item de revisão manual não entra nesta contagem.",
     other: "{count} itens de revisão manual não entram nesta contagem.",
   },
-  "md.nonLinear":
-    " Cada linha mostra como a pontuação ficaria se você corrigisse apenas os problemas daquela severidade. Como o cálculo não é linear, corrigir problemas de diferentes severidades pode recuperar menos pontos do que a soma apresentada nas linhas.",
   "md.wcagReading": "Leitura WCAG",
   "md.failsBy": "reprova em {criteria}",
   "md.noAFailures": "nenhuma falha de nível A detectada automaticamente",
@@ -384,8 +377,8 @@ export const ptBR: Catalog = {
 
   "scope.stillMissing":
     "O viewport de celular, o movimento reduzido e as correções verificadas continuam fora daqui, então esta não é uma auditoria completa.",
-  "scope.quickKicker": "Nota da auditoria rápida",
-  "scope.currentTabKicker": "Nota da auditoria desta aba",
+  "scope.quickKicker": "Auditoria rápida",
+  "scope.currentTabKicker": "Esta aba",
   "scope.preliminaryLead": "Resultado preliminar",
   "scope.skippedNote":
     "O caminho do foco não foi verificado, então nada aqui responde pelo uso com teclado. {why} {rest}",
@@ -541,35 +534,15 @@ export const ptBR: Catalog = {
   "review.nested.s1": "Confirme que não há controles focalizáveis dentro de outros controles",
   "review.nested.s2": "Achate a marcação para que cada controle fique por conta própria",
 
-  "vision.normal": "Normal",
-  "vision.normalTitle": "Normal, sem filtro de visão",
-  "vision.deuteranopia": "Deuteranopia",
-  "vision.deuteranopiaTitle": "Deuteranopia (daltonismo vermelho-verde)",
-  "vision.protanopia": "Protanopia",
-  "vision.protanopiaTitle": "Protanopia (daltonismo vermelho-verde)",
-  "vision.tritanopia": "Tritanopia",
-  "vision.tritanopiaTitle": "Tritanopia (daltonismo azul-amarelo)",
-  "vision.lowVision": "Baixa visão",
-  "vision.lowVisionTitle": "Baixa visão (nitidez e contraste reduzidos)",
-  "vision.grayscale": "Escala de cinza",
-  "vision.grayscaleTitle": "Escala de cinza (sem cor)",
-  "vision.short.deut": "Deuter.",
-  "vision.short.gray": "Cinza",
   "home.lens.frameLabel": "Captura \u00b7 escala 43%",
-  "vision.rail": "Visão",
   "layer.rail": "Sobreposição",
   "layer.markers": "Marcadores de problema",
   "layer.markersTitle": "Mostrar os marcadores de problema na captura",
-  "layer.focus": "Caminho do foco",
-  "layer.focusTitle": "Mostrar a ordem de foco do teclado",
   "layer.none": "Sem sobreposição",
   "layer.noneTitle": "Esconder a sobreposição",
 
-  "capture.defaultRender": "renderização padrão \u00b7 sem filtro de visão",
-  "capture.simulating": "simulando {mode}",
-
   "home.md.filename": "accesscheck-aurora-coffee-com.md",
-  "home.md.line1": "## aurora-coffee.com: 53/100",
+  "home.md.line1": "## aurora-coffee.com — Com falhas",
   "home.md.line2": "| severidade | problemas | elementos |",
   "home.md.line3": "| grave    | 1 | 7 |",
   "home.md.line4": "| moderado | 2 | 2 |",
@@ -577,59 +550,26 @@ export const ptBR: Catalog = {
   "home.md.line6": "1. color-contrast \u00b7 1.4.3 \u00b7 verificada",
 
   "results.focusPathStops": "paradas no caminho do foco",
-  "focusPath.continuesDown": "O Tab segue para a parada {stop}, mais abaixo na página",
-  "capture.tileUnavailable": "Esta faixa da página ({from}px a {to}px) não pôde ser carregada.",
-  "inspect.nativeScale": "1:1 \u00b7 em {x}, {y} da página",
-  "inspect.finding": "Problema {n}, em resolução plena",
-  "inspect.stop": "Parada {n}, em resolução plena",
-  "focusPath.continuesUp": "O Tab segue para a parada {stop}, mais acima na página",
   "focusPath.listTitle": "Ordem do Tab",
-  "focusPath.goToStop": "Mostrar a parada {stop} na página",
+  "focusPath.readStop": "Ler a parada {stop}",
+  "focusPath.insideScroller": "dentro de uma área rolável",
   "focusPath.previousStop": "Parada anterior",
   "focusPath.nextStop": "Próxima parada",
-  "focusPath.offCapture": "fora desta captura",
   "focusPath.selectedStop": "Parada {stop} de {total}",
   "results.manualReviewItems": {
     one: "{count} item de revisão manual \u00b7",
     other: "{count} itens de revisão manual \u00b7",
   },
-  "capture.evidenceLabel":
-    "Evidência em alta resolução \u00b7 {width} \u00d7 {height} \u00b7 escala {scale}%",
   "capture.contextual": "Recorte do contexto \u00b7 {width} \u00d7 {height} \u00b7 escala {scale}%",
-  "capture.announceContextual":
-    "Mostrando o elemento afetado em resolução plena. Role a captura para ver o entorno.",
-  "capture.announceOverview": "Mostrando a captura geral.",
-  "capture.backToOverview": "Voltar à página inteira",
   "capture.openEvidence": "Ver a evidência",
-  "capture.readOnEvidence":
-    "Esta visão geral está em meia escala, para você se localizar. Abra um marcador para ler a evidência em resolução plena.",
-  "capture.markerHint": "Selecione um marcador para abrir a evidência em resolução plena.",
+  "capture.markerHint": "Selecione um marcador para abrir o problema a que ele pertence.",
   "detail.sharedColorPair": {
     one: "{count} ocorrência tem o mesmo par de cores detectado.",
     other: "{count} ocorrências têm o mesmo par de cores detectado.",
   },
   "detail.moreSelectors": "+{count} outros",
-  "capture.overviewLabel": "Página inteira \u00b7 {width} \u00d7 {height} \u00b7 escala {scale}%",
-  "capture.overviewPartialLabel":
-    "Página inteira, parcial \u00b7 {width} \u00d7 {height} \u00b7 escala {scale}%",
-  "capture.announceOverviewScroll":
-    "Mostrando a página inteira. Role a captura para ver o restante.",
-  "capture.partialTitle": "Esta visão geral não chega ao fim da página",
-  "capture.partialBody":
-    "Ela vai até {captured}px dos {total}px de altura desta página. Tudo o que vem depois foi auditado, mas não está nesta imagem.",
-  "capture.partialWhyHeight": "A página é mais alta que os {limit}px que cabem em uma visão geral.",
-  "capture.partialWhyTiles": "A página exige mais blocos do que cabem em uma visão geral.",
-  "capture.partialWhyBytes": "Os blocos atingiram o peso que uma visão geral pode ocupar.",
-  "capture.partialWhyTime": "A captura atingiu o tempo que uma visão geral pode levar.",
-  "capture.partialWhyError":
-    "A página parou de responder enquanto os últimos blocos eram capturados.",
-  "capture.partialCrops":
-    "Os problemas mais abaixo mantêm recortes próprios em resolução plena \u2014 abra um deles na lista para ver.",
-  "capture.overviewGrew":
-    "A página cresceu enquanto era fotografada, então o último bloco pode não coincidir com o que você vê agora.",
-  "panel.tileAlt": "{url}, de {from}px a {to}px a partir do topo da página",
   "capture.evidenceShared": "aparece em um recorte feito para um elemento vizinho",
-  "capture.frameLabel": "Captura \u00b7 {width} \u00d7 {height} \u00b7 escala {scale}%",
+  "capture.frameLabel": "Captura \u00b7 {width} \u00d7 {height}",
   "capture.shownOnScreenshot": "{count} visíveis na captura",
   "capture.onScreenshot": "\u00b7 na captura",
   "detail.elementsAffected": {
@@ -719,7 +659,6 @@ export const ptBR: Catalog = {
   "report.auditDuration": "Duração da auditoria",
   "report.elementsChecked": "Elementos verificados",
   "report.exportedTitle": "Relatório de acessibilidade exportado",
-  "report.internalScore": "Nota interna de prioridade",
   "report.executiveSummary": "Resumo executivo",
   "report.priorityRoadmap": "Roteiro de prioridades",
   "report.suggestedFix": "Correção sugerida",
@@ -749,7 +688,7 @@ export const ptBR: Catalog = {
     "São os passos que o AccessCheck executa de fato, na ordem em que acontecem.",
   "results.partialReport": "Relatório parcial",
   "results.partialNote":
-    "A nota reflete apenas o que conseguimos medir. O que ficou de fora está listado abaixo — nada foi estimado.",
+    "Esta leitura cobre apenas o que conseguimos medir. O que ficou de fora está listado abaixo — nada foi estimado.",
 
   "home.lens.locatedOccurrence": "Ocorrência localizada",
   "home.lens.verifiedInSandbox": "Verificado em cópia da página",
@@ -840,18 +779,17 @@ export const ptBR: Catalog = {
   "report.whereScoreCouldGo": "Até onde esta página pode chegar",
   "report.projectionBody":
     "Com os problemas críticos e graves resolvidos, esta página passaria a ser lida como",
-  "report.projectionTail":
-    ". Isto é só uma projeção da nota, não uma aprovação na WCAG. Atender à WCAG também depende dos itens moderados e de",
   "report.accessibilityReport": "Relatório de acessibilidade",
   "report.detailedFindings": "Problemas detalhados",
   "report.noSeriousOnPage":
     "Nenhuma falha crítica ou grave detectada automaticamente nesta página. Itens moderados e revisão manual estão na página 3.",
+  "report.rulesMoved": { one: "{count} regra mudou", other: "{count} regras mudaram" },
   "report.changesSinceLast": "Mudanças desde a última auditoria",
   "report.scoringModelUpdated": "Modelo de pontuação atualizado",
   "report.whatMoved": "O que mudou desde {date}",
   "report.sectionTwo": "Seção 02",
 
-  "login.subtitle": "Salve suas auditorias e acompanhe a nota de cada site ao longo do tempo.",
+  "login.subtitle": "Salve suas auditorias e veja o que mudou em cada site ao longo do tempo.",
   "login.note":
     "Sem senhas. Usamos GitHub ou Google só para confirmar quem você é. O AccessCheck continua gratuito sem conta.",
 
@@ -864,10 +802,8 @@ export const ptBR: Catalog = {
   "ratio.minAAShort": "mín. AA {required}:1",
   "ratio.ariaLabel": "Contraste de {found} para 1, mínimo de {required} para 1",
   "ratio.ariaLabelFixed": ", a correção alcança {fixed} para 1",
-  "score.ariaLabel": "Nota interna de prioridade: {score} de 100",
-  "home.cta.notConformance":
-    "Nota interna de prioridade \u00b7 não é uma declaração de conformidade",
-  "score.ifYouFix": "Corrigindo estes, a nota sobe para",
+  "score.ariaLabel": "Ordenação de prioridade: {score} de 100",
+  "home.cta.notConformance": "Leitura automatizada · não é uma declaração de conformidade",
 
   "home.hero.standards": "axe-core \u00b7 WCAG 2.0 / 2.1 / 2.2 \u00b7 níveis A e AA",
   "home.footerStandards": "axe-core \u00b7 Playwright \u00b7 WCAG A e AA",
@@ -897,7 +833,7 @@ export const ptBR: Catalog = {
   "home.notSeal.kicker": "Não é",
   "home.notSeal.body":
     "um selo de conformidade. A ferramenta mede o que o teste automático consegue provar e separa o restante para uma pessoa revisar.",
-  "home.mostRecent": "Auditoria pública mais recente \u00b7 nota interna de prioridade",
+  "home.mostRecent": "Auditoria pública mais recente · como a página está",
   "home.auditSite": "Auditar site",
   "home.auditPage": "Auditar página",
   "home.timing": "De 10 a 25 segundos por página",
@@ -927,7 +863,6 @@ export const ptBR: Catalog = {
   },
   "results.noVisibleFocus": "sem foco visível",
   "results.measuredNeeds": "{measured}:1 \u00b7 mínimo {required}:1",
-  "results.fixArrow": "corrigir \u2192 {score}",
   "results.outsideScore": " não contabilizado",
   "results.runFullAuditNote":
     "a auditoria completa para incluir a captura de tela, as verificações de teclado e o teste das correções.",
@@ -935,8 +870,6 @@ export const ptBR: Catalog = {
     "Análise da auditoria de site: regras do axe e as detecções próprias deste projeto. Teclado, interface expandida e verificação de correções rodam na auditoria completa da página.",
   "results.noMarkerOffScreenshot": "sem marcador \u00b7 fora da captura",
   "score.checksPassed": "{count} verificações automáticas aprovadas",
-  "score.nonLinearNote":
-    "Cada linha mostra a nota se você corrigir só aquela severidade. A nota não é linear: corrigir mais de uma recupera menos do que a soma das linhas.",
   "wcagReading.failsBy": "Reprova em",
 
   "home.howItWorks.kicker": "Como funciona",
@@ -954,7 +887,7 @@ export const ptBR: Catalog = {
   "home.export.kicker": "Exportação",
   "home.export.title": "Duas exportações, dois públicos: quem decide e quem corrige",
   "home.export.pdfFor": "para quem decide",
-  "home.export.pdfTitle": "Nota, régua e impacto em linguagem simples",
+  "home.export.pdfTitle": "Veredito, prioridades e impacto em linguagem simples",
   "home.export.pdfBody":
     "Resumo, níveis de severidade e o impacto de cada problema nas pessoas. Pronto para enviar a um cliente ou ao time de produto, sem exigir contexto técnico.",
   "home.export.mdFor": "para quem corrige",
@@ -964,7 +897,8 @@ export const ptBR: Catalog = {
   "home.track.kicker": "Ao longo do tempo",
   "home.track.title": "Audite de novo depois e veja exatamente o que mudou",
   "home.track.body":
-    "Uma página que passa hoje pode falhar no próximo deploy. Cada auditoria feita com login fica salva, e a seguinte é comparada regra a regra com ela \u2014 não só um número novo, mas quais barreiras foram resolvidas e quais voltaram.",
+    "Uma página que passa hoje pode falhar no próximo deploy. Cada auditoria feita com login fica salva, e a seguinte é comparada regra a regra com ela \u2014 quais barreiras foram resolvidas, quais voltaram, e se isso mudou como a página está.",
+  "home.track.cleared": { one: "{count} resolvido", other: "{count} resolvidos" },
   "home.track.previousAudit": "Auditoria anterior",
   "home.track.thisAudit": "Esta auditoria",
   "home.track.daysLater": { one: "{count} dia depois", other: "{count} dias depois" },
@@ -1229,18 +1163,18 @@ export const ptBR: Catalog = {
   "history.noMatches": "Nenhuma auditoria corresponde aos seus filtros",
   "history.empty": "Nenhuma auditoria ainda",
   "history.emptyBody":
-    "Rode uma auditoria logado e ela aparece aqui, para você acompanhar a nota de cada site ao longo do tempo.",
+    "Rode uma auditoria logado e ela aparece aqui, para você ver o que mudou em cada site ao longo do tempo.",
   "history.searchPlaceholder": "Buscar por domínio\u2026",
   "history.clearSearch": "Limpar busca",
   "history.filterByScore": "Filtrar por nota",
 
+  "site.score": "Nota do site",
   "site.runningAverage": "média parcial entre as páginas auditadas",
   "site.finalAverage": "média entre todas as páginas auditadas",
   "site.newAuditTitle": "Começar uma auditoria nova",
   "site.newAudit": "Nova auditoria",
   "site.fullAudit": "Auditoria de acessibilidade do site inteiro",
   "site.auditFailed": "A auditoria falhou",
-  "site.score": "Nota do site",
   "site.noAutomatedFindings": "Nenhum problema detectado automaticamente",
   "site.noFindings": "Nenhum problema",
   "site.pageFailed": "Não foi possível auditar esta página.",
@@ -1420,10 +1354,7 @@ export const ptBR: Catalog = {
   "stage.focus": "Percorrendo o caminho do foco",
   "stage.report": "Preparando o relatório",
 
-  "panel.scoreOutOf": " de 100 — voltar para o resumo",
   "panel.backToSummary": " — voltar ao resumo",
-  "panel.scoreHeading": "Nota da auditoria",
-  "panel.perHundred": "/100",
   "panel.count.critical": "críticos",
   "panel.count.serious": "graves",
   "panel.count.moderate": "moderados",

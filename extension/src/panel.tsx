@@ -57,8 +57,8 @@ function send(message: PanelMessage): Promise<unknown> {
 
 function LanguageChoice({ preference }: { preference: LocalePreference }) {
   return (
-    <div className="mt-5 flex items-center gap-2 border-t border-hairline px-3 pt-3">
-      <label htmlFor="panel-language">
+    <div className="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1.5 border-t border-hairline px-3 pt-3">
+      <label htmlFor="panel-language" className="shrink-0">
         <SectionKicker>{t("language.label")}</SectionKicker>
       </label>
       <select
@@ -70,7 +70,7 @@ function LanguageChoice({ preference }: { preference: LocalePreference }) {
             .then(markLanguageChanged)
             .then(() => location.reload());
         }}
-        className="ml-auto cursor-pointer border border-border bg-surface px-2 py-1 text-[12.5px] text-ink"
+        className="ml-auto max-w-full min-w-0 cursor-pointer border border-border bg-surface px-2 py-1 text-[12.5px] text-ink"
       >
         <option value={FOLLOW_BROWSER}>{t("language.followBrowser")}</option>
         {REPORT_LOCALES.map((option) => (

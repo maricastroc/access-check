@@ -145,7 +145,7 @@ try {
       origins: [...document.querySelectorAll("button .font-cond.uppercase")].map(
         (s) => s.textContent,
       ),
-      partialLabel: text.includes("Quick audit score"),
+      partialLabel: text.includes("Quick audit"),
       preliminary: text.includes("Preliminary result"),
       partialNote: text.includes("not a full audit"),
       focusPathNamed: text.includes("focus path was not verified"),
@@ -206,7 +206,7 @@ try {
   check(seen.markers > 0, "no markers drawn on the screenshot");
   check(seen.partialLabel, "a reading with no focus path is not labelled a quick audit");
   check(seen.preliminary, "a quick audit does not say the result is preliminary");
-  check(seen.partialNote, "no note next to the score saying checks were skipped");
+  check(seen.partialNote, "no note saying checks were skipped");
   check(seen.focusPathNamed, "the panel does not say the focus path went unverified");
   check(!seen.claimsComplete, "the panel calls a reading with missing checks a complete audit");
   check(seen.notChecked, "the panel does not list what it skipped");

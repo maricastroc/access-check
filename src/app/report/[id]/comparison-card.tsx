@@ -1,6 +1,7 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowDown,
+  faArrowRight,
   faArrowUp,
   faCheck,
   faMinus,
@@ -9,6 +10,7 @@ import {
 import type { ScanDiff, ViolationRef } from "@/lib/scan/diff";
 import type { Severity } from "@/lib/scan/types";
 import { sevHex, sevLabelKey } from "../shared";
+import { standingOf, STANDING_LABEL, STANDING_TONE } from "@/lib/report/standing";
 import type { Translate } from "@/lib/i18n/t";
 import type { ReportLocale } from "@/lib/i18n/locale";
 
@@ -33,8 +35,21 @@ export function ComparisonCard({
   locale: ReportLocale;
   t: Translate;
 }) {
-  const up = diff.scoreDelta > 0;
-  const down = diff.scoreDelta < 0;
+  const standingAt = (side: "from" | "to") =>
+    standingOf({
+      critical: diff.counts.critical[side],
+      serious: diff.counts.serious[side],
+      moderate: diff.counts.moderate[side],
+      minor: diff.counts.minor[side],
+      passed: diff.counts.passed[side],
+      bestPractice: 0,
+      manualReview: 0,
+    });
+
+  const standingFrom = standingAt("from");
+  const standingTo = standingAt("to");
+  const up = diff.fixed.length > diff.regressed.length;
+  const down = diff.regressed.length > diff.fixed.length;
   const deltaColor = up ? "#16764f" : down ? "#c62a2f" : "#63676f";
 
   return (
@@ -50,9 +65,11 @@ export function ComparisonCard({
         </div>
 
         <div className="flex shrink-0 items-center gap-3">
-          <span className="text-2xl font-bold text-muted">{diff.scoreFrom}</span>
-          <FontAwesomeIcon icon={faMinus} className="text-line-strong rotate-0 text-xs" />
-          <span className="text-2xl font-bold text-ink">{diff.scoreTo}</span>
+          <span className="text-lg font-bold text-muted">{t(STANDING_LABEL[standingFrom])}</span>
+          <FontAwesomeIcon icon={faArrowRight} className="text-line-strong text-xs" />
+          <span className="text-lg font-bold" style={{ color: STANDING_TONE[standingTo] }}>
+            {t(STANDING_LABEL[standingTo])}
+          </span>
           {diff.comparable ? (
             <span
               className="flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-bold"
@@ -62,7 +79,7 @@ export function ComparisonCard({
                 icon={up ? faArrowUp : down ? faArrowDown : faMinus}
                 className="text-[10px]"
               />
-              {diff.scoreDelta > 0 ? `+${diff.scoreDelta}` : diff.scoreDelta}
+              {t("report.rulesMoved", { count: diff.fixed.length + diff.regressed.length })}
             </span>
           ) : (
             <span className="rounded-full bg-canvas px-2.5 py-1 text-sm font-semibold text-muted">

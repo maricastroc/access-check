@@ -25,7 +25,7 @@ The report opens in the Chrome side panel, beside the page you audited. The clic
 (`activeTab`), so the extension never has standing permission to any site — the
 install prompt asks for no host access at all.
 
-## One audit, one score
+## One audit, one verdict
 
 Clicking the icon runs the whole audit in four steps, and shows them as it goes:
 
@@ -34,7 +34,7 @@ Clicking the icon runs the whole audit in four steps, and shows them as it goes:
 3. walking the focus path
 4. preparing the report
 
-The score appears only after the last step. Nothing is published as a finished
+The verdict appears only after the last step. Nothing is published as a finished
 reading before the focus path has been walked, so a number can never drop later
 because a check ran late.
 
@@ -46,11 +46,11 @@ time it is asked, so a reading taken before it settles is marked
 
 If step 3 does not finish — you cancel it, DevTools is holding the tab, or
 Chrome refuses to debug the page — the rest of the audit is kept and shown as a
-**Quick audit score**, marked _Preliminary result_, saying which step stopped
+**Quick audit**, marked _Preliminary result_, saying which step stopped
 and why. A partial audit is never turned into a total failure.
 
 **Quick audit** is available as a secondary action for the cases where the
-expanded audit cannot run at all. It is labelled _Quick audit score ·
+expanded audit cannot run at all. It is labelled _Quick audit ·
 Preliminary result_, states that the focus path was not verified, and offers to
 walk it afterwards without re-running the rules.
 
@@ -104,7 +104,7 @@ one. The shipped manifest is untouched and stays `activeTab`-only.
 
 axe-core (WCAG A/AA 2.0–2.2 plus best practice), the target-size rules, the
 live-region rules, marker positions on a screenshot of the visible viewport, and
-the same score, counts, fix text and criteria as the hosted report.
+the same verdict, counts, fix text and criteria as the hosted report.
 
 ## Deep audit
 
@@ -122,7 +122,7 @@ Before walking, the audit takes the page back to the start of its tab order.
 This matters more than it sounds: `blur()` does **not** move Chrome's sequential
 focus navigation starting point, so without it a second audit picks up wherever
 the first one stopped and measures a different set of controls — which is how
-the same page scored 46, then 37, then 34, then 23. The walk focuses the first
+four runs of the same page each reported a different set of findings. The walk focuses the first
 control it can see and steps back once to check nothing precedes it; a synthetic
 Shift+Tab wraps to the end of the page instead of leaving through the top, and
 landing _after_ the seed is how that wrap is told apart from a real predecessor.
@@ -150,16 +150,16 @@ covered it.
 - **iframes and closed shadow roots** — only the top frame is audited
 
 Every one of these is listed in the report itself, and the result is marked
-`partial`, so a reading from this build never poses as a full audit. The score is
-called an **Expanded audit score**, never a complete one, for exactly this
+`partial`, so a reading from this build never poses as a full audit. The panel says
+it is reading **this tab**, never a complete audit, for exactly this
 reason.
 
 ## Reading one page, not three
 
 Content that only renders when you scroll to it used to be woken by the focus
 walk — **after** the rules had already read the page — and it stayed rendered.
-So the first audit scored one page and every audit after it scored a fuller one:
-on stripe.com that was 46, then 21, then 21.
+So the first audit read one page and every audit after it read a fuller one:
+on stripe.com the reading only settled from the second run on.
 
 Measured on stripe.com, left alone: the page settles at 2843 elements after
 830ms and does not move for the next twenty seconds. It was the audit that grew
@@ -167,7 +167,7 @@ it, not the page.
 
 So step 1 now walks the viewport down the page itself, before any rule runs, and
 puts the viewport back. Everything after it — the rules, the focus path, the
-screenshot, the selectors and the score — reads the same, fully rendered page. A
+screenshot, the selectors and the verdict — reads the same, fully rendered page. A
 page with nothing to scroll pays nothing for this (measured: 0 steps, 1ms); a
 page with lazy content below the fold pays under a second (measured: 3 steps,
 977ms, on the fixture in `npm run check:deep`).

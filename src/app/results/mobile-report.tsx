@@ -4,13 +4,19 @@ import type { ScanResult } from "@/lib/scan/types";
 import { locatedMarkers, type FindingView } from "@/lib/report/findings";
 import type { ScoreBreakdown } from "@/lib/report/score";
 import type { WcagReadingModel } from "@/lib/report/wcag";
-import { Button, FindingDetail, FindingRow, SectionKicker, WcagChips } from "@/components/ui";
+import {
+  Button,
+  FindingDetail,
+  FindingRow,
+  PriorityList,
+  SectionKicker,
+  WcagChips,
+} from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { langAttrs } from "@/lib/i18n/locale";
-import { modeList, type SimKey } from "./data";
-import { CaptureStage, PartialOverviewNote, type FocusPoint } from "./evidence-frame";
+import { CaptureStage } from "./evidence-frame";
 import { FocusPathList } from "./focus-path-list";
-import { PriorityList, StaleScoringNotice } from "./summary-band";
+import { StaleScoringNotice } from "./summary-band";
 import {
   scoringIsCurrent,
   standingOf,
@@ -19,21 +25,14 @@ import {
   STANDING_TONE,
 } from "@/lib/report/standing";
 import { focusPathLines } from "@/lib/report/focus-coverage";
-import { type ActiveCapture, type InspectRegion, type Layer, type MarkerView } from "./report-ui";
-import { RegionInspector } from "./region-inspector";
+import { type Layer, type MarkerView } from "./report-ui";
 import { useT } from "@/lib/i18n/provider";
 
-const MOBILE_MODES: SimKey[] = ["normal", "deuteranopia", "grayscale"];
-
 export function MobileReport({
-  capture,
-  overviewTop,
   result,
   host,
   breakdown,
   wcag,
-  sim,
-  setSim,
   layer,
   findings,
   selectedFinding,
@@ -41,12 +40,9 @@ export function MobileReport({
   onSelect,
   onOpenEvidence,
   markerViews,
-  focusPoints,
   selectedStop,
   onSelectStop,
-  locatedStops,
   onStepStop,
-  inspect,
   onSelectMarker,
   tab,
   setTab,
@@ -55,14 +51,10 @@ export function MobileReport({
   onRunFull,
   pending = false,
 }: {
-  capture: ActiveCapture;
-  overviewTop?: number | null;
   result: ScanResult;
   host: string;
   breakdown: ScoreBreakdown;
   wcag: WcagReadingModel;
-  sim: SimKey;
-  setSim: (s: SimKey) => void;
   layer: Layer;
   findings: FindingView[];
   selectedFinding: FindingView | null;
@@ -70,12 +62,9 @@ export function MobileReport({
   onSelect: (id: string) => void;
   onOpenEvidence: (id: string) => void;
   markerViews: MarkerView[];
-  focusPoints: FocusPoint[];
   selectedStop: number | null;
   onSelectStop: (n: number) => void;
-  locatedStops: Set<number>;
   onStepStop: (delta: 1 | -1) => void;
-  inspect: { region: InspectRegion; label: string; tone: string } | null;
   onSelectMarker: (markerN: number) => void;
   tab: "capture" | "findings";
   setTab: (t: "capture" | "findings") => void;
@@ -145,55 +134,20 @@ export function MobileReport({
 
       {tab === "capture" ? (
         <div className="p-4">
-          <div className="mb-3 inline-flex border border-border" role="tablist" aria-label="Vision">
-            {MOBILE_MODES.map((m, i) => (
-              <button
-                key={m}
-                role="tab"
-                aria-selected={sim === m}
-                onClick={() => setSim(m)}
-                className={cn(
-                  "flex h-10 cursor-pointer items-center px-4 text-[13px] font-medium",
-                  i > 0 && "border-l border-border",
-                  sim === m ? "bg-ink text-surface" : "bg-surface text-ink",
-                )}
-              >
-                {(() => {
-                  const found = modeList.find((x) => x.key === m);
-                  return found ? t(found.label) : m;
-                })()}
-              </button>
-            ))}
-          </div>
-
           <div className="border border-ink">
-            {capture.partial && capture.tiles && capture.tiles.length > 0 && (
-              <PartialOverviewNote capture={capture} />
-            )}
             <CaptureStage
-              capture={capture}
-              overviewTop={overviewTop}
               host={host}
-              sim={sim}
               layer={layer}
               markerViews={markerViews}
-              focusPoints={focusPoints}
-              selectedStop={selectedStop}
-              onSelectStop={onSelectStop}
               selectedFinding={selectedFinding}
               onSelectMarker={onSelectMarker}
+              screenshot={result.screenshot}
               height={300}
               quickFromSite={quickFromSite}
               onRunFull={onRunFull}
               pending={pending}
             />
           </div>
-
-          {inspect && capture.tiles && capture.tiles.length > 0 && (
-            <div className="mt-4">
-              <RegionInspector t={t} host={host} sim={sim} capture={capture} inspect={inspect} />
-            </div>
-          )}
 
           {selectedFinding ? (
             <div className="mt-4">
@@ -258,7 +212,6 @@ export function MobileReport({
                   t={t}
                   stops={focusStops}
                   coverage={coverage}
-                  located={locatedStops}
                   selected={selectedStop}
                   onSelect={(n) => {
                     onSelectStop(n);

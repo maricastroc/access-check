@@ -102,8 +102,6 @@ describe("buildFindings", () => {
         top: 20,
         width: 5,
         height: 5,
-        captureId: "overview",
-        evidence: "captured",
       },
       {
         n: 2,
@@ -113,8 +111,6 @@ describe("buildFindings", () => {
         top: 40,
         width: 5,
         height: 5,
-        captureId: "overview",
-        evidence: "captured",
       },
     ];
     const f = buildFindings(baseResult({ violations: [contrast, heading], markers }));

@@ -1,7 +1,6 @@
 import type { ScanResult } from "@/lib/scan/types";
 import type { ScoreBreakdown } from "@/lib/report/score";
 import type { WcagReadingModel } from "@/lib/report/wcag";
-import { severityLabel, severityTextVar } from "@/lib/report/severity";
 import {
   countedSeverities,
   scoringIsCurrent,
@@ -10,7 +9,8 @@ import {
   STANDING_NOTE,
   STANDING_TONE,
 } from "@/lib/report/standing";
-import { SectionKicker, WcagChips } from "@/components/ui";
+import { severityLabel, severityTextVar } from "@/lib/report/severity";
+import { PriorityList, SectionKicker, WcagChips } from "@/components/ui";
 import type { Translate } from "@/lib/i18n/t";
 
 export function StaleScoringNotice({ t }: { t: Translate }) {
@@ -19,35 +19,6 @@ export function StaleScoringNotice({ t }: { t: Translate }) {
       <SectionKicker>{t("standing.staleTitle")}</SectionKicker>
       <p className="mt-1.5 text-[12.5px] leading-normal text-body">{t("standing.staleBody")}</p>
     </div>
-  );
-}
-
-export function PriorityList({ breakdown, t }: { breakdown: ScoreBreakdown; t: Translate }) {
-  if (breakdown.deductions.length === 0) {
-    return <p className="text-[13px] text-muted">{t("priority.nothing")}</p>;
-  }
-
-  return (
-    <ol className="flex flex-col gap-2">
-      {breakdown.deductions.map((d) => (
-        <li key={d.severity} className="flex items-baseline gap-2.5">
-          <span
-            aria-hidden
-            className="mt-1 inline-block h-2.5 w-2.5 shrink-0"
-            style={{ background: severityTextVar[d.severity] }}
-          />
-          <span className="text-[13.5px] leading-normal text-ink">
-            <span className="font-semibold" style={{ color: severityTextVar[d.severity] }}>
-              {d.issues} {severityLabel(d.severity, t).toLowerCase()}
-            </span>{" "}
-            <span className="text-muted">
-              {t("priority.elements", { count: d.elements })} ·{" "}
-              <span className="tabular-nums">{t("priority.share", { share: d.share })}</span>
-            </span>
-          </span>
-        </li>
-      ))}
-    </ol>
   );
 }
 

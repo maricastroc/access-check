@@ -6,7 +6,6 @@ import { scrollBehavior } from "@/lib/motion";
 export function FocusPathList({
   stops,
   coverage,
-  located,
   selected,
   onSelect,
   onStep,
@@ -14,7 +13,6 @@ export function FocusPathList({
 }: {
   stops: FocusStop[];
   coverage: { line: string; notes: string[] };
-  located: Set<number>;
   selected: number | null;
   onSelect: (n: number) => void;
   onStep: (delta: 1 | -1) => void;
@@ -72,19 +70,17 @@ export function FocusPathList({
       <ol className="flex flex-col gap-0.5 text-[12.5px] text-body">
         {stops.map((s) => {
           const here = selected === s.n;
-          const canLocate = located.has(s.n);
 
           return (
             <li key={s.n} id={`focus-stop-row-${s.n}`} className="scroll-mt-12">
               <button
                 type="button"
                 onClick={() => onSelect(s.n)}
-                disabled={!canLocate}
                 aria-current={here ? "true" : undefined}
-                title={canLocate ? t("focusPath.goToStop", { stop: s.n }) : undefined}
-                className={`flex w-full items-baseline gap-2 px-1.5 py-1 text-left ${
-                  canLocate ? "cursor-pointer hover:bg-band" : "cursor-default"
-                } ${here ? "bg-band outline-1 outline-ink" : ""}`}
+                title={t("focusPath.readStop", { stop: s.n })}
+                className={`flex w-full cursor-pointer items-baseline gap-2 px-1.5 py-1 text-left hover:bg-band ${
+                  here ? "bg-band outline-1 outline-ink" : ""
+                }`}
               >
                 <span className="font-cond text-muted tabular-nums">{s.n}</span>
                 <span className="min-w-0 truncate">{s.label}</span>
@@ -93,9 +89,9 @@ export function FocusPathList({
                     {t("results.noVisibleFocus")}
                   </span>
                 )}
-                {s.focusVisible && !canLocate && (
+                {s.rect?.scrolled && (
                   <span className="ml-auto shrink-0 text-[11px] text-muted">
-                    {t("focusPath.offCapture")}
+                    {t("focusPath.insideScroller")}
                   </span>
                 )}
               </button>

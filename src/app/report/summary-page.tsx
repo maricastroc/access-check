@@ -2,8 +2,7 @@ import type { ScanResult } from "@/lib/scan/types";
 import { scoreBreakdown } from "@/lib/report/score";
 import { violationsBehindScore } from "@/lib/scan/scored";
 import { buildWcagReading } from "@/lib/report/wcag";
-import { WcagChips } from "@/components/ui";
-import { severityLabel } from "@/lib/report/severity";
+import { PriorityList, WcagChips } from "@/components/ui";
 import { standingOf, STANDING_LABEL, STANDING_NOTE, type Standing } from "@/lib/report/standing";
 import { safeHost, sevHex, shortId } from "./shared";
 import { PageShell, SectionKicker, SectionKickerMuted } from "./primitives";
@@ -107,27 +106,9 @@ export function SummaryPage({ result }: { result: ScanResult }) {
           <div className="border border-hairline p-3">
             <SectionKickerMuted>{t("priority.kicker")}</SectionKickerMuted>
             <p className="mt-1 text-[10.5px] leading-tight text-muted">{t("priority.note")}</p>
-            <ol className="mt-2 flex flex-col gap-1.5">
-              {breakdown.deductions.map((d) => (
-                <li key={d.severity} className="flex items-baseline gap-2 text-[11.5px] text-ink">
-                  <span
-                    aria-hidden
-                    className="inline-block h-2 w-2 shrink-0"
-                    style={{ background: sevHex[d.severity] }}
-                  />
-                  <span className="font-semibold">
-                    {d.issues} {severityLabel(d.severity, t).toLowerCase()}
-                  </span>
-                  <span className="text-muted tabular-nums">
-                    {t("priority.elements", { count: d.elements })} ·{" "}
-                    {t("priority.share", { share: d.share })}
-                  </span>
-                </li>
-              ))}
-              {breakdown.deductions.length === 0 && (
-                <li className="text-[11.5px] text-muted">{t("priority.nothing")}</li>
-              )}
-            </ol>
+            <div className="mt-2">
+              <PriorityList breakdown={breakdown} t={t} size="compact" />
+            </div>
           </div>
         </div>
       </div>

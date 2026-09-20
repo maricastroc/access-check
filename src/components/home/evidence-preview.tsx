@@ -63,8 +63,6 @@ export function demoFinding(t: Translate): FindingView {
         top: 46,
         width: 14,
         height: 7,
-        captureId: "overview",
-        evidence: "captured" as const,
       },
     ],
     located: true,
@@ -147,20 +145,7 @@ export function CapturePreview({ height = 240, t }: { height?: number; t: Transl
 
 export function HeroEvidencePreview({ t }: { t: Translate }) {
   return (
-    <BrowserFrame
-      label={t("home.lens.frameLabel")}
-      trailing={
-        <div className="hidden items-stretch border border-border text-[11px] sm:flex">
-          <span className="bg-ink px-2 py-0.5 font-medium text-surface">{t("vision.normal")}</span>
-          <span className="border-l border-border px-2 py-0.5 text-muted">
-            {t("vision.short.deut")}
-          </span>
-          <span className="border-l border-border px-2 py-0.5 text-muted">
-            {t("vision.short.gray")}
-          </span>
-        </div>
-      }
-    >
+    <BrowserFrame label={t("home.lens.frameLabel")}>
       <CapturePreview t={t} height={210} />
       <div
         className="border-t border-ink p-3.5"

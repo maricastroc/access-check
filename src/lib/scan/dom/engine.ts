@@ -14,16 +14,7 @@ import { DOM_ENGINE_VERSION, type DomEngine } from "./engine-api";
 import { overlayClear, overlayRestoreScroll, overlayShow } from "./overlay";
 import { collectLiveRegionsRaw } from "./live-regions";
 import { primeLazyContent, waitForPaintCalm } from "./prime";
-import {
-  collectDocRects,
-  collectRects,
-  documentHeight,
-  freezeOverlays,
-  readViewport,
-  restoreOverlays,
-  scrollToDocY,
-  stickyInset,
-} from "./rects";
+import { collectRects, readViewport } from "./rects";
 import { cssPath } from "./selector";
 import { collectTargetSizeRaw } from "./target-size";
 
@@ -32,12 +23,6 @@ const engine: DomEngine = {
   cssPath,
   collectElementInfo,
   collectRects,
-  collectDocRects,
-  stickyInset,
-  scrollToDocY,
-  freezeOverlays,
-  restoreOverlays,
-  documentHeight,
   readViewport,
   primeLazyContent,
   waitForPaintCalm,

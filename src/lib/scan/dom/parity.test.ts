@@ -342,22 +342,22 @@ describe("a coordinate that survives a container scrolling under it", () => {
     expect(after.rect!.flowContext).not.toBe(rows[0].rect!.flowContext);
   });
 
-  it("leaves the painted document rectangle exactly as it was", async () => {
+  it("keeps the painted rectangle relative to the viewport", async () => {
     await scroller.evaluate(() => {
       document.getElementById("list")!.scrollTop = 240;
       window.scrollTo(0, 120);
     });
 
     const measured = await scroller.evaluate(() =>
-      window.__accessCheckDom!.collectDocRects([".row a"]),
+      window.__accessCheckDom!.collectRects([".row a"]),
     );
     const painted = await scroller.evaluate(() => {
       const r = document.querySelector(".row a")!.getBoundingClientRect();
-      return { docX: r.left + window.scrollX, docY: r.top + window.scrollY };
+      return { x: r.left, y: r.top };
     });
 
-    expect(measured[0]!.docX).toBe(painted.docX);
-    expect(measured[0]!.docY).toBe(painted.docY);
+    expect(measured[0]!.x).toBe(painted.x);
+    expect(measured[0]!.y).toBe(painted.y);
   });
 
   it("puts the container back where the reader had left it", async () => {

@@ -58,12 +58,11 @@ A tool that measures contrast shouldn't have questionable contrast of its own, s
 | **🌐 Whole-Site Crawl**   | Point it at a domain and it discovers pages from the sitemap (or by crawling links) and audits them in parallel — a background job fans out one short serverless run per page, with live progress and an aggregate site score. |
 | **🔧 Copy-Paste Fixes**   | Each violation gets a generated code snippet — the exact contrast color, alt text, or label to paste — not just a restated rule.                                                                                               |
 | **✅ Verified Fixes**     | Every fix is applied in the page and the audit is re-run to prove it actually clears the violation before it's suggested.                                                                                                      |
-| **👁️ Vision Simulations** | Preview the page through deuteranopia, protanopia, tritanopia, low vision, and grayscale filters to check meaning survives without color.                                                                                      |
-| **📊 Score & Export**     | A weighted 0–100 score, a prioritized "Fix First" list, and an exportable PDF / Markdown report you can hand to a client or paste into a ticket.                                                                               |
+| **⚖️ Verdict & Export**   | Where the page stands — _blocked_, _failing_, _minor gaps_ or _no rule failed_ — a prioritized "Fix First" list, and an exportable PDF / Markdown report you can hand to a client or paste into a ticket.                       |
 | **🔍 Beyond Violations**  | Surfaces axe's "best practice" recommendations and flags items that need manual review — the two buckets most tools silently discard.                                                                                          |
 | **⌨️ Keyboard Path**      | Tabs through the page in a real browser and maps the focus order — flagging invisible focus, keyboard traps, positive `tabindex`, and controls that can't be reached by keyboard.                                              |
 | **📱 Context-Aware Scan** | Re-audits at a mobile viewport and after opening menus / disclosures, catching violations that only surface on small screens or once the UI is expanded.                                                                       |
-| **📈 Change Over Time**   | Signed-in audits are saved, and each new one is diffed rule by rule against the last — which barriers cleared, which came back, and how the score moved. A page that passes today can fail after the next deploy.              |
+| **📈 Change Over Time**   | Signed-in audits are saved, and each new one is diffed rule by rule against the last — which barriers cleared, which came back, and whether that moved where the page stands. A page that passes today can fail after the next deploy.              |
 | **🧩 Chrome Extension**   | A Manifest V3 side panel that audits the tab you are already on — including a keyboard focus path walked with real `Tab` presses — and points at the offending element in the live page.                                       |
 
 <br/>
@@ -84,16 +83,16 @@ A tool that measures contrast shouldn't have questionable contrast of its own, s
   </tr>
 </table>
 
-<p align="center"><em>Change tracking, as explained on the landing page — an example audit moving 53 → 84, with two rules cleared and one regression.</em></p>
+<p align="center"><em>Change tracking, as explained on the landing page — an example page moving from failing to minor gaps, with two rules cleared and one regression.</em></p>
 
 <p align="center">
-  <img src="docs/track-over-time.png" alt="AccessCheck's change-over-time section: a previous audit scoring 53 and the current one scoring 84, listing two cleared rules and one new regression" width="820" />
+  <img src="docs/track-over-time.png" alt="AccessCheck's change-over-time section: a previous audit reading as failing and the current one as minor gaps, listing two cleared rules and one new regression" width="820" />
 </p>
 
-<p align="center"><em>The side panel: the score for the current tab, and the focus path drawn over the live page.</em></p>
+<p align="center"><em>The side panel: where the current tab stands, and the focus path drawn over the live page.</em></p>
 
 <p align="center">
-  <img src="docs/extension-1.png" alt="AccessCheck's side panel showing the score and the findings list for the current tab" width="820" />
+  <img src="docs/extension-1.png" alt="AccessCheck's side panel showing the verdict and the findings list for the current tab" width="820" />
 </p>
 
 <p align="center">
@@ -137,20 +136,20 @@ A tool that measures contrast shouldn't have questionable contrast of its own, s
 
 AccessCheck is an accessibility auditor that goes one step further than the usual checker. Most tools tell you _what_ is broken; AccessCheck generates the exact code to fix each violation, **proves the fix works by re-running the audit after applying it**, and groups repeated issues so one change can resolve many elements at once.
 
-It renders the page in a real headless browser (Playwright), runs [axe-core](https://github.com/dequelabs/axe-core) against WCAG 2.2 A/AA rules, and turns the raw findings into an actionable report — a live preview with issue markers, color-blindness simulations, a keyboard focus-path map, context re-scans (mobile + expanded UI), an accessibility score, a prioritized "Fix First" list, and an exportable PDF.
+It renders the page in a real headless browser (Playwright), runs [axe-core](https://github.com/dequelabs/axe-core) against WCAG 2.2 A/AA rules, and turns the raw findings into an actionable report — a screenshot with issue markers, the keyboard focus path as a readable list, context re-scans (mobile + expanded UI), a plain-language verdict, a prioritized "Fix First" list, and an exportable PDF.
 
 The scan runs server-side in a Node runtime (`/api/scan`) because Playwright needs a real browser. Locally it uses the full Playwright Chromium; on serverless it falls back to `playwright-core` + `@sparticuz/chromium`. axe-core is injected into the target page with `bypassCSP` enabled, so the audit still runs on sites that ship a strict Content-Security-Policy (which would otherwise block third-party script injection).
 
 **Additional features:**
 
 - **Verified, copy-paste remediation:** The flagship feature. See the [dedicated section](#-the-verified-fix-engine) below — each fix is deterministically generated, applied to the live DOM, and re-audited to label it **Verified** or **Needs review** before it's ever suggested.
-- **Whole-site crawl (background job):** Point it at a domain and AccessCheck discovers pages from the sitemap (falling back to a same-origin link crawl), then audits them in parallel. Because a single scan already spends 10–25s in a headless browser and Vercel caps a function at 60s, the crawl is decomposed into a durable background job: [Upstash QStash](https://upstash.com/docs/qstash) fans out **one short serverless invocation per page**, each writes its result to Postgres, and the client polls a live progress view that ends in an aggregate site score. It degrades gracefully — with no QStash configured (local dev) the pages are processed inline instead. Works signed-in or anonymous.
-- **Scan history with diffs:** Signed-in scans are saved at `/history` (newest first, with thumbnails, score, and a delta vs the previous scan of the same URL). Opening a saved report shows a **"Changes since last scan"** panel — exactly which rules were **fixed** or **regressed** over time, computed by a pure, unit-tested diff function.
+- **Whole-site crawl (background job):** Point it at a domain and AccessCheck discovers pages from the sitemap (falling back to a same-origin link crawl), then audits them in parallel. Because a single scan already spends 10–25s in a headless browser and Vercel caps a function at 60s, the crawl is decomposed into a durable background job: [Upstash QStash](https://upstash.com/docs/qstash) fans out **one short serverless invocation per page**, each writes its result to Postgres, and the client polls a live progress view that ends in an aggregate site reading. It degrades gracefully — with no QStash configured (local dev) the pages are processed inline instead. Works signed-in or anonymous.
+- **Scan history with diffs:** Signed-in scans are saved at `/history` (newest first, with thumbnails and a delta vs the previous scan of the same URL). Opening a saved report shows a **"Changes since last scan"** panel — exactly which rules were **fixed** or **regressed** over time, computed by a pure, unit-tested diff function.
 - **Three-layer result reuse & rate limiting:** A page audited in the last 5 minutes isn't audited again. The browser session answers first (instant, survives leaving the report and coming back, or hopping to the PDF export), then Upstash Redis for anonymous readers (shared across serverless instances, screenshot included so a hit still opens with its evidence frame), then the reader's own scan history in Postgres when signed in. A reused reading never poses as a new one — it carries the `scannedAt` of the run that produced it and the report says how old it is, with **Re-audit** walking past every layer. Scans are gated at 5/min per IP via the same Redis, and everything degrades gracefully to measuring again when Redis isn't configured.
 - **Keyboard focus-path analysis:** Every scan tabs through the page in the real browser, maps the focus order, and flags invisible focus indicators, keyboard traps, positive `tabindex`, and interactive controls that can't be reached by keyboard — operability checks axe-core doesn't perform.
 - **Context-aware re-scans:** Beyond the default desktop pass, AccessCheck re-audits the page at a mobile viewport and after opening menus / disclosures, surfacing violations that only appear on small screens or once dynamic UI is expanded.
 - **Three-tier reporting:** Results are split into WCAG violations (confirmed failures), best practices (recommendations beyond the spec, clearly labelled as non-blocking), and needs-manual-review items (axe flagged something but can't decide automatically — surfaced with the affected selectors _plus a per-rule, step-by-step walkthrough of how to confirm it by hand_) so you know exactly where to look. Most tools collapse these into one list or discard tiers 2 and 3 entirely.
-- **Export to PDF & Markdown:** A formatted report view at `/report`, plus a browser-generated Markdown report (score, severity table, Fix First list, every violation with its fix and verification status) perfect for pasting into an issue, PR, or ticket.
+- **Export to PDF & Markdown:** A formatted report view at `/report`, plus a browser-generated Markdown report (verdict, severity table, Fix First list, every violation with its fix and verification status) perfect for pasting into an issue, PR, or ticket.
 - **Responsive layout:** Fully responsive across the landing, results, and exportable report views.
 
 <br/>
@@ -165,7 +164,7 @@ URL → headless Chromium (Playwright) → inject axe-core → WCAG audit
     → cluster identical fixes into groups
     → re-run axe per fix to verify it clears the violation
     → keyboard focus-path pass + mobile / dynamic-state re-scans
-    → score + markers + report → UI / PDF
+    → verdict + markers + report → UI / PDF
 ```
 
 **It writes the actual fix.** Instead of restating the rule, each violation gets a generated snippet from a deterministic, dependency-free generator ([`src/lib/scan/remediate.ts`](src/lib/scan/remediate.ts)):
@@ -192,7 +191,7 @@ The web app audits a URL. The extension audits **the tab you are already looking
 - **Two readings, by cost.** A **quick audit** runs the rules and returns without ever attaching the debugger. An **expanded audit** adds the keyboard focus path, and says so before it starts.
 - **A real focus path, not a simulated one.** The walk attaches `chrome.debugger` and dispatches genuine `Tab` / `Shift+Tab` through CDP, so the order it reports is the order Chrome actually produces — including what the browser skips. The debugger is attached for that step only and released before the report appears; a walk that is cut short still releases it.
 - **It points at the element.** Every occurrence carries its selector, an abbreviated snippet, and its measured rectangle — and **Locate on page** highlights it in the live tab. Stepping through the focus path numbers the stops over the page itself.
-- **It says what it could not check.** Coverage is stated in the score card (_"Partial coverage · 3 checks unavailable"_) rather than quietly rounded away, and the reading is never called complete when checks were skipped.
+- **It says what it could not check.** Coverage is stated next to the verdict (_"Partial coverage · 3 checks unavailable"_) rather than quietly rounded away, and the reading is never called complete when checks were skipped.
 - **Narrow permissions.** `activeTab`, `scripting`, `sidePanel`, `storage`, `debugger` — no host permissions, and nothing is loaded over the network at runtime.
 
 The panel is held to the standard the product sells: one `<main>`, one `<h1>`, no skipped heading levels, a visible focus ring on every control, no horizontal overflow at 320–600px or at 200% zoom, and no layout shift when a finding opens — all asserted by [`scripts/check-panel-ux.mjs`](scripts/check-panel-ux.mjs).

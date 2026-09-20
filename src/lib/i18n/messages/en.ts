@@ -137,23 +137,16 @@ export const en = {
   "md.reportTitle": "Accessibility report: {name}",
   "md.reportTitleDash": "Accessibility report \u2014 {name}",
   "md.url": "URL",
-  "md.scoreLabel": "Score",
-  "md.priorityScore": "Internal priority score",
   "md.priorityNote": "(priority, not a WCAG conformance grade)",
   "md.elementsScanned": "Elements scanned",
   "md.generated": "Generated",
-  "md.whereScoreCanGo": "Where the score can go",
-  "md.currentScore": "Current internal priority score: **{score} / 100**.",
   "md.colIfYouFix": "If you fix",
   "md.colElements": "Elements",
   "md.colShare": "Share of what is left",
-  "md.colScoreRises": "Score rises to",
   "md.manualOutside": {
     one: "{count} manual-review item is not counted here.",
     other: "{count} manual-review items are not counted here.",
   },
-  "md.nonLinear":
-    " Each row is the score after fixing that severity on its own; the score is non-linear, so fixing more than one recovers less than the rows added together.",
   "md.wcagReading": "WCAG reading",
   "md.failsBy": "fails by {criteria}",
   "md.noAFailures": "no automated level-A failures",
@@ -370,8 +363,8 @@ export const en = {
 
   "scope.stillMissing":
     "The mobile viewport, reduced motion and verified fixes are still not checked here, so this is not a full audit.",
-  "scope.quickKicker": "Quick audit score",
-  "scope.currentTabKicker": "Current-tab audit score",
+  "scope.quickKicker": "Quick audit",
+  "scope.currentTabKicker": "This tab",
   "scope.preliminaryLead": "Preliminary result",
   "scope.skippedNote":
     "The focus path was not verified, so nothing here can speak for keyboard use. {why} {rest}",
@@ -400,7 +393,7 @@ export const en = {
   "evidence.heuristic.tag": "Needs a human check",
   "evidence.heuristic.title": "Why this is not counted as a failure",
   "evidence.heuristic.body":
-    "This is an observation about how the page behaved, not a rule that passes or fails, so it is left out of the score. What it would take to settle it is in the description above.",
+    "This is an observation about how the page behaved, not a rule that passes or fails, so it is not counted here. What it would take to settle it is in the description above.",
   "evidence.heuristic.short": "Observation, not counted",
   "md.needsHumanCheck": "Observations that need a human check",
   "md.needsHumanCheckNote":
@@ -520,35 +513,15 @@ export const en = {
   "review.nested.s1": "Confirm there aren't focusable controls inside other controls",
   "review.nested.s2": "Flatten the markup so each control stands on its own",
 
-  "vision.normal": "Normal",
-  "vision.normalTitle": "Normal, no vision filter",
-  "vision.deuteranopia": "Deuteranopia",
-  "vision.deuteranopiaTitle": "Deuteranopia (red-green color blindness)",
-  "vision.protanopia": "Protanopia",
-  "vision.protanopiaTitle": "Protanopia (red-green color blindness)",
-  "vision.tritanopia": "Tritanopia",
-  "vision.tritanopiaTitle": "Tritanopia (blue-yellow color blindness)",
-  "vision.lowVision": "Low vision",
-  "vision.lowVisionTitle": "Low vision (reduced sharpness and contrast)",
-  "vision.grayscale": "Grayscale",
-  "vision.grayscaleTitle": "Grayscale (no color)",
-  "vision.short.deut": "Deut.",
-  "vision.short.gray": "Gray",
   "home.lens.frameLabel": "Screenshot \u00b7 scale 43%",
-  "vision.rail": "Vision",
   "layer.rail": "Overlay",
   "layer.markers": "Issue markers",
   "layer.markersTitle": "Show the issue markers on the screenshot",
-  "layer.focus": "Focus path",
-  "layer.focusTitle": "Show the keyboard focus order",
   "layer.none": "No overlay",
   "layer.noneTitle": "Hide the overlay",
 
-  "capture.defaultRender": "default render \u00b7 no vision filter",
-  "capture.simulating": "simulating {mode}",
-
   "home.md.filename": "accesscheck-aurora-coffee-com.md",
-  "home.md.line1": "## aurora-coffee.com: 53/100",
+  "home.md.line1": "## aurora-coffee.com \u2014 Failing",
   "home.md.line2": "| severity | findings | elements |",
   "home.md.line3": "| serious  | 1 | 7 |",
   "home.md.line4": "| moderate | 2 | 2 |",
@@ -556,58 +529,26 @@ export const en = {
   "home.md.line6": "1. color-contrast \u00b7 1.4.3 \u00b7 verified",
 
   "results.focusPathStops": "focus-path stops",
-  "focusPath.continuesDown": "Tab goes on to stop {stop}, further down the page",
-  "capture.tileUnavailable": "This strip of the page ({from}px to {to}px) could not be loaded.",
-  "inspect.nativeScale": "1:1 \u00b7 at {x}, {y} on the page",
-  "inspect.finding": "Finding {n}, at full resolution",
-  "inspect.stop": "Stop {n}, at full resolution",
-  "focusPath.continuesUp": "Tab goes on to stop {stop}, further up the page",
   "focusPath.listTitle": "Tab order",
-  "focusPath.goToStop": "Show stop {stop} on the page",
+  "focusPath.readStop": "Read stop {stop}",
+  "focusPath.insideScroller": "inside a scrolling area",
   "focusPath.previousStop": "Previous stop",
   "focusPath.nextStop": "Next stop",
-  "focusPath.offCapture": "not on this capture",
   "focusPath.selectedStop": "Stop {stop} of {total}",
   "results.manualReviewItems": {
     one: "{count} manual-review item \u00b7",
     other: "{count} manual-review items \u00b7",
   },
-  "capture.evidenceLabel":
-    "High-resolution evidence \u00b7 {width} \u00d7 {height} \u00b7 scale {scale}%",
   "capture.contextual": "Contextual capture \u00b7 {width} \u00d7 {height} \u00b7 scale {scale}%",
-  "capture.announceContextual":
-    "Showing the affected element at full resolution. Scroll the capture to see around it.",
-  "capture.announceOverview": "Showing the overview capture.",
-  "capture.backToOverview": "Back to the whole page",
   "capture.openEvidence": "See the evidence",
-  "capture.readOnEvidence":
-    "This overview is half-scale, for finding your way around. Open a marker to read the evidence at full resolution.",
-  "capture.markerHint": "Select a marker to open its full-resolution evidence.",
+  "capture.markerHint": "Select a marker to open the finding it belongs to.",
   "detail.sharedColorPair": {
     one: "{count} occurrence shares this detected colour pair.",
     other: "{count} occurrences share this detected colour pair.",
   },
   "detail.moreSelectors": "+{count} more",
-  "capture.overviewLabel": "Whole page \u00b7 {width} \u00d7 {height} \u00b7 scale {scale}%",
-  "capture.overviewPartialLabel":
-    "Whole page, partial \u00b7 {width} \u00d7 {height} \u00b7 scale {scale}%",
-  "capture.announceOverviewScroll":
-    "Showing the whole page. Scroll the capture to read further down.",
-  "capture.partialTitle": "This overview stops short of the end of the page",
-  "capture.partialBody":
-    "It reaches {captured}px of the {total}px this page is tall. Everything below that was audited, but is not in this image.",
-  "capture.partialWhyHeight": "The page is taller than the {limit}px an overview can hold.",
-  "capture.partialWhyTiles": "The page needs more blocks than an overview can hold.",
-  "capture.partialWhyBytes": "The blocks reached the weight an overview may take.",
-  "capture.partialWhyTime": "The capture reached the time an overview may take.",
-  "capture.partialWhyError": "The page stopped answering while the last blocks were taken.",
-  "capture.partialCrops":
-    "Findings further down keep their own full-resolution crops \u2014 open one from the list to see it.",
-  "capture.overviewGrew":
-    "The page grew while it was being photographed, so the last block may not line up with what you see now.",
-  "panel.tileAlt": "{url}, from {from}px to {to}px down the page",
   "capture.evidenceShared": "shown in a capture taken for a nearby element",
-  "capture.frameLabel": "Screenshot \u00b7 {width} \u00d7 {height} \u00b7 scale {scale}%",
+  "capture.frameLabel": "Screenshot \u00b7 {width} \u00d7 {height}",
   "capture.shownOnScreenshot": "{count} shown on the screenshot",
   "capture.onScreenshot": "\u00b7 on the screenshot",
   "detail.elementsAffected": {
@@ -695,7 +636,6 @@ export const en = {
   "report.auditDuration": "Audit duration",
   "report.elementsChecked": "Elements checked",
   "report.exportedTitle": "Exported accessibility report",
-  "report.internalScore": "Internal priority score",
   "report.executiveSummary": "Executive summary",
   "report.priorityRoadmap": "Priority roadmap",
   "report.suggestedFix": "Suggested fix",
@@ -724,7 +664,7 @@ export const en = {
   "results.stepsNote": "These are the real steps AccessCheck runs, in the order they happen.",
   "results.partialReport": "Partial report",
   "results.partialNote":
-    "The score reflects only what we could measure. Anything we skipped is listed below, not guessed.",
+    "This reading covers only what we could measure. Anything we skipped is listed below, not guessed.",
 
   "home.lens.locatedOccurrence": "Located occurrence",
   "home.lens.verifiedInSandbox": "Verified in sandbox",
@@ -814,18 +754,17 @@ export const en = {
   "report.whereScoreCouldGo": "Where this page could stand",
   "report.projectionBody":
     "With the critical and serious findings resolved, this page would read as",
-  "report.projectionTail":
-    ". This is only a projection, not a pass for WCAG. Meeting WCAG also depends on the moderate items and on",
   "report.accessibilityReport": "Accessibility report",
   "report.detailedFindings": "Detailed findings",
   "report.noSeriousOnPage":
     "No critical or serious automated failures on this page. Moderate items and manual review are on page 3.",
+  "report.rulesMoved": { one: "{count} rule moved", other: "{count} rules moved" },
   "report.changesSinceLast": "Changes since last audit",
   "report.scoringModelUpdated": "Scoring model updated",
   "report.whatMoved": "What moved since {date}",
   "report.sectionTwo": "Section 02",
 
-  "login.subtitle": "Save your audits and track each site\u2019s score over time.",
+  "login.subtitle": "Save your audits and see what moved on each site over time.",
   "login.note":
     "No passwords. We use GitHub or Google only to confirm who you are. AccessCheck stays free without an account.",
 
@@ -838,9 +777,8 @@ export const en = {
   "ratio.minAAShort": "min AA {required}:1",
   "ratio.ariaLabel": "Contrast {found} to 1, minimum {required} to 1",
   "ratio.ariaLabelFixed": ", fix reaches {fixed} to 1",
-  "score.ariaLabel": "Internal priority score {score} out of 100",
-  "home.cta.notConformance": "Internal priority score \u00b7 not a conformance statement",
-  "score.ifYouFix": "If you fix these, the score rises to",
+  "score.ariaLabel": "Priority ranking {score} out of 100",
+  "home.cta.notConformance": "Automated reading \u00b7 not a conformance statement",
 
   "home.hero.standards": "axe-core \u00b7 WCAG 2.0 / 2.1 / 2.2 \u00b7 levels A and AA",
   "home.footerStandards": "axe-core \u00b7 Playwright \u00b7 WCAG A & AA",
@@ -871,7 +809,7 @@ export const en = {
   "home.notSeal.kicker": "Not",
   "home.notSeal.body":
     "a conformance seal. It measures what automated tools can prove, and marks the rest for a human to review.",
-  "home.mostRecent": "Most recent public audit \u00b7 internal priority score",
+  "home.mostRecent": "Most recent public audit \u00b7 where the page stands",
   "home.auditSite": "Audit site",
   "home.auditPage": "Audit page",
   "home.timing": "About 10 to 25 seconds per page",
@@ -900,7 +838,6 @@ export const en = {
   },
   "results.noVisibleFocus": "no visible focus",
   "results.measuredNeeds": "{measured}:1 \u00b7 needs {required}:1",
-  "results.fixArrow": "fix \u2192 {score}",
   "results.outsideScore": " not counted here",
   "results.runFullAuditNote":
     "the full audit to add the screenshot, keyboard checks and fix testing.",
@@ -908,8 +845,6 @@ export const en = {
     "Site-audit pass: axe rules and this project's own detections. Keyboard, expanded UI and fix verification run in the full page audit.",
   "results.noMarkerOffScreenshot": "no marker \u00b7 outside the screenshot",
   "score.checksPassed": "{count} automated checks passed",
-  "score.nonLinearNote":
-    "Each line is the score after fixing that severity on its own. The score is non-linear, so fixing more than one recovers less than the lines added together.",
   "wcagReading.failsBy": "Fails by",
 
   "home.howItWorks.kicker": "How it works",
@@ -927,7 +862,7 @@ export const en = {
   "home.export.title":
     "Two exports for two readers: the person who decides and the person who fixes",
   "home.export.pdfFor": "for the person who decides",
-  "home.export.pdfTitle": "Score, ruler and impact in plain language",
+  "home.export.pdfTitle": "Standing, priorities and impact in plain language",
   "home.export.pdfBody":
     "Summary, severity levels and each finding's impact on people. Ready to send to a client or a product team, with no engineering context required.",
   "home.export.mdFor": "for the person who fixes",
@@ -937,7 +872,8 @@ export const en = {
   "home.track.kicker": "Over time",
   "home.track.title": "Audit again later and see exactly what moved",
   "home.track.body":
-    "A page that passes today can fail after the next deploy. Every audit you run signed in is saved, and the next one is compared rule by rule against it \u2014 not just a new number, but which barriers cleared and which came back.",
+    "A page that passes today can fail after the next deploy. Every audit you run signed in is saved, and the next one is compared rule by rule against it \u2014 which barriers cleared, which came back, and whether that moved where the page stands.",
+  "home.track.cleared": { one: "{count} cleared", other: "{count} cleared" },
   "home.track.previousAudit": "Previous audit",
   "home.track.thisAudit": "This audit",
   "home.track.daysLater": { one: "{count} day later", other: "{count} days later" },
@@ -1196,18 +1132,18 @@ export const en = {
   "history.noMatches": "No audits match your filters",
   "history.empty": "No audits yet",
   "history.emptyBody":
-    "Run an audit while signed in and it\u2019ll show up here, so you can track each site\u2019s score over time.",
+    "Run an audit while signed in and it’ll show up here, so you can see what moved on each site over time.",
   "history.searchPlaceholder": "Search by domain\u2026",
   "history.clearSearch": "Clear search",
   "history.filterByScore": "Filter by score",
 
+  "site.score": "Site score",
   "site.runningAverage": "running average across audited pages",
   "site.finalAverage": "average across all audited pages",
   "site.newAuditTitle": "Start a new audit",
   "site.newAudit": "New audit",
   "site.fullAudit": "Full-site accessibility audit",
   "site.auditFailed": "Audit failed",
-  "site.score": "Site score",
   "site.noAutomatedFindings": "No automated findings",
   "site.noFindings": "No findings",
   "site.pageFailed": "This page could not be audited.",
@@ -1385,10 +1321,7 @@ export const en = {
   "stage.focus": "Walking the focus path",
   "stage.report": "Preparing the report",
 
-  "panel.scoreOutOf": " out of 100 — back to the summary",
   "panel.backToSummary": " — back to the summary",
-  "panel.scoreHeading": "Audit score",
-  "panel.perHundred": "/100",
   "panel.count.critical": "critical",
   "panel.count.serious": "serious",
   "panel.count.moderate": "moderate",

@@ -11,7 +11,7 @@ O QUE ELE VERIFICA
 
 O QUE ELE NÃO FAZ
 
-Não é um selo de conformidade. O teste automático prova uma minoria da WCAG, e o AccessCheck diz isso: a nota cobre o que as verificações conseguiram provar, e tudo que depende de uma pessoa fica listado à parte como revisão manual, em vez de virar número. Quando uma verificação não pôde rodar, o painel diz qual foi, em vez de aprovar em silêncio.
+Não é um selo de conformidade. O teste automático prova uma minoria da WCAG, e o AccessCheck diz isso: o veredito cobre o que as verificações conseguiram provar, e tudo que depende de uma pessoa fica listado à parte como revisão manual, em vez de virar número. Quando uma verificação não pôde rodar, o painel diz qual foi, em vez de aprovar em silêncio.
 
 COMO ELE TRATA O SEU NAVEGADOR
 
