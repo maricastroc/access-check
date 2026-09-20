@@ -3,6 +3,8 @@ import type { MessageKey, Translate } from "@/lib/i18n/t";
 
 export type FixStatus = "verified" | "needs-review" | "unchecked";
 
+export type SealStatus = Exclude<FixStatus, "unchecked">;
+
 export const SEVERITY_ORDER: Severity[] = ["critical", "serious", "moderate", "minor"];
 
 export const SEVERITY_LABEL_KEY: Record<Severity, MessageKey> = {

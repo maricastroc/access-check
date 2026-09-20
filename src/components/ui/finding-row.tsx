@@ -1,5 +1,5 @@
 import type { FindingView } from "@/lib/report/findings";
-import type { Verdict } from "@/lib/report/verdict";
+import { verdictTone, type Verdict } from "@/lib/report/verdict";
 import { severityColorVar, severityLabel } from "@/lib/report/severity";
 import { SC_LEVEL } from "@/lib/report/wcag";
 import { cn } from "@/lib/cn";
@@ -10,11 +10,11 @@ function railColor(f: FindingView): string {
   return "var(--color-steel)";
 }
 
-function VerdictCue({ kind, t }: { kind: Verdict["kind"]; t: Translate }) {
-  if (kind === "verified") return <span className="text-verified">{t("cue.verified")}</span>;
-  if (kind === "partial") return <span className="text-moderate-text">{t("cue.partial")}</span>;
-  if (kind === "sampled") return <span className="text-muted">{t("cue.sampled")}</span>;
-  if (kind === "failed") return <span className="text-moderate-text">{t("cue.failed")}</span>;
+function VerdictCue({ verdict, t }: { verdict: Verdict; t: Translate }) {
+  const tone = verdictTone(verdict);
+  if (tone === "verified") return <span className="text-verified">{t("cue.verified")}</span>;
+  if (tone === "attention")
+    return <span className="text-moderate-text">{t("cue.needsReview")}</span>;
   return null;
 }
 
@@ -114,7 +114,7 @@ export function FindingRow({
         </span>
         <span aria-hidden>·</span>
         <span className="font-mono text-[11.5px]">{finding.ruleId}</span>
-        <VerdictCue kind={finding.verdict.kind} t={t} />
+        <VerdictCue verdict={finding.verdict} t={t} />
       </p>
 
       {noMarker && (

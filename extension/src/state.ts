@@ -4,11 +4,11 @@ import type { MessageKey } from "../../src/lib/i18n/t";
 
 export type AuditStage = "structure" | "rules" | "focus" | "report";
 
-export type AuditMode = "expanded" | "quick";
+export type AuditTask = "audit" | "focus-path";
 
 export type PanelState =
   | { kind: "idle" }
-  | { kind: "running"; url: string; mode: AuditMode; stage: AuditStage }
+  | { kind: "running"; url: string; task: AuditTask; stage: AuditStage }
   | { kind: "done"; result: ScanResult; deepError?: string }
   | { kind: "error"; message: string; recoverable: boolean }
   | { kind: "unsupported"; url: string; reason: MessageKey };
@@ -25,7 +25,7 @@ export type HighlightReply = { ok: true; report: OverlayReport } | { ok: false; 
 
 export type PanelMessage =
   | { type: "panel:hello" }
-  | { type: "panel:audit"; deep: boolean }
+  | { type: "panel:audit" }
   | { type: "panel:focus-path" }
   | HighlightRequest
   | { type: "panel:continue-walk" }

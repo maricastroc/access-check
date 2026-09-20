@@ -1,3 +1,4 @@
+import { accessibleName, identityOf, type ElementIdentity } from "./identity";
 import { overlayClear } from "./overlay";
 import { flowOffsetOf } from "./rects";
 import { cssPath } from "./selector";
@@ -17,6 +18,7 @@ export type FocusProbe = {
   selector: string;
   tag: string;
   label: string;
+  identity: ElementIdentity | null;
   html: string;
   isIframe: boolean;
   hasShadowRoot: boolean;
@@ -40,6 +42,7 @@ export type FocusReach = {
   reachableInteractive: number;
   unreachable: string[];
   positiveTabindex: string[];
+  identities: Record<string, ElementIdentity>;
 };
 
 const INTERACTIVE =
@@ -89,21 +92,7 @@ function styleOf(el: Element): FocusStyle {
 }
 
 function labelOf(el: Element): string {
-  const aria = el.getAttribute("aria-label");
-  if (aria && aria.trim()) return aria.trim().slice(0, 60);
-  const labelledby = el.getAttribute("aria-labelledby");
-  if (labelledby) {
-    const ref = document.getElementById(labelledby.split(/\s+/)[0]);
-    const t = ref?.textContent?.replace(/\s+/g, " ").trim();
-    if (t) return t.slice(0, 60);
-  }
-  const text = el.textContent?.replace(/\s+/g, " ").trim();
-  if (text) return text.slice(0, 60);
-  const alt = el.getAttribute("alt");
-  if (alt && alt.trim()) return alt.trim().slice(0, 60);
-  const title = el.getAttribute("title");
-  if (title && title.trim()) return title.trim().slice(0, 60);
-  return el.tagName.toLowerCase();
+  return accessibleName(el) || el.tagName.toLowerCase();
 }
 
 const SNIPPET_ATTRS = [
@@ -229,6 +218,7 @@ export function readFocusedStop(record = true): FocusProbe {
       selector: "",
       tag: "",
       label: "",
+      identity: null,
       html: "",
       isIframe: false,
       hasShadowRoot: false,
@@ -245,6 +235,7 @@ export function readFocusedStop(record = true): FocusProbe {
     selector: cssPath(el),
     tag: el.tagName.toLowerCase(),
     label: labelOf(el),
+    identity: identityOf(el),
     html: htmlOf(el),
     isIframe: el.tagName === "IFRAME",
     hasShadowRoot: el.shadowRoot !== null,
@@ -286,16 +277,24 @@ export function readFocusReach(): FocusReach {
   const seen = new Set(visited);
   const candidates = tabbableCandidates();
 
-  const unreachable = candidates.filter((el) => !seen.has(el)).map((el) => cssPath(el));
-  const positiveTabindex = Array.from(document.querySelectorAll("[tabindex]"))
-    .filter((el) => parseInt(el.getAttribute("tabindex") || "0", 10) > 0)
-    .map((el) => cssPath(el));
+  const missed = candidates.filter((el) => !seen.has(el));
+  const positive = Array.from(document.querySelectorAll("[tabindex]")).filter(
+    (el) => parseInt(el.getAttribute("tabindex") || "0", 10) > 0,
+  );
 
+  const identities: Record<string, ElementIdentity> = {};
+  for (const el of [...missed, ...positive]) {
+    const selector = cssPath(el);
+    if (selector && !(selector in identities)) identities[selector] = identityOf(el);
+  }
+
+  const unreachable = missed.map((el) => cssPath(el));
   return {
     totalInteractive: candidates.length,
     reachableInteractive: candidates.length - unreachable.length,
     unreachable,
-    positiveTabindex: [...new Set(positiveTabindex)],
+    positiveTabindex: [...new Set(positive.map((el) => cssPath(el)))],
+    identities,
   };
 }
 

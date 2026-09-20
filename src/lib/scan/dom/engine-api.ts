@@ -1,18 +1,22 @@
 import type { AxeResults, Locale } from "axe-core";
 import type { ElementInfo } from "../remediate";
+import type { ElementIdentity } from "./identity";
 import type { RawLiveRegions } from "../live-regions";
 import type { RawTargetSize } from "../target-size";
 import type { DomRect } from "./rects";
 import type { FocusProbe, FocusReach, FocusStyle } from "./focus";
+import type { VerifyOp } from "./verify";
+import type { FixVerification } from "../types";
 import type { OverlayMark, OverlayReport } from "./overlay";
 import type { PaintCalm, PrimeReport } from "./prime";
 
-export const DOM_ENGINE_VERSION = 13;
+export const DOM_ENGINE_VERSION = 15;
 
 export type DomEngine = {
   version: number;
   cssPath(el: Element | null): string;
   collectElementInfo(selectors: string[]): Record<string, ElementInfo>;
+  collectIdentities(selectors: string[]): Record<string, ElementIdentity>;
   collectRects(selectors: string[]): (DomRect | null)[];
   readViewport(): { width: number; height: number };
   primeLazyContent(): Promise<PrimeReport>;
@@ -24,6 +28,7 @@ export type DomEngine = {
     options?: { preload?: boolean; locale?: Locale | null },
   ): Promise<AxeResults>;
   crossOriginAssets(): { styleSheets: number; media: number };
+  verifyFixes(ops: VerifyOp[]): Promise<FixVerification[]>;
   focusProbeStart(): void;
   focusFirstStop(): "focused" | "empty" | "failed";
   focusSelector(selector: string): boolean;

@@ -1,9 +1,14 @@
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { en } from "./messages/en";
 import { ptBR } from "./messages/pt-BR";
 import type { MessageKey } from "./t";
 
 const keys = Object.keys(en) as MessageKey[];
+
+const fromRepo = (rel: string) => fileURLToPath(new URL(`../../../${rel}`, import.meta.url));
 
 function variants(message: unknown): string[] {
   return typeof message === "string" ? [message] : Object.values(message as Record<string, string>);
@@ -99,5 +104,33 @@ describe("the Portuguese catalog reads as Portuguese", () => {
     expect(all).not.toContain("falha automática");
     expect(all).not.toContain("falhas automáticas");
     expect(all).not.toContain("problema automático");
+  });
+});
+
+describe("the catalog carries nothing the product no longer says", () => {
+  const roots = ["src", "extension", "scripts"];
+
+  function sources(dir: string, into: string[]): string[] {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        if (["node_modules", ".next", ".git", "dist", ".claude"].includes(entry.name)) continue;
+        sources(full, into);
+      } else if (/\.(ts|tsx|mjs)$/.test(entry.name) && !full.includes(join("i18n", "messages"))) {
+        into.push(readFileSync(full, "utf8"));
+      }
+    }
+    return into;
+  }
+
+  const code = roots.flatMap((root) => sources(fromRepo(root), [])).join("\n");
+
+  it("has a reader for every key", () => {
+    const orphans = keys.filter((key) => !code.includes(`"${key}"`));
+    expect(orphans, `unused message keys: ${orphans.join(", ")}`).toEqual([]);
+  });
+
+  it("keeps both catalogs on exactly the same keys", () => {
+    expect(Object.keys(ptBR).sort()).toEqual(Object.keys(en).sort());
   });
 });

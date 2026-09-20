@@ -7,6 +7,8 @@ import type {
   Severity,
 } from "@/lib/scan/types";
 import { concernOf } from "@/lib/scan/concern";
+import { shownSelectors } from "@/lib/scan/violations";
+import type { ElementIdentity } from "@/lib/scan/dom/identity";
 import { evidenceForRule, evidenceOf } from "@/lib/scan/evidence";
 import type { ContextIssue } from "@/lib/scan/contexts";
 import type { KeyboardOccurrence } from "@/lib/scan/keyboard";
@@ -66,6 +68,7 @@ export type FindingView = {
   verdict: Verdict;
   affectedSelectors: string[];
   selectors: string[];
+  identities: Record<string, ElementIdentity>;
   markers: ScanMarker[];
   located: boolean;
   noMarkerReason: string;
@@ -77,15 +80,22 @@ function distinct(list: string[]): string[] {
   return [...new Set(list.filter(Boolean))];
 }
 
-function affectedFrom(v: ScanViolation): string[] {
-  const fromGroups = (v.fixGroups ?? []).flatMap((g) => g.selectors);
-  const all = distinct([...fromGroups, v.where].filter((s) => s && s !== "—"));
-  return all;
+type Identities = Record<string, ElementIdentity>;
+
+function identitiesFor(selectors: string[], known: Identities | undefined): Identities {
+  if (!known) return {};
+  const out: Identities = {};
+  for (const selector of selectors) {
+    const identity = known[selector];
+    if (identity) out[selector] = identity;
+  }
+  return out;
 }
 
 function wcagFinding(
   v: ScanViolation,
   markers: ScanMarker[],
+  known: Identities | undefined,
   t: Translate,
 ): Omit<FindingView, "n"> {
   const { sc, name } = splitCriterion(v.criterion);
@@ -104,7 +114,7 @@ function wcagFinding(
     fixConfidence,
   });
   const linked = linkMarkers(v, markers);
-  const affected = affectedFrom(v);
+  const affected = shownSelectors(v);
   return {
     id: `wcag:${v.id}`,
     kind: "wcag",
@@ -132,6 +142,7 @@ function wcagFinding(
     verdict,
     affectedSelectors: affected,
     selectors: affected,
+    identities: identitiesFor(affected, known),
     markers: linked,
     located: linked.length > 0,
     contexts: v.contexts ?? [],
@@ -157,6 +168,7 @@ type PassFinding = {
 function complementaryFinding(
   f: PassFinding,
   kind: FindingKind,
+  known: Identities | undefined,
   t: Translate,
 ): Omit<FindingView, "n"> {
   const { sc, name } = splitCriterion(f.criterion);
@@ -191,6 +203,14 @@ function complementaryFinding(
     verdict,
     affectedSelectors: affected,
     selectors: affected,
+    identities: {
+      ...identitiesFor(affected, known),
+      ...Object.fromEntries(
+        (f.occurrences ?? [])
+          .filter((o) => Boolean(o.identity))
+          .map((o) => [o.selector, o.identity as ElementIdentity]),
+      ),
+    },
     markers: [],
     located: false,
     contexts: [],
@@ -232,6 +252,7 @@ function contextFinding(issue: ContextIssue, where: string, t: Translate): Omit<
     verdict,
     affectedSelectors: affected,
     selectors: affected,
+    identities: {},
     markers: [],
     located: false,
     contexts: [where],
@@ -241,6 +262,7 @@ function contextFinding(issue: ContextIssue, where: string, t: Translate): Omit<
 }
 
 function bestPracticeFindings(result: ScanResult, t: Translate): Omit<FindingView, "n">[] {
+  const known = result.identities;
   return result.bestPractice.map((bp) => {
     const affected = distinct(bp.selectors);
     return {
@@ -272,6 +294,7 @@ function bestPracticeFindings(result: ScanResult, t: Translate): Omit<FindingVie
       }),
       affectedSelectors: affected,
       selectors: affected,
+      identities: identitiesFor(affected, known),
       markers: [],
       located: false,
       contexts: [],
@@ -312,16 +335,19 @@ export function buildFindings(result: ScanResult): FindingView[] {
     withSeverity.push(finding);
   };
 
-  for (const v of result.violations) add(wcagFinding(v, result.markers, t));
+  const known = result.identities;
 
-  for (const f of result.keyboard?.findings ?? []) add(complementaryFinding(f, "keyboard", t));
+  for (const v of result.violations) add(wcagFinding(v, result.markers, known, t));
+
+  for (const f of result.keyboard?.findings ?? [])
+    add(complementaryFinding(f, "keyboard", known, t));
 
   for (const f of result.audits?.targetSize?.findings ?? [])
-    add(complementaryFinding(f, "target-size", t));
+    add(complementaryFinding(f, "target-size", known, t));
   for (const f of result.audits?.reducedMotion?.findings ?? [])
-    add(complementaryFinding(f, "reduced-motion", t));
+    add(complementaryFinding(f, "reduced-motion", known, t));
   for (const f of result.audits?.liveRegions?.findings ?? [])
-    add(complementaryFinding(f, "live-regions", t));
+    add(complementaryFinding(f, "live-regions", known, t));
 
   const ctx = result.contexts;
   if (ctx) {

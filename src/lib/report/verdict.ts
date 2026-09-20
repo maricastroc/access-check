@@ -100,26 +100,22 @@ export function buildVerdict(input: VerdictInput): Verdict {
   return { kind: "sampled", ...base };
 }
 
-export function verdictLabel(v: Verdict, t: Translate): string {
-  switch (v.kind) {
+export type VerdictTone = "verified" | "attention" | "quiet";
+
+export function verdictTone(v: Verdict): VerdictTone {
+  if (v.sampledFailed > 0) return "attention";
+  if (v.sampledCleared > 0) return "verified";
+  return "quiet";
+}
+
+export function verdictLabel(v: Verdict, t: Translate): string | null {
+  switch (verdictTone(v)) {
     case "verified":
       return t("verdict.label.verified");
-    case "partial":
-      return t("verdict.label.partial");
-    case "sampled":
-      return v.reaudited > 1 ? t("verdict.label.sampledMany") : t("verdict.label.sampledOne");
-    case "failed":
-      return t("verdict.label.failed");
-    case "unverifiable":
-      return t("verdict.label.unverifiable");
-    case "contextual":
-      return t("verdict.label.contextual");
-    case "no-auto-fix":
-      return t("verdict.label.noAutoFix");
-    case "best-practice":
-      return t("verdict.label.bestPractice");
-    case "complementary":
-      return t("verdict.label.complementary");
+    case "attention":
+      return t("verdict.label.needsReview");
+    case "quiet":
+      return null;
   }
 }
 

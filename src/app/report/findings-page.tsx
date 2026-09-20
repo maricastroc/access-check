@@ -45,7 +45,12 @@ export function FindingsPage({ result }: { result: ScanResult }) {
             <GroupHeading t={t} sev={sev} count={items.length} />
             <div className="mt-2.5 flex flex-col gap-2.5">
               {items.slice(0, limit).map((v, i) => (
-                <DetailedCard t={t} key={`${v.id}-${i}`} v={v} />
+                <DetailedCard
+                  t={t}
+                  key={`${v.id}-${i}`}
+                  v={v}
+                  identity={result.identities?.[v.where]}
+                />
               ))}
               {hiddenCount > 0 && (
                 <p className="px-1 text-[10px] text-muted">

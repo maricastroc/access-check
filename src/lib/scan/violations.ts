@@ -11,10 +11,12 @@ import {
   fixLabel,
   fixMetaViewport,
   type ElementInfo,
-  type FixApply,
   type FixResult,
 } from "./remediate";
 import { clusterFixes, isVerifiable, type FixCluster } from "./group";
+import type { VerifyOp } from "./dom/verify";
+
+export type { VerifyOp };
 import type { FixGroup, ScanBestPractice, ScanIncomplete, ScanViolation, Severity } from "./types";
 
 export type AxeCheck = { id: string; data?: unknown };
@@ -183,6 +185,25 @@ export function enrichViolations(
   });
 }
 
+export const MAX_IDENTIFIED = 6;
+
+export function shownSelectors(v: Pick<ScanViolation, "where" | "fixGroups">): string[] {
+  const fromGroups = (v.fixGroups ?? []).flatMap((g) => g.selectors);
+  return [...new Set([...fromGroups, v.where].filter((s) => s && s !== "\u2014"))];
+}
+
+export function identitySelectors(
+  violations: Pick<ScanViolation, "where" | "fixGroups">[],
+  extra: string[] = [],
+): string[] {
+  const out = new Set<string>();
+  for (const v of violations) {
+    for (const selector of shownSelectors(v).slice(0, MAX_IDENTIFIED)) out.add(selector);
+  }
+  for (const selector of extra) if (selector) out.add(selector);
+  return [...out];
+}
+
 const MAX_SELECTORS = 5;
 
 function selectorsOf(nodes: AxeNode[]): string[] {
@@ -231,8 +252,6 @@ export function attachFixGroups(enriched: Enriched[]): void {
     e.v.verification = main.verification ?? "unchecked";
   }
 }
-
-export type VerifyOp = { ruleId: string; selector: string | null; apply: FixApply };
 
 export function planVerification(
   enriched: Enriched[],

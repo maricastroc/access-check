@@ -145,8 +145,8 @@ try {
       origins: [...document.querySelectorAll("button .font-cond.uppercase")].map(
         (s) => s.textContent,
       ),
-      partialLabel: text.includes("Quick audit"),
-      preliminary: text.includes("Preliminary result"),
+      readsThisTab: text.includes("This tab"),
+      focusPending: text.includes("Keyboard focus path not walked yet"),
       partialNote: text.includes("not a full audit"),
       focusPathNamed: text.includes("focus path was not verified"),
       claimsComplete: /\bcomplete audit\b|\bfull audit score\b/i.test(text),
@@ -204,8 +204,8 @@ try {
   check(before.scrollY === after.scrollY, "the audited page was scrolled");
   check(seen.screenshot, "no screenshot in the panel");
   check(seen.markers > 0, "no markers drawn on the screenshot");
-  check(seen.partialLabel, "a reading with no focus path is not labelled a quick audit");
-  check(seen.preliminary, "a quick audit does not say the result is preliminary");
+  check(seen.readsThisTab, "the panel does not say which tab it read");
+  check(seen.focusPending, "a reading with no focus path does not say the walk is still pending");
   check(seen.partialNote, "no note saying checks were skipped");
   check(seen.focusPathNamed, "the panel does not say the focus path went unverified");
   check(!seen.claimsComplete, "the panel calls a reading with missing checks a complete audit");
@@ -256,9 +256,26 @@ try {
 
   await report.keyboard.press("Tab");
   const expanded = await report.evaluate(async () => {
-    const row = [...document.querySelectorAll("button")].find((b) => b.querySelector("h3"));
+    const rows = [...document.querySelectorAll("button")].filter((b) => b.querySelector("h3"));
+    const row = rows[0];
     row.focus();
     const focused = document.activeElement === row;
+
+    const sealed = [];
+    for (const each of rows) {
+      each.click();
+      await new Promise((r) => setTimeout(r, 40));
+      const panel = each.parentElement;
+      const text = panel.innerText;
+      sealed.push({
+        rule: each.innerText.split("\n").find((l) => /^[a-z-]+$/.test(l.trim())) ?? "",
+        section: /verification result/i.test(text),
+        cue: /verified in sandbox|needs review/i.test(each.innerText),
+      });
+      each.click();
+      await new Promise((r) => setTimeout(r, 20));
+    }
+
     row.click();
     await new Promise((r) => setTimeout(r, 50));
     const doc = document.documentElement;
@@ -266,6 +283,8 @@ try {
       focused,
       fix: !!document.querySelector("button + div p"),
       overflow: doc.scrollWidth - doc.clientWidth,
+      sealed,
+      stale: /not re-audited|could not verify|one example checked/i.test(document.body.innerText),
     };
   });
   console.log("expanded finding:", JSON.stringify(expanded));
@@ -273,6 +292,17 @@ try {
   check(expanded.focused, "a finding row cannot take keyboard focus");
   check(expanded.fix, "an expanded finding shows no explanation or fix");
   check(expanded.overflow <= 0, `expanded finding overflows the panel by ${expanded.overflow}px`);
+  check(!expanded.stale, "the panel still shows a retired verification label");
+  for (const finding of expanded.sealed) {
+    check(
+      finding.section === finding.cue,
+      `${finding.rule}: the verification section and the list cue disagree`,
+    );
+  }
+  check(
+    expanded.sealed.some((f) => !f.section),
+    "every finding claims a verification result; the quiet case is not rendering",
+  );
 
   if (failures.length > 0) {
     console.error("\nFAILED:\n- " + failures.join("\n- "));

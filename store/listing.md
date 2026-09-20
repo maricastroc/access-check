@@ -44,7 +44,9 @@ panel names it instead of quietly passing.
 
 - No account, no sign-in, no telemetry
 - It reads a tab only after you click the toolbar icon on that tab
-- The audited page is never rewritten. The only thing AccessCheck draws is a temporary highlight
+- The audited page is left exactly as it was: a contrast fix is applied, re-run and undone in the
+  same moment, and an automated check compares the page before and after, byte for byte. The only
+  thing AccessCheck draws is a temporary highlight
   box when you ask it to locate an element, and it clears that overlay and restores your scroll
   position when you are done
 - Nothing is uploaded anywhere. The extension ships no network code at all, and the audit runs
@@ -92,7 +94,9 @@ o painel diz qual foi, em vez de aprovar em silêncio.
 
 - Sem conta, sem login, sem telemetria
 - Só lê uma aba depois que você clica no ícone da barra naquela aba
-- A página auditada nunca é reescrita. A única coisa que o AccessCheck desenha é uma caixa de
+- A página auditada fica exatamente como estava: uma correção de contraste é aplicada, reexecutada
+  e desfeita no mesmo instante, e uma verificação automatizada compara a página antes e depois,
+  byte a byte. A única coisa que o AccessCheck desenha é uma caixa de
   destaque temporária, quando você pede para localizar um elemento, e ele apaga esse destaque e
   devolve a sua posição de rolagem ao terminar
 - Nada é enviado para lugar nenhum. A extensão não embarca nenhum código de rede, e a auditoria

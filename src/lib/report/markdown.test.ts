@@ -59,13 +59,23 @@ describe("buildReportMarkdown", () => {
   });
 
   it("keeps sandbox language, the real measurement, and never extrapolates the sample", () => {
-    expect(md).toContain("One example checked");
+    expect(md).toContain("**Verified fix.**");
     expect(md).toContain("sandbox copy");
     expect(md).toContain("not individually verified");
     expect(md).toContain("the audited site is not altered");
     expect(md).toMatch(/2\.10:1 · minimum AA 4\.5:1 · fix reaches 4\.62:1/);
     expect(md.toLowerCase()).not.toContain("clears all");
     expect(md.toLowerCase()).not.toMatch(/of 7 (occurrences )?(were )?cleared/);
+  });
+
+  it("puts a verification label only where something was re-run", () => {
+    const labelled = md.split("\n").filter((line) => line.startsWith("**Verified fix.**"));
+    const plain = md.split("\n").filter((line) => /^_[A-Z]/.test(line));
+
+    expect(labelled.length).toBe(1);
+    expect(plain.length).toBeGreaterThan(0);
+    expect(md).not.toContain("Not re-audited");
+    expect(md).not.toContain("Could not verify");
   });
 
   it("never uses forbidden conformance vocabulary", () => {

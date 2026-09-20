@@ -15,6 +15,7 @@ import { CONTENT_SIGNATURE, waitForContentReady } from "./page-ready";
 import { AXE_TAGS } from "./dom/axe";
 import type { DomRect } from "./dom/rects";
 import { DOM_ENGINE_VERSION } from "./dom/engine-api";
+import type { ElementIdentity } from "./dom/identity";
 import { buildMarkers, markerTargets } from "./markers";
 import { SCORING_VERSION, scoredViolations } from "./scored";
 import {
@@ -23,9 +24,9 @@ import {
   buildIncomplete,
   elementSelectorsFor,
   enrichViolations,
+  identitySelectors,
   planVerification,
   type AxeResults,
-  type VerifyOp,
 } from "./violations";
 import { captureScreenshot, SCREENSHOT_QUALITY } from "./screenshot";
 import { installNetworkGuard } from "./ssrf";
@@ -110,6 +111,7 @@ function warningText(t: Translate): Record<ScanWarningCode, string> {
     "content-unsettled": t("scanWarning.contentUnsettled"),
     "verification-skipped": t("scanWarning.verificationSkipped"),
     "audits-skipped": t("scanWarning.auditsSkipped"),
+    "reduced-motion-skipped": t("warning.reducedMotionSkipped"),
     "keyboard-skipped": t("scanWarning.keyboardSkipped"),
     "lazy-content-skipped": t("scanWarning.lazyContentSkipped"),
     "walk-changed-page": t("scanWarning.walkChangedPage"),
@@ -128,85 +130,6 @@ export function normalizeUrl(input: string): string {
 async function primeLazyContent(page: Page): Promise<void> {
   await page.evaluate(() => window.__accessCheckDom!.primeLazyContent()).catch(() => {});
 }
-
-const VERIFY_IN_PAGE = async (ops: VerifyOp[]): Promise<FixVerification[]> => {
-  const axe = window.axe;
-
-  const runRule = async (context: Element | Document, ruleId: string): Promise<boolean> => {
-    const res = await axe.run(context, {
-      runOnly: { type: "rule", values: [ruleId] },
-    });
-    return res.violations.length === 0;
-  };
-
-  const results: FixVerification[] = [];
-  {
-    for (const op of ops) {
-      try {
-        const a = op.apply;
-        if (a.kind === "doc" && a.target === "lang") {
-          const el = document.documentElement;
-          const prev = el.getAttribute("lang");
-          el.setAttribute("lang", a.value);
-          const ok = await runRule(document, op.ruleId);
-          if (prev === null) el.removeAttribute("lang");
-          else el.setAttribute("lang", prev);
-          results.push(ok ? "verified" : "failed");
-        } else if (a.kind === "doc" && a.target === "title") {
-          const prev = document.title;
-          document.title = a.value;
-          const ok = await runRule(document, op.ruleId);
-          document.title = prev;
-          results.push(ok ? "verified" : "failed");
-        } else if (a.kind === "viewport") {
-          let meta = document.querySelector('meta[name="viewport"]') as HTMLMetaElement | null;
-          const created = !meta;
-          const prev = meta?.getAttribute("content") ?? null;
-          if (!meta) {
-            meta = document.createElement("meta");
-            meta.setAttribute("name", "viewport");
-            document.head.appendChild(meta);
-          }
-          meta.setAttribute("content", a.value);
-          const ok = await runRule(document, op.ruleId);
-          if (created) meta.remove();
-          else if (prev !== null) meta.setAttribute("content", prev);
-          results.push(ok ? "verified" : "failed");
-        } else if (op.selector) {
-          const el = document.querySelector(op.selector);
-          if (!el) {
-            results.push("unchecked");
-            continue;
-          }
-          if (a.kind === "attr") {
-            const prev = el.getAttribute(a.name);
-            el.setAttribute(a.name, a.value);
-            const ok = await runRule(el, op.ruleId);
-            if (prev === null) el.removeAttribute(a.name);
-            else el.setAttribute(a.name, prev);
-            results.push(ok ? "verified" : "failed");
-          } else if (a.kind === "style") {
-            const style = (el as HTMLElement).style;
-            const prev = style.getPropertyValue(a.prop);
-            const prevPrio = style.getPropertyPriority(a.prop);
-            style.setProperty(a.prop, a.value, "important");
-            const ok = await runRule(el, op.ruleId);
-            if (prev) style.setProperty(a.prop, prev, prevPrio);
-            else style.removeProperty(a.prop);
-            results.push(ok ? "verified" : "failed");
-          } else {
-            results.push("unchecked");
-          }
-        } else {
-          results.push("unchecked");
-        }
-      } catch {
-        results.push("unchecked");
-      }
-    }
-  }
-  return results;
-};
 
 export type ScanOptions = {
   locale?: ReportLocale;
@@ -494,7 +417,7 @@ async function runScanAttempt(
       const outcome = await track("verify", () =>
         policy.run(
           "verify",
-          () => page.evaluate(VERIFY_IN_PAGE, verifyOps),
+          () => page.evaluate((ops) => window.__accessCheckDom!.verifyFixes(ops), verifyOps),
           [] as FixVerification[],
         ),
       );
@@ -539,6 +462,29 @@ async function runScanAttempt(
     const bestPractice = buildBestPractice(bpViolations);
     const incomplete = buildIncomplete(axe.incomplete, translator(locale));
 
+    const identities: Record<string, ElementIdentity> = {};
+
+    const identify = async (selectors: string[]) => {
+      if (selectors.length === 0) return;
+      const collected = await policy.run<Record<string, ElementIdentity>>(
+        "element-info",
+        () =>
+          page.evaluate(
+            (list) => window.__accessCheckDom!.collectIdentities(list),
+            selectors.filter((selector) => !(selector in identities)),
+          ),
+        {},
+      );
+      Object.assign(identities, collected.value);
+    };
+
+    await identify(
+      identitySelectors(violations, [
+        ...bestPractice.flatMap((bp) => bp.selectors),
+        ...incomplete.flatMap((inc) => inc.selectors),
+      ]),
+    );
+
     phase("finalizing");
     const core: ScanResult = {
       locale,
@@ -558,6 +504,7 @@ async function runScanAttempt(
       bestPractice,
       passed,
       markers,
+      identities,
       fixFirst: buildFixFirst(violations),
       partial: policy.partial,
       warnings: policy.warnings().length > 0 ? policy.warnings() : undefined,
@@ -595,6 +542,13 @@ async function runScanAttempt(
         );
         audits = collected.value;
         if (collected.timedOut || (collected.ran && !collected.value)) policy.skip("audits");
+        if (audits) {
+          await identify([
+            ...(audits.targetSize?.findings ?? []).flatMap((f) => f.selectors),
+            ...(audits.liveRegions?.findings ?? []).flatMap((f) => f.selectors),
+            ...(audits.reducedMotion?.findings ?? []).flatMap((f) => f.selectors),
+          ]);
+        }
       },
 
       screenshot: async () => {

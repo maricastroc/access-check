@@ -1,75 +1,6 @@
-import type { FindingView } from "@/lib/report/findings";
-import type { ContrastMeasurement } from "@/lib/report/contrast";
-import { buildVerdict } from "@/lib/report/verdict";
-import { buildContrastPreview } from "@/lib/report/preview";
 import { BrowserFrame, ColorSwatch, Marker, StatusSeal } from "@/components/ui";
 import { exampleFinding } from "./content";
 import type { Translate } from "@/lib/i18n/t";
-
-const demoMeasurement: ContrastMeasurement = {
-  measured: exampleFinding.measured,
-  required: exampleFinding.required,
-  fixed: exampleFinding.fixed,
-  fromHex: exampleFinding.fromHex,
-  toHex: exampleFinding.toHex,
-  bgHex: "#ffffff",
-  prop: "color",
-};
-
-const demoVerdict = buildVerdict({
-  kind: "wcag",
-  isWcag: true,
-  elements: exampleFinding.elements,
-  fixGroups: null,
-  fixVerification: "verified",
-  fixConfidence: "deterministic",
-});
-
-export function demoFinding(t: Translate): FindingView {
-  return {
-    id: "demo",
-    n: 1,
-    kind: "wcag",
-    evidence: "deterministic",
-    isWcag: true,
-    severity: "serious",
-    passLabel: null,
-    title: t(exampleFinding.title),
-    criterionSc: exampleFinding.sc,
-    criterionName: t(exampleFinding.name),
-    elements: exampleFinding.elements,
-    ruleId: exampleFinding.ruleId,
-    desc: t("home.example.desc"),
-    impact: t("impact.contrast"),
-    fixText: t("home.example.fixText", {
-      hex: exampleFinding.toHex.toUpperCase(),
-      ratio: exampleFinding.fixed,
-    }),
-    fixCode: `color: ${exampleFinding.toHex};`,
-    fixGroups: null,
-    guidance: null,
-    measurement: demoMeasurement,
-    preview: buildContrastPreview(demoMeasurement, "verified", exampleFinding.elements),
-    verdict: demoVerdict,
-    occurrences: [],
-    affectedSelectors: [exampleFinding.selector],
-    selectors: [exampleFinding.selector],
-    markers: [
-      {
-        n: 1,
-        severity: "serious",
-        label: t(exampleFinding.title),
-        left: 8,
-        top: 46,
-        width: 14,
-        height: 7,
-      },
-    ],
-    located: true,
-    contexts: [],
-    noMarkerReason: "",
-  };
-}
 
 export function CapturePreview({ height = 240, t }: { height?: number; t: Translate }) {
   return (
@@ -165,7 +96,7 @@ export function HeroEvidencePreview({ t }: { t: Translate }) {
         </div>
         <p className="mt-2 text-[14.5px] font-semibold text-ink">{t(exampleFinding.title)}</p>
         <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-muted">
-          <span className="font-mono text-[11.5px] text-steel">a.hero__cta</span>
+          <span className="font-mono text-[11.5px] text-steel">a.hero__cta “Order now”</span>
           <span aria-hidden className="text-border">
             ·
           </span>

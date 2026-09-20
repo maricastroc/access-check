@@ -1,6 +1,6 @@
 AccessCheck audits the tab you are on and shows you the evidence, not just a list.
 
-Open any finding and it expands into the element that produced it: the CSS selector, the element's own HTML, a suggested fix, and — for keyboard findings — what actually happened when focus reached it. Selector and HTML copy to the clipboard in one click, and "Locate on page" draws a box around the element on the live page.
+Open any finding and it names the element that produced it — the tag, one stable attribute, its accessible name and the part of the page it sits in — with the CSS selector kept beside that name, plus the element's own HTML, a suggested fix, and — for keyboard findings — what actually happened when focus reached it. Selector and HTML copy to the clipboard in one click, and "Locate on page" draws a box around the element on the live page.
 
 WHAT IT CHECKS
 
@@ -17,7 +17,7 @@ HOW IT TREATS YOUR BROWSER
 
 • No account, no sign-in, no telemetry
 • It reads a tab only after you click the toolbar icon on that tab
-• The audited page is never rewritten. The only thing AccessCheck draws is a temporary highlight box when you ask it to locate an element, and it clears that overlay and restores your scroll position when you are done
+• The audited page is left exactly as it was. To prove a contrast fix, AccessCheck applies it, re-runs that one rule and undoes it in the same moment — an automated check compares the page before and after, byte for byte. The only thing it draws is a temporary highlight box when you ask it to locate an element, and it clears that overlay and restores your scroll position when you are done
 • Nothing is uploaded anywhere. The extension ships no network code at all, and the audit runs entirely in your browser
 
 LANGUAGES

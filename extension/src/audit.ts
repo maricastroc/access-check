@@ -6,6 +6,8 @@ import {
   buildIncomplete,
   elementSelectorsFor,
   enrichViolations,
+  identitySelectors,
+  planVerification,
   type AxeResults,
 } from "../../src/lib/scan/violations";
 import { severityOrder } from "../../src/lib/scan/derive";
@@ -36,6 +38,8 @@ const SETTLE_MS = 6_000;
 const POST_PRIME_SETTLE_MS = 3_000;
 
 const PAINT_CALM_MS = 2_000;
+
+const MAX_VERIFY_OPS = 40;
 
 export type AuditContext = {
   readiness?: ContentReadiness;
@@ -100,6 +104,13 @@ export async function auditActiveDocument(context: AuditContext = {}): Promise<S
 
   const elementInfos = dom.collectElementInfo(elementSelectorsFor(wcagViolations));
   const enriched = enrichViolations(wcagViolations, elementInfos, t);
+
+  const { ops, clusters } = planVerification(enriched, MAX_VERIFY_OPS);
+  const verification = ops.length > 0 ? await dom.verifyFixes(ops) : [];
+  verification.forEach((outcome, i) => {
+    clusters[i].verification = outcome;
+  });
+
   attachFixGroups(enriched);
 
   const violations = enriched
@@ -118,6 +129,18 @@ export async function auditActiveDocument(context: AuditContext = {}): Promise<S
     liveRegions: analyzeLiveRegions(dom.collectLiveRegionsRaw(), t),
   };
 
+  const bestPractice = buildBestPractice(bpViolations);
+  const incomplete = buildIncomplete(axe.incomplete, t);
+
+  const identities = dom.collectIdentities(
+    identitySelectors(violations, [
+      ...bestPractice.flatMap((bp) => bp.selectors),
+      ...incomplete.flatMap((inc) => inc.selectors),
+      ...audits.targetSize.findings.flatMap((f) => f.selectors),
+      ...audits.liveRegions.findings.flatMap((f) => f.selectors),
+    ]),
+  );
+
   return withScoring({
     locale,
     url: location.href,
@@ -134,10 +157,11 @@ export async function auditActiveDocument(context: AuditContext = {}): Promise<S
       manualReview: axe.incomplete.length,
     },
     violations,
-    incomplete: buildIncomplete(axe.incomplete, t),
-    bestPractice: buildBestPractice(bpViolations),
+    incomplete,
+    bestPractice,
     passed: axe.passes.map((p) => p.help),
     markers,
+    identities,
     audits,
     partial: true,
     warnings: [

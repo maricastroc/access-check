@@ -1,6 +1,6 @@
 O AccessCheck audita a aba em que você está e mostra a evidência, não só uma lista.
 
-Abra qualquer problema e ele se expande no elemento que o gerou: o seletor CSS, o HTML do próprio elemento, uma correção sugerida e — nos problemas de teclado — o que de fato aconteceu quando o foco chegou nele. Seletor e HTML vão para a área de transferência em um clique, e "Localizar na página" desenha uma caixa em volta do elemento na página ao vivo.
+Abra qualquer problema e ele nomeia o elemento que o gerou — a tag, um atributo estável, o nome acessível e a parte da página onde ele está — com o seletor CSS ao lado desse nome, mais o HTML do próprio elemento, uma correção sugerida e — nos problemas de teclado — o que de fato aconteceu quando o foco chegou nele. Seletor e HTML vão para a área de transferência em um clique, e "Localizar na página" desenha uma caixa em volta do elemento na página ao vivo.
 
 O QUE ELE VERIFICA
 
@@ -17,7 +17,7 @@ COMO ELE TRATA O SEU NAVEGADOR
 
 • Sem conta, sem login, sem telemetria
 • Só lê uma aba depois que você clica no ícone da barra naquela aba
-• A página auditada nunca é reescrita. A única coisa que o AccessCheck desenha é uma caixa de destaque temporária, quando você pede para localizar um elemento, e ele apaga esse destaque e devolve a sua posição de rolagem ao terminar
+• A página auditada fica exatamente como estava. Para provar uma correção de contraste, o AccessCheck a aplica, reexecuta aquela regra e desfaz no mesmo instante — uma verificação automatizada compara a página antes e depois, byte a byte. A única coisa que ele desenha é uma caixa de destaque temporária, quando você pede para localizar um elemento, e ele apaga esse destaque e devolve a sua posição de rolagem ao terminar
 • Nada é enviado para lugar nenhum. A extensão não embarca nenhum código de rede, e a auditoria roda inteira no seu navegador
 
 IDIOMAS

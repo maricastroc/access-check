@@ -15,7 +15,7 @@ export const en = {
   "privacy.metaDescription": "What the AccessCheck browser extension reads, and where it goes.",
   "meta.title": "AccessCheck: measure, locate and trace every accessibility barrier",
   "meta.description":
-    "Paste a web address. AccessCheck opens the page in a real browser, runs axe-core (WCAG levels A and AA) plus keyboard, mobile and vision passes, and returns each finding tied to the element that caused it, with a fix tested on a copy of the page.",
+    "Paste a web address. AccessCheck opens the page in a real browser, runs axe-core (WCAG levels A and AA) plus keyboard, mobile and motion passes, and returns each finding tied to the element that caused it, with a fix tested on a copy of the page.",
   "nav.skipToContent": "Skip to content",
   "nav.howItWorks": "How it works",
   "nav.checks": "Checks",
@@ -89,16 +89,6 @@ export const en = {
   "audit.target.fix":
     "Grow each control to at least 24\u00d724px, or add enough spacing so a 24px circle centred on it clears its neighbours (padding on the control usually does both).",
 
-  "audit.liveRegionHidden":
-    "The region is removed from the accessibility tree (display:none, visibility:hidden or aria-hidden), so screen readers never announce it.",
-  "audit.liveRegionFix":
-    "Keep the live region in the accessibility tree: use a clip or screen-reader-only pattern instead of hiding it.",
-  "audit.liveRegionContradiction": "The two contradict each other, so nothing is announced.",
-  "audit.targetSizeFix":
-    "Grow each control to at least 24\u00d724px, or add enough spacing around it that a 24px target fits without overlapping its neighbours.",
-  "audit.motionFix":
-    "Wrap non-essential animation in @media (prefers-reduced-motion: reduce) and turn it off or shorten it there.",
-
   "scanFail.browserUnavailable":
     "The browser we use to open the page stopped responding before the audit could run.",
   "scanFail.browserSlow":
@@ -135,9 +125,7 @@ export const en = {
   "report.actionPlan": "Action plan",
 
   "md.reportTitle": "Accessibility report: {name}",
-  "md.reportTitleDash": "Accessibility report \u2014 {name}",
   "md.url": "URL",
-  "md.priorityNote": "(priority, not a WCAG conformance grade)",
   "md.elementsScanned": "Elements scanned",
   "md.generated": "Generated",
   "md.colIfYouFix": "If you fix",
@@ -155,9 +143,10 @@ export const en = {
   "md.findings": "Findings",
   "md.needsManualReview": "Needs manual review",
   "md.whereLabel": "Where",
+  "identity.in": "in {where}",
+  "identity.nth": "{n} of {total}",
   "md.howToCheck": "How to check",
   "md.checksPassed": "Automated checks passed ({count})",
-  "md.passedChecks": "Passed checks ({count})",
   "md.footer":
     "_Fixes are applied and re-audited in a sandbox copy; the audited site is not altered. This standing covers what a tool can decide on its own; it is not a declaration of conformance._",
   "md.bestPracticeNote": "**Best practice** (not a WCAG success criterion)",
@@ -171,45 +160,6 @@ export const en = {
   "md.suggestedFix": "Suggested fix",
   "md.setProp": "Set `{prop}` to {hex}.",
   "md.andMore": "(+{count} more)",
-  "md.summary": "Summary",
-  "md.colCritical": "Critical",
-  "md.colSerious": "Serious",
-  "md.colModerate": "Moderate",
-  "md.colMinor": "Minor",
-  "md.colPassed": "Passed",
-  "md.fixFirst": "Fix First",
-  "md.fixFirstLine": "**{title}** \u2014 impact {impact}, effort {effort}",
-  "md.violations": "Violations",
-  "md.severityHeading": "{severity} ({count})",
-  "md.selectorLabel": "Selector",
-  "md.occurrencesLabel": "Occurrences",
-  "md.verifiedTag": "\u2705 Verified \u2014 re-scan passes",
-  "md.needsReviewTag": "\u26a0\ufe0f Needs review \u2014 re-scan still flags",
-  "md.resolvesElements": {
-    one: "Resolves {count} element",
-    other: "Resolves {count} elements",
-  },
-  "md.keyboardHeading": "Keyboard & focus",
-  "md.tracedStops": {
-    one: "Traced {count} focus stop",
-    other: "Traced {count} focus stops",
-  },
-  "md.reachableCounts": "{reachable}/{total} interactive elements reachable by keyboard",
-  "md.noInteractive": "no interactive controls detected",
-  "md.severityLabel": "Severity",
-  "md.fixLabel": "Fix",
-  "md.contextsHeading": "Responsive & dynamic",
-  "md.viewportChecked": "{width}px viewport",
-  "md.openedStates": {
-    one: "{count} opened state",
-    other: "{count} opened states",
-  },
-  "md.rescannedBeyond": "Re-scanned beyond the initial desktop load \u2014 checked {checked}.",
-  "md.onlyAtWidth": "Only at {width}px",
-  "md.noViolations": "No automated violations detected. \ud83c\udf89",
-  "md.noKeyboard": "No keyboard or focus issues detected. \ud83c\udf89",
-  "md.noContexts": "No new violations surfaced in these contexts. \ud83c\udf89",
-  "md.manualNote": "Automated testing couldn't determine these \u2014 confirm them by hand.",
   "md.noFailures": "No automated failures on this page. This is coverage, not WCAG conformance.",
   "md.manualOutsideScore":
     "Automated testing couldn't decide these, so confirm them by hand. They are not counted here.",
@@ -254,7 +204,7 @@ export const en = {
 
   "scanWarning.screenshotUnavailable": "The screenshot could not be taken in time.",
   "scanWarning.fixDetailsSkipped":
-    "Some findings show general guidance instead of a specific suggested fix.",
+    "Some findings show general guidance instead of a specific suggested fix, and name their elements by selector only.",
   "scanWarning.markersSkipped": "The markers could not be placed on the screenshot.",
   "scanWarning.contentUnsettled": "The page was still loading when the audit ran.",
   "scanWarning.verificationSkipped": "Fixes were not tested on a copy of the page this time.",
@@ -314,10 +264,8 @@ export const en = {
     "Content that only renders once you scroll to it was not loaded, so anything below the fold was not read. The expanded audit walks the page first; this reading did not.",
   "warning.contextsSkipped":
     "The mobile-viewport pass needs viewport emulation, not available in this build.",
-  "warning.auditsSkipped":
-    "The reduced-motion check needs media emulation, not available in this build.",
-  "warning.verificationSkipped":
-    "Fixes are not tested here: this build never writes to the audited page.",
+  "warning.reducedMotionSkipped":
+    "The reduced-motion check needs media emulation, not available in this build. Target size and live regions were checked.",
   "warning.walkChangedPage":
     "Typing Tab through this page opened content that stayed open — a menu, a panel or a suggestion list. The rules had already read the page by then, so auditing again can give a slightly different reading of the same page.",
   "warning.contentUnsettled":
@@ -362,10 +310,9 @@ export const en = {
   "focusPath.stoppedByTrap": "Partial: focus was trapped at stop {stops}, so {leftover}.",
 
   "scope.stillMissing":
-    "The mobile viewport, reduced motion and verified fixes are still not checked here, so this is not a full audit.",
-  "scope.quickKicker": "Quick audit",
+    "The mobile viewport and reduced motion are still not checked here, so this is not a full audit.",
+  "scope.focusPathPending": "Keyboard focus path not walked yet",
   "scope.currentTabKicker": "This tab",
-  "scope.preliminaryLead": "Preliminary result",
   "scope.skippedNote":
     "The focus path was not verified, so nothing here can speak for keyboard use. {why} {rest}",
   "scope.partialBadge": "Includes keyboard focus path · partial",
@@ -394,7 +341,6 @@ export const en = {
   "evidence.heuristic.title": "Why this is not counted as a failure",
   "evidence.heuristic.body":
     "This is an observation about how the page behaved, not a rule that passes or fails, so it is not counted here. What it would take to settle it is in the description above.",
-  "evidence.heuristic.short": "Observation, not counted",
   "md.needsHumanCheck": "Observations that need a human check",
   "md.needsHumanCheckNote":
     "Read from how the page behaved, not from a rule that passes or fails. These are not counted here, and each one says what would settle it.",
@@ -515,7 +461,6 @@ export const en = {
 
   "home.lens.frameLabel": "Screenshot \u00b7 scale 43%",
   "layer.rail": "Overlay",
-  "layer.markers": "Issue markers",
   "layer.markersTitle": "Show the issue markers on the screenshot",
   "layer.none": "No overlay",
   "layer.noneTitle": "Hide the overlay",
@@ -539,7 +484,6 @@ export const en = {
     one: "{count} manual-review item \u00b7",
     other: "{count} manual-review items \u00b7",
   },
-  "capture.contextual": "Contextual capture \u00b7 {width} \u00d7 {height} \u00b7 scale {scale}%",
   "capture.openEvidence": "See the evidence",
   "capture.markerHint": "Select a marker to open the finding it belongs to.",
   "detail.sharedColorPair": {
@@ -547,10 +491,8 @@ export const en = {
     other: "{count} occurrences share this detected colour pair.",
   },
   "detail.moreSelectors": "+{count} more",
-  "capture.evidenceShared": "shown in a capture taken for a nearby element",
   "capture.frameLabel": "Screenshot \u00b7 {width} \u00d7 {height}",
   "capture.shownOnScreenshot": "{count} shown on the screenshot",
-  "capture.onScreenshot": "\u00b7 on the screenshot",
   "detail.elementsAffected": {
     one: "element affected",
     other: "elements affected",
@@ -639,7 +581,7 @@ export const en = {
   "report.executiveSummary": "Executive summary",
   "report.priorityRoadmap": "Priority roadmap",
   "report.suggestedFix": "Suggested fix",
-  "report.selector": "Selector",
+  "report.element": "Element",
   "report.elementsAffected": "Elements affected",
   "report.criterion": "Criterion",
   "report.backToResults": "Back to results",
@@ -679,8 +621,6 @@ export const en = {
   "home.lens.sandbox": "Sandbox",
   "home.lens.before": "Before",
   "home.lens.after": "After",
-  "home.lens.locate": "Locate",
-  "home.lens.verify": "Verify",
 
   "history.deleteOneTitle": "Delete this audit?",
   "history.deleteOneBody":
@@ -791,7 +731,7 @@ export const en = {
   "form.scopeSite": "Site",
   "home.hero.title":
     "Every barrier measured, located on the element, and tested before it's suggested.",
-  "home.hero.passes": "+ keyboard, viewport and vision passes",
+  "home.hero.passes": "+ keyboard, viewport and motion passes",
   "home.hero.body":
     "This is not another report. It is a visual inspector: paste a web address and every finding comes tied to the element that caused it, with the contrast ratio, the selector and a fix we test on a copy of the page.",
   "home.hero.lensNote":
@@ -829,7 +769,6 @@ export const en = {
 
   "results.checksPassedLabel": "automated checks passed",
   "results.manualReviewLabel": "manual-review items, with how to check",
-  "results.needPersonReview": "need a person to review, listed below.",
   "results.noAutomatedFailures": "No automated failures on this page.",
   "results.checksPassedNote": "{passed} checks passed. This is not the same as WCAG conformance:",
   "results.manualReviewPending": {
@@ -844,7 +783,6 @@ export const en = {
   "results.siteAuditPassNote":
     "Site-audit pass: axe rules and this project's own detections. Keyboard, expanded UI and fix verification run in the full page audit.",
   "results.noMarkerOffScreenshot": "no marker \u00b7 outside the screenshot",
-  "score.checksPassed": "{count} automated checks passed",
   "wcagReading.failsBy": "Fails by",
 
   "home.howItWorks.kicker": "How it works",
@@ -904,9 +842,6 @@ export const en = {
   "home.pass.context": "Context",
   "home.pass.contextDesc":
     "Checks the page again at mobile size and after opening menus and expandable sections",
-  "home.pass.vision": "Vision",
-  "home.pass.visionDesc":
-    "Simulates color blindness (deuteranopia, protanopia, tritanopia), low vision and grayscale",
   "home.pass.motion": "Motion",
   "home.pass.motionDesc": "Checks that the page respects the visitor's reduced-motion setting",
   "home.pass.live": "Live",
@@ -924,14 +859,10 @@ export const en = {
   "home.step3.body":
     "We apply the change to a copy of the page, run the check again, then mark the result as verified or needs review.",
 
-  "home.example.name": "Contrast (Minimum)",
   "home.example.title": "Text below the minimum contrast",
   "home.example.summary":
     "No critical blockers, but 1 serious finding still makes the page harder to use for people who rely on assistive technology.",
 
-  "home.example.desc":
-    "Ensures the contrast between foreground and background colors meets the WCAG threshold.",
-  "home.example.fixText": "Set the text color to {hex} \u2192 {ratio}:1.",
   "impact.contrast":
     "People with low vision or reduced contrast sensitivity may be unable to read this text, especially on low-quality screens or in bright light.",
   "impact.alt":
@@ -1089,12 +1020,6 @@ export const en = {
   "ssrf.invalidAddress": "That doesn't look like a valid web address. Check it and try again.",
   "ssrf.onlyHttp": "Only web pages (addresses starting with http or https) can be audited.",
   "ssrf.notFound": "We couldn't find a site at that address. Check the spelling and try again.",
-
-  "sim.deuteranopiaDesc":
-    "Red-green color blindness, missing green cones. Affects about 6% of men.",
-  "sim.protanopiaDesc": "Red-green color blindness, missing red cones. Affects about 2% of men.",
-  "sim.tritanopiaDesc": "Blue-yellow color blindness, missing blue cones. Rare, about 0.01%.",
-
   "report.projectionCaveat":
     ". This is only a projection, not a pass for WCAG. Meeting WCAG also depends on the moderate items and on manual review.",
   "report.recommendations": "Recommendations",
@@ -1111,21 +1036,15 @@ export const en = {
   "context.recheckLong":
     "Re-check this element in the affected context; the engine did not sandbox a fix here.",
 
-  "sim.normalDesc": "Default rendering, with no vision filter.",
-  "sim.lowVisionDesc": "Reduced sharpness and contrast sensitivity.",
-  "sim.grayscaleDesc": "All color removed. Checks that meaning survives without hue.",
-
   "wcagReading.noA": "No automated level-A failures",
   "wcagReading.noAA": "No automated level-AA failures",
   "provenance.title": "Provenance",
   "provenance.complementary":
-    "Complementary passes: keyboard, mobile viewport, expanded UI, vision, motion, live regions.",
+    "Complementary passes: keyboard, mobile viewport, expanded UI, motion, live regions.",
   "stepper.previous": "Previous occurrence",
   "stepper.next": "Next occurrence",
   "seal.verified": "Verified: the rule stopped flagging the element",
   "seal.needsReview": "Needs review: the suggestion alone doesn't clear it",
-  "seal.notReaudited": "Not re-audited",
-
   "history.title": "Audit history",
   "history.kicker": "History",
   "history.scoreLabel": "Score",
@@ -1154,10 +1073,7 @@ export const en = {
   "severity.minor": "Minor",
 
   "cue.verified": "· verified in sandbox",
-  "cue.partial": "· partly verified",
-  "cue.sampled": "· one example checked",
-  "cue.failed": "· needs review",
-
+  "cue.needsReview": "· needs review",
   "detail.sampleText": "Sample text",
   "detail.currentView": "current",
   "detail.largeText": " (large text)",
@@ -1177,20 +1093,13 @@ export const en = {
   "detail.result": "Result",
   "detail.impactOnUsers": "Impact on users",
   "detail.affectedElement": "Affected element",
+  "detail.technicalSelector": "Selector",
   "detail.howToFix": "How to fix",
   "detail.verificationResult": "Verification result",
   "detail.sandboxNote": "Fixes are applied and reverted in a sandbox copy. {host} was not altered.",
 
   "verdict.label.verified": "Verified fix",
-  "verdict.label.partial": "Partly verified",
-  "verdict.label.sampledMany": "Examples checked",
-  "verdict.label.sampledOne": "One example checked",
-  "verdict.label.failed": "Needs human review",
-  "verdict.label.unverifiable": "Could not verify",
-  "verdict.label.contextual": "Confirm before applying",
-  "verdict.label.noAutoFix": "Needs human review",
-  "verdict.label.bestPractice": "Best practice",
-  "verdict.label.complementary": "Not re-audited",
+  "verdict.label.needsReview": "Needs review",
 
   "verdict.others": {
     one: "The other {count} occurrence shares the same suggestion but was not individually verified.",
@@ -1215,15 +1124,15 @@ export const en = {
   "verdict.failedPlain":
     "{subject} still fails after the change was applied in a sandbox copy. Review it by hand.{tail}",
   "verdict.unverifiable":
-    "The element couldn't be re-audited in the sandbox copy (it wasn't found, or verification was cut short for time). Confirm the change by hand.",
+    "This fix could not be re-run on the page — the element was gone, or there was no time left. Confirm it by hand.",
   "verdict.contextual":
-    "This change is a valid way to clear the rule, but whether it is right depends on the content of the page, so only a person can confirm it. It was not re-audited in a sandbox copy.",
+    "This suggestion clears the rule, but whether it says the right thing for this page is a judgement only a person can make.",
   "verdict.noAutoFix":
-    "This finding has no automatic fix. A person needs to decide the right change for the page.",
+    "No automatic fix applies here. The right change depends on the page, so it needs a person.",
   "verdict.bestPractice":
     "Best practice, not a WCAG success criterion. Worth fixing, but it does not affect the WCAG reading.",
   "verdict.complementary":
-    "Found by a complementary pass (keyboard, mobile, vision or dynamic state); it isn't re-audited in a sandbox copy. Fix and re-run to confirm.",
+    "Found by a complementary pass (keyboard, mobile, motion or dynamic state). Fix it and run the audit again to confirm.",
 
   "keyboard.region.offscreen": "outside the visible viewport",
   "keyboard.region.top": "near the top of the viewport",
@@ -1393,24 +1302,24 @@ export const en = {
   "panel.drawingAll": "Every stop is drawn. The current one is highlighted; the rest are dimmed.",
   "panel.drawingWindow":
     "Drawing the current stop and {neighbours} either side, so the page stays readable.",
+  "panel.walkingFocusPath": "Walking the focus path",
+  "panel.runningNoteFocus":
+    "Chrome shows its own banner while the debugger is attached. It is released before the report comes back, and the page is not modified.",
+  "panel.walkDebuggerNote":
+    "Walking the tab order needs Chrome's debugger, so Chrome will show its own banner and DevTools cannot attach to this tab meanwhile. It is released as soon as the walk ends.",
   "panel.walkNow": "Walk the focus path now",
   "panel.continueWalk": "Continue the walk",
   "panel.continueWalkNote": "Picks up at stop {stops} and keeps going, without starting over.",
 
-  "panel.quickAudit": "Quick audit",
   "panel.auditingTab": "Auditing this tab",
   "panel.runningNote":
-    "The score appears when every step above has finished. The page is not modified.",
-  "panel.runningNoteDeep":
-    " Walking the focus path attaches Chrome's debugger for that step only — Chrome shows its own banner meanwhile — and it is released before the report appears.",
+    "The result appears when every step above has finished. Any change made to test a fix is undone in the same moment.",
   "panel.announceStep": "Auditing. Step {n}: {stage}.",
 
   "panel.coverageLimitations": "Coverage limitations",
   "panel.notChecked": "Not checked in this build",
   "panel.notCheckedNote": "A reading from this build is never a clean bill of health for the page.",
   "panel.auditAgain": "Audit this tab again",
-  "panel.runQuickAudit": "Run quick audit",
-  "panel.quickAuditNote": "No debugger or keyboard focus path",
 
   "panel.idleTitle": "Nothing audited yet",
   "panel.idleBody":

@@ -53,17 +53,17 @@ A tool that measures contrast shouldn't have questionable contrast of its own, s
 
 ## ♿ Features
 
-|                           |                                                                                                                                                                                                                                |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **🌐 Whole-Site Crawl**   | Point it at a domain and it discovers pages from the sitemap (or by crawling links) and audits them in parallel — a background job fans out one short serverless run per page, with live progress and an aggregate site score. |
-| **🔧 Copy-Paste Fixes**   | Each violation gets a generated code snippet — the exact contrast color, alt text, or label to paste — not just a restated rule.                                                                                               |
-| **✅ Verified Fixes**     | Every fix is applied in the page and the audit is re-run to prove it actually clears the violation before it's suggested.                                                                                                      |
-| **⚖️ Verdict & Export**   | Where the page stands — _blocked_, _failing_, _minor gaps_ or _no rule failed_ — a prioritized "Fix First" list, and an exportable PDF / Markdown report you can hand to a client or paste into a ticket.                       |
-| **🔍 Beyond Violations**  | Surfaces axe's "best practice" recommendations and flags items that need manual review — the two buckets most tools silently discard.                                                                                          |
-| **⌨️ Keyboard Path**      | Tabs through the page in a real browser and maps the focus order — flagging invisible focus, keyboard traps, positive `tabindex`, and controls that can't be reached by keyboard.                                              |
-| **📱 Context-Aware Scan** | Re-audits at a mobile viewport and after opening menus / disclosures, catching violations that only surface on small screens or once the UI is expanded.                                                                       |
-| **📈 Change Over Time**   | Signed-in audits are saved, and each new one is diffed rule by rule against the last — which barriers cleared, which came back, and whether that moved where the page stands. A page that passes today can fail after the next deploy.              |
-| **🧩 Chrome Extension**   | A Manifest V3 side panel that audits the tab you are already on — including a keyboard focus path walked with real `Tab` presses — and points at the offending element in the live page.                                       |
+|                           |                                                                                                                                                                                                                                        |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **🌐 Whole-Site Crawl**   | Point it at a domain and it discovers pages from the sitemap (or by crawling links) and audits them in parallel — a background job fans out one short serverless run per page, with live progress and an aggregate site score.         |
+| **🔧 Copy-Paste Fixes**   | Each violation gets a generated code snippet — the exact contrast color, alt text, or label to paste — not just a restated rule.                                                                                                       |
+| **✅ Verified Fixes**     | Every fix is applied in the page and the audit is re-run to prove it actually clears the violation before it's suggested.                                                                                                              |
+| **⚖️ Verdict & Export**   | Where the page stands — _blocked_, _failing_, _minor gaps_ or _no rule failed_ — a prioritized "Fix First" list, and an exportable PDF / Markdown report you can hand to a client or paste into a ticket.                              |
+| **🔍 Beyond Violations**  | Surfaces axe's "best practice" recommendations and flags items that need manual review — the two buckets most tools silently discard.                                                                                                  |
+| **⌨️ Keyboard Path**      | Tabs through the page in a real browser and maps the focus order — flagging invisible focus, keyboard traps, positive `tabindex`, and controls that can't be reached by keyboard.                                                      |
+| **📱 Context-Aware Scan** | Re-audits at a mobile viewport and after opening menus / disclosures, catching violations that only surface on small screens or once the UI is expanded.                                                                               |
+| **📈 Change Over Time**   | Signed-in audits are saved, and each new one is diffed rule by rule against the last — which barriers cleared, which came back, and whether that moved where the page stands. A page that passes today can fail after the next deploy. |
+| **🧩 Chrome Extension**   | A Manifest V3 side panel that audits the tab you are already on — including a keyboard focus path walked with real `Tab` presses — and points at the offending element in the live page.                                               |
 
 <br/>
 
@@ -174,11 +174,12 @@ URL → headless Chromium (Playwright) → inject axe-core → WCAG audit
 - **Form labels & accessible names** — suggests a `<label for>` (when there's an id) or an `aria-label`, guessing the text from placeholder / name / id; covers buttons, links, and ARIA controls without a name.
 - **Document-level & ARIA** — missing `<html lang>`, missing `<title>`, zoom-blocking viewport, and the exact required-but-missing or not-allowed ARIA attributes axe reports.
 
-**It proves the fix, doesn't assert it.** Each generated fix carries a structured DOM mutation. After the scan, AccessCheck applies that mutation in the page, re-runs axe scoped to the specific rule, then reverts — labeling each fix:
+**It proves the fix, doesn't assert it.** A deterministic fix — one computed from measured values, in practice a contrast colour — carries a structured DOM mutation. AccessCheck applies that mutation in the page, re-runs axe scoped to that one rule, then reverts, and reports only what the re-run showed:
 
-- **Verified** — the rule no longer flags the element. The fix is proven.
-- **Needs review** — the re-scan still flags it; the suggestion isn't enough on its own.
-- _(unchecked)_ — fixes that can't be auto-applied safely (e.g. removing ARIA attributes) are left unvalidated rather than faked.
+- **Verified fix** — the rule stopped flagging the element.
+- **Needs review** — the change was applied and the rule still flags it. The suggestion isn't enough on its own.
+
+Everything else — an alt text, an `aria-label`, a structural change — is a suggestion that depends on what the page means, and no re-run can settle it. Those findings carry no verification label at all: they read as what they are, a suggestion that needs a person. Measured over eight production pages: 55 findings, 4 verified, 2 needing review, 49 in that third group — which is why it is the quiet one rather than a badge repeated on every card. The distinction is still in the data (`verified` / `failed` / `unchecked` per fix group); it is the interface that stopped spending attention on it.
 
 **It groups what repeats.** When many nodes of the same violation share an identical fix (e.g. 14 buttons with the same contrast problem), they collapse into a single group — _"Resolves N elements"_ — validated once per group via a representative selector. This turns "here are 14 problems" into "here is 1 fix that clears 14 elements".
 
@@ -188,9 +189,9 @@ URL → headless Chromium (Playwright) → inject axe-core → WCAG audit
 
 The web app audits a URL. The extension audits **the tab you are already looking at** — behind a login, mid-checkout, three clicks into a flow no crawler can reach. It is a Manifest V3 side panel that reuses the same engine as the server-side scan.
 
-- **Two readings, by cost.** A **quick audit** runs the rules and returns without ever attaching the debugger. An **expanded audit** adds the keyboard focus path, and says so before it starts.
+- **The debugger is opt-in, not the price of admission.** Clicking the icon runs the rules, the own-rule audits and the fix verification without ever attaching `chrome.debugger`. Walking the keyboard focus path is a separate action that states its cost before you press it, and **Continue the walk** resumes a walk that was cut short instead of starting over.
 - **A real focus path, not a simulated one.** The walk attaches `chrome.debugger` and dispatches genuine `Tab` / `Shift+Tab` through CDP, so the order it reports is the order Chrome actually produces — including what the browser skips. The debugger is attached for that step only and released before the report appears; a walk that is cut short still releases it.
-- **It points at the element.** Every occurrence carries its selector, an abbreviated snippet, and its measured rectangle — and **Locate on page** highlights it in the live tab. Stepping through the focus path numbers the stops over the page itself.
+- **It names the element, not just its CSS path.** axe points at `.bg-gradient-left.dark\:bg-gradient-left-dark…` — 501 characters of compiled Tailwind on react.dev. The report reads `span.text-gray-30 “example.com/”  ·  in <article>`, built from the tag, one stable attribute, the accessible name and the enclosing landmark, with generated ids and hashed classes deliberately left out. Repeated elements that would read the same way are numbered (`1 of 3`) rather than invented. The selector is kept beside the name for **Locate on page** and **Copy selector** — identity is for people, the locator is for `querySelector`.
 - **It says what it could not check.** Coverage is stated next to the verdict (_"Partial coverage · 3 checks unavailable"_) rather than quietly rounded away, and the reading is never called complete when checks were skipped.
 - **Narrow permissions.** `activeTab`, `scripting`, `sidePanel`, `storage`, `debugger` — no host permissions, and nothing is loaded over the network at runtime.
 

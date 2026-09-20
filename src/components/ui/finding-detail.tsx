@@ -2,44 +2,16 @@
 
 import { useState } from "react";
 import { locatedMarkers, type FindingView } from "@/lib/report/findings";
-import type { Verdict } from "@/lib/report/verdict";
-import { verdictLabel, verdictMessage } from "@/lib/report/verdict";
+import { describeElement } from "@/lib/report/identity";
+import { verdictMessage, verdictTone } from "@/lib/report/verdict";
 import { ratioPosition } from "@/lib/report/contrast";
 import type { ContrastPreview } from "@/lib/report/preview";
 import { severityColorVar } from "@/lib/report/severity";
 import { SectionKicker } from "./section-kicker";
+import { VerdictSeal } from "./verdict-seal";
 import { CodeBlock } from "./code-block";
 import { cn } from "@/lib/cn";
 import type { Translate } from "@/lib/i18n/t";
-
-const SEAL: Record<Verdict["kind"], { cls: string; glyph: string }> = {
-  verified: { cls: "border-solid border-verified bg-verified/[0.08] text-verified", glyph: "✓" },
-  partial: { cls: "border-dashed border-moderate text-moderate-text", glyph: "◑" },
-  sampled: { cls: "border-dashed border-steel text-steel", glyph: "◐" },
-  failed: { cls: "border-dashed border-moderate text-moderate-text", glyph: "?" },
-  unverifiable: { cls: "border-dashed border-border text-muted", glyph: "·" },
-  contextual: { cls: "border-dashed border-border text-muted", glyph: "·" },
-  "no-auto-fix": { cls: "border-dashed border-border text-muted", glyph: "·" },
-  "best-practice": { cls: "border-solid border-steel text-steel", glyph: "◇" },
-  complementary: { cls: "border-dashed border-border text-muted", glyph: "·" },
-};
-
-function VerdictSeal({ verdict, t }: { verdict: Verdict; t: Translate }) {
-  const s = SEAL[verdict.kind];
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-2 border px-2.5 py-1.5 text-[12.5px] leading-tight",
-        s.cls,
-      )}
-    >
-      <span aria-hidden className="font-cond text-[13px]">
-        {s.glyph}
-      </span>
-      {verdictLabel(verdict, t)}
-    </span>
-  );
-}
 
 function RatioBar({
   found,
@@ -201,6 +173,8 @@ export function FindingDetail({
   const located = locatedMarkers(finding);
   const affectedShown = finding.affectedSelectors.slice(0, 6);
   const affectedExtra = finding.affectedSelectors.length - affectedShown.length;
+  const primary = finding.affectedSelectors[0];
+  const element = primary ? describeElement(primary, finding.identities[primary], t) : null;
   const railColor = finding.severity ? severityColorVar[finding.severity] : "var(--color-steel)";
 
   return (
@@ -250,19 +224,27 @@ export function FindingDetail({
                 >
                   {finding.markers[0]?.n ?? 1}
                 </span>
-                <code className="min-w-0 flex-1 truncate font-mono text-[12.5px] text-steel">
-                  {finding.affectedSelectors[0]}
-                </code>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-mono text-[12.5px] text-ink">
+                    {element?.label}
+                  </span>
+                  {element?.context && (
+                    <span className="block truncate text-[11.5px] text-muted">
+                      {element.context}
+                    </span>
+                  )}
+                </span>
                 <span className="shrink-0 text-[11.5px] font-medium text-ink underline">
                   {t("capture.openEvidence")}
                 </span>
               </button>
             ) : (
-              <p className="mt-2 flex items-center gap-2 text-[13px]">
-                <code className="font-mono text-[12.5px] text-steel">
-                  {finding.affectedSelectors[0]}
-                </code>
-              </p>
+              <div className="mt-2">
+                <p className="font-mono text-[12.5px] break-words text-ink">{element?.label}</p>
+                {element?.context && (
+                  <p className="text-[11.5px] break-words text-muted">{element.context}</p>
+                )}
+              </div>
             )}
             <p className="mt-1.5 text-[12.5px] text-muted">
               <span className="font-medium text-ink tabular-nums">{finding.elements}</span>{" "}
@@ -274,9 +256,9 @@ export function FindingDetail({
                 {affectedShown.slice(1).map((s) => (
                   <li
                     key={s}
-                    className="border border-hairline bg-code px-1.5 py-0.5 font-mono text-[11px] text-body"
+                    className="border border-hairline bg-code px-1.5 py-0.5 font-mono text-[11px] break-words text-body"
                   >
-                    {s}
+                    {describeElement(s, finding.identities[s], t).label}
                   </li>
                 ))}
                 {affectedExtra > 0 && (
@@ -285,6 +267,14 @@ export function FindingDetail({
                   </li>
                 )}
               </ul>
+            )}
+            {element && element.label !== element.locator && (
+              <p className="mt-2 flex items-baseline gap-1.5 text-[11px] text-muted">
+                <span className="shrink-0">{t("detail.technicalSelector")}</span>
+                <code className="min-w-0 truncate font-mono text-steel" title={element.locator}>
+                  {element.locator}
+                </code>
+              </p>
             )}
           </>
         ) : (
@@ -333,7 +323,7 @@ export function FindingDetail({
                   lines={[
                     {
                       text: finding.fixCode,
-                      tone: finding.verdict.kind === "verified" ? "added" : "default",
+                      tone: verdictTone(finding.verdict) === "verified" ? "added" : "default",
                     },
                   ]}
                 />
@@ -341,20 +331,25 @@ export function FindingDetail({
             )}
           </>
         )}
-      </section>
-
-      <section className="border-t border-hairline p-3.5">
-        <SectionKicker>{t("detail.verificationResult")}</SectionKicker>
-        <div className="mt-2">
-          <VerdictSeal verdict={finding.verdict} t={t} />
-        </div>
-        <p className="mt-2 text-[12.5px] leading-normal text-body">
-          {verdictMessage(finding.verdict, t, finding.measurement)}
-        </p>
-        {finding.verdict.reaudited > 0 && (
-          <p className="mt-1.5 text-[11.5px] text-muted">{t("detail.sandboxNote", { host })}</p>
+        {verdictTone(finding.verdict) === "quiet" && (
+          <p className="mt-2.5 text-[12px] leading-normal text-muted">
+            {verdictMessage(finding.verdict, t, finding.measurement)}
+          </p>
         )}
       </section>
+
+      {verdictTone(finding.verdict) !== "quiet" && (
+        <section className="border-t border-hairline p-3.5">
+          <SectionKicker>{t("detail.verificationResult")}</SectionKicker>
+          <div className="mt-2">
+            <VerdictSeal verdict={finding.verdict} t={t} />
+          </div>
+          <p className="mt-2 text-[12.5px] leading-normal text-body">
+            {verdictMessage(finding.verdict, t, finding.measurement)}
+          </p>
+          <p className="mt-1.5 text-[11.5px] text-muted">{t("detail.sandboxNote", { host })}</p>
+        </section>
+      )}
     </div>
   );
 }

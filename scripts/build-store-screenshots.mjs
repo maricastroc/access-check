@@ -151,14 +151,20 @@ try {
   await page.goto(SITE, { waitUntil: "domcontentloaded" });
   await page.bringToFront();
 
-  const audit = (deep) =>
-    sw.evaluate(async (isDeep) => {
+  const audit = () =>
+    sw.evaluate(async () => {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      await globalThis.__accessCheckAuditTab(tab, { deep: isDeep });
+      await globalThis.__accessCheckAuditTab(tab);
       await new Promise((r) => setTimeout(r, 700));
-    }, deep);
+    });
 
-  await audit(true);
+  const walkFocusPath = () =>
+    sw.evaluate(async () => {
+      await globalThis.__accessCheckDeepAudit();
+      await new Promise((r) => setTimeout(r, 900));
+    });
+
+  await audit();
 
   const panel = await ctx.newPage();
   await panel.setViewportSize({ width: PANEL, height: HEIGHT });
@@ -169,9 +175,9 @@ try {
 
   const dom = await panel.evaluate(() => ({
     roots: document.querySelectorAll("#root").length,
-    scoreCards: document.querySelectorAll("#score-heading").length,
     findingsHeaders: document.querySelectorAll("#findings-heading").length,
     rows: document.querySelectorAll("button h3").length,
+    verdicts: document.querySelectorAll("#verdict-heading").length,
     bodyHeight: document.body.scrollHeight,
     scripts: document.querySelectorAll("script").length,
   }));
@@ -217,27 +223,42 @@ try {
       await new Promise((r) => setTimeout(r, 500));
     }, label);
 
-  await compose("1-score-and-findings", "the score, the coverage line and the findings list");
+  await compose("1-verdict-and-findings", "the verdict, what was covered, and the findings list");
 
-  const openedKeyboard = await panel.evaluate(async () => {
-    const rows = [...document.querySelectorAll("button")].filter((b) => b.querySelector("h3"));
-    const row = rows.find((b) => /KEYBOARD|Target size/i.test(b.textContent)) ?? rows[0];
-    row.scrollIntoView({ block: "center", behavior: "instant" });
-    row.click();
-    await new Promise((r) => setTimeout(r, 350));
-    return row.querySelector("h3")?.textContent ?? null;
-  });
-  console.log("  opened:", openedKeyboard);
-  await scrollPanelTo("Occurrence");
+  const openFinding = (pattern) =>
+    panel.evaluate(async (source) => {
+      const wanted = new RegExp(source, "i");
+      const rows = [...document.querySelectorAll("button")].filter((b) => b.querySelector("h3"));
+      const open = rows.find((b) => b.getAttribute("aria-pressed") === "true");
+      if (open) {
+        open.click();
+        await new Promise((r) => setTimeout(r, 200));
+      }
+      const row = rows.find((b) => wanted.test(b.textContent)) ?? rows[0];
+      row.scrollIntoView({ block: "center", behavior: "instant" });
+      row.click();
+      await new Promise((r) => setTimeout(r, 400));
+      return row.querySelector("h3")?.textContent ?? null;
+    }, pattern.source ?? pattern);
+
+  console.log("  identity shot:", await openFinding("button-name|image-alt|target-size|label"));
+  await scrollPanelTo("Element");
   await compose(
-    "2-occurrence",
-    "a finding opened: explanation, fix, occurrence, selector, element",
+    "2-element-identity",
+    "a finding named by its element, with the selector kept beside it",
   );
 
-  await clickPanel("Locate on page");
-  await scrollPanelTo("Occurrence");
-  await compose("3-located-on-page", "the element highlighted on the page");
+  console.log("  verified shot:", await openFinding("color-contrast"));
+  await scrollPanelTo("Verification result");
+  await compose("3-verified-fix", "a fix applied and re-audited on the page, then reverted");
 
+  await walkFocusPath();
+  await panel.reload();
+  await panel.waitForFunction(() => document.body.textContent.includes("Findings \u00b7"), null, {
+    timeout: 20000,
+  });
+
+  console.log("  keyboard shot:", await openFinding("focus|keyboard|reach"));
   await clickPanel("Show focus path");
   const stop = await panel.evaluate(async () => {
     const next = [...document.querySelectorAll("button")].find(
@@ -255,17 +276,11 @@ try {
     return document.querySelector('[aria-live="polite"].min-w-24')?.textContent ?? null;
   });
   console.log("  focus stop:", stop);
-  await compose("4-focus-path", "the focus path: current stop highlighted, neighbours dimmed");
+  await compose("4-focus-path", "the real tab order, walked with genuine keystrokes");
 
-  await clickPanel("Clear overlay");
-  await page.bringToFront();
-  await audit(false);
-  await panel.bringToFront();
-  await panel.reload();
-  await panel.waitForFunction(() => document.body.textContent.includes("Findings ·"), null, {
-    timeout: 20000,
-  });
-  await compose("5-quick-audit", "the quick audit: preliminary, no debugger, no focus path");
+  await clickPanel("Locate on page");
+  await scrollPanelTo("Occurrence");
+  await compose("5-located-on-page", "the element found again and drawn on the live page");
 } finally {
   await ctx.close();
 }

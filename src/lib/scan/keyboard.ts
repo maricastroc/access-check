@@ -1,6 +1,7 @@
 import type { Page } from "playwright-core";
 import type { EvidenceClass, Severity } from "./types";
 import type { FocusProbe, FocusReach, FocusStyle } from "./dom/focus";
+import type { ElementIdentity } from "./dom/identity";
 import { severityOrder } from "./derive";
 import type { MessageKey, Translate } from "../i18n/t";
 
@@ -29,6 +30,7 @@ export type FocusStop = {
   selector: string;
   label: string;
   tag: string;
+  identity?: ElementIdentity | null;
   focusVisible: boolean;
   left: number | null;
   top: number | null;
@@ -52,6 +54,7 @@ export type KeyboardOccurrence = {
   selector: string;
   tag: string;
   label: string;
+  identity?: ElementIdentity | null;
   html: string | null;
   rect: FocusRect | null;
   onScreen: boolean;
@@ -93,6 +96,7 @@ export type RawKeyboard = {
   trapSelector: string | null;
   positiveTabindex: string[];
   unreachable: string[];
+  identities?: Record<string, ElementIdentity>;
   totalInteractive: number;
   reachableInteractive: number;
   truncated: boolean;
@@ -231,6 +235,7 @@ function occurrenceOf(
     selector: stop.selector,
     tag: stop.tag,
     label: stop.label,
+    identity: stop.identity ?? null,
     html: stop.html ?? null,
     rect: stop.rect ?? null,
     onScreen: stop.onScreen ?? stop.top !== null,
@@ -245,14 +250,17 @@ function occurrenceForSelector(
   stops: FocusStop[],
   reason: string,
   certainty: KeyboardCertainty,
+  identities: Record<string, ElementIdentity> = {},
 ): KeyboardOccurrence {
   const stop = stops.find((s) => s.selector === selector);
   if (stop) return occurrenceOf(stop, reason, certainty);
+  const identity = identities[selector] ?? null;
   return {
     stop: null,
     selector,
-    tag: "",
-    label: "",
+    tag: identity?.tag ?? "",
+    label: identity?.name ?? "",
+    identity,
     html: null,
     rect: null,
     onScreen: false,
@@ -364,7 +372,13 @@ export function buildKeyboardReport(raw: RawKeyboard, t: Translate): KeyboardRep
       count: 1,
       selectors: [raw.trapSelector],
       occurrences: [
-        occurrenceForSelector(raw.trapSelector, stops, t("keyboard.trap.occurrence"), "conclusive"),
+        occurrenceForSelector(
+          raw.trapSelector,
+          stops,
+          t("keyboard.trap.occurrence"),
+          "conclusive",
+          raw.identities,
+        ),
       ],
     });
   }
@@ -394,6 +408,7 @@ export function buildKeyboardReport(raw: RawKeyboard, t: Translate): KeyboardRep
             stops,
             conclusive ? t("keyboard.unreachable.occurrence") : t("keyboard.notReached.occurrence"),
             "needs-review",
+            raw.identities,
           ),
         ),
     });
@@ -455,7 +470,13 @@ export function buildKeyboardReport(raw: RawKeyboard, t: Translate): KeyboardRep
       count: n,
       selectors: raw.positiveTabindex.slice(0, MAX_FINDING_SELECTORS),
       occurrences: raw.positiveTabindex.map((selector) =>
-        occurrenceForSelector(selector, stops, t("keyboard.tabindex.occurrence"), "conclusive"),
+        occurrenceForSelector(
+          selector,
+          stops,
+          t("keyboard.tabindex.occurrence"),
+          "conclusive",
+          raw.identities,
+        ),
       ),
     });
   }
@@ -623,6 +644,7 @@ export async function collectFocusPath(
         selector: s.selector,
         label: s.label,
         tag: s.tag,
+        identity: s.identity,
         focusVisible,
         left: onScreen ? (r!.x / viewport.width) * 100 : null,
         top: onScreen ? (r!.y / viewport.height) * 100 : null,
@@ -648,6 +670,7 @@ export async function collectFocusPath(
       stoppedBy,
       trapSelector,
       positiveTabindex: reach.positiveTabindex,
+      identities: reach.identities,
       unreachable,
       totalInteractive: reach.totalInteractive,
       reachableInteractive: Math.max(0, reach.totalInteractive - unreachable.length),

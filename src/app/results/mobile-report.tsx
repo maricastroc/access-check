@@ -6,6 +6,7 @@ import type { ScoreBreakdown } from "@/lib/report/score";
 import type { WcagReadingModel } from "@/lib/report/wcag";
 import {
   Button,
+  ElementIdentityLine,
   FindingDetail,
   FindingRow,
   PriorityList,
@@ -162,9 +163,9 @@ export function MobileReport({
               </div>
               <div className="mt-3 border border-border bg-surface p-3">
                 <p className="text-[15px] font-semibold text-ink">{selectedFinding.title}</p>
-                <p className="mt-1 font-mono text-[12px] text-steel">
-                  {selectedFinding.affectedSelectors[0] ?? selectedFinding.ruleId}
-                </p>
+                <div className="mt-1">
+                  <ElementIdentityLine finding={selectedFinding} t={t} />
+                </div>
               </div>
             </div>
           ) : (

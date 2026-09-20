@@ -49,14 +49,21 @@ try {
   const extId = sw.url().split("/")[2];
 
   const page = await ctx.newPage();
-  const audit = async (path, deep = true) => {
+  const walkFocusPath = async () => {
+    await sw.evaluate(async () => {
+      await globalThis.__accessCheckDeepAudit();
+      await new Promise((r) => setTimeout(r, 800));
+    });
+  };
+
+  const audit = async (path) => {
     await page.goto(`${origin}${path}`, { waitUntil: "domcontentloaded" });
     await page.bringToFront();
-    await sw.evaluate(async (isDeep) => {
+    await sw.evaluate(async () => {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      await globalThis.__accessCheckAuditTab(tab, { deep: isDeep });
+      await globalThis.__accessCheckAuditTab(tab);
       await new Promise((r) => setTimeout(r, 600));
-    }, deep);
+    });
   };
 
   const openPanel = async (width) => {
@@ -173,6 +180,7 @@ try {
   await longPanel.close();
 
   await audit("/many");
+  await walkFocusPath();
   const manyPanel = await openPanel(400);
   const many = await manyPanel.evaluate(async () => {
     const row = [...document.querySelectorAll("button")].find(

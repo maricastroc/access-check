@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { FixGroup } from "@/lib/scan/types";
-import { buildVerdict, verdictLabel, verdictMessage, type VerdictInput } from "./verdict";
+import {
+  buildVerdict,
+  verdictLabel,
+  verdictMessage,
+  verdictTone,
+  type VerdictInput,
+} from "./verdict";
 import { translator } from "../i18n/t";
 
 const t = translator();
@@ -120,7 +126,7 @@ describe("buildVerdict — never extrapolates one representative to a whole clus
   it("no-auto-fix — no applicable correction", () => {
     const v = buildVerdict({ ...base, fixVerification: "unchecked", fixConfidence: null });
     expect(v.kind).toBe("no-auto-fix");
-    expect(verdictMessage(v, t)).toContain("no automatic fix");
+    expect(verdictMessage(v, t)).toContain("No automatic fix");
   });
 
   it("best-practice and complementary never claim a WCAG fix", () => {
@@ -130,19 +136,44 @@ describe("buildVerdict — never extrapolates one representative to a whole clus
     expect(buildVerdict({ ...base, kind: "keyboard" }).kind).toBe("complementary");
   });
 
-  it("labels stay honest — verified is the only 'Verified fix'", () => {
+  it("labels what happened, not how it was categorised", () => {
     expect(verdictLabel(buildVerdict({ ...base, fixVerification: "verified" }), t)).toBe(
       "Verified fix",
     );
     expect(
       verdictLabel(buildVerdict({ ...base, elements: 7, fixGroups: [group(7, "verified")] }), t),
-    ).toBe("One example checked");
-    expect(verdictLabel(buildVerdict({ ...base, fixVerification: "failed" }), t)).not.toContain(
-      "Verified",
+    ).toBe("Verified fix");
+    expect(verdictLabel(buildVerdict({ ...base, fixVerification: "failed" }), t)).toBe(
+      "Needs review",
     );
-    expect(verdictLabel(buildVerdict({ ...base, kind: "best-practice", isWcag: false }), t)).toBe(
-      "Best practice",
-    );
+  });
+
+  it("gives no seal at all to a finding nothing was re-run on", () => {
+    for (const input of [
+      { ...base, kind: "best-practice", isWcag: false },
+      { ...base, kind: "keyboard" },
+      { ...base, fixConfidence: "contextual" as const },
+      { ...base, fixConfidence: null },
+    ]) {
+      const v = buildVerdict(input);
+      expect(verdictTone(v), v.kind).toBe("quiet");
+      expect(verdictLabel(v, t), v.kind).toBeNull();
+      expect(verdictMessage(v, t).length).toBeGreaterThan(0);
+    }
+  });
+
+  it("derives the tone from what was re-run, never from the category", () => {
+    const cleared = buildVerdict({ ...base, elements: 7, fixGroups: [group(7, "verified")] });
+    const failed = buildVerdict({ ...base, elements: 7, fixGroups: [group(7, "failed")] });
+    const mixed = buildVerdict({
+      ...base,
+      elements: 8,
+      fixGroups: [group(7, "verified"), group(1, "failed")],
+    });
+
+    expect(verdictTone(cleared)).toBe("verified");
+    expect(verdictTone(failed)).toBe("attention");
+    expect(verdictTone(mixed)).toBe("attention");
   });
 });
 
@@ -157,8 +188,8 @@ describe("buildVerdict — only a deterministic fix can earn Verified fix", () =
     const v = buildVerdict({ ...base, fixConfidence: "contextual", fixVerification: "verified" });
     expect(v.kind).toBe("contextual");
     expect(v.reaudited).toBe(0);
-    expect(verdictLabel(v, t)).toBe("Confirm before applying");
-    expect(verdictMessage(v, t)).toContain("only a person can confirm");
+    expect(verdictLabel(v, t)).toBeNull();
+    expect(verdictMessage(v, t)).toContain("only a person can make");
   });
 
   it("a suggestion without apply is never certified", () => {
@@ -169,7 +200,7 @@ describe("buildVerdict — only a deterministic fix can earn Verified fix", () =
         fixVerification: verification,
       });
       expect(v.kind).toBe("no-auto-fix");
-      expect(verdictLabel(v, t)).not.toContain("Verified");
+      expect(verdictLabel(v, t)).toBeNull();
     }
   });
 

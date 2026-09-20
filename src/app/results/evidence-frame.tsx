@@ -2,7 +2,15 @@
 
 import type { ScanResult, Severity } from "@/lib/scan/types";
 import { locatedMarkers, type FindingView } from "@/lib/report/findings";
-import { Button, CodeBlock, Marker, ProvenancePanel, SectionKicker } from "@/components/ui";
+import { verdictTone } from "@/lib/report/verdict";
+import {
+  Button,
+  CodeBlock,
+  ElementIdentityLine,
+  Marker,
+  ProvenancePanel,
+  SectionKicker,
+} from "@/components/ui";
 import { clamp } from "./shared";
 import type { Layer, MarkerView } from "./report-ui";
 import { useT } from "@/lib/i18n/provider";
@@ -283,9 +291,7 @@ export function EvidenceFrame({
           <SectionKicker>{t("capture.elementAndCode")}</SectionKicker>
           {selectedFinding ? (
             <div className="mt-3 space-y-2.5">
-              <code className="block font-mono text-[13px] text-steel">
-                {selectedFinding.affectedSelectors[0] ?? selectedFinding.ruleId}
-              </code>
+              <ElementIdentityLine finding={selectedFinding} t={t} />
               <p className="text-[12.5px] text-muted">
                 <span className="font-medium text-ink tabular-nums">
                   {selectedFinding.elements}
@@ -307,7 +313,8 @@ export function EvidenceFrame({
                   lines={[
                     {
                       text: selectedFinding.fixCode,
-                      tone: selectedFinding.verdict.kind === "verified" ? "added" : "default",
+                      tone:
+                        verdictTone(selectedFinding.verdict) === "verified" ? "added" : "default",
                     },
                   ]}
                 />

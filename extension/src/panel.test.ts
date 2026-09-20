@@ -55,11 +55,36 @@ describe("the panel reuses the product's own report", () => {
     expect(panel).not.toContain("buildSummary");
   });
 
-  it("takes fixes and their confidence from the shared enrichment, and never re-audits them", () => {
+  it("takes fixes and their confidence from the shared enrichment", () => {
     expect(audit).toContain("enrichViolations(wcagViolations, elementInfos, t)");
     expect(audit).toContain("attachFixGroups(enriched)");
-    expect(audit).not.toContain("planVerification");
     expect(manifest.permissions).not.toContain("<all_urls>");
+  });
+
+  it("verifies fixes through the shared engine, never its own copy", () => {
+    expect(audit).toContain("planVerification(enriched, MAX_VERIFY_OPS)");
+    expect(audit).toContain("dom.verifyFixes(ops)");
+    expect(audit).not.toContain("axe.run(");
+    expect(audit).not.toContain("setAttribute");
+    expect(audit).not.toContain("removeAttribute");
+  });
+
+  it("needs no debugger to verify a fix, so the plain audit can do it", () => {
+    const run = between(background, "async function runAudit(", "async function addFocusPath(");
+    expect(run).not.toContain("chrome.debugger");
+    expect(audit).not.toContain("chrome.debugger");
+  });
+
+  it("no longer says fixes went untested", () => {
+    const coverage = file("./coverage.ts");
+    const unavailable = between(
+      coverage,
+      "export function unavailableWarnings",
+      "export function warningsAfterDeepAudit",
+    );
+
+    expect(unavailable).not.toContain("verification-skipped");
+    expect(unavailable).toContain("reduced-motion-skipped");
   });
 
   it("never puts page content into innerHTML", () => {
@@ -173,14 +198,14 @@ describe("assets the audit is not allowed to fetch", () => {
     );
   });
 
-  it("walks the page for lazy content before any rule reads it", () => {
+  it("walks the page for lazy content before any rule reads it, on every audit", () => {
     const background = file("./background.ts");
     const prime = background.indexOf("__accessCheckPrime");
-    const rules = background.indexOf('stage(url, mode, "rules")');
+    const rules = background.indexOf('stage(url, "audit", "rules")');
 
     expect(prime).toBeGreaterThan(-1);
     expect(prime).toBeLessThan(rules);
-    expect(background).toContain("if (opts.deep)");
+    expect(background).not.toContain("opts.deep");
     expect(audit).toContain("dom.primeLazyContent()");
   });
 
@@ -215,7 +240,7 @@ describe("assets the audit is not allowed to fetch", () => {
   it("settles the page while it is still reading the structure, before the rules", () => {
     const background = file("./background.ts");
     const settle = background.indexOf("__accessCheckSettle");
-    const rules = background.indexOf('stage(url, mode, "rules")');
+    const rules = background.indexOf('stage(url, "audit", "rules")');
     const axe = background.indexOf("__accessCheckAudit");
 
     expect(settle).toBeGreaterThan(-1);
@@ -285,16 +310,29 @@ describe("the deep audit reuses the shared focus analysis", () => {
     expect(background).not.toMatch(/publish\(\{ kind: "done", result: \{ \.\.\.base, keyboard/);
   });
 
-  it("walks the focus path inside the main audit, before any score is published", () => {
+  it("never reaches for the debugger in the audit the toolbar click runs", () => {
     const run = between(background, "async function runAudit(", "async function addFocusPath(");
-    const focus = run.indexOf('stage(url, mode, "focus")');
-    const done = run.indexOf('publish({ kind: "done", result: walked.result');
 
-    expect(focus).toBeGreaterThan(-1);
-    expect(done).toBeGreaterThan(focus);
-    expect(run).toMatch(
-      /if \(!opts\.deep\) \{[\s\S]{0,160}publish\(\{ kind: "done", result: base \}\)/,
-    );
+    expect(run).not.toContain("withFocusPath");
+    expect(run).not.toContain("runDeepAudit");
+    expect(run).not.toContain("chrome.debugger");
+    expect(run).toContain('publish({ kind: "done", result: base })');
+  });
+
+  it("runs that same audit, and nothing heavier, from the toolbar icon", () => {
+    const click = between(background, "chrome.action.onClicked", "chrome.runtime.onConnect");
+
+    expect(click).toContain("await runAudit(tab)");
+    expect(click).not.toContain("deep");
+  });
+
+  it("attaches the debugger only where the focus path is walked", () => {
+    const walk = background.slice(background.indexOf("async function withFocusPath("));
+    expect(walk).toContain("runDeepAudit");
+
+    const deep = file("./deep.ts");
+    expect(deep).toContain("chrome.debugger.attach");
+    expect(background).not.toMatch(/chrome\.debugger\.attach/);
   });
 
   it("never asks for the debugger at runtime, which Chrome refuses", () => {
@@ -302,12 +340,19 @@ describe("the deep audit reuses the shared focus analysis", () => {
     expect(background).not.toContain("permissions.request");
   });
 
-  it("says the debugger is attached, for which step, and that it is let go", () => {
-    expect(panel).toContain('t("panel.runningNoteDeep")');
-    expect(t("panel.runningNoteDeep")).toContain("attaches Chrome's debugger for that step only");
-    expect(t("panel.runningNoteDeep")).toContain("released before the report appears");
-    expect(t("panel.runningNoteDeep")).toContain("Chrome shows its own banner");
-    expect(pt("panel.runningNoteDeep")).toContain("depurador do Chrome");
+  it("warns about the debugger before the reader asks for the walk, not during", () => {
+    const section = between(panel, "panel.walkDebuggerNote", "panel.walkNow");
+
+    expect(section).toContain('aria-describedby="walk-debugger-note"');
+    expect(t("panel.walkDebuggerNote")).toContain("Chrome's debugger");
+    expect(t("panel.walkDebuggerNote")).toContain("released as soon as the walk ends");
+    expect(pt("panel.walkDebuggerNote")).toContain("depurador do Chrome");
+  });
+
+  it("offers one audit, not a quick one and a deep one", () => {
+    expect(panel).not.toContain("panel.runQuickAudit");
+    expect(panel).not.toContain("panel.quickAuditNote");
+    expect(panel).toContain('t("panel.auditAgain")');
   });
 
   it("keeps the reading on screen when the deep audit fails", () => {
@@ -395,18 +440,20 @@ describe("how much of the audit is behind the number", () => {
 
   const result = (over: Partial<ScanResult> = {}) =>
     ({
-      warnings: [{ code: "keyboard-skipped", message: "Run the deep audit." }] as ScanWarning[],
+      warnings: [
+        { code: "keyboard-skipped", message: "Walk the focus path now." },
+      ] as ScanWarning[],
       ...over,
     }) as ScanResult;
 
-  it("calls a reading without a focus path preliminary, and says why", () => {
+  it("names the tab it read, and says the focus path is still pending", () => {
     const scope = auditScope(result(), t);
 
-    expect(scope.kicker).toBe("Quick audit");
-    expect(scope.lead).toBe("Preliminary result");
+    expect(scope.kicker).toBe("This tab");
+    expect(scope.lead).toBe("Keyboard focus path not walked yet");
     expect(scope.focusPath).toBe("skipped");
     expect(scope.note).toContain("not verified");
-    expect(scope.note).toContain("Run the deep audit.");
+    expect(scope.note).toContain("Walk the focus path now");
   });
 
   it("never calls a reading complete, even with the focus path walked", () => {
@@ -476,7 +523,7 @@ describe("how much of the audit is behind the number", () => {
   it("carries the reason the focus path did not finish into the report itself", () => {
     const kept = warningsAfterDeepAudit(
       [
-        { code: "keyboard-skipped", message: "Run the deep audit." },
+        { code: "keyboard-skipped", message: "Walk the focus path now." },
         { code: "audits-skipped", message: "reduced motion" },
       ],
       t,
@@ -493,7 +540,7 @@ describe("how much of the audit is behind the number", () => {
   it("drops the invitation once the path has actually been walked", () => {
     const kept = warningsAfterDeepAudit(
       [
-        { code: "keyboard-skipped", message: "Run the deep audit." },
+        { code: "keyboard-skipped", message: "Walk the focus path now." },
         { code: "audits-skipped", message: "reduced motion" },
       ],
       t,
@@ -807,7 +854,7 @@ describe("the panel reads as a document, not a stack of boxes", () => {
   });
 
   it("descends h1 → h2 → h3 → h4 without skipping a level", () => {
-    expect(panel).toMatch(/as="h2" id="score-heading"/);
+    expect(panel).toMatch(/as="h2" id="verdict-heading"/);
     expect(panel).toMatch(/as="h2" id="findings-heading"/);
     expect(panel).toMatch(/function Field\([\s\S]{0,300}as="h4"/);
     const collapsed = panel.slice(panel.indexOf("function Collapsed("));
@@ -941,5 +988,56 @@ describe("what the panel says about a reading-order guess", () => {
   it("counts what needs a human apart from the failures", () => {
     expect(panel).toContain("panel.count.needsReview");
     expect(panel).toContain("result.counts.needsReview");
+  });
+});
+
+describe("naming the element comes from the shared engine", () => {
+  it("asks the engine for identities instead of deriving them in the audit", () => {
+    expect(audit).toContain("dom.collectIdentities(");
+    expect(audit).toContain("identitySelectors(");
+    expect(audit).not.toContain("closest(");
+    expect(audit).not.toContain("parentElement");
+  });
+
+  it("renders the identity through the report's own formatter", () => {
+    expect(panel).toContain('from "../../src/lib/report/identity"');
+    expect(panel).toContain("describeElement(occurrence.selector");
+  });
+
+  it("keeps the selector as the thing Locate and Copy act on", () => {
+    const occurrence = between(panel, "function Occurrences(", "function ReadingLanguage(");
+    expect(occurrence).toContain("{occurrence.selector}");
+    expect(occurrence).toContain("value={occurrence.selector}");
+  });
+
+  it("carries the identities into the published result", () => {
+    expect(audit).toContain("identities,");
+  });
+});
+
+describe("the panel speaks about verification only when it happened", () => {
+  it("renders the shared seal instead of a second one", () => {
+    expect(panel).toContain('from "../../src/components/ui/verdict-seal"');
+    expect(panel).not.toContain("seal.verified");
+    expect(panel).not.toContain("border-verified");
+  });
+
+  it("puts the quiet case beside the fix, not under a verification heading", () => {
+    const list = between(panel, 'label={t("panel.suggestedFix")}', "<Occurrences");
+    expect(list).toContain('verdictTone(f.verdict) === "quiet"');
+    expect(list).toContain('verdictTone(f.verdict) !== "quiet"');
+    expect(list).toContain('t("detail.verificationResult")');
+  });
+
+  it("has no retired verification vocabulary left", () => {
+    for (const retired of [
+      "verdict.label.unverifiable",
+      "verdict.label.noAutoFix",
+      "verdict.label.complementary",
+      "seal.notReaudited",
+      "cue.sampled",
+    ]) {
+      expect(panel, retired).not.toContain(retired);
+    }
   });
 });

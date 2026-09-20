@@ -1,5 +1,7 @@
+import type { ElementIdentity } from "@/lib/scan/dom/identity";
 import type { ScanResult } from "@/lib/scan/types";
 import { parseContrastFix } from "@/lib/report/contrast";
+import { describeElement } from "@/lib/report/identity";
 import { toFixStatus } from "@/lib/report/severity";
 import { certifiedVerification, fixConfidenceOf } from "@/lib/scan/confidence";
 import { ColorSwatch, StatusSeal } from "@/components/ui";
@@ -7,9 +9,18 @@ import { sevHex, sevLabelKey } from "./shared";
 import { FieldLabel } from "./primitives";
 import type { Translate } from "@/lib/i18n/t";
 
-export function DetailedCard({ v, t }: { v: ScanResult["violations"][number]; t: Translate }) {
+export function DetailedCard({
+  v,
+  identity,
+  t,
+}: {
+  v: ScanResult["violations"][number];
+  identity?: ElementIdentity;
+  t: Translate;
+}) {
   const measurement = parseContrastFix(v.fix, v.fixCode);
   const status = toFixStatus(certifiedVerification(fixConfidenceOf(v), v.verification));
+  const element = describeElement(v.where, identity, t);
 
   return (
     <div
@@ -70,20 +81,27 @@ export function DetailedCard({ v, t }: { v: ScanResult["violations"][number]; t:
               </code>
             )}
 
-            <div className="mt-2">
-              <StatusSeal t={t} status={status} />
-            </div>
             {status !== "unchecked" && (
-              <p className="mt-1.5 text-[9.5px] text-muted">{t("report.sandboxApplied")}</p>
+              <>
+                <div className="mt-2">
+                  <StatusSeal t={t} status={status} />
+                </div>
+                <p className="mt-1.5 text-[9.5px] text-muted">{t("report.sandboxApplied")}</p>
+              </>
             )}
           </div>
         </div>
 
         <div className="flex flex-col gap-2.5 bg-band p-3.5">
-          <FieldLabel>{t("report.selector")}</FieldLabel>
-          <code className="-mt-1.5 truncate bg-surface px-2 py-1 font-mono text-[10px] text-steel">
-            {v.where}
-          </code>
+          <FieldLabel>{t("report.element")}</FieldLabel>
+          <div className="-mt-1.5">
+            <code className="block truncate bg-surface px-2 py-1 font-mono text-[10px] text-ink">
+              {element.label}
+            </code>
+            {element.context && (
+              <span className="mt-0.5 block px-2 text-[9.5px] text-muted">{element.context}</span>
+            )}
+          </div>
           <FieldLabel>{t("report.elementsAffected")}</FieldLabel>
           <span className="-mt-1.5 font-cond text-[20px] text-ink tabular-nums">{v.nodes}</span>
           <FieldLabel>{t("report.criterion")}</FieldLabel>

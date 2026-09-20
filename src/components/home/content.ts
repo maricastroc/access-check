@@ -20,7 +20,6 @@ export type Pass = { label: MessageKey; desc: MessageKey };
 export const complementaryPasses: Pass[] = [
   { label: "home.pass.keyboard", desc: "home.pass.keyboardDesc" },
   { label: "home.pass.context", desc: "home.pass.contextDesc" },
-  { label: "home.pass.vision", desc: "home.pass.visionDesc" },
   { label: "home.pass.motion", desc: "home.pass.motionDesc" },
   { label: "home.pass.live", desc: "home.pass.liveDesc" },
   { label: "home.pass.review", desc: "home.pass.reviewDesc" },
@@ -35,13 +34,8 @@ export const steps: Step[] = [
 ];
 
 export const exampleFinding = {
-  severity: "serious" as Severity,
-  sc: "1.4.3",
-  name: "home.example.name" as MessageKey,
   title: "home.example.title" as MessageKey,
-  selector: "a.hero__cta",
   elements: 7,
-  ruleId: "color-contrast",
   measured: 2.1,
   required: 4.5,
   fixed: 4.62,

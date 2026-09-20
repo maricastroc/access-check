@@ -614,18 +614,22 @@ try {
       return realSet(items);
     };
 
-    await globalThis.__accessCheckAuditTab(tab, { deep: true });
+    await globalThis.__accessCheckAuditTab(tab);
     await new Promise((r) => setTimeout(r, 600));
+    const afterAudit = [...seen];
+    await globalThis.__accessCheckDeepAudit();
+    await new Promise((r) => setTimeout(r, 800));
     chrome.storage.session.set = realSet;
 
     const stored = await chrome.storage.session.get("panelState");
-    return { seen, atFirstDone, state: stored.panelState?.state };
+    return { seen, afterAudit, atFirstDone, state: stored.panelState?.state };
   });
   const fullResult = full.state?.result;
   console.log(
-    "one audit, one score:",
+    "the audit, then the walk:",
     JSON.stringify({
       seen: full.seen,
+      afterAudit: full.afterAudit,
       atFirstDone: full.atFirstDone,
       score: fullResult?.score,
       stops: fullResult?.keyboard?.focusPath.length,
@@ -634,22 +638,21 @@ try {
   );
 
   check(
-    JSON.stringify(full.seen) ===
-      JSON.stringify([
-        "running:structure",
-        "running:rules",
-        "running:focus",
-        "running:report",
-        "done",
-      ]),
-    `the audit did not run its four steps in order: ${JSON.stringify(full.seen)}`,
+    JSON.stringify(full.afterAudit) ===
+      JSON.stringify(["running:structure", "running:rules", "running:report", "done"]),
+    `the audit did not run its three steps in order: ${JSON.stringify(full.afterAudit)}`,
   );
   check(
-    full.seen.indexOf("done") > full.seen.indexOf("running:focus"),
-    "a score was published before the focus path had been walked",
+    !full.afterAudit.includes("running:focus"),
+    "the audit walked the focus path without being asked",
+  );
+  check(
+    JSON.stringify(full.seen.slice(full.afterAudit.length)) ===
+      JSON.stringify(["running:focus", "running:report", "done"]),
+    `the walk did not run its own two steps: ${JSON.stringify(full.seen.slice(full.afterAudit.length))}`,
   );
   check(full.atFirstDone === false, "the debugger was still attached at the first done");
-  check(!!fullResult?.keyboard, "the main audit produced no focus path");
+  check(!!fullResult?.keyboard, "walking the focus path produced no report");
   check(
     fullResult?.score < 100,
     `the walked findings did not reach the score (${fullResult?.score})`,
@@ -1057,7 +1060,7 @@ try {
 
   const again = await sw.evaluate(async () => {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    await globalThis.__accessCheckAuditTab(tab, { deep: true });
+    await globalThis.__accessCheckAuditTab(tab);
     const stored = await chrome.storage.session.get("panelState");
     return stored.panelState?.state?.result;
   });
@@ -1085,8 +1088,10 @@ try {
     await page.bringToFront();
     const state = await sw.evaluate(async () => {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      await globalThis.__accessCheckAuditTab(tab, { deep: true });
+      await globalThis.__accessCheckAuditTab(tab);
       await new Promise((r) => setTimeout(r, 600));
+      await globalThis.__accessCheckDeepAudit();
+      await new Promise((r) => setTimeout(r, 800));
       return (await chrome.storage.session.get("panelState")).panelState?.state;
     });
     return (state?.result?.warnings ?? []).map((w) => w.code);
@@ -1108,8 +1113,10 @@ try {
   await page.bringToFront();
   await sw.evaluate(async () => {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    await globalThis.__accessCheckAuditTab(tab, { deep: true });
+    await globalThis.__accessCheckAuditTab(tab);
     await new Promise((r) => setTimeout(r, 600));
+    await globalThis.__accessCheckDeepAudit();
+    await new Promise((r) => setTimeout(r, 800));
   });
 
   const mixedPanel = await ctx.newPage();
@@ -1126,12 +1133,12 @@ try {
       caveat: /caveat/i.test(text),
       checkedFirst:
         /Checked the first \d+ of \d+ detected controls\.|Walked the full tab order/.test(text),
-      quick: [...document.querySelectorAll("button")].some(
-        (b) => b.textContent.trim() === "Run quick audit",
+      oneAudit: ![...document.querySelectorAll("button")].some((b) =>
+        /quick audit/i.test(b.textContent),
       ),
-      quickNamed: !!document
-        .querySelector('button[aria-describedby="quick-audit-note"]')
-        ?.textContent?.includes("Run quick audit"),
+      reauditNamed: [...document.querySelectorAll("button")].some(
+        (b) => b.textContent.trim() === "Audit this tab again",
+      ),
     };
   });
   console.log("wording:", JSON.stringify(words));
@@ -1139,7 +1146,8 @@ try {
   check(!words.reachable, 'the panel still calls visited controls "reachable"');
   check(!words.caveat, 'the panel still uses the word "caveat"');
   check(words.checkedFirst, "the focus path does not say what it actually covered");
-  check(words.quick && words.quickNamed, "the quick audit is not an unambiguous named action");
+  check(words.oneAudit, "the panel still offers a separate quick audit");
+  check(words.reauditNamed, "the panel has no unambiguous way to audit the tab again");
 
   const pressMixed = (label) =>
     mixedPanel.evaluate(async (text) => {
@@ -1226,8 +1234,10 @@ try {
     };
 
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    await globalThis.__accessCheckAuditTab(tab, { deep: true });
+    await globalThis.__accessCheckAuditTab(tab);
     await new Promise((r) => setTimeout(r, 600));
+    await globalThis.__accessCheckDeepAudit();
+    await new Promise((r) => setTimeout(r, 800));
 
     chrome.debugger.detach = realDetach;
     chrome.storage.session.set = realSet;
@@ -1236,15 +1246,15 @@ try {
 
   const first = (what) => timeline.findIndex((m) => m.what === what);
   const detachedAt = first("detach:resolved");
-  const doneAt = first("publish:done");
+  const doneAt = timeline.map((m) => m.what).lastIndexOf("publish:done");
   const zero = timeline[0]?.t ?? 0;
   console.log(
     "order of detach and publish:",
     JSON.stringify(timeline.map((m) => `${m.what}@+${m.t - zero}ms`)),
   );
 
-  check(detachedAt > -1, "the debugger was never detached during a deep audit");
-  check(doneAt > -1, "the deep audit never published a result");
+  check(detachedAt > -1, "the debugger was never detached after the walk");
+  check(doneAt > -1, "the walk never published a result");
   check(
     detachedAt < doneAt,
     `the result was published before the debugger was let go: ${JSON.stringify(timeline.map((m) => m.what))}`,
@@ -1258,8 +1268,10 @@ try {
   const runHere = () =>
     sw.evaluate(async () => {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      await globalThis.__accessCheckAuditTab(tab, { deep: true });
+      await globalThis.__accessCheckAuditTab(tab);
       await new Promise((r) => setTimeout(r, 600));
+      await globalThis.__accessCheckDeepAudit();
+      await new Promise((r) => setTimeout(r, 900));
       return (await chrome.storage.session.get("panelState")).panelState?.state;
     });
 

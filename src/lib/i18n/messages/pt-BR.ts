@@ -19,7 +19,7 @@ export const ptBR: Catalog = {
     "O que a extensão de navegador do AccessCheck lê, e para onde isso vai.",
   "meta.title": "AccessCheck: meça, localize e rastreie cada barreira de acessibilidade",
   "meta.description":
-    "Cole um endereço da web. O AccessCheck abre a página em um navegador real, roda o axe-core (WCAG níveis A e AA) e mais as análises de teclado, celular e visão. Cada problema volta ligado ao elemento que o causou, com uma correção já testada em uma cópia da página.",
+    "Cole um endereço da web. O AccessCheck abre a página em um navegador real, roda o axe-core (WCAG níveis A e AA) e mais as análises de teclado, celular e movimento. Cada problema volta ligado ao elemento que o causou, com uma correção já testada em uma cópia da página.",
   "nav.skipToContent": "Pular para o conteúdo",
   "nav.howItWorks": "Como funciona",
   "nav.checks": "Verificações",
@@ -93,16 +93,6 @@ export const ptBR: Catalog = {
   "audit.target.fix":
     "Aumente cada controle para pelo menos 24\u00d724px, ou dê espaçamento suficiente para que um círculo de 24px centrado nele não encoste nos vizinhos — em geral, preencher o controle resolve os dois lados.",
 
-  "audit.liveRegionHidden":
-    "A região está removida da árvore de acessibilidade (display:none, visibility:hidden ou aria-hidden), então leitores de tela nunca a anunciam.",
-  "audit.liveRegionFix":
-    "Mantenha a região dinâmica na árvore de acessibilidade: use um padrão de recorte ou só-para-leitor-de-tela em vez de escondê-la.",
-  "audit.liveRegionContradiction": "As duas se contradizem, então nada é anunciado.",
-  "audit.targetSizeFix":
-    "Aumente cada controle para pelo menos 24\u00d724px, ou dê espaçamento suficiente ao redor para que um alvo de 24px caiba sem sobrepor os vizinhos.",
-  "audit.motionFix":
-    "Envolva animações não essenciais em @media (prefers-reduced-motion: reduce) e desligue ou encurte a animação ali.",
-
   "scanFail.browserUnavailable":
     "O navegador que usamos para abrir a página parou de responder antes de a auditoria rodar.",
   "scanFail.browserSlow":
@@ -140,9 +130,7 @@ export const ptBR: Catalog = {
   "report.actionPlan": "Plano de ação",
 
   "md.reportTitle": "Relatório de acessibilidade: {name}",
-  "md.reportTitleDash": "Relatório de acessibilidade \u2014 {name}",
   "md.url": "URL",
-  "md.priorityNote": "(serve para priorizar, não atesta conformidade com a WCAG)",
   "md.elementsScanned": "Elementos analisados",
   "md.generated": "Gerado em",
   "md.colIfYouFix": "Se corrigir",
@@ -160,9 +148,10 @@ export const ptBR: Catalog = {
   "md.findings": "Problemas encontrados",
   "md.needsManualReview": "Precisa de revisão manual",
   "md.whereLabel": "Onde",
+  "identity.in": "em {where}",
+  "identity.nth": "{n} de {total}",
   "md.howToCheck": "Como conferir",
   "md.checksPassed": "Verificações automáticas aprovadas ({count})",
-  "md.passedChecks": "Verificações aprovadas ({count})",
   "md.footer":
     "_As correções são aplicadas e reauditadas numa cópia da página; o site auditado não é alterado. Este veredito cobre o que uma ferramenta decide sozinha; não atesta conformidade._",
   "md.bestPracticeNote": "**Boa prática** (não é um critério de sucesso da WCAG)",
@@ -176,46 +165,6 @@ export const ptBR: Catalog = {
   "md.suggestedFix": "Correção sugerida",
   "md.setProp": "Defina `{prop}` como {hex}.",
   "md.andMore": "(mais {count})",
-  "md.summary": "Resumo",
-  "md.colCritical": "Críticos",
-  "md.colSerious": "Graves",
-  "md.colModerate": "Moderados",
-  "md.colMinor": "Leves",
-  "md.colPassed": "Aprovadas",
-  "md.fixFirst": "Corrija primeiro",
-  "md.fixFirstLine": "**{title}** \u2014 impacto {impact}, esforço {effort}",
-  "md.violations": "Violações",
-  "md.severityHeading": "{severity} ({count})",
-  "md.selectorLabel": "Seletor",
-  "md.occurrencesLabel": "Ocorrências",
-  "md.verifiedTag": "\u2705 Verificada \u2014 a reanálise passa",
-  "md.needsReviewTag": "\u26a0\ufe0f Precisa de revisão \u2014 a reanálise ainda sinaliza",
-  "md.resolvesElements": {
-    one: "Resolve {count} elemento",
-    other: "Resolve {count} elementos",
-  },
-  "md.keyboardHeading": "Teclado e foco",
-  "md.tracedStops": {
-    one: "{count} parada de foco percorrida",
-    other: "{count} paradas de foco percorridas",
-  },
-  "md.reachableCounts": "{reachable}/{total} elementos interativos alcançáveis por teclado",
-  "md.noInteractive": "nenhum controle interativo detectado",
-  "md.severityLabel": "Severidade",
-  "md.fixLabel": "Correção",
-  "md.contextsHeading": "Responsivo e dinâmico",
-  "md.viewportChecked": "viewport de {width}px",
-  "md.openedStates": {
-    one: "{count} estado aberto",
-    other: "{count} estados abertos",
-  },
-  "md.rescannedBeyond":
-    "Reanalisado além do carregamento inicial em desktop \u2014 conferimos {checked}.",
-  "md.onlyAtWidth": "Só em {width}px",
-  "md.noViolations": "Nenhuma violação detectada automaticamente. \ud83c\udf89",
-  "md.noKeyboard": "Nenhum problema de teclado ou foco detectado. \ud83c\udf89",
-  "md.noContexts": "Nenhuma violação nova apareceu nestes contextos. \ud83c\udf89",
-  "md.manualNote": "O teste automatizado não conseguiu determinar estes \u2014 confirme à mão.",
   "md.noFailures":
     "Nenhuma falha detectada automaticamente nesta página. Isto é cobertura, não conformidade WCAG.",
   "md.manualOutsideScore":
@@ -262,7 +211,7 @@ export const ptBR: Catalog = {
 
   "scanWarning.screenshotUnavailable": "Não deu tempo de tirar a captura de tela.",
   "scanWarning.fixDetailsSkipped":
-    "Alguns problemas mostram orientação geral em vez de uma correção específica.",
+    "Alguns problemas mostram orientação geral em vez de uma correção específica, e identificam o elemento apenas pelo seletor.",
   "scanWarning.markersSkipped": "Não foi possível posicionar os marcadores na captura.",
   "scanWarning.contentUnsettled": "A página ainda estava carregando quando a auditoria rodou.",
   "scanWarning.verificationSkipped":
@@ -326,10 +275,8 @@ export const ptBR: Catalog = {
     "Conteúdo que só aparece quando você rola até ele não foi carregado, então nada abaixo da dobra foi lido. A auditoria expandida percorre a página antes; esta leitura não fez isso.",
   "warning.contextsSkipped":
     "A análise em viewport de celular precisa de emulação de viewport, indisponível nesta versão.",
-  "warning.auditsSkipped":
-    "A checagem de movimento reduzido precisa de emulação de mídia, indisponível nesta versão.",
-  "warning.verificationSkipped":
-    "As correções não são testadas aqui: esta versão nunca escreve na página auditada.",
+  "warning.reducedMotionSkipped":
+    "A checagem de movimento reduzido precisa de emulação de mídia, indisponível nesta versão. Tamanho de alvo e regiões dinâmicas foram verificados.",
   "warning.walkChangedPage":
     "Pressionar Tab por esta página abriu conteúdo que ficou aberto — um menu, um painel ou uma lista de sugestões. As regras já tinham lido a página até então, então auditar de novo pode dar uma leitura um pouco diferente da mesma página.",
   "warning.contentUnsettled":
@@ -376,10 +323,9 @@ export const ptBR: Catalog = {
   "focusPath.stoppedByTrap": "Parcial: o foco ficou preso na parada {stops}, então {leftover}.",
 
   "scope.stillMissing":
-    "O viewport de celular, o movimento reduzido e as correções verificadas continuam fora daqui, então esta não é uma auditoria completa.",
-  "scope.quickKicker": "Auditoria rápida",
+    "O viewport de celular e o movimento reduzido continuam fora daqui, então esta não é uma auditoria completa.",
+  "scope.focusPathPending": "Caminho de foco ainda não percorrido",
   "scope.currentTabKicker": "Esta aba",
-  "scope.preliminaryLead": "Resultado preliminar",
   "scope.skippedNote":
     "O caminho do foco não foi verificado, então nada aqui responde pelo uso com teclado. {why} {rest}",
   "scope.partialBadge": "Inclui o caminho do foco do teclado · parcial",
@@ -409,7 +355,6 @@ export const ptBR: Catalog = {
   "evidence.heuristic.title": "Por que isto não conta como falha",
   "evidence.heuristic.body":
     "É uma observação sobre como a página se comportou, não uma regra que passa ou falha, então não entra nesta contagem. O que resolveria a dúvida está na descrição acima.",
-  "evidence.heuristic.short": "Observação, não contabilizada",
   "md.needsHumanCheck": "Observações que precisam de conferência humana",
   "md.needsHumanCheckNote":
     "Lido a partir do comportamento da página, não de uma regra que passa ou falha. Não entram nesta contagem, e cada um diz o que resolveria a dúvida.",
@@ -536,7 +481,6 @@ export const ptBR: Catalog = {
 
   "home.lens.frameLabel": "Captura \u00b7 escala 43%",
   "layer.rail": "Sobreposição",
-  "layer.markers": "Marcadores de problema",
   "layer.markersTitle": "Mostrar os marcadores de problema na captura",
   "layer.none": "Sem sobreposição",
   "layer.noneTitle": "Esconder a sobreposição",
@@ -560,7 +504,6 @@ export const ptBR: Catalog = {
     one: "{count} item de revisão manual \u00b7",
     other: "{count} itens de revisão manual \u00b7",
   },
-  "capture.contextual": "Recorte do contexto \u00b7 {width} \u00d7 {height} \u00b7 escala {scale}%",
   "capture.openEvidence": "Ver a evidência",
   "capture.markerHint": "Selecione um marcador para abrir o problema a que ele pertence.",
   "detail.sharedColorPair": {
@@ -568,10 +511,8 @@ export const ptBR: Catalog = {
     other: "{count} ocorrências têm o mesmo par de cores detectado.",
   },
   "detail.moreSelectors": "+{count} outros",
-  "capture.evidenceShared": "aparece em um recorte feito para um elemento vizinho",
   "capture.frameLabel": "Captura \u00b7 {width} \u00d7 {height}",
   "capture.shownOnScreenshot": "{count} visíveis na captura",
-  "capture.onScreenshot": "\u00b7 na captura",
   "detail.elementsAffected": {
     one: "elemento afetado",
     other: "elementos afetados",
@@ -662,7 +603,7 @@ export const ptBR: Catalog = {
   "report.executiveSummary": "Resumo executivo",
   "report.priorityRoadmap": "Roteiro de prioridades",
   "report.suggestedFix": "Correção sugerida",
-  "report.selector": "Seletor",
+  "report.element": "Elemento",
   "report.elementsAffected": "Elementos afetados",
   "report.criterion": "Critério",
   "report.backToResults": "Voltar para os resultados",
@@ -703,8 +644,6 @@ export const ptBR: Catalog = {
   "home.lens.sandbox": "Cópia da página",
   "home.lens.before": "Antes",
   "home.lens.after": "Depois",
-  "home.lens.locate": "Localizar",
-  "home.lens.verify": "Verificar",
 
   "history.deleteOneTitle": "Excluir esta auditoria?",
   "history.deleteOneBody":
@@ -815,7 +754,7 @@ export const ptBR: Catalog = {
   "form.scopePage": "Página",
   "form.scopeSite": "Site",
   "home.hero.title": "Localize o problema. Entenda a causa. Teste a correção.",
-  "home.hero.passes": "+ análises de teclado, viewport e visão",
+  "home.hero.passes": "+ análises de teclado, viewport e movimento",
   "home.hero.body":
     "Não é apenas um relatório. É um inspetor visual: cole o endereço de uma página e veja cada problema destacado no elemento em que foi encontrado, com a razão de contraste, o seletor CSS e uma correção testada em uma cópia da página.",
   "home.hero.lensNote":
@@ -853,7 +792,6 @@ export const ptBR: Catalog = {
 
   "results.checksPassedLabel": "verificações automáticas aprovadas",
   "results.manualReviewLabel": "itens de revisão manual, com o passo a passo",
-  "results.needPersonReview": "precisam da conferência de uma pessoa, listados abaixo.",
   "results.noAutomatedFailures": "Nenhuma falha detectada automaticamente nesta página.",
   "results.checksPassedNote":
     "{passed} verificações passaram. Isso não é o mesmo que conformidade com a WCAG:",
@@ -869,7 +807,6 @@ export const ptBR: Catalog = {
   "results.siteAuditPassNote":
     "Análise da auditoria de site: regras do axe e as detecções próprias deste projeto. Teclado, interface expandida e verificação de correções rodam na auditoria completa da página.",
   "results.noMarkerOffScreenshot": "sem marcador \u00b7 fora da captura",
-  "score.checksPassed": "{count} verificações automáticas aprovadas",
   "wcagReading.failsBy": "Reprova em",
 
   "home.howItWorks.kicker": "Como funciona",
@@ -929,9 +866,6 @@ export const ptBR: Catalog = {
   "home.pass.context": "Contexto",
   "home.pass.contextDesc":
     "Refaz a análise em tamanho de celular e depois de abrir menus e seções expansíveis",
-  "home.pass.vision": "Visão",
-  "home.pass.visionDesc":
-    "Simula daltonismo (deuteranopia, protanopia, tritanopia), baixa visão e escala de cinza",
   "home.pass.motion": "Movimento",
   "home.pass.motionDesc":
     "Verifica se a página respeita a preferência de movimento reduzido de quem acessa",
@@ -951,14 +885,10 @@ export const ptBR: Catalog = {
   "home.step3.body":
     "Aplicamos a mudança em uma cópia da página, rodamos a verificação de novo e marcamos o resultado como correção verificada ou como pendente de revisão.",
 
-  "home.example.name": "Contraste (Mínimo)",
   "home.example.title": "Texto abaixo do contraste mínimo",
   "home.example.summary":
     "Nenhum bloqueio crítico, mas 1 problema grave ainda deixa a página mais difícil de usar para quem depende de tecnologia assistiva.",
 
-  "home.example.desc":
-    "Garante que o contraste entre as cores de primeiro plano e de fundo atenda ao limite da WCAG.",
-  "home.example.fixText": "Defina a cor do texto para {hex} \u2192 {ratio}:1.",
   "impact.contrast":
     "Pessoas com baixa visão ou sensibilidade reduzida ao contraste podem não conseguir ler este texto, principalmente em telas de baixa qualidade ou sob luz forte.",
   "impact.alt":
@@ -1118,14 +1048,6 @@ export const ptBR: Catalog = {
   "ssrf.onlyHttp":
     "Só páginas da web (endereços que começam com http ou https) podem ser auditadas.",
   "ssrf.notFound": "Não encontramos um site nesse endereço. Confira a grafia e tente de novo.",
-
-  "sim.deuteranopiaDesc":
-    "Daltonismo vermelho-verde por ausência dos cones verdes. Atinge cerca de 6% dos homens.",
-  "sim.protanopiaDesc":
-    "Daltonismo vermelho-verde por ausência dos cones vermelhos. Atinge cerca de 2% dos homens.",
-  "sim.tritanopiaDesc":
-    "Daltonismo azul-amarelo por ausência dos cones azuis. Raro, cerca de 0,01%.",
-
   "report.projectionCaveat":
     ". É apenas uma projeção, não uma aprovação na WCAG. Atender à WCAG depende também dos itens moderados e da revisão manual.",
   "report.recommendations": "Recomendações",
@@ -1142,21 +1064,15 @@ export const ptBR: Catalog = {
   "context.recheckLong":
     "Confira este elemento de novo no contexto em que ele falhou; o motor não testou uma correção aqui.",
 
-  "sim.normalDesc": "Renderização padrão, sem filtro de visão.",
-  "sim.lowVisionDesc": "Nitidez e sensibilidade ao contraste reduzidas.",
-  "sim.grayscaleDesc": "Toda a cor removida. Verifica se o significado sobrevive sem matiz.",
-
   "wcagReading.noA": "Nenhuma falha de nível A detectada automaticamente",
   "wcagReading.noAA": "Nenhuma falha de nível AA detectada automaticamente",
   "provenance.title": "Procedência",
   "provenance.complementary":
-    "Passagens complementares: teclado, viewport de celular, UI expandida, visão, movimento, regiões dinâmicas.",
+    "Passagens complementares: teclado, viewport de celular, UI expandida, movimento, regiões dinâmicas.",
   "stepper.previous": "Ocorrência anterior",
   "stepper.next": "Próxima ocorrência",
   "seal.verified": "Verificado: a regra parou de sinalizar o elemento",
   "seal.needsReview": "Precisa de revisão: a sugestão sozinha não resolve",
-  "seal.notReaudited": "Não reauditado",
-
   "history.kicker": "Histórico",
   "history.scoreLabel": "Nota",
   "history.title": "Histórico de auditorias",
@@ -1185,10 +1101,7 @@ export const ptBR: Catalog = {
   "severity.minor": "Leve",
 
   "cue.verified": "· verificado em cópia da página",
-  "cue.partial": "· parcialmente verificado",
-  "cue.sampled": "· um exemplo conferido",
-  "cue.failed": "· precisa de revisão",
-
+  "cue.needsReview": "· precisa de revisão",
   "detail.currentView": "atual",
   "detail.largeText": " (texto grande)",
   "detail.sampleText": "Texto de exemplo",
@@ -1209,21 +1122,14 @@ export const ptBR: Catalog = {
   "detail.result": "Resultado",
   "detail.impactOnUsers": "Impacto nas pessoas",
   "detail.affectedElement": "Elemento afetado",
+  "detail.technicalSelector": "Seletor",
   "detail.howToFix": "Como corrigir",
   "detail.verificationResult": "Resultado da verificação",
   "detail.sandboxNote":
     "As correções são aplicadas e revertidas em uma cópia da página. {host} não foi alterado.",
 
   "verdict.label.verified": "Correção verificada",
-  "verdict.label.partial": "Parcialmente verificada",
-  "verdict.label.sampledMany": "Exemplos conferidos",
-  "verdict.label.sampledOne": "Um exemplo conferido",
-  "verdict.label.failed": "Precisa de revisão humana",
-  "verdict.label.unverifiable": "Não foi possível verificar",
-  "verdict.label.contextual": "Confirme antes de aplicar",
-  "verdict.label.noAutoFix": "Precisa de revisão humana",
-  "verdict.label.bestPractice": "Boa prática",
-  "verdict.label.complementary": "Não reauditado",
+  "verdict.label.needsReview": "Precisa de revisão",
 
   "verdict.others": {
     one: "A outra {count} ocorrência compartilha a mesma sugestão, mas não foi verificada individualmente.",
@@ -1248,15 +1154,15 @@ export const ptBR: Catalog = {
   "verdict.failedPlain":
     "{subject} continua falhando mesmo com a mudança aplicada em uma cópia da página. Revise esse caso manualmente.{tail}",
   "verdict.unverifiable":
-    "Não foi possível reauditar o elemento na cópia da página — ele não foi encontrado ou a verificação foi interrompida por tempo. Confirme a mudança manualmente.",
+    "Não deu para reexecutar esta correção na página — o elemento sumiu, ou não sobrou tempo. Confirme manualmente.",
   "verdict.contextual":
-    "Esta mudança é um jeito válido de resolver a regra, mas se ela está certa depende do conteúdo da página, então só uma pessoa pode confirmar. Ela não foi reauditada em uma cópia da página.",
+    "Esta sugestão resolve a regra, mas se ela diz a coisa certa para esta página é um julgamento que só uma pessoa pode fazer.",
   "verdict.noAutoFix":
-    "Este problema não tem correção automática. Uma pessoa precisa decidir a mudança certa para a página.",
+    "Nenhuma correção automática se aplica aqui. A mudança certa depende da página, então precisa de uma pessoa.",
   "verdict.bestPractice":
     "Boa prática, não um critério de sucesso da WCAG. Vale corrigir, mas não altera a leitura WCAG.",
   "verdict.complementary":
-    "Encontrado por uma análise complementar (teclado, celular, visão ou estado dinâmico); não é reauditado em uma cópia da página. Corrija e rode de novo para confirmar.",
+    "Encontrado por uma análise complementar (teclado, celular, movimento ou estado dinâmico). Corrija e rode a auditoria de novo para confirmar.",
 
   "keyboard.region.offscreen": "fora do viewport visível",
   "keyboard.region.top": "perto do topo do viewport",
@@ -1428,16 +1334,18 @@ export const ptBR: Catalog = {
     "Todas as paradas estão desenhadas. A atual fica destacada; as outras, esmaecidas.",
   "panel.drawingWindow":
     "Desenhando a parada atual e {neighbours} de cada lado, para a página seguir legível.",
+  "panel.walkingFocusPath": "Percorrendo o caminho de foco",
+  "panel.runningNoteFocus":
+    "O Chrome mostra o próprio aviso enquanto o depurador está conectado. Ele é liberado antes do relatório voltar, e a página não é modificada.",
+  "panel.walkDebuggerNote":
+    "Percorrer a ordem de tabulação precisa do depurador do Chrome, então o Chrome vai mostrar o próprio aviso e o DevTools não consegue se conectar a esta aba enquanto isso. Ele é liberado assim que a caminhada termina.",
   "panel.walkNow": "Percorrer o caminho do foco agora",
   "panel.continueWalk": "Continuar a caminhada",
   "panel.continueWalkNote": "Retoma na parada {stops} e segue adiante, sem recomeçar.",
 
-  "panel.quickAudit": "Auditoria rápida",
   "panel.auditingTab": "Auditando esta aba",
   "panel.runningNote":
-    "A nota aparece quando todos os passos acima terminarem. A página não é modificada.",
-  "panel.runningNoteDeep":
-    " Percorrer o caminho do foco anexa o depurador do Chrome só nesse passo — o Chrome mostra o próprio aviso enquanto isso — e ele é liberado antes de o relatório aparecer.",
+    "O resultado aparece quando todos os passos acima terminarem. Qualquer mudança feita para testar uma correção é desfeita no mesmo instante.",
   "panel.announceStep": "Auditando. Passo {n}: {stage}.",
 
   "panel.coverageLimitations": "Limites da cobertura",
@@ -1445,8 +1353,6 @@ export const ptBR: Catalog = {
   "panel.notCheckedNote":
     "Uma leitura desta versão nunca atesta que a página está livre de barreiras.",
   "panel.auditAgain": "Auditar esta aba de novo",
-  "panel.runQuickAudit": "Rodar auditoria rápida",
-  "panel.quickAuditNote": "Sem depurador nem caminho do foco",
 
   "panel.idleTitle": "Nada auditado ainda",
   "panel.idleBody":

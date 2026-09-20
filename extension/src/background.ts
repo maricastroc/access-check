@@ -10,7 +10,7 @@ import { browserLocale, LOCALE_KEY, readLocale } from "./locale-preference";
 import { DeepAuditCancelled, DeepAuditError, runDeepAudit } from "./deep";
 import {
   unsupportedReason,
-  type AuditMode,
+  type AuditTask,
   type AuditStage,
   type HighlightReply,
   type PanelMessage,
@@ -72,8 +72,8 @@ async function restore(): Promise<PanelState> {
   return state;
 }
 
-function stage(url: string, mode: AuditMode, at: AuditStage): void {
-  publish({ kind: "running", url, mode, stage: at });
+function stage(url: string, task: AuditTask, at: AuditStage): void {
+  publish({ kind: "running", url, task, stage: at });
 }
 
 function describeDeepFailure(e: unknown): string {
@@ -124,13 +124,12 @@ async function withFocusPath(
   }
 }
 
-async function runAudit(tab: chrome.tabs.Tab, opts: { deep: boolean }): Promise<void> {
+async function runAudit(tab: chrome.tabs.Tab): Promise<void> {
   if (!tab.id || !tab.windowId) return;
   if (running) return;
   running = true;
   await syncLocale();
 
-  const mode: AuditMode = opts.deep ? "expanded" : "quick";
   const url = tab.url ?? "";
 
   try {
@@ -142,7 +141,7 @@ async function runAudit(tab: chrome.tabs.Tab, opts: { deep: boolean }): Promise<
     }
 
     auditedTabId = tab.id;
-    stage(url, mode, "structure");
+    stage(url, "audit", "structure");
 
     await chrome.scripting.executeScript({
       target: { tabId: tab.id },
@@ -157,17 +156,19 @@ async function runAudit(tab: chrome.tabs.Tab, opts: { deep: boolean }): Promise<
 
     const axeLocale = axeLocaleFor(locale);
 
-    let context: AuditContext = { readiness: settled, primed: false, axeLocale, locale };
-    if (opts.deep) {
-      const [{ result: primed }] = await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        func: (before: typeof settled) => window.__accessCheckPrime!(before),
-        args: [settled],
-      });
-      context = { readiness: primed?.readiness, primed: true, axeLocale, locale };
-    }
+    const [{ result: primed }] = await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: (before: typeof settled) => window.__accessCheckPrime!(before),
+      args: [settled],
+    });
+    const context: AuditContext = {
+      readiness: primed?.readiness ?? settled,
+      primed: true,
+      axeLocale,
+      locale,
+    };
 
-    stage(url, mode, "rules");
+    stage(url, "audit", "rules");
     const [{ result }] = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
       func: (given: AuditContext) => window.__accessCheckAudit!(given),
@@ -181,17 +182,8 @@ async function runAudit(tab: chrome.tabs.Tab, opts: { deep: boolean }): Promise<
 
     const base = { ...(result as ScanResult), screenshot: shot };
 
-    if (!opts.deep) {
-      stage(url, mode, "report");
-      publish({ kind: "done", result: base });
-      return;
-    }
-
-    stage(url, mode, "focus");
-    const walked = await withFocusPath(base, tab.id);
-
-    stage(url, mode, "report");
-    publish({ kind: "done", result: walked.result, deepError: walked.deepError });
+    stage(url, "audit", "report");
+    publish({ kind: "done", result: base });
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     const lostAccess = /Cannot access|permission|Frame with ID|No tab with id/i.test(message);
@@ -215,13 +207,13 @@ async function addFocusPath(opts: { resume?: boolean } = {}): Promise<void> {
   running = true;
 
   try {
-    stage(url, "expanded", "focus");
+    stage(url, "focus-path", "focus");
     const walked = await withFocusPath(
       previous,
       auditedTabId,
       opts.resume ? previous.keyboard : undefined,
     );
-    stage(url, "expanded", "report");
+    stage(url, "focus-path", "report");
     publish({ kind: "done", result: walked.result, deepError: walked.deepError });
   } finally {
     running = false;
@@ -275,7 +267,7 @@ async function clearOverlay(): Promise<void> {
 
 chrome.action.onClicked.addListener(async (tab) => {
   if (tab.id) await chrome.sidePanel.open({ tabId: tab.id });
-  await runAudit(tab, { deep: true });
+  await runAudit(tab);
 });
 
 chrome.runtime.onConnect.addListener((port) => {
@@ -340,7 +332,6 @@ chrome.runtime.onMessage.addListener((message: PanelMessage, _sender, sendRespon
   }
 
   if (message.type === "panel:audit") {
-    const deep = message.deep;
     void (async () => {
       await restore();
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -352,7 +343,7 @@ chrome.runtime.onMessage.addListener((message: PanelMessage, _sender, sendRespon
         });
         return;
       }
-      await runAudit(tab, { deep });
+      await runAudit(tab);
     })();
     sendResponse({ ok: true });
   }
@@ -366,12 +357,12 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 });
 
 const seams = globalThis as unknown as {
-  __accessCheckAuditTab?: (tab: chrome.tabs.Tab, opts?: { deep: boolean }) => Promise<void>;
+  __accessCheckAuditTab?: (tab: chrome.tabs.Tab) => Promise<void>;
   __accessCheckDeepAudit?: typeof addFocusPath;
   __accessCheckContinueWalk?: () => Promise<void>;
   __accessCheckForgetState?: () => void;
 };
-seams.__accessCheckAuditTab = (tab, opts) => runAudit(tab, { deep: opts?.deep ?? false });
+seams.__accessCheckAuditTab = (tab) => runAudit(tab);
 seams.__accessCheckDeepAudit = addFocusPath;
 seams.__accessCheckContinueWalk = () => addFocusPath({ resume: true });
 seams.__accessCheckForgetState = () => {

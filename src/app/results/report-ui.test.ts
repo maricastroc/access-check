@@ -27,6 +27,7 @@ function finding(over: Partial<FindingView> = {}): FindingView {
     evidence: "deterministic",
     isWcag: true,
     severity: "serious",
+    identities: {},
     passLabel: null,
     title: "Contrast",
     criterionSc: "1.4.3",

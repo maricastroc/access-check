@@ -1,6 +1,6 @@
 # AccessCheck extension — privacy policy
 
-**Effective 8 September 2026.** This policy covers the AccessCheck browser
+**Effective 20 September 2026.** This policy covers the AccessCheck browser
 extension. The hosted scanner at the AccessCheck website is a separate product
 with its own accounts and storage; this policy is only about the extension.
 
@@ -26,6 +26,25 @@ tab:
   out, because it holds what you typed, and `href` keeps only its path — the
   query string, where tokens usually live, is removed.
 
+## What the extension writes
+
+It writes nothing to your page except in two moments, both of them yours to
+trigger and both undone immediately:
+
+- **Proving a fix.** Where a fix can be computed from measured values — in
+  practice a contrast colour — the extension sets that one CSS property on the
+  element, re-runs that one rule, and puts the attribute back exactly as it
+  found it. An automated check in the project compares the page's markup before
+  and after, byte for byte, and fails the build on any difference. Suggestions
+  that depend on what the page means are never applied.
+- **Locating an element.** When you press "Locate on page" it draws a highlight
+  box in its own container at the document root. The box is `aria-hidden`, takes
+  no events, never touches the audited elements, and is removed when you clear
+  it, when you pick another occurrence, when the panel closes and at the start
+  of any audit.
+
+Nothing you typed is written, read back or stored.
+
 ## Where it goes
 
 Nowhere. It stays in the extension's own memory and in `chrome.storage.session`,
@@ -47,10 +66,11 @@ profiling or tracking.
 
 ## The debugger permission
 
-The expanded audit walks the page's real keyboard focus order. Doing that needs
-genuine Tab keystrokes, which only Chrome's debugger can produce, so the
-extension attaches `chrome.debugger` to the tab **for the length of that walk
-and nothing else**. Chrome shows its own banner on the tab while it is attached.
+Clicking the toolbar icon never attaches the debugger. It is attached only when
+you ask the extension to walk the page's real keyboard focus order, which needs
+genuine Tab keystrokes that only Chrome's debugger can produce, so the extension
+attaches `chrome.debugger` to the tab **for the length of that walk and nothing
+else**. Chrome shows its own banner on the tab while it is attached.
 
 The debugger is used for one thing: sending Tab and Shift+Tab. The page is read
 through the same code the rest of the audit uses. The debugger is released

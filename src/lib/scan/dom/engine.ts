@@ -1,5 +1,6 @@
 import { AXE_TAGS, crossOriginAssets, runAxeInPage } from "./axe";
 import { collectElementInfo } from "./element-info";
+import { collectIdentities } from "./identity";
 import {
   focusFirstStop,
   focusProbeEnd,
@@ -16,12 +17,14 @@ import { collectLiveRegionsRaw } from "./live-regions";
 import { primeLazyContent, waitForPaintCalm } from "./prime";
 import { collectRects, readViewport } from "./rects";
 import { cssPath } from "./selector";
+import { verifyFixes } from "./verify";
 import { collectTargetSizeRaw } from "./target-size";
 
 const engine: DomEngine = {
   version: DOM_ENGINE_VERSION,
   cssPath,
   collectElementInfo,
+  collectIdentities,
   collectRects,
   readViewport,
   primeLazyContent,
@@ -30,6 +33,7 @@ const engine: DomEngine = {
   collectTargetSizeRaw,
   runAxe: runAxeInPage,
   crossOriginAssets,
+  verifyFixes,
   focusProbeStart,
   focusFirstStop,
   focusSelector,

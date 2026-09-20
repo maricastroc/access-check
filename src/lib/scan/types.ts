@@ -2,6 +2,7 @@ import type { KeyboardReport } from "./keyboard";
 import type { ContextReport } from "./contexts";
 import type { AuditsReport } from "./audits";
 import type { ReportLocale } from "../i18n/locale";
+import type { ElementIdentity } from "./dom/identity";
 
 export type Severity = "critical" | "serious" | "moderate" | "minor";
 
@@ -14,6 +15,7 @@ export type ScanWarningCode =
   | "content-unsettled"
   | "verification-skipped"
   | "audits-skipped"
+  | "reduced-motion-skipped"
   | "keyboard-skipped"
   | "lazy-content-skipped"
   | "walk-changed-page"
@@ -123,6 +125,7 @@ export type ScanResult = {
   bestPractice: ScanBestPractice[];
   passed: string[];
   markers: ScanMarker[];
+  identities?: Record<string, ElementIdentity>;
   keyboard?: KeyboardReport;
   contexts?: ContextReport;
   audits?: AuditsReport;

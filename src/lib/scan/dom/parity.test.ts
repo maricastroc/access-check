@@ -8,6 +8,11 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Browser, Page } from "playwright-core";
 import { acquireBrowser, closeSharedBrowser } from "../browser";
 import { DOM_ENGINE_VERSION } from "./engine-api";
+import type { ElementIdentity } from "./identity";
+import { elementLine, identityLabel } from "../../report/identity";
+import { translator } from "../../i18n/t";
+import { buildFindings } from "../../report/findings";
+import { MAX_IDENTIFIED } from "../violations";
 import { INTERACTIVE } from "../target-size";
 import { injectDomEngine, runScan } from "../scan";
 import { SCORING_VERSION } from "../scored";
@@ -244,6 +249,24 @@ describe("ScanResult parity: hosted runScan vs the extension bundle", () => {
     expect(extension.markers).toEqual(hosted.markers);
   });
 
+  it("names the affected elements the same way in both", () => {
+    expect(Object.keys(hosted.identities ?? {}).length).toBeGreaterThan(0);
+    expect(extension.identities).toEqual(hosted.identities);
+  });
+
+  it("gives every element a report points at a name a person can read", () => {
+    const t = translator("en");
+    for (const finding of buildFindings(hosted)) {
+      for (const selector of finding.affectedSelectors.slice(0, MAX_IDENTIFIED)) {
+        const identity = hosted.identities?.[selector];
+        expect(identity, `${finding.ruleId} left ${selector} unnamed`).toBeDefined();
+        const label = identityLabel(identity!, t);
+        expect(label, `${finding.ruleId} reads as a path`).not.toContain(" > ");
+        expect(label).not.toContain(":nth-of-type");
+      }
+    }
+  });
+
   it("runs the same own-rule audits it can run", () => {
     expect(extension.audits?.targetSize).toEqual(hosted.audits?.targetSize);
     expect(extension.audits?.liveRegions).toEqual(hosted.audits?.liveRegions);
@@ -372,5 +395,246 @@ describe("a coordinate that survives a container scrolling under it", () => {
 
     await scroller.evaluate(() => window.__accessCheckDom!.focusProbeEnd());
     expect(await listTop()).toBe(360);
+  });
+});
+
+describe("verifying a fix leaves the page exactly as it was", () => {
+  const FIXTURE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Revert</title></head>
+<body><main><h1>Revert</h1>
+  <p id="bare">no style attribute</p>
+  <p id="styled" style="margin:0">already styled</p>
+  <img id="pic" src="/logo.png">
+</main></body></html>`;
+
+  let revert: Page;
+
+  beforeAll(async () => {
+    const context = await browser.newContext({ viewport: { width: 1200, height: 800 } });
+    revert = await context.newPage();
+    await revert.setContent(FIXTURE);
+    await revert.addScriptTag({ path: HOSTED_ENGINE });
+    await revert.addScriptTag({ path: repoFile("node_modules/axe-core/axe.min.js") });
+  }, 90_000);
+
+  const markupAround = async (run: () => Promise<unknown>) => {
+    const before = await revert.evaluate(() => document.body.innerHTML);
+    await run();
+    const after = await revert.evaluate(() => document.body.innerHTML);
+    return { before, after };
+  };
+
+  it("adds no style attribute to an element that had none", async () => {
+    const { before, after } = await markupAround(() =>
+      revert.evaluate(() =>
+        window.__accessCheckDom!.verifyFixes([
+          {
+            ruleId: "color-contrast",
+            selector: "#bare",
+            apply: { kind: "style", prop: "color", value: "#111827" },
+          },
+        ]),
+      ),
+    );
+
+    expect(after).toBe(before);
+    expect(after).not.toContain('id="bare" style');
+  });
+
+  it("puts a style attribute it did touch back byte for byte", async () => {
+    const { before, after } = await markupAround(() =>
+      revert.evaluate(() =>
+        window.__accessCheckDom!.verifyFixes([
+          {
+            ruleId: "color-contrast",
+            selector: "#styled",
+            apply: { kind: "style", prop: "color", value: "#111827" },
+          },
+        ]),
+      ),
+    );
+
+    expect(after).toBe(before);
+    expect(after).toContain('style="margin:0"');
+  });
+
+  it("puts an attribute it added back the way it found it", async () => {
+    const { before, after } = await markupAround(() =>
+      revert.evaluate(() =>
+        window.__accessCheckDom!.verifyFixes([
+          {
+            ruleId: "image-alt",
+            selector: "#pic",
+            apply: { kind: "attr", name: "alt", value: "A logo" },
+          },
+        ]),
+      ),
+    );
+
+    expect(after).toBe(before);
+    expect(after).not.toContain("alt=");
+  });
+
+  it("says unchecked, not failed, when the element is gone", async () => {
+    const [outcome] = await revert.evaluate(() =>
+      window.__accessCheckDom!.verifyFixes([
+        {
+          ruleId: "image-alt",
+          selector: "#vanished",
+          apply: { kind: "attr", name: "alt", value: "x" },
+        },
+      ]),
+    );
+
+    expect(outcome).toBe("unchecked");
+  });
+
+  it("tells a fix that clears the rule apart from one that does not", async () => {
+    const outcomes = await revert.evaluate(() =>
+      window.__accessCheckDom!.verifyFixes([
+        {
+          ruleId: "image-alt",
+          selector: "#pic",
+          apply: { kind: "attr", name: "alt", value: "A logo" },
+        },
+        {
+          ruleId: "html-has-lang",
+          selector: null,
+          apply: { kind: "doc", target: "lang", value: "en" },
+        },
+      ]),
+    );
+
+    expect(outcomes[0]).toBe("verified");
+    expect(outcomes).not.toContain("failed");
+  });
+});
+
+describe("naming the element a developer has to find", () => {
+  const ROWS_IN_FEED = 8;
+
+  const FIXTURE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Identity</title>
+<style>#feed { height: 80px; overflow-y: auto } .row { height: 60px }</style></head>
+<body>
+  <header>
+    <nav aria-label="Primary">
+      <a href="/docs/getting-started">Get started</a>
+      <button class="sc-fznKkj hLSTQF css-1x2y3z" id=":r7:">Sign in</button>
+    </nav>
+  </header>
+  <main>
+    <section id="pricing">
+      <h2>Pricing</h2>
+      <ul>
+        <li class="card"><h3>Starter</h3><a href="/signup">Read more</a></li>
+        <li class="card"><h3>Team</h3><a href="/signup">Read more</a></li>
+        <li class="card"><h3>Scale</h3><a href="/signup">Read more</a></li>
+      </ul>
+      <p class="mt-2 lg:my-16 dark:bg-card text-gray-30 xs:p-5 flex-col">Utility soup</p>
+    </section>
+    <section aria-label="Feed">
+      <div id="feed">${Array.from(
+        { length: ROWS_IN_FEED },
+        (_, i) => `<div class="row"><a href="/row-${i}">Row ${i}</a></div>`,
+      ).join("")}</div>
+    </section>
+    <section id="account">
+      <h2>Account</h2>
+      <form>
+        <label for=":r0:">Email address</label>
+        <input id=":r0:" name="email" type="email">
+        <button class="icon" type="button" aria-label="Close dialog"></button>
+        <button class="icon" type="button" aria-label="Close banner"></button>
+      </form>
+    </section>
+    <div id="__next"><div class="jsx-2947419541">
+      <a class="sc-bdVaJa gBdqXv" href="/blog/2026/release" data-testid="release-link">Read the release notes</a>
+    </div></div>
+  </main>
+</body></html>`;
+
+  let named: Page;
+
+  beforeAll(async () => {
+    const context = await browser.newContext({ viewport: { width: 1200, height: 800 } });
+    named = await context.newPage();
+    await named.setContent(FIXTURE);
+    await named.addScriptTag({ path: HOSTED_ENGINE });
+  }, 90_000);
+
+  const read = (selectors: string[]) =>
+    named.evaluate(
+      (list) => window.__accessCheckDom!.collectIdentities(list),
+      selectors,
+    ) as Promise<Record<string, ElementIdentity>>;
+
+  const line = async (selector: string) => {
+    const identity = (await read([selector]))[selector];
+    return elementLine(selector, identity, translator("en"));
+  };
+
+  it("ignores generated and utility classes instead of reciting them", async () => {
+    expect(await line("nav button")).toBe("button “Sign in” · in <nav> “Primary”");
+    expect(await line("#pricing p")).toBe("p “Utility soup” · in <section> “Pricing”");
+  });
+
+  it("refuses a framework-generated id and finds a real signal instead", async () => {
+    const identity = (await read(["#pricing ~ * input"]))["#pricing ~ * input"];
+    expect(identity.ref).toBe('[name="email"]');
+    expect(identity.name).toBe("Email address");
+  });
+
+  it("numbers repeated components that would otherwise read identically", async () => {
+    const selectors = [1, 2, 3].map((n) => `#pricing li:nth-of-type(${n}) a`);
+    const identities = await read(selectors);
+    expect(selectors.map((s) => identityLabel(identities[s], translator("en")))).toEqual([
+      'a[href*="signup"] “Read more” 1 of 3',
+      'a[href*="signup"] “Read more” 2 of 3',
+      'a[href*="signup"] “Read more” 3 of 3',
+    ]);
+  });
+
+  it("leaves elements alone when their names already tell them apart", async () => {
+    const selectors = ["button.icon:nth-of-type(1)", "button.icon:nth-of-type(2)"];
+    const identities = await read(selectors);
+    expect(identities[selectors[0]].of).toBeNull();
+    expect(identityLabel(identities[selectors[0]], translator("en"))).toBe(
+      "button.icon “Close dialog”",
+    );
+    expect(identityLabel(identities[selectors[1]], translator("en"))).toBe(
+      "button.icon “Close banner”",
+    );
+  });
+
+  it("names an element sitting below the fold of a scroll container", async () => {
+    const last = `#feed .row:nth-of-type(${ROWS_IN_FEED}) a`;
+    expect(await line(last)).toBe(
+      `a[href*="row-${ROWS_IN_FEED - 1}"] “Row ${ROWS_IN_FEED - 1}” · in <section> “Feed”`,
+    );
+  });
+
+  it("prefers a test id over the class chain React ships", async () => {
+    expect(await line("#__next a")).toBe(
+      'a[data-testid="release-link"] “Read the release notes” · in <main>',
+    );
+  });
+
+  it("names every element it is asked about without repeating a class chain", async () => {
+    const selectors = [
+      "nav a",
+      "nav button",
+      "#pricing li:nth-of-type(2) a",
+      "#feed .row:nth-of-type(3) a",
+      "#__next a",
+    ];
+    const identities = await read(selectors);
+    const t = translator("en");
+
+    for (const selector of selectors) {
+      const label = identityLabel(identities[selector], t);
+      expect(label.length).toBeLessThanOrEqual(64);
+      for (const generated of ["sc-", "css-", "jsx-", "hLSTQF", "gBdqXv", "lg\\:", "dark\\:"]) {
+        expect(label, `${selector} leaked ${generated}`).not.toContain(generated);
+      }
+    }
   });
 });

@@ -3,9 +3,12 @@ import { createRoot } from "react-dom/client";
 import { FindingRow } from "../../src/components/ui/finding-row";
 import { OccurrenceStepper } from "../../src/components/ui/occurrence-stepper";
 import { SectionKicker } from "../../src/components/ui/section-kicker";
+import { VerdictSeal } from "../../src/components/ui/verdict-seal";
 import { StageList } from "../../src/components/ui/scan-stages";
 import { WarningList } from "../../src/components/ui/warning-list";
 import { buildFindings, type FindingView } from "../../src/lib/report/findings";
+import { describeElement } from "../../src/lib/report/identity";
+import { verdictMessage, verdictTone } from "../../src/lib/report/verdict";
 import type { KeyboardOccurrence } from "../../src/lib/scan/keyboard";
 import type { OverlayMark } from "../../src/lib/scan/dom/overlay";
 import type { ScanResult } from "../../src/lib/scan/types";
@@ -31,24 +34,22 @@ import {
   writePreference,
   type LocalePreference,
 } from "./locale-preference";
-import type { AuditStage, HighlightReply, PanelMessage, PanelState } from "./state";
+import type { AuditStage, AuditTask, HighlightReply, PanelMessage, PanelState } from "./state";
 
 let UI_LOCALE: ReportLocale = browserLocale();
 let t = translator(UI_LOCALE);
 
-let STAGES: readonly string[] = [];
-let QUICK_STAGES: readonly string[] = [];
+let AUDIT_STAGES: readonly string[] = [];
+let FOCUS_STAGES: readonly string[] = [];
 
 const NATIVE_NAME: Record<ReportLocale, string> = {
   en: "English",
   "pt-BR": "Português",
 };
 
-const STAGE_INDEX: Record<AuditStage, number> = {
-  structure: 0,
-  rules: 1,
-  focus: 2,
-  report: 3,
+const STAGE_AT: Record<AuditTask, Partial<Record<AuditStage, number>>> = {
+  audit: { structure: 0, rules: 1, report: 2 },
+  "focus-path": { focus: 0, report: 1 },
 };
 
 function send(message: PanelMessage): Promise<unknown> {
@@ -129,8 +130,8 @@ function Header({ result }: { result: ScanResult }) {
   const scope = auditScope(result, t);
 
   return (
-    <section className="mt-3 border border-border bg-surface p-3" aria-labelledby="score-heading">
-      <SectionKicker as="h2" id="score-heading">
+    <section className="mt-3 border border-border bg-surface p-3" aria-labelledby="verdict-heading">
+      <SectionKicker as="h2" id="verdict-heading">
         {scope.kicker}
       </SectionKicker>
       {scope.lead && (
@@ -324,10 +325,11 @@ function Occurrences({
   };
 
   const truncated = occurrence.html?.includes("…") ?? false;
+  const element = describeElement(occurrence.selector, occurrence.identity ?? undefined, t);
   const where = [
     occurrence.stop === null ? t("panel.neverReached") : t("panel.stopN", { n: occurrence.stop }),
-    occurrence.tag ? `<${occurrence.tag}>` : null,
-    occurrence.label || null,
+    occurrence.identity ? element.label : occurrence.tag ? `<${occurrence.tag}>` : null,
+    occurrence.identity ? element.context : occurrence.label || null,
   ].filter(Boolean);
 
   return (
@@ -484,6 +486,9 @@ function Findings({
                 <Field label={t("panel.problem")}>
                   <p className="text-[13px] leading-[1.55] break-words text-body">{f.desc}</p>
                 </Field>
+                {f.occurrences.length === 0 && f.affectedSelectors.length > 0 && (
+                  <FindingElement finding={f} />
+                )}
                 <Field label={t("panel.suggestedFix")}>
                   <p className="text-[13px] leading-[1.55] break-words text-body">{f.fixText}</p>
                   {f.fixCode && (
@@ -491,7 +496,20 @@ function Findings({
                       {f.fixCode}
                     </pre>
                   )}
+                  {verdictTone(f.verdict) === "quiet" && (
+                    <p className="mt-1.5 text-[12px] leading-normal break-words text-muted">
+                      {verdictMessage(f.verdict, t, f.measurement)}
+                    </p>
+                  )}
                 </Field>
+                {verdictTone(f.verdict) !== "quiet" && (
+                  <Field label={t("detail.verificationResult")}>
+                    <VerdictSeal verdict={f.verdict} t={t} />
+                    <p className="mt-1.5 text-[12.5px] leading-normal break-words text-body">
+                      {verdictMessage(f.verdict, t, f.measurement)}
+                    </p>
+                  </Field>
+                )}
                 <Occurrences finding={f} syncStop={syncStop} onLocate={onLocate} />
               </div>
             )}
@@ -499,6 +517,28 @@ function Findings({
         ))
       )}
     </section>
+  );
+}
+
+function FindingElement({ finding }: { finding: FindingView }) {
+  const selector = finding.affectedSelectors[0];
+  const element = describeElement(selector, finding.identities[selector], t);
+
+  return (
+    <Field label={t("panel.element")}>
+      <p className="font-mono text-[12.5px] leading-snug break-words text-ink">{element.label}</p>
+      {element.context && <p className="text-[12px] text-muted">{element.context}</p>}
+      {element.label !== element.locator && (
+        <p className="mt-1 overflow-x-auto font-mono text-[11.5px] break-all text-steel">
+          {element.locator}
+        </p>
+      )}
+      {finding.elements > 1 && (
+        <p className="mt-1 text-[12px] text-muted">
+          {t("detail.elementsAffected", { count: finding.elements })}
+        </p>
+      )}
+    </Field>
   );
 }
 
@@ -678,9 +718,22 @@ function FocusPath({
       {notice && <p className="mt-2 text-[12px] leading-normal text-moderate-text">{notice}</p>}
 
       {!walked && (
-        <button type="button" onClick={onWalk} className={`${PRIMARY_BUTTON} mt-3`}>
-          {t("panel.walkNow")}
-        </button>
+        <>
+          <p
+            id="walk-debugger-note"
+            className="mt-3 border-l-2 border-steel bg-band px-2.5 py-2 text-[12px] leading-normal text-body"
+          >
+            {t("panel.walkDebuggerNote")}
+          </p>
+          <button
+            type="button"
+            onClick={onWalk}
+            aria-describedby="walk-debugger-note"
+            className={`${PRIMARY_BUTTON} mt-2`}
+          >
+            {t("panel.walkNow")}
+          </button>
+        </>
       )}
 
       {walked && walked.truncated && (
@@ -702,29 +755,20 @@ function FocusPath({
   );
 }
 
-function Running({
-  url,
-  mode,
-  stage,
-}: {
-  url: string;
-  mode: "expanded" | "quick";
-  stage: AuditStage;
-}) {
-  const stages = mode === "quick" ? QUICK_STAGES : STAGES;
-  const current = mode === "quick" && stage === "report" ? stages.length - 1 : STAGE_INDEX[stage];
+function Running({ url, task, stage }: { url: string; task: AuditTask; stage: AuditStage }) {
+  const stages = task === "audit" ? AUDIT_STAGES : FOCUS_STAGES;
+  const current = STAGE_AT[task][stage] ?? 0;
 
   return (
     <>
-      <StickyBar title={mode === "quick" ? t("panel.quickAudit") : t("panel.auditingTab")} />
+      <StickyBar title={task === "audit" ? t("panel.auditingTab") : t("panel.walkingFocusPath")} />
       <div className="px-3 pt-3">
         <p className="truncate font-mono text-[12px] text-muted">{url}</p>
         <div className="mt-3 border border-border bg-surface p-3">
           <StageList stages={stages} current={current} />
         </div>
         <p className="mt-3 text-[12.5px] leading-[1.5] text-muted">
-          {t("panel.runningNote")}
-          {mode === "expanded" ? t("panel.runningNoteDeep") : ""}
+          {task === "audit" ? t("panel.runningNote") : t("panel.runningNoteFocus")}
         </p>
       </div>
     </>
@@ -735,7 +779,6 @@ function Report({
   result,
   deepError,
   onReaudit,
-  onQuick,
   onWalk,
   onContinue,
   draw,
@@ -745,7 +788,6 @@ function Report({
   result: ScanResult;
   deepError?: string;
   onReaudit: () => void;
-  onQuick: () => void;
   onWalk: () => void;
   onContinue: () => void;
   draw: (
@@ -852,20 +894,9 @@ function Report({
       <Capture result={result} />
 
       <div className="mt-4 border-t border-hairline px-3 pt-3">
-        <button type="button" onClick={onReaudit} className={PRIMARY_BUTTON}>
+        <button type="button" onClick={onReaudit} className={SECONDARY_BUTTON}>
           {t("panel.auditAgain")}
         </button>
-        <button
-          type="button"
-          onClick={onQuick}
-          aria-describedby="quick-audit-note"
-          className={`${SECONDARY_BUTTON} mt-2`}
-        >
-          {t("panel.runQuickAudit")}
-        </button>
-        <p id="quick-audit-note" className="mt-1.5 text-center text-[12px] text-muted">
-          {t("panel.quickAuditNote")}
-        </p>
       </div>
     </>
   );
@@ -926,7 +957,7 @@ function Panel({
         if (!current) return;
         setState(current);
         if (retranslate && current.kind === "done" && current.result.locale !== UI_LOCALE) {
-          void send({ type: "panel:audit", deep: true });
+          void send({ type: "panel:audit" });
         }
       },
       () => {},
@@ -981,8 +1012,10 @@ function Panel({
       <div role="status" aria-live="polite" className="sr-only">
         {running
           ? t("panel.announceStep", {
-              n: STAGE_INDEX[state.stage] + 1,
-              stage: STAGES[STAGE_INDEX[state.stage]],
+              n: (STAGE_AT[state.task][state.stage] ?? 0) + 1,
+              stage: (state.task === "audit" ? AUDIT_STAGES : FOCUS_STAGES)[
+                STAGE_AT[state.task][state.stage] ?? 0
+              ],
             })
           : ""}
       </div>
@@ -992,7 +1025,7 @@ function Panel({
       )}
 
       {state.kind === "running" && (
-        <Running url={state.url} mode={state.mode} stage={state.stage} />
+        <Running url={state.url} task={state.task} stage={state.stage} />
       )}
 
       {state.kind === "unsupported" && (
@@ -1008,7 +1041,7 @@ function Panel({
           {state.recoverable && (
             <button
               type="button"
-              onClick={() => void send({ type: "panel:audit", deep: true })}
+              onClick={() => void send({ type: "panel:audit" })}
               className={`${PRIMARY_BUTTON} mt-3`}
             >
               {t("panel.tryAgain")}
@@ -1021,8 +1054,7 @@ function Panel({
         <Report
           result={state.result}
           deepError={state.deepError}
-          onReaudit={() => void send({ type: "panel:audit", deep: true })}
-          onQuick={() => void send({ type: "panel:audit", deep: false })}
+          onReaudit={() => void send({ type: "panel:audit" })}
           onWalk={() => void send({ type: "panel:focus-path" })}
           onContinue={() => void send({ type: "panel:continue-walk" })}
           draw={draw}
@@ -1039,8 +1071,8 @@ async function boot(): Promise<void> {
 
   UI_LOCALE = localeOf(preference);
   t = translator(UI_LOCALE);
-  STAGES = [t("stage.structure"), t("stage.rules"), t("stage.focus"), t("stage.report")];
-  QUICK_STAGES = [t("stage.structure"), t("stage.rules"), t("stage.report")];
+  AUDIT_STAGES = [t("stage.structure"), t("stage.rules"), t("stage.report")];
+  FOCUS_STAGES = [t("stage.focus"), t("stage.report")];
   document.documentElement.lang = UI_LOCALE;
 
   createRoot(document.getElementById("root")!).render(

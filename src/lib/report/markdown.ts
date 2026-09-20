@@ -1,6 +1,7 @@
 import type { ScanResult } from "@/lib/scan/types";
 import { reviewGuidance } from "../scan/review";
 import { buildFindings, type FindingView } from "./findings";
+import { describeElement, identityLabel } from "./identity";
 import { violationsBehindScore } from "../scan/scored";
 import { scoreBreakdown } from "./score";
 import { buildWcagReading } from "./wcag";
@@ -31,12 +32,17 @@ function findingBlock(f: FindingView, out: string[], t: Translate) {
   if (f.affectedSelectors.length > 0) {
     const shown = f.affectedSelectors
       .slice(0, 5)
-      .map((s) => `\`${s}\``)
+      .map((s) => `\`${describeElement(s, f.identities[s], t).label}\``)
       .join(", ");
     const extra = f.affectedSelectors.length - 5;
     out.push(
       `- **${t("md.affected")}:** ${shown}${extra > 0 ? ` ${t("md.andMore", { count: extra })}` : ""}`,
     );
+    const first = describeElement(f.affectedSelectors[0], f.identities[f.affectedSelectors[0]], t);
+    if (first.context) out.push(`- **${t("md.whereLabel")}:** ${first.context}`);
+    if (first.label !== first.locator) {
+      out.push(`- **${t("detail.technicalSelector")}:** \`${first.locator}\``);
+    }
   }
   out.push(`- **${t("md.elementsLabel")}:** ${f.elements}`);
   if (f.measurement) {
@@ -63,7 +69,9 @@ function findingBlock(f: FindingView, out: string[], t: Translate) {
   if (f.fixCode) out.push("", "```", f.fixCode, "```");
   else if (f.guidance?.example)
     out.push("", "```" + f.guidance.example.lang, f.guidance.example.code, "```");
-  out.push("", `_${verdictLabel(f.verdict, t)}: ${verdictMessage(f.verdict, t, f.measurement)}_`);
+  const label = verdictLabel(f.verdict, t);
+  const note = verdictMessage(f.verdict, t, f.measurement);
+  out.push("", label ? `**${label}.** _${note}_` : `_${note}_`);
   out.push("");
 }
 
@@ -162,7 +170,11 @@ export function buildReportMarkdown(result: ScanResult): string {
       out.push("");
       out.push(`- **WCAG:** ${inc.criterion}`);
       if (inc.selectors.length > 0) {
-        out.push(`- **${t("md.whereLabel")}:** ${inc.selectors.map((s) => `\`${s}\``).join(", ")}`);
+        const named = inc.selectors.map((s) => {
+          const identity = result.identities?.[s];
+          return `\`${identity ? identityLabel(identity, t) : s}\``;
+        });
+        out.push(`- **${t("md.whereLabel")}:** ${named.join(", ")}`);
       }
       out.push("");
       const guide = reviewGuidance(inc.id, t);

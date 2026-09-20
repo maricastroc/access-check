@@ -9,8 +9,7 @@ export function unavailableWarnings(t: Translate): ScanWarning[] {
     { code: "keyboard-skipped", message: t("warning.keyboardSkipped") },
     { code: "lazy-content-skipped", message: t("warning.lazyContent") },
     { code: "contexts-skipped", message: t("warning.contextsSkipped") },
-    { code: "audits-skipped", message: t("warning.auditsSkipped") },
-    { code: "verification-skipped", message: t("warning.verificationSkipped") },
+    { code: "reduced-motion-skipped", message: t("warning.reducedMotionSkipped") },
   ];
 }
 
@@ -52,6 +51,7 @@ const SKIPPED_CHECKS: ScanWarningCode[] = [
   "keyboard-skipped",
   "contexts-skipped",
   "audits-skipped",
+  "reduced-motion-skipped",
   "verification-skipped",
   "lazy-content-skipped",
 ];
@@ -85,8 +85,8 @@ export function auditScope(result: ScanResult, t: Translate): AuditScope {
   if (!walked) {
     const why = (result.warnings ?? []).find((w) => w.code === "keyboard-skipped")?.message;
     return {
-      kicker: t("scope.quickKicker"),
-      lead: t("scope.preliminaryLead"),
+      kicker: t("scope.currentTabKicker"),
+      lead: t("scope.focusPathPending"),
       summary: coverageSummary(result, t),
       badge: null,
       note: t("scope.skippedNote", { why: why ?? "", rest }),

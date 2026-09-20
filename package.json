@@ -26,6 +26,7 @@
     "build:icons": "node scripts/build-icons.mjs",
     "pack": "node scripts/pack-extension.mjs",
     "check:release": "node scripts/check-release.mjs",
+    "smoke:package": "node scripts/smoke-package.mjs",
     "build:screenshots": "node scripts/build-store-screenshots.mjs",
     "build:tile": "node scripts/build-promo-tile.mjs",
     "check:panel": "node scripts/check-panel-ux.mjs"

@@ -1,24 +1,21 @@
 import type { ReactNode } from "react";
-import type { FixStatus } from "@/lib/report/severity";
+import type { SealStatus } from "@/lib/report/severity";
 import { cn } from "@/lib/cn";
 import type { MessageKey, Translate } from "@/lib/i18n/t";
 
-const DEFAULT_TEXT_KEY: Record<FixStatus, MessageKey> = {
+const DEFAULT_TEXT_KEY: Record<SealStatus, MessageKey> = {
   verified: "seal.verified",
   "needs-review": "seal.needsReview",
-  unchecked: "seal.notReaudited",
 };
 
-const GLYPH: Record<FixStatus, string> = {
+const GLYPH: Record<SealStatus, string> = {
   verified: "✓",
   "needs-review": "?",
-  unchecked: "·",
 };
 
-const CLS: Record<FixStatus, string> = {
+const CLS: Record<SealStatus, string> = {
   verified: "border border-solid border-verified bg-verified/[0.08] text-verified",
   "needs-review": "border border-dashed border-moderate text-moderate-text",
-  unchecked: "border border-dashed border-border text-muted",
 };
 
 export function StatusSeal({
@@ -26,7 +23,7 @@ export function StatusSeal({
   children,
   t,
 }: {
-  status: FixStatus;
+  status: SealStatus;
   children?: ReactNode;
   t: Translate;
 }) {

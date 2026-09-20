@@ -22,6 +22,7 @@ function stop(selector: string, style: FocusStyle = RING): FocusProbe {
     selector,
     tag: "button",
     label: selector,
+    identity: null,
     html: `<button>${selector}</button>`,
     isIframe: false,
     hasShadowRoot: false,
@@ -46,6 +47,7 @@ const BODY: FocusProbe = {
   selector: "",
   tag: "",
   label: "",
+  identity: null,
   html: "",
   isIframe: false,
   hasShadowRoot: false,
@@ -80,6 +82,7 @@ function io(stops: FocusProbe[], over: Partial<FocusPathIO> = {}) {
       reachableInteractive: stops.filter((s) => !s.isBody).length,
       unreachable: [],
       positiveTabindex: [],
+      identities: {},
     })),
     end: vi.fn(async () => {
       calls.ended += 1;
@@ -455,6 +458,7 @@ describe("picking a walk up where it stopped", () => {
         reachableInteractive: 3,
         unreachable: ["#b1", "#b2", "#b3", "#b7", "#b8"],
         positiveTabindex: [],
+        identities: {},
       })),
     });
 
