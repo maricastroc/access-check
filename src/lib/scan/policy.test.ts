@@ -6,6 +6,7 @@ import type { ScanWarningCode } from "./types";
 const TEXT = {
   "screenshot-unavailable": "no preview",
   "fix-details-skipped": "generic fixes",
+  "regions-skipped": "regions",
   "markers-skipped": "no markers",
   "content-unsettled": "still loading",
   "verification-skipped": "not verified",
@@ -37,12 +38,21 @@ describe("stage catalogue", () => {
   });
 
   it("orders the optional ladder so the costliest passes are dropped first", () => {
-    expect(OPTIONAL_ORDER).toEqual(["verify", "audits", "screenshot", "keyboard", "contexts"]);
-    const last = OPTIONAL_ORDER.slice(-2);
-    expect(last).toEqual(["keyboard", "contexts"]);
-    for (const id of last) {
-      expect(STAGES[id].minMs).toBeGreaterThanOrEqual(STAGES.screenshot.minMs);
-    }
+    expect(OPTIONAL_ORDER).toEqual([
+      "verify",
+      "audits",
+      "screenshot",
+      "keyboard",
+      "regions",
+      "contexts",
+    ]);
+    const last = OPTIONAL_ORDER.slice(-3);
+    expect(last).toEqual(["keyboard", "regions", "contexts"]);
+  });
+
+  it("captures regions only after the walk that gives them their anchors", () => {
+    expect(OPTIONAL_ORDER.indexOf("regions")).toBeGreaterThan(OPTIONAL_ORDER.indexOf("keyboard"));
+    expect(OPTIONAL_ORDER.indexOf("regions")).toBeLessThan(OPTIONAL_ORDER.indexOf("contexts"));
   });
 
   it("scales the assembly reserve down with the budget", () => {

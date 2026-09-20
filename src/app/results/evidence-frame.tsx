@@ -1,6 +1,6 @@
 "use client";
 
-import type { ScanResult, Severity } from "@/lib/scan/types";
+import { VIEWPORT_CAPTURE, type ScanResult, type Severity } from "@/lib/scan/types";
 import { locatedMarkers, type FindingView } from "@/lib/report/findings";
 import { verdictTone } from "@/lib/report/verdict";
 import {
@@ -12,7 +12,8 @@ import {
   SectionKicker,
 } from "@/components/ui";
 import { clamp } from "./shared";
-import type { Layer, MarkerView } from "./report-ui";
+import { readableContext, type StopPlacement } from "@/lib/scan/placement";
+import type { ActiveCapture, Layer, MarkerView, StopView } from "./report-ui";
 import { useT } from "@/lib/i18n/provider";
 
 function tintFor(severity: Severity | null): string {
@@ -34,6 +35,93 @@ const severityEdge: Record<string, string> = {
   moderate: "dashed",
   minor: "dotted",
 };
+
+function StopLayer({
+  views,
+  onSelect,
+  t,
+}: {
+  views: StopView[];
+  onSelect: (n: number) => void;
+  t: ReturnType<typeof useT>;
+}) {
+  return (
+    <div className="pointer-events-none absolute inset-0">
+      {views.map((v) => (
+        <div key={v.n} style={{ opacity: v.current ? 1 : 0.5 }}>
+          <span
+            aria-hidden
+            className="absolute"
+            style={{
+              left: `${v.left}%`,
+              top: `${v.top}%`,
+              width: `${v.width}%`,
+              height: `${v.height}%`,
+              borderWidth: v.current ? 3 : 1,
+              borderStyle: v.visible ? "solid" : "dashed",
+              borderColor: v.visible ? "var(--color-steel)" : "var(--color-critical)",
+              background: v.current ? "rgba(60,92,122,.14)" : "transparent",
+            }}
+          />
+          <span
+            className="pointer-events-auto absolute"
+            style={{
+              left: `${clamp(v.left, 3, 96)}%`,
+              top: `${clamp(v.top, 3, 96)}%`,
+              transform: "translate(-50%, -50%)",
+            }}
+          >
+            <Marker
+              n={v.n}
+              state={v.current ? "selected" : "idle"}
+              dimmed={!v.current}
+              size={v.current ? undefined : 22}
+              ariaPressed={v.current}
+              ariaLabel={t("capture.stopAria", { n: v.n })}
+              onSelect={() => onSelect(v.n)}
+            />
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function StopNotice({
+  placement,
+  n,
+  t,
+}: {
+  placement: StopPlacement;
+  n: number;
+  t: ReturnType<typeof useT>;
+}) {
+  const context = placement.kind === "inside-scroller" ? readableContext(placement.context) : null;
+
+  const message =
+    placement.kind === "region-missed"
+      ? t(
+          placement.reason === "bytes"
+            ? "capture.regionMissedBytes"
+            : placement.reason === "failed"
+              ? "capture.regionMissedFailed"
+              : "capture.regionMissedTime",
+          { docY: placement.docY },
+        )
+      : placement.kind === "outside"
+        ? t("capture.stopOutside", { n, docY: placement.docY })
+        : placement.kind === "inside-scroller"
+          ? context
+            ? t("capture.stopInsideScroller", { n, context })
+            : t("capture.stopInsideScrollerPlain", { n })
+          : t("capture.stopUnplaced", { n });
+
+  return (
+    <p className="pointer-events-none absolute inset-x-0 bottom-0 bg-ink/85 px-3 py-2 text-[12px] leading-normal text-surface">
+      {message}
+    </p>
+  );
+}
 
 function MarkerLayer({
   views,
@@ -138,7 +226,11 @@ export function CaptureStage({
   markerViews,
   selectedFinding,
   onSelectMarker,
-  screenshot,
+  stopViews,
+  selectedStop,
+  stopPlacement,
+  onSelectStop,
+  capture,
   height,
   quickFromSite = false,
   onRunFull,
@@ -149,7 +241,11 @@ export function CaptureStage({
   markerViews: MarkerView[];
   selectedFinding: FindingView | null;
   onSelectMarker: (markerN: number) => void;
-  screenshot: string | null;
+  stopViews: StopView[];
+  selectedStop: number | null;
+  stopPlacement: StopPlacement | null;
+  onSelectStop: (n: number) => void;
+  capture: ActiveCapture;
   height: number;
   quickFromSite?: boolean;
   onRunFull?: () => void;
@@ -157,10 +253,34 @@ export function CaptureStage({
 }) {
   const t = useT();
   const selectedN = markerViews.find((v) => v.state === "selected")?.marker.n ?? null;
+  const adrift = selectedStop !== null && stopPlacement !== null && stopPlacement.kind !== "placed";
 
-  if (!screenshot && pending) return <CaptureSkeleton height={height} />;
+  if (capture.missed) {
+    return (
+      <div
+        className="hatch-outside flex items-center justify-center overflow-hidden px-6"
+        style={{ height, background: "#FBFAF7" }}
+      >
+        <div className="w-full max-w-105 border border-border bg-surface p-5">
+          <SectionKicker>{t("capture.regionMissedTitle")}</SectionKicker>
+          <p className="mt-2 text-[14px] leading-normal text-ink">
+            {t(
+              capture.missed === "bytes"
+                ? "capture.regionMissedBytes"
+                : capture.missed === "failed"
+                  ? "capture.regionMissedFailed"
+                  : "capture.regionMissedTime",
+              { docY: Math.round(capture.docY) },
+            )}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
-  if (!screenshot) {
+  if (!capture.image && pending) return <CaptureSkeleton height={height} />;
+
+  if (!capture.image) {
     return (
       <div
         className="hatch-outside flex items-center justify-center overflow-hidden px-6"
@@ -193,7 +313,7 @@ export function CaptureStage({
       <div className="relative">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={screenshot}
+          src={capture.image ?? undefined}
           alt={t("panel.screenshotAlt", { url: host })}
           className="block w-full"
         />
@@ -207,6 +327,22 @@ export function CaptureStage({
         {layer === "markers" && markerViews.length === 0 && (
           <p className="pointer-events-none absolute inset-x-0 bottom-0 bg-ink/85 px-3 py-2 text-[12px] leading-normal text-surface">
             {t("capture.noMarkersLanded")}
+          </p>
+        )}
+        {layer === "focus" && stopViews.length > 0 && (
+          <StopLayer views={stopViews} onSelect={onSelectStop} t={t} />
+        )}
+        {layer === "focus" && adrift && (
+          <StopNotice placement={stopPlacement} n={selectedStop} t={t} />
+        )}
+        {layer === "focus" && !adrift && stopViews.length === 0 && (
+          <p className="pointer-events-none absolute inset-x-0 bottom-0 bg-ink/85 px-3 py-2 text-[12px] leading-normal text-surface">
+            {t("capture.noStopsLanded")}
+          </p>
+        )}
+        {layer === "focus" && !adrift && stopViews.length > 0 && selectedStop === null && (
+          <p className="pointer-events-none absolute inset-x-0 bottom-0 bg-ink/85 px-3 py-2 text-[12px] leading-normal text-surface">
+            {t("capture.focusHint")}
           </p>
         )}
         {layer === "markers" && markerViews.length > 0 && selectedN === null && (
@@ -234,39 +370,62 @@ export function EvidenceFrame({
   markerViews,
   selectedFinding,
   onSelectMarker,
+  stopViews,
+  selectedStop,
+  stopPlacement,
+  onSelectStop,
+  capture,
+  onBackToFirst,
   quickFromSite = false,
   onRunFull,
   pending = false,
 }: {
   result: ScanResult;
   host: string;
+  capture: ActiveCapture;
+  onBackToFirst: () => void;
   layer: Layer;
   collapsed: boolean;
   onToggleCollapse: () => void;
   markerViews: MarkerView[];
   selectedFinding: FindingView | null;
   onSelectMarker: (markerN: number) => void;
+  stopViews: StopView[];
+  selectedStop: number | null;
+  stopPlacement: StopPlacement | null;
+  onSelectStop: (n: number) => void;
   quickFromSite?: boolean;
   onRunFull?: () => void;
   pending?: boolean;
 }) {
   const t = useT();
 
+  const contextual = capture.id !== VIEWPORT_CAPTURE;
+
   const legend = collapsed
     ? t("capture.collapsed")
-    : result.screenshot
-      ? t("capture.frameLabel", { width: 1200, height: 800 })
-      : pending
-        ? t("capture.beingTaken")
-        : t("capture.screenshot");
+    : contextual
+      ? t("capture.regionLabel", { docY: Math.round(capture.docY) })
+      : result.screenshot
+        ? t("capture.frameLabel", { width: 1200, height: 800 })
+        : pending
+          ? t("capture.beingTaken")
+          : t("capture.screenshot");
 
   return (
     <div className="border border-ink bg-surface">
       <div className="flex items-center justify-between gap-3 border-b border-ink px-3 py-2.5">
         <SectionKicker>{legend}</SectionKicker>
-        <Button variant="secondary" size="sm" onClick={onToggleCollapse}>
-          {collapsed ? t("capture.show") : t("capture.collapse")}
-        </Button>
+        <div className="flex shrink-0 items-center gap-2">
+          {contextual && !collapsed && (
+            <Button variant="tertiary" size="sm" onClick={onBackToFirst}>
+              {t("capture.backToFirst")}
+            </Button>
+          )}
+          <Button variant="secondary" size="sm" onClick={onToggleCollapse}>
+            {collapsed ? t("capture.show") : t("capture.collapse")}
+          </Button>
+        </div>
       </div>
 
       {!collapsed && (
@@ -277,7 +436,11 @@ export function EvidenceFrame({
             markerViews={markerViews}
             selectedFinding={selectedFinding}
             onSelectMarker={onSelectMarker}
-            screenshot={result.screenshot}
+            stopViews={stopViews}
+            selectedStop={selectedStop}
+            stopPlacement={stopPlacement}
+            onSelectStop={onSelectStop}
+            capture={capture}
             height={540}
             quickFromSite={quickFromSite}
             onRunFull={onRunFull}

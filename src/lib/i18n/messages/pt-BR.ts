@@ -28,8 +28,27 @@ export const ptBR: Catalog = {
   "nav.account": "Conta",
   "nav.signOut": "Sair",
   "layer.markersShort": "Marcadores",
+  "capture.stopOutside":
+    "A parada {n} fica cerca de {docY}px abaixo do topo. Nenhuma captura deste relatório cobre esse ponto.",
+  "capture.stopInsideScroller":
+    "A parada {n} está dentro de uma área rolável ({context}). Esta captura foi feita com essa área em repouso, então a parada não é desenhada onde a caminhada a encontrou.",
+  "capture.stopInsideScrollerPlain":
+    "A parada {n} está dentro de uma área rolável. Esta captura foi feita com essa área em repouso, então a parada não é desenhada onde a caminhada a encontrou.",
+  "capture.stopUnplaced": "A parada {n} não tinha posição mensurável na página.",
+  "capture.noStopsLanded": "Nenhuma parada do foco caiu dentro desta captura.",
+  "capture.focusHint": "Escolha uma parada no caminho de foco para acompanhá-la aqui.",
+  "capture.stopAria": "Parada de foco {n}",
+  "capture.regionLabel": "Captura da página a {docY}px do topo",
+  "capture.backToFirst": "Voltar à primeira captura",
+  "capture.regionMissedTitle": "Esta área não foi capturada",
+  "capture.regionMissedTime":
+    "A auditoria ficou sem tempo antes de fotografar a página em torno de {docY}px do topo. O resto do relatório não é afetado.",
+  "capture.regionMissedBytes":
+    "O relatório atingiu o peso que pode carregar antes de fotografar a página em torno de {docY}px do topo. O resto do relatório não é afetado.",
+  "capture.regionMissedFailed":
+    "A página não respondeu enquanto a área em torno de {docY}px do topo era fotografada. O resto do relatório não é afetado.",
   "capture.noMarkersLanded":
-    "Nenhum marcador cabe nesta captura: todos os elementos afetados estão fora da área capturada ou não têm caixa visível.",
+    "Nenhum problema está marcado nesta captura. Abra um problema e o relatório vai para a parte da página de onde ele veio.",
   "nav.signIn": "Entrar",
   "language.label": "Idioma",
   "language.followBrowser": "Padrão do navegador",
@@ -212,6 +231,8 @@ export const ptBR: Catalog = {
   "scanWarning.screenshotUnavailable": "Não deu tempo de tirar a captura de tela.",
   "scanWarning.fixDetailsSkipped":
     "Alguns problemas mostram orientação geral em vez de uma correção específica, e identificam o elemento apenas pelo seletor.",
+  "scanWarning.regionsSkipped":
+    "Algumas áreas da página abaixo da primeira captura não foram fotografadas, então alguns problemas ficam sem imagem de onde estão.",
   "scanWarning.markersSkipped": "Não foi possível posicionar os marcadores na captura.",
   "scanWarning.contentUnsettled": "A página ainda estava carregando quando a auditoria rodou.",
   "scanWarning.verificationSkipped":
@@ -482,6 +503,8 @@ export const ptBR: Catalog = {
   "home.lens.frameLabel": "Captura \u00b7 escala 43%",
   "layer.rail": "Sobreposição",
   "layer.markersTitle": "Mostrar os marcadores de problema na captura",
+  "layer.focusShort": "Caminho de foco",
+  "layer.focusTitle": "Desenhar o caminho do foco sobre a captura",
   "layer.none": "Sem sobreposição",
   "layer.noneTitle": "Esconder a sobreposição",
 
@@ -512,7 +535,7 @@ export const ptBR: Catalog = {
   },
   "detail.moreSelectors": "+{count} outros",
   "capture.frameLabel": "Captura \u00b7 {width} \u00d7 {height}",
-  "capture.shownOnScreenshot": "{count} visíveis na captura",
+  "capture.shownOnScreenshot": "{count} marcados em alguma captura",
   "detail.elementsAffected": {
     one: "elemento afetado",
     other: "elementos afetados",
@@ -806,7 +829,7 @@ export const ptBR: Catalog = {
     "a auditoria completa para incluir a captura de tela, as verificações de teclado e o teste das correções.",
   "results.siteAuditPassNote":
     "Análise da auditoria de site: regras do axe e as detecções próprias deste projeto. Teclado, interface expandida e verificação de correções rodam na auditoria completa da página.",
-  "results.noMarkerOffScreenshot": "sem marcador \u00b7 fora da captura",
+  "results.noMarkerOffScreenshot": "sem marcador \u00b7 sem imagem",
   "wcagReading.failsBy": "Reprova em",
 
   "home.howItWorks.kicker": "Como funciona",
@@ -1016,7 +1039,7 @@ export const ptBR: Catalog = {
   "marker.docLevel":
     "Aplica-se ao documento inteiro ou à estrutura da página, não a um único elemento posicionado.",
   "marker.offCapture":
-    "O elemento afetado está fora da parte da página que capturamos (os primeiros 1200\u00d7800 pixels), está oculto, ou não tem caixa visível na captura.",
+    "O elemento afetado está numa parte da página que nenhuma captura deste relatório cobre, está oculto, ou não tem caixa visível.",
 
   "wcag.1.1.1": "Conteúdo não textual",
   "wcag.1.3.1": "Informações e relações",

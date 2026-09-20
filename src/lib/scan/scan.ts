@@ -2,7 +2,7 @@ import path from "path";
 import type { BrowserContext, Page } from "playwright-core";
 import { acquireBrowser, closeSharedBrowser } from "./browser";
 import { type ElementInfo } from "./remediate";
-import { collectKeyboard, type KeyboardReport } from "./keyboard";
+import { collectKeyboard, type FocusStop, type KeyboardReport } from "./keyboard";
 import { collectContexts, type ContextReport } from "./contexts";
 import { collectTargetSize } from "./target-size";
 import { collectReducedMotion } from "./reduced-motion";
@@ -14,9 +14,24 @@ import { OPTIONAL_ORDER, ScanPolicy, STAGES, type StageId } from "./policy";
 import { CONTENT_SIGNATURE, waitForContentReady } from "./page-ready";
 import { AXE_TAGS } from "./dom/axe";
 import type { DomRect } from "./dom/rects";
+import { SCAN_VIEWPORT } from "./types";
 import { DOM_ENGINE_VERSION } from "./dom/engine-api";
 import type { ElementIdentity } from "./dom/identity";
-import { buildMarkers, markerTargets } from "./markers";
+import {
+  buildMarkers,
+  markerTargets,
+  placeMarkers,
+  type MarkerNumbers,
+  type MarkerTarget,
+} from "./markers";
+import {
+  findingAnchors,
+  planCoverage,
+  REGION_BUDGET,
+  stopAnchors,
+  type Coverage,
+  type RegionBudget,
+} from "./regions";
 import { SCORING_VERSION, scoredViolations } from "./scored";
 import {
   attachFixGroups,
@@ -28,12 +43,15 @@ import {
   planVerification,
   type AxeResults,
 } from "./violations";
-import { captureScreenshot, SCREENSHOT_QUALITY } from "./screenshot";
+import { captureScreenshot, SCREENSHOT_MIME, SCREENSHOT_QUALITY } from "./screenshot";
 import { installNetworkGuard } from "./ssrf";
 import type {
   FixVerification,
+  RegionStop,
   ScanErrorCode,
+  ScanMarker,
   ScanPhase,
+  ScanRegion,
   ScanResult,
   ScanViolation,
   ScanWarningCode,
@@ -42,7 +60,7 @@ import { axeLocaleFor } from "../i18n/axe-locale";
 import { DEFAULT_REPORT_LOCALE, type ReportLocale } from "../i18n/locale";
 import { translator, type Translate } from "../i18n/t";
 
-const VIEWPORT = { width: 1200, height: 800 };
+const VIEWPORT = SCAN_VIEWPORT;
 
 const CONTEXT_OPTIONS = {
   viewport: VIEWPORT,
@@ -111,6 +129,7 @@ function warningText(t: Translate): Record<ScanWarningCode, string> {
     "content-unsettled": t("scanWarning.contentUnsettled"),
     "verification-skipped": t("scanWarning.verificationSkipped"),
     "audits-skipped": t("scanWarning.auditsSkipped"),
+    "regions-skipped": t("scanWarning.regionsSkipped"),
     "reduced-motion-skipped": t("warning.reducedMotionSkipped"),
     "keyboard-skipped": t("scanWarning.keyboardSkipped"),
     "lazy-content-skipped": t("scanWarning.lazyContentSkipped"),
@@ -184,6 +203,171 @@ async function sessionIsGone(page: Page): Promise<boolean> {
   } finally {
     if (timer) clearTimeout(timer);
   }
+}
+
+const REGION_SETTLE_MS = 250;
+
+async function captureRegions(
+  page: Page,
+  input: {
+    targets: MarkerTarget[];
+    rects: (DomRect | null)[];
+    stops: FocusStop[];
+    markerNumbers: MarkerNumbers;
+    budget: RegionBudget;
+    onMarker: (markers: ScanMarker[]) => void;
+  },
+): Promise<{ regions: ScanRegion[]; coverage: Coverage } | undefined> {
+  const page_ = await page.evaluate(() => ({
+    docHeight: window.__accessCheckDom!.documentHeight(),
+    stickyInset: window.__accessCheckDom!.stickyInset(),
+    scrollY: Math.round(window.scrollY),
+  }));
+
+  const fromFindings = findingAnchors(input.targets, input.rects, VIEWPORT);
+  const fromStops = stopAnchors(input.stops, VIEWPORT);
+
+  const coverage = planCoverage(
+    {
+      anchors: [...fromFindings.anchors, ...fromStops.anchors],
+      firstCapture: [...fromFindings.firstCapture, ...fromStops.firstCapture],
+      unanchorable: [...fromFindings.unanchorable, ...fromStops.unanchorable],
+    },
+    { viewport: VIEWPORT, docHeight: page_.docHeight, stickyInset: page_.stickyInset },
+    input.budget,
+  );
+
+  if (coverage.regions.length === 0) return { regions: [], coverage };
+
+  const stopSelectors = input.stops.map((stop) => stop.selector);
+  const regions: ScanRegion[] = [];
+  const startedAt = Date.now();
+  let spentBytes = 0;
+
+  try {
+    for (const planned of coverage.regions) {
+      if (planned.missed) {
+        regions.push({ ...bare(planned), image: null, stops: [] });
+        continue;
+      }
+      if (Date.now() - startedAt > input.budget.maxMs) {
+        regions.push({ ...bare(planned), image: null, missed: "time", stops: [] });
+        continue;
+      }
+
+      const landedAt = await page.evaluate(
+        (docY) => window.__accessCheckDom!.scrollToDocY(docY),
+        planned.docY,
+      );
+      await page.waitForTimeout(REGION_SETTLE_MS);
+
+      const [freshTargets, freshStops] = await Promise.all([
+        page.evaluate(
+          (selectors) => window.__accessCheckDom!.collectRects(selectors),
+          input.targets.map((t) => t.selector),
+        ),
+        page.evaluate(
+          (selectors) => window.__accessCheckDom!.collectRects(selectors),
+          stopSelectors,
+        ),
+      ]);
+
+      const shot = await page
+        .screenshot({
+          type: "jpeg",
+          quality: SCREENSHOT_QUALITY,
+          clip: { x: 0, y: 0, ...VIEWPORT },
+          animations: "disabled",
+        })
+        .catch(() => null);
+
+      if (!shot) {
+        regions.push({ ...bare(planned), image: null, missed: "failed", stops: [] });
+        continue;
+      }
+
+      const image = `data:${SCREENSHOT_MIME};base64,${shot.toString("base64")}`;
+      spentBytes += image.length;
+      if (spentBytes > input.budget.maxBytes) {
+        regions.push({ ...bare(planned), image: null, missed: "bytes", stops: [] });
+        break;
+      }
+
+      input.onMarker(
+        placeMarkers(input.targets, freshTargets, VIEWPORT, planned.id, input.markerNumbers),
+      );
+
+      regions.push({
+        ...bare(planned),
+        docY: landedAt,
+        image,
+        stops: placeStops(input.stops, freshStops, VIEWPORT),
+      });
+    }
+  } finally {
+    await page
+      .evaluate((y) => window.__accessCheckDom!.scrollToDocY(y), page_.scrollY)
+      .catch(() => null);
+  }
+
+  return { regions, coverage: { ...coverage, ...recount(coverage, regions) } };
+}
+
+function bare(planned: Coverage["regions"][number]): Omit<ScanRegion, "image" | "stops"> {
+  return {
+    id: planned.id,
+    docY: planned.docY,
+    width: planned.width,
+    height: planned.height,
+    ...(planned.missed ? { missed: planned.missed } : {}),
+  };
+}
+
+function placeStops(
+  stops: FocusStop[],
+  rects: (DomRect | null)[],
+  viewport: { width: number; height: number },
+): RegionStop[] {
+  const placed: RegionStop[] = [];
+
+  stops.forEach((stop, i) => {
+    const r = rects[i];
+    if (!r || r.w === 0 || r.h === 0 || r.scrolled) return;
+    if (r.y < 0 || r.y > viewport.height || r.x < 0 || r.x > viewport.width) return;
+
+    const top = Math.max(0, r.y);
+    const height = Math.min(r.h - (top - r.y), viewport.height - top);
+    placed.push({
+      n: stop.n,
+      left: (r.x / viewport.width) * 100,
+      top: (top / viewport.height) * 100,
+      width: (r.w / viewport.width) * 100,
+      height: (Math.max(height, 4) / viewport.height) * 100,
+    });
+  });
+
+  return placed;
+}
+
+function recount(
+  coverage: Coverage,
+  regions: ScanRegion[],
+): Pick<Coverage, "covered" | "uncovered"> {
+  const missed = new Map(regions.map((r) => [r.id, r.missed]));
+  const covered: Coverage["covered"] = [];
+  const uncovered: Coverage["uncovered"] = coverage.uncovered.filter(
+    (u) => u.reason === "inside-scroller" || u.reason === "unplaced",
+  );
+
+  for (const planned of coverage.regions) {
+    const reason = missed.get(planned.id);
+    for (const held of planned.holds) {
+      if (reason) uncovered.push({ ...held, reason });
+      else covered.push({ ...held, regionId: planned.id });
+    }
+  }
+
+  return { covered, uncovered };
 }
 
 export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<ScanResult> {
@@ -449,7 +633,8 @@ async function runScanAttempt(
       )
     ).value;
 
-    const markers = buildMarkers(targets, rects, VIEWPORT);
+    const markerNumbers: MarkerNumbers = new Map();
+    const markers = buildMarkers(targets, rects, VIEWPORT, markerNumbers);
 
     const counts = buildCounts(violations, {
       passed: axe.passes.length,
@@ -519,6 +704,8 @@ async function runScanAttempt(
     }
 
     let screenshot: string | null = null;
+    let regions: ScanRegion[] | undefined;
+    let coverage: Coverage | undefined;
     let audits: AuditsReport | undefined;
     let keyboard: KeyboardReport | undefined;
     let contexts: ContextReport | undefined;
@@ -605,6 +792,31 @@ async function runScanAttempt(
         if (!contexts) policy.skip("contexts");
       },
 
+      regions: async () => {
+        const collected = await track("regions", () =>
+          policy.run<{ regions: ScanRegion[]; coverage: Coverage } | undefined>(
+            "regions",
+            (allowanceMs) =>
+              captureRegions(page, {
+                targets,
+                rects,
+                stops: keyboard?.focusPath ?? [],
+                markerNumbers,
+                budget: { ...REGION_BUDGET, maxMs: Math.min(REGION_BUDGET.maxMs, allowanceMs) },
+                onMarker: (found) => markers.push(...found),
+              }),
+            undefined,
+          ),
+        );
+        if (!collected.value) {
+          if (collected.timedOut) policy.skip("regions");
+          return;
+        }
+        regions = collected.value.regions;
+        coverage = collected.value.coverage;
+        if (regions.some((r) => r.missed)) policy.warn("regions-skipped");
+      },
+
       navigation: async () => noop(),
       prime: async () => noop(),
       "content-ready": async () => noop(),
@@ -614,6 +826,7 @@ async function runScanAttempt(
     };
 
     const wanted: Record<string, boolean> = {
+      regions: doKeyboard || doScreenshot,
       verify: doVerify,
       audits: doAudits,
       screenshot: doScreenshot,
@@ -637,8 +850,12 @@ async function runScanAttempt(
       manualReview: axe.incomplete.length,
     });
 
+    void coverage;
+
     return {
       ...core,
+      markers,
+      regions,
       durationMs: Date.now() - startedAt,
       screenshot,
       keyboard,

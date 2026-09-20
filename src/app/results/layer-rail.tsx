@@ -44,12 +44,14 @@ export function LayerRail({
   layer,
   setLayer,
   layerDisabled,
+  focusDisabled,
   collapsed,
   onToggleCollapse,
 }: {
   layer: Layer;
   setLayer: (l: Layer) => void;
   layerDisabled: boolean;
+  focusDisabled: boolean;
   collapsed: boolean;
   onToggleCollapse: () => void;
 }) {
@@ -62,7 +64,7 @@ export function LayerRail({
         <RailButton
           key={l.key}
           active={layer === l.key}
-          disabled={layerDisabled && l.key !== "none"}
+          disabled={(layerDisabled && l.key !== "none") || (focusDisabled && l.key === "focus")}
           title={t(l.title)}
           onClick={() => setLayer(l.key)}
         >

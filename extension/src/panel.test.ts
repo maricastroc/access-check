@@ -1041,3 +1041,18 @@ describe("the panel speaks about verification only when it happened", () => {
     }
   });
 });
+
+describe("the extension takes no contextual captures", () => {
+  it("never scrolls the audited page to photograph it", () => {
+    expect(audit).not.toContain("scrollToDocY");
+    expect(audit).not.toContain("stickyInset");
+    expect(audit).not.toContain("planCoverage");
+    expect(audit).not.toContain("scan/regions");
+    expect(audit).not.toMatch(/\bregions:/);
+  });
+
+  it("publishes only the visible tab as its capture", () => {
+    expect(background).toContain("captureVisibleTab");
+    expect(background).not.toContain("captureBeyondViewport");
+  });
+});

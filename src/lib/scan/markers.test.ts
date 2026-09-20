@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildMarkers, markerTargets, MAX_MARKERS, type MarkerTarget } from "./markers";
 import type { DomRect } from "./dom/rects";
+import { VIEWPORT_CAPTURE } from "./types";
 
 const VIEWPORT = { width: 1200, height: 800 };
 
@@ -10,7 +11,16 @@ const target = (n: number): MarkerTarget => ({
   label: `finding ${n}`,
 });
 
-const rect = (over: Partial<DomRect> = {}): DomRect => ({ x: 100, y: 200, w: 80, h: 40, ...over });
+const rect = (over: Partial<DomRect> = {}): DomRect => ({
+  x: 100,
+  y: 200,
+  w: 80,
+  h: 40,
+  docX: 100,
+  docY: 200,
+  scrolled: false,
+  ...over,
+});
 
 describe("markers on the screenshot", () => {
   it("places a rectangle as a percentage of the viewport", () => {
@@ -102,5 +112,18 @@ describe("which elements get a marker", () => {
         { id: "x", impact: "serious", help: "H", description: "d", tags: [], nodes: [] },
       ]),
     ).toEqual([]);
+  });
+});
+
+describe("which capture a marker was measured in", () => {
+  it("tags every marker with the capture it came from", () => {
+    const markers = buildMarkers([target(1), target(2)], [rect(), rect({ y: 400 })], VIEWPORT);
+
+    expect(markers).toHaveLength(2);
+    for (const marker of markers) expect(marker.captureId).toBe(VIEWPORT_CAPTURE);
+  });
+
+  it("names the first screenshot, not an invented capture", () => {
+    expect(VIEWPORT_CAPTURE).toBe("viewport");
   });
 });

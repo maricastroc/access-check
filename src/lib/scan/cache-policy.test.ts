@@ -49,3 +49,44 @@ describe("what a reading carries into the cache", () => {
     expect(trimForCache(original)).toEqual(original);
   });
 });
+
+describe("what the cache drops first when a scan is heavy", () => {
+  const region = (id: string, chars: number) => ({
+    id,
+    docY: 1_000,
+    width: 1200,
+    height: 800,
+    image: `data:image/jpeg;base64,${"x".repeat(chars)}`,
+    stops: [],
+  });
+
+  it("keeps a scan that fits, images and all", () => {
+    const light = { ...result({}), screenshot: "data:x", regions: [region("r1", 1_000)] };
+    expect(trimForCache(light as never)).toEqual(light);
+  });
+
+  it("drops the contextual captures before the first screenshot", () => {
+    const heavy = {
+      ...result({}),
+      screenshot: `data:image/jpeg;base64,${"s".repeat(100_000)}`,
+      regions: [region("r1", 600_000), region("r2", 600_000)],
+    };
+    const trimmed = trimForCache(heavy as never);
+
+    expect(trimmed.screenshot).toBe(heavy.screenshot);
+    expect(trimmed.regions?.every((r) => r.image === null)).toBe(true);
+    expect(trimmed.regions?.every((r) => r.missed === "bytes")).toBe(true);
+  });
+
+  it("drops the first screenshot only when dropping the regions was not enough", () => {
+    const enormous = {
+      ...result({}),
+      screenshot: `data:image/jpeg;base64,${"s".repeat(2_000_000)}`,
+      regions: [region("r1", 10)],
+    };
+    const trimmed = trimForCache(enormous as never);
+
+    expect(trimmed.screenshot).toBeNull();
+    expect(trimmed.regions?.[0].image).toBeNull();
+  });
+});

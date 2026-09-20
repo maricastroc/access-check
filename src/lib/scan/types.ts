@@ -15,6 +15,7 @@ export type ScanWarningCode =
   | "content-unsettled"
   | "verification-skipped"
   | "audits-skipped"
+  | "regions-skipped"
   | "reduced-motion-skipped"
   | "keyboard-skipped"
   | "lazy-content-skipped"
@@ -72,8 +73,33 @@ export type ScanViolation = {
   contexts?: string[];
 };
 
+export const VIEWPORT_CAPTURE = "viewport";
+
+export const SCAN_VIEWPORT = { width: 1200, height: 800 };
+
+export type RegionMiss = "time" | "bytes" | "failed";
+
+export type RegionStop = {
+  n: number;
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+};
+
+export type ScanRegion = {
+  id: string;
+  docY: number;
+  width: number;
+  height: number;
+  image: string | null;
+  missed?: RegionMiss;
+  stops: RegionStop[];
+};
+
 export type ScanMarker = {
   n: number;
+  captureId?: string;
   severity: Severity;
   label: string;
   left: number;
@@ -126,6 +152,7 @@ export type ScanResult = {
   passed: string[];
   markers: ScanMarker[];
   identities?: Record<string, ElementIdentity>;
+  regions?: ScanRegion[];
   keyboard?: KeyboardReport;
   contexts?: ContextReport;
   audits?: AuditsReport;

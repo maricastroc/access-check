@@ -249,10 +249,17 @@ npm run build:extension
 > Then open `chrome://extensions`, turn on **Developer mode**, choose **Load unpacked** and select the `extension/dist` folder.
 > Click the AccessCheck icon on any tab to open the side panel.
 
-> Run the extension gates (each drives a real Chrome through Playwright):
+> Run the browser gates (each drives a real Chrome through Playwright):
 
 ```bash
 npm run check:manifest && npm run check:extension && npm run check:deep && npm run check:panel
+```
+
+> And the one for the web report, which builds the app and drives it against a fixed
+> result covering every capture state:
+
+```bash
+npm run check:results
 ```
 
 <br/>

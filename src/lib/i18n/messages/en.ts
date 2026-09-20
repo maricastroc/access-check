@@ -24,8 +24,27 @@ export const en = {
   "nav.account": "Account",
   "nav.signOut": "Sign out",
   "layer.markersShort": "Markers",
+  "capture.stopOutside":
+    "Stop {n} sits about {docY}px down the page. No screenshot in this report covers it.",
+  "capture.stopInsideScroller":
+    "Stop {n} is inside a scrolling area ({context}). This screenshot was taken with that area at rest, so the stop is not drawn where the walk found it.",
+  "capture.stopInsideScrollerPlain":
+    "Stop {n} is inside a scrolling area. This screenshot was taken with that area at rest, so the stop is not drawn where the walk found it.",
+  "capture.stopUnplaced": "Stop {n} had no measurable position on the page.",
+  "capture.noStopsLanded": "No focus stop landed inside this screenshot.",
+  "capture.focusHint": "Pick a stop in the focus path to follow it here.",
+  "capture.stopAria": "Focus stop {n}",
+  "capture.regionLabel": "Screenshot of the page at {docY}px down",
+  "capture.backToFirst": "Back to the first screenshot",
+  "capture.regionMissedTitle": "This area was not captured",
+  "capture.regionMissedTime":
+    "The audit ran out of time before it could photograph the page around {docY}px down. Everything else in the report is unaffected.",
+  "capture.regionMissedBytes":
+    "The report reached the weight it may carry before it could photograph the page around {docY}px down. Everything else in the report is unaffected.",
+  "capture.regionMissedFailed":
+    "The page did not answer while the area around {docY}px down was being photographed. Everything else in the report is unaffected.",
   "capture.noMarkersLanded":
-    "No marker fits this screenshot: every affected element sits outside the captured area, or has no visible box.",
+    "No finding is marked on this screenshot. Open a finding and the report moves to the part of the page it came from.",
   "nav.signIn": "Sign in",
   "language.label": "Language",
   "language.followBrowser": "Browser default",
@@ -205,6 +224,8 @@ export const en = {
   "scanWarning.screenshotUnavailable": "The screenshot could not be taken in time.",
   "scanWarning.fixDetailsSkipped":
     "Some findings show general guidance instead of a specific suggested fix, and name their elements by selector only.",
+  "scanWarning.regionsSkipped":
+    "Some areas of the page below the first screenshot were not captured, so a few findings have no picture of where they are.",
   "scanWarning.markersSkipped": "The markers could not be placed on the screenshot.",
   "scanWarning.contentUnsettled": "The page was still loading when the audit ran.",
   "scanWarning.verificationSkipped": "Fixes were not tested on a copy of the page this time.",
@@ -462,6 +483,8 @@ export const en = {
   "home.lens.frameLabel": "Screenshot \u00b7 scale 43%",
   "layer.rail": "Overlay",
   "layer.markersTitle": "Show the issue markers on the screenshot",
+  "layer.focusShort": "Focus path",
+  "layer.focusTitle": "Draw the keyboard focus path on the screenshot",
   "layer.none": "No overlay",
   "layer.noneTitle": "Hide the overlay",
 
@@ -492,7 +515,7 @@ export const en = {
   },
   "detail.moreSelectors": "+{count} more",
   "capture.frameLabel": "Screenshot \u00b7 {width} \u00d7 {height}",
-  "capture.shownOnScreenshot": "{count} shown on the screenshot",
+  "capture.shownOnScreenshot": "{count} marked on a screenshot",
   "detail.elementsAffected": {
     one: "element affected",
     other: "elements affected",
@@ -782,7 +805,7 @@ export const en = {
     "the full audit to add the screenshot, keyboard checks and fix testing.",
   "results.siteAuditPassNote":
     "Site-audit pass: axe rules and this project's own detections. Keyboard, expanded UI and fix verification run in the full page audit.",
-  "results.noMarkerOffScreenshot": "no marker \u00b7 outside the screenshot",
+  "results.noMarkerOffScreenshot": "no marker \u00b7 not pictured",
   "wcagReading.failsBy": "Fails by",
 
   "home.howItWorks.kicker": "How it works",
@@ -984,13 +1007,13 @@ export const en = {
   "marker.bestPractice":
     "Best practice, reported as coverage. It is not tied to one positioned element.",
   "marker.context":
-    "Found in a different context (mobile size or an opened state), so it is not on the desktop screenshot.",
+    "Found in a different context (mobile size or an opened state), so it is not on any desktop screenshot.",
   "marker.keyboard":
     "From the keyboard pass, so it appears on the focus path rather than as an issue marker.",
   "marker.docLevel":
     "Applies to the whole document or page structure, not a single positioned element.",
   "marker.offCapture":
-    "The affected element is outside the part of the page we captured (the first 1200\u00d7800 pixels), is hidden, or has no visible box on the screenshot.",
+    "The affected element sits in a part of the page no screenshot in this report covers, is hidden, or has no visible box.",
 
   "wcag.1.1.1": "Non-text Content",
   "wcag.1.3.1": "Info and Relationships",

@@ -86,6 +86,29 @@ const SCROLLER_FIXTURE = `<!doctype html>
   </body>
 </html>`;
 
+const TALL_FIXTURE = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Tall page</title>
+    <style>
+      body { margin: 0; background: #ffffff; color: #111827 }
+      header { position: sticky; top: 0; height: 64px; background: #14342b; color: #f4efe2 }
+      .band { height: 760px; border-bottom: 1px solid #e5e7eb; padding: 16px }
+      .faint { color: #b4b4b4; background: #ffffff }
+    </style>
+  </head>
+  <body>
+    <header>Sticky header</header>
+    <main>
+      <div class="band"><h1>Tall page</h1><a href="/near">Near the top</a></div>
+      <div class="band"><a href="/mid">Halfway down</a><p class="faint">Low contrast halfway down.</p></div>
+      <div class="band"><a href="/deep">Deep down</a><img src="/deep.png" /></div>
+      <div class="band"><a href="/deeper">Deeper still</a></div>
+    </main>
+  </body>
+</html>`;
+
 const repoFile = (rel: string) => fileURLToPath(new URL(`../../../../${rel}`, import.meta.url));
 
 const HOSTED_ENGINE = repoFile("dom-engine/dom-engine.js");
@@ -108,7 +131,14 @@ beforeAll(async () => {
       "content-type": "text/html; charset=utf-8",
       "content-security-policy": "default-src 'self'; script-src 'self'",
     });
-    res.end((req.url ?? "").startsWith("/scroller") ? SCROLLER_FIXTURE : FIXTURE);
+    const path = req.url ?? "";
+    res.end(
+      path.startsWith("/scroller")
+        ? SCROLLER_FIXTURE
+        : path.startsWith("/tall")
+          ? TALL_FIXTURE
+          : FIXTURE,
+    );
   });
   server.on("connection", (socket) => {
     sockets.add(socket);
@@ -635,6 +665,138 @@ describe("naming the element a developer has to find", () => {
       for (const generated of ["sc-", "css-", "jsx-", "hLSTQF", "gBdqXv", "lg\\:", "dark\\:"]) {
         expect(label, `${selector} leaked ${generated}`).not.toContain(generated);
       }
+    }
+  });
+});
+
+describe("reading the page geometry a contextual capture needs", () => {
+  let geometry: Page;
+
+  const TALL = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Tall</title>
+<style>
+  body { margin: 0 }
+  header { position: sticky; top: 0; height: 64px; background: #14342b; color: #fff }
+  .band { height: 900px; border-bottom: 1px solid #ccc }
+  #feed { height: 120px; overflow-y: auto }
+  .row { height: 200px }
+</style></head>
+<body>
+  <header>Sticky</header>
+  <div class="band" id="one">one</div>
+  <div class="band" id="two"><button id="deep">Deep button</button></div>
+  <div id="feed"><div class="row"><a id="inside" href="/x">Inside a scroller</a></div><div class="row">b</div></div>
+  <div class="band" id="three">three</div>
+</body></html>`;
+
+  beforeAll(async () => {
+    const context = await browser.newContext({ viewport: { width: 1200, height: 800 } });
+    geometry = await context.newPage();
+    await geometry.setContent(TALL);
+    await geometry.addScriptTag({ path: HOSTED_ENGINE });
+  }, 90_000);
+
+  it("gives every rectangle its document position", async () => {
+    const [rect] = await geometry.evaluate(
+      (selectors) => window.__accessCheckDom!.collectRects(selectors),
+      ["#deep"],
+    );
+
+    expect(rect).not.toBeNull();
+    expect(rect!.docY).toBeGreaterThan(900);
+    expect(rect!.scrolled).toBe(false);
+  });
+
+  it("says when a rectangle lives inside something that scrolls on its own", async () => {
+    const [rect] = await geometry.evaluate(
+      (selectors) => window.__accessCheckDom!.collectRects(selectors),
+      ["#inside"],
+    );
+
+    expect(rect!.scrolled).toBe(true);
+  });
+
+  it("measures the sticky header without changing the page", async () => {
+    const before = await geometry.evaluate(() => document.body.innerHTML);
+    const inset = await geometry.evaluate(() => window.__accessCheckDom!.stickyInset());
+    const after = await geometry.evaluate(() => document.body.innerHTML);
+
+    expect(inset).toBeGreaterThanOrEqual(64);
+    expect(after).toBe(before);
+  });
+
+  it("scrolls to a document position and reports where it landed", async () => {
+    const landed = await geometry.evaluate(() => window.__accessCheckDom!.scrollToDocY(1_200));
+    expect(landed).toBe(1_200);
+
+    const past = await geometry.evaluate(() => window.__accessCheckDom!.scrollToDocY(999_999));
+    const height = await geometry.evaluate(() => window.__accessCheckDom!.documentHeight());
+    expect(past).toBe(height - 800);
+
+    await geometry.evaluate(() => window.__accessCheckDom!.scrollToDocY(0));
+  });
+
+  it("reports a different rectangle once the page has scrolled, and the same document position", async () => {
+    const at = (docY: number) =>
+      geometry.evaluate((y) => {
+        window.__accessCheckDom!.scrollToDocY(y);
+        return window.__accessCheckDom!.collectRects(["#deep"])[0];
+      }, docY);
+
+    const top = await at(0);
+    const near = await at(900);
+    await geometry.evaluate(() => window.__accessCheckDom!.scrollToDocY(0));
+
+    expect(near!.y).not.toBe(top!.y);
+    expect(Math.round(near!.docY)).toBe(Math.round(top!.docY));
+  });
+});
+
+describe("capturing the parts of a page the first screenshot cannot reach", () => {
+  let tall: ScanResult;
+
+  beforeAll(async () => {
+    tall = await runScan(`${origin}/tall`, {
+      screenshot: true,
+      keyboard: true,
+      contexts: false,
+      audits: false,
+      verifyFixes: false,
+      budgetMs: 90_000,
+    });
+  }, 120_000);
+
+  it("photographs the areas that hold something worth pointing at", () => {
+    const regions = tall.regions ?? [];
+    expect(regions.length).toBeGreaterThan(0);
+    expect(regions.every((r) => r.docY > 0)).toBe(true);
+    expect(regions.some((r) => r.image !== null)).toBe(true);
+  });
+
+  it("names the capture each marker was measured in", () => {
+    expect(tall.markers.length).toBeGreaterThan(0);
+    for (const marker of tall.markers) expect(marker.captureId).toBeTruthy();
+  });
+
+  it("places stops from the page as it stood when the picture was taken", () => {
+    const captured = (tall.regions ?? []).filter((r) => r.image !== null);
+    const placed = captured.flatMap((r) => r.stops);
+
+    expect(placed.length).toBeGreaterThan(0);
+    for (const stop of placed) {
+      expect(stop.top).toBeGreaterThanOrEqual(0);
+      expect(stop.top).toBeLessThanOrEqual(100);
+      expect(stop.left).toBeGreaterThanOrEqual(0);
+    }
+  });
+
+  it("leaves the reader's scroll position alone", () => {
+    expect(tall.warnings?.some((w) => w.code === "walk-changed-page")).not.toBe(true);
+  });
+
+  it("offers no way to hide a fixed element to make a nicer picture", () => {
+    const engine = readFileSync(HOSTED_ENGINE, "utf8");
+    for (const mutation of ["freezeOverlays", "restoreOverlays", 'visibility = "hidden"']) {
+      expect(engine, `engine can ${mutation}`).not.toContain(mutation);
     }
   });
 });

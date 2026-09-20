@@ -1,6 +1,6 @@
 "use client";
 
-import type { ScanResult } from "@/lib/scan/types";
+import { VIEWPORT_CAPTURE, type ScanResult } from "@/lib/scan/types";
 import { locatedMarkers, type FindingView } from "@/lib/report/findings";
 import type { ScoreBreakdown } from "@/lib/report/score";
 import type { WcagReadingModel } from "@/lib/report/wcag";
@@ -26,7 +26,8 @@ import {
   STANDING_TONE,
 } from "@/lib/report/standing";
 import { focusPathLines } from "@/lib/report/focus-coverage";
-import { type Layer, type MarkerView } from "./report-ui";
+import type { StopPlacement } from "@/lib/scan/placement";
+import { type ActiveCapture, type Layer, type MarkerView, type StopView } from "./report-ui";
 import { useT } from "@/lib/i18n/provider";
 
 export function MobileReport({
@@ -43,6 +44,10 @@ export function MobileReport({
   markerViews,
   selectedStop,
   onSelectStop,
+  stopViews,
+  stopPlacement,
+  capture,
+  onBackToFirst,
   onStepStop,
   onSelectMarker,
   tab,
@@ -65,6 +70,10 @@ export function MobileReport({
   markerViews: MarkerView[];
   selectedStop: number | null;
   onSelectStop: (n: number) => void;
+  stopViews: StopView[];
+  stopPlacement: StopPlacement | null;
+  capture: ActiveCapture;
+  onBackToFirst: () => void;
   onStepStop: (delta: 1 | -1) => void;
   onSelectMarker: (markerN: number) => void;
   tab: "capture" | "findings";
@@ -136,13 +145,24 @@ export function MobileReport({
       {tab === "capture" ? (
         <div className="p-4">
           <div className="border border-ink">
+            {capture.id !== VIEWPORT_CAPTURE && (
+              <div className="flex justify-end border-b border-ink px-3 py-2">
+                <Button variant="tertiary" size="sm" onClick={onBackToFirst}>
+                  {t("capture.backToFirst")}
+                </Button>
+              </div>
+            )}
             <CaptureStage
               host={host}
               layer={layer}
               markerViews={markerViews}
               selectedFinding={selectedFinding}
               onSelectMarker={onSelectMarker}
-              screenshot={result.screenshot}
+              stopViews={stopViews}
+              selectedStop={selectedStop}
+              stopPlacement={stopPlacement}
+              onSelectStop={onSelectStop}
+              capture={capture}
               height={300}
               quickFromSite={quickFromSite}
               onRunFull={onRunFull}

@@ -10,7 +10,7 @@ import type { FixVerification } from "../types";
 import type { OverlayMark, OverlayReport } from "./overlay";
 import type { PaintCalm, PrimeReport } from "./prime";
 
-export const DOM_ENGINE_VERSION = 15;
+export const DOM_ENGINE_VERSION = 16;
 
 export type DomEngine = {
   version: number;
@@ -19,6 +19,9 @@ export type DomEngine = {
   collectIdentities(selectors: string[]): Record<string, ElementIdentity>;
   collectRects(selectors: string[]): (DomRect | null)[];
   readViewport(): { width: number; height: number };
+  documentHeight(): number;
+  stickyInset(): number;
+  scrollToDocY(docY: number): number;
   primeLazyContent(): Promise<PrimeReport>;
   waitForPaintCalm(baseline: number, maxMs: number): Promise<PaintCalm>;
   collectLiveRegionsRaw(): RawLiveRegions;

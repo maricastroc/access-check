@@ -10,6 +10,7 @@ export type StageId =
   | "axe"
   | "element-info"
   | "markers"
+  | "regions"
   | "verify"
   | "audits"
   | "screenshot"
@@ -45,6 +46,13 @@ export const STAGES: Record<StageId, StageSpec> = {
     affectsReport: true,
   },
   markers: { tier: "assembly", maxMs: 2_000, minMs: 300, warning: "markers-skipped" },
+  regions: {
+    tier: "optional",
+    maxMs: 5_000,
+    minMs: 800,
+    warning: "regions-skipped",
+    affectsReport: true,
+  },
   verify: {
     tier: "optional",
     maxMs: 6_000,
@@ -76,7 +84,14 @@ export const STAGES: Record<StageId, StageSpec> = {
   },
 };
 
-export const OPTIONAL_ORDER: StageId[] = ["verify", "audits", "screenshot", "keyboard", "contexts"];
+export const OPTIONAL_ORDER: StageId[] = [
+  "verify",
+  "audits",
+  "screenshot",
+  "keyboard",
+  "regions",
+  "contexts",
+];
 
 export const ASSEMBLY_RESERVE_MS = 6_000;
 export const ASSEMBLY_RESERVE_SHARE = 0.15;

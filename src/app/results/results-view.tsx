@@ -7,7 +7,17 @@ import { orderedMarkers } from "@/lib/report/findings";
 import { buildReportMarkdown, reportMarkdownFilename } from "@/lib/report/markdown";
 import { usePageAudit } from "@/hooks/use-page-audit";
 import { safeHost } from "./shared";
-import { buildMarkerViews, stepFocusStop, type Layer } from "./report-ui";
+import {
+  buildMarkerViews,
+  buildStopViews,
+  captureById,
+  captureForFinding,
+  markersOfCapture,
+  selectedStopPlacement,
+  stepFocusStop,
+  type Layer,
+} from "./report-ui";
+import { VIEWPORT_CAPTURE } from "@/lib/scan/types";
 import { buildReportView } from "./report-model";
 import { useFindingSelection } from "./use-finding-selection";
 import { TopBar } from "./top-bar";
@@ -64,7 +74,7 @@ export function ResultsView({
   const selection = useFindingSelection(view?.findings ?? NO_FINDINGS);
 
   const effectiveLayer: Layer = result?.screenshot ? layer : "none";
-  const markerViews = useMemo(
+  const allMarkerViews = useMemo(
     () => (result ? buildMarkerViews(orderedMarkers(result), selection.selectedFinding, t) : []),
     [result, selection.selectedFinding, t],
   );
@@ -79,7 +89,53 @@ export function ResultsView({
 
   const focusStops = useMemo(() => result?.keyboard?.focusPath ?? [], [result]);
 
-  const selectStop = useCallback((n: number) => setSelectedStop(n), []);
+  const regions = useMemo(() => result?.regions ?? [], [result]);
+  const [captureId, setCaptureId] = useState<string>(VIEWPORT_CAPTURE);
+
+  const [captureFrom, setCaptureFrom] = useState(result);
+  if (captureFrom !== result) {
+    setCaptureFrom(result);
+    setCaptureId(VIEWPORT_CAPTURE);
+  }
+
+  const stopWhere = useMemo(
+    () => selectedStopPlacement(focusStops, selectedStop, regions),
+    [focusStops, selectedStop, regions],
+  );
+
+  const selectStop = useCallback(
+    (n: number) => {
+      setSelectedStop(n);
+      setLayer("focus");
+      const where = selectedStopPlacement(focusStops, n, regions);
+      if (where?.kind === "placed" || where?.kind === "region-missed") {
+        setCaptureId(where.captureId);
+      }
+    },
+    [focusStops, regions],
+  );
+
+  const wantedCapture = captureForFinding(selection.selectedFinding);
+  const [markerFrom, setMarkerFrom] = useState(wantedCapture);
+  if (markerFrom !== wantedCapture) {
+    setMarkerFrom(wantedCapture);
+    if (wantedCapture) setCaptureId(wantedCapture);
+  }
+
+  const capture = useMemo(
+    () => captureById(captureId, result?.screenshot ?? null, regions),
+    [captureId, result, regions],
+  );
+
+  const stopViews = useMemo(
+    () => buildStopViews(focusStops, selectedStop, captureId, regions),
+    [focusStops, selectedStop, captureId, regions],
+  );
+
+  const markerViews = useMemo(
+    () => markersOfCapture(allMarkerViews, captureId),
+    [allMarkerViews, captureId],
+  );
 
   const stepStop = useCallback(
     (delta: 1 | -1) => {
@@ -171,6 +227,7 @@ export function ResultsView({
                       layer={layer}
                       setLayer={setLayer}
                       layerDisabled={!result.screenshot}
+                      focusDisabled={focusStops.length === 0}
                       collapsed={collapsed}
                       onToggleCollapse={() => setCollapsed((c) => !c)}
                     />
@@ -179,12 +236,18 @@ export function ResultsView({
                     <EvidenceFrame
                       result={result}
                       host={host}
+                      capture={capture}
+                      onBackToFirst={() => setCaptureId(VIEWPORT_CAPTURE)}
                       layer={effectiveLayer}
                       collapsed={collapsed}
                       onToggleCollapse={() => setCollapsed((c) => !c)}
                       markerViews={markerViews}
                       selectedFinding={selection.selectedFinding}
                       onSelectMarker={selection.selectMarker}
+                      stopViews={stopViews}
+                      selectedStop={selectedStop}
+                      stopPlacement={stopWhere}
+                      onSelectStop={selectStop}
                       quickFromSite={quickFromSite}
                       onRunFull={() => scan(url, { force: true })}
                       pending={streaming}
@@ -213,6 +276,8 @@ export function ResultsView({
                 breakdown={view.breakdown}
                 wcag={view.wcag}
                 layer={effectiveLayer}
+                capture={capture}
+                onBackToFirst={() => setCaptureId(VIEWPORT_CAPTURE)}
                 findings={view.findings}
                 selectedFinding={selection.selectedFinding}
                 selectedId={selection.selectedId}
@@ -222,6 +287,8 @@ export function ResultsView({
                 selectedStop={selectedStop}
                 onSelectStop={selectStop}
                 onStepStop={stepStop}
+                stopViews={stopViews}
+                stopPlacement={stopWhere}
                 onSelectMarker={selection.selectMarker}
                 tab={mobileTab}
                 setTab={setMobileTab}
