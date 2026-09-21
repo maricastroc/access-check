@@ -6,7 +6,7 @@ submitted automatically.
 ## Basics
 
 - **Item name:** AccessCheck
-- **Version:** 1.2.0
+- **Version:** 1.2.1
 - **Category:** Developer Tools
 - **Default language:** English (United States)
 - **Visibility:** Unlisted

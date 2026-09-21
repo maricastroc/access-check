@@ -23,7 +23,6 @@ export const en = {
   "nav.history": "History",
   "nav.account": "Account",
   "nav.signOut": "Sign out",
-  "layer.markersShort": "Markers",
   "capture.stopOutside":
     "Stop {n} sits about {docY}px down the page. No screenshot in this report covers it.",
   "capture.stopInsideScroller":
@@ -35,6 +34,8 @@ export const en = {
   "capture.focusHint": "Pick a stop in the focus path to follow it here.",
   "capture.stopAria": "Focus stop {n}",
   "capture.regionLabel": "Screenshot of the page at {docY}px down",
+  "capture.hideOverlay": "Hide overlay",
+  "capture.showOverlay": "Show overlay",
   "capture.backToFirst": "Back to the first screenshot",
   "capture.regionMissedTitle": "This area was not captured",
   "capture.regionMissedTime":
@@ -481,12 +482,6 @@ export const en = {
   "review.nested.s2": "Flatten the markup so each control stands on its own",
 
   "home.lens.frameLabel": "Screenshot \u00b7 scale 43%",
-  "layer.rail": "Overlay",
-  "layer.markersTitle": "Show the issue markers on the screenshot",
-  "layer.focusShort": "Focus path",
-  "layer.focusTitle": "Draw the keyboard focus path on the screenshot",
-  "layer.none": "No overlay",
-  "layer.noneTitle": "Hide the overlay",
 
   "home.md.filename": "accesscheck-aurora-coffee-com.md",
   "home.md.line1": "## aurora-coffee.com \u2014 Failing",
@@ -549,7 +544,6 @@ export const en = {
   "capture.screenshot": "Screenshot",
   "capture.show": "Show screenshot",
   "capture.collapse": "Collapse screenshot",
-  "capture.collapseShort": "Collapse",
   "capture.elementAndCode": "Element and code",
 
   "results.auditedMinutesAgo": "Audited {minutes} min ago",

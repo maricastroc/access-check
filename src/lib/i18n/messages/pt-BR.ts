@@ -27,7 +27,6 @@ export const ptBR: Catalog = {
   "nav.history": "Histórico",
   "nav.account": "Conta",
   "nav.signOut": "Sair",
-  "layer.markersShort": "Marcadores",
   "capture.stopOutside":
     "A parada {n} fica cerca de {docY}px abaixo do topo. Nenhuma captura deste relatório cobre esse ponto.",
   "capture.stopInsideScroller":
@@ -39,6 +38,8 @@ export const ptBR: Catalog = {
   "capture.focusHint": "Escolha uma parada no caminho de foco para acompanhá-la aqui.",
   "capture.stopAria": "Parada de foco {n}",
   "capture.regionLabel": "Captura da página a {docY}px do topo",
+  "capture.hideOverlay": "Ocultar marcações",
+  "capture.showOverlay": "Mostrar marcações",
   "capture.backToFirst": "Voltar à primeira captura",
   "capture.regionMissedTitle": "Esta área não foi capturada",
   "capture.regionMissedTime":
@@ -501,12 +502,6 @@ export const ptBR: Catalog = {
   "review.nested.s2": "Achate a marcação para que cada controle fique por conta própria",
 
   "home.lens.frameLabel": "Captura \u00b7 escala 43%",
-  "layer.rail": "Sobreposição",
-  "layer.markersTitle": "Mostrar os marcadores de problema na captura",
-  "layer.focusShort": "Caminho de foco",
-  "layer.focusTitle": "Desenhar o caminho do foco sobre a captura",
-  "layer.none": "Sem sobreposição",
-  "layer.noneTitle": "Esconder a sobreposição",
 
   "home.md.filename": "accesscheck-aurora-coffee-com.md",
   "home.md.line1": "## aurora-coffee.com — Com falhas",
@@ -569,7 +564,6 @@ export const ptBR: Catalog = {
   "capture.screenshot": "Captura de tela",
   "capture.show": "Mostrar a captura",
   "capture.collapse": "Recolher a captura",
-  "capture.collapseShort": "Recolher",
   "capture.elementAndCode": "Elemento e código",
 
   "results.auditedMinutesAgo": "Auditada há {minutes} min",

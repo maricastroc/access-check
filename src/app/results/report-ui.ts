@@ -3,15 +3,9 @@ import type { FocusStop } from "@/lib/scan/keyboard";
 import { captureOf, stopPlacement, type StopPlacement } from "@/lib/scan/placement";
 import { VIEWPORT_CAPTURE, type ScanMarker, type ScanRegion } from "@/lib/scan/types";
 import type { MarkerState } from "@/components/ui";
-import type { MessageKey, Translate } from "@/lib/i18n/t";
+import type { Translate } from "@/lib/i18n/t";
 
 export type Layer = "markers" | "focus" | "none";
-
-export const LAYER_RAIL: { key: Layer; label: MessageKey; title: MessageKey }[] = [
-  { key: "markers", label: "layer.markersShort", title: "layer.markersTitle" },
-  { key: "focus", label: "layer.focusShort", title: "layer.focusTitle" },
-  { key: "none", label: "layer.none", title: "layer.noneTitle" },
-];
 
 export type StopView = {
   n: number;

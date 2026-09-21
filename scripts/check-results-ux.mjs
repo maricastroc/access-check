@@ -246,6 +246,79 @@ try {
   check(missed.back, "a missed region offers no way back to the first capture");
   await context.close();
 
+  const wide = await open(1560);
+  const layout = await wide.page.evaluate(() => {
+    const img = [...document.querySelectorAll("img")].find((i) => i.src.startsWith("data:image"));
+    return {
+      rail: Boolean(document.querySelector("div.bg-band.border-r")),
+      overlayLabel: [...document.querySelectorAll("section, div")].some((d) =>
+        /^OVERLAY$/i.test((d.firstElementChild?.textContent ?? "").trim()),
+      ),
+      shot: img ? Math.round(img.getBoundingClientRect().width) : 0,
+    };
+  });
+  console.log("layout at 1560px:", JSON.stringify(layout));
+  check(!layout.rail, "the overlay column is back");
+  check(!layout.overlayLabel, "an OVERLAY heading is still on the page");
+  check(
+    layout.shot / 1200 >= 0.88,
+    `the screenshot renders at ${Math.round((layout.shot / 1200) * 100)}%`,
+  );
+
+  const count = (page) =>
+    page.evaluate(() => ({
+      markers: document.querySelectorAll('[aria-label^="Marker "]').length,
+      stops: document.querySelectorAll('[aria-label^="Focus stop"]').length,
+    }));
+  const press = (page, pattern) =>
+    page.evaluate(async (source) => {
+      const button = [...document.querySelectorAll("button")].find((b) =>
+        new RegExp(source).test(b.textContent ?? ""),
+      );
+      button?.click();
+      await new Promise((r) => setTimeout(r, 300));
+      return Boolean(button);
+    }, pattern);
+  const openFinding = (page, pattern) =>
+    page.evaluate(async (source) => {
+      const row = [...document.querySelectorAll("button")].find(
+        (b) => b.querySelector("h3") && new RegExp(source, "i").test(b.textContent ?? ""),
+      );
+      row?.click();
+      await new Promise((r) => setTimeout(r, 400));
+      return Boolean(row);
+    }, pattern);
+
+  const shown = await count(wide.page);
+  await press(wide.page, "^Hide overlay$");
+  const hidden = await count(wide.page);
+  const hiddenLabel = await wide.page.evaluate(() =>
+    [...document.querySelectorAll("button")].some((b) =>
+      /^Show overlay$/.test(b.textContent ?? ""),
+    ),
+  );
+  await press(wide.page, "^Show overlay$");
+  const restored = await count(wide.page);
+  console.log("overlay toggle:", JSON.stringify({ shown, hidden, hiddenLabel, restored }));
+  check(shown.markers > 0, "nothing is marked before the toggle is touched");
+  check(
+    hidden.markers === 0 && hidden.stops === 0,
+    "hiding the overlay left marks on the screenshot",
+  );
+  check(hiddenLabel, "the toggle does not offer to show the overlay again");
+  check(restored.markers === shown.markers, "showing the overlay again lost marks");
+
+  await openStops(wide.page);
+  await pickStop(wide.page, 3);
+  const onStop = await count(wide.page);
+  await openFinding(wide.page, "alternative text");
+  const onFinding = await count(wide.page);
+  console.log("stop then finding:", JSON.stringify({ onStop, onFinding }));
+  check(onStop.stops > 0, "picking a stop did not draw the focus path");
+  check(onFinding.markers > 0, "picking a finding after a stop did not bring its marker back");
+  check(onFinding.stops === 0, "picking a finding left the focus path drawn over it");
+  await wide.context.close();
+
   const pt = await open(1440, "pt-BR");
   await openStops(pt.page);
   await pickStop(pt.page, 12);

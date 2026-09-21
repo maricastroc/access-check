@@ -376,6 +376,9 @@ export function EvidenceFrame({
   onSelectStop,
   capture,
   onBackToFirst,
+  overlay,
+  overlayDisabled,
+  onToggleOverlay,
   quickFromSite = false,
   onRunFull,
   pending = false,
@@ -384,6 +387,9 @@ export function EvidenceFrame({
   host: string;
   capture: ActiveCapture;
   onBackToFirst: () => void;
+  overlay: boolean;
+  overlayDisabled: boolean;
+  onToggleOverlay: () => void;
   layer: Layer;
   collapsed: boolean;
   onToggleCollapse: () => void;
@@ -416,7 +422,17 @@ export function EvidenceFrame({
     <div className="border border-ink bg-surface">
       <div className="flex items-center justify-between gap-3 border-b border-ink px-3 py-2.5">
         <SectionKicker>{legend}</SectionKicker>
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+          {!collapsed && (
+            <Button
+              variant="tertiary"
+              size="sm"
+              onClick={onToggleOverlay}
+              disabled={overlayDisabled}
+            >
+              {overlay ? t("capture.hideOverlay") : t("capture.showOverlay")}
+            </Button>
+          )}
           {contextual && !collapsed && (
             <Button variant="tertiary" size="sm" onClick={onBackToFirst}>
               {t("capture.backToFirst")}

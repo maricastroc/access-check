@@ -22,7 +22,6 @@ import { buildReportView } from "./report-model";
 import { useFindingSelection } from "./use-finding-selection";
 import { TopBar } from "./top-bar";
 import { SummaryBand } from "./summary-band";
-import { LayerRail } from "./layer-rail";
 import { EvidenceFrame } from "./evidence-frame";
 import { FindingsMargin } from "./findings-margin";
 import { MobileReport } from "./mobile-report";
@@ -64,7 +63,8 @@ export function ResultsView({
 
   const [input, setInput] = useState(initialUrl);
 
-  const [layer, setLayer] = useState<Layer>("markers");
+  const [layer, setLayer] = useState<"markers" | "focus">("markers");
+  const [overlay, setOverlay] = useState(true);
   const [collapsed, setCollapsed] = useState(false);
   const [mobileTab, setMobileTab] = useState<"capture" | "findings">("capture");
 
@@ -73,7 +73,14 @@ export function ResultsView({
   const view = useMemo(() => (result ? buildReportView(result) : null), [result]);
   const selection = useFindingSelection(view?.findings ?? NO_FINDINGS);
 
-  const effectiveLayer: Layer = result?.screenshot ? layer : "none";
+  const findingId = selection.selectedFinding?.id ?? null;
+  const [layerFrom, setLayerFrom] = useState(findingId);
+  if (layerFrom !== findingId) {
+    setLayerFrom(findingId);
+    if (findingId) setLayer("markers");
+  }
+
+  const effectiveLayer: Layer = result?.screenshot && overlay ? layer : "none";
   const allMarkerViews = useMemo(
     () => (result ? buildMarkerViews(orderedMarkers(result), selection.selectedFinding, t) : []),
     [result, selection.selectedFinding, t],
@@ -221,17 +228,7 @@ export function ResultsView({
             {desktop ? (
               <>
                 <SummaryBand t={t} result={result} breakdown={view.breakdown} wcag={view.wcag} />
-                <div className="mx-auto grid w-full max-w-[1560px] grid-cols-[164px_minmax(0,1fr)_420px] items-start">
-                  <div className="sticky top-15.5 self-start">
-                    <LayerRail
-                      layer={layer}
-                      setLayer={setLayer}
-                      layerDisabled={!result.screenshot}
-                      focusDisabled={focusStops.length === 0}
-                      collapsed={collapsed}
-                      onToggleCollapse={() => setCollapsed((c) => !c)}
-                    />
-                  </div>
+                <div className="mx-auto grid w-full max-w-[1560px] grid-cols-[minmax(0,1fr)_420px] items-start">
                   <div className="p-4">
                     <EvidenceFrame
                       result={result}
@@ -239,6 +236,9 @@ export function ResultsView({
                       capture={capture}
                       onBackToFirst={() => setCaptureId(VIEWPORT_CAPTURE)}
                       layer={effectiveLayer}
+                      overlay={overlay}
+                      overlayDisabled={!result.screenshot}
+                      onToggleOverlay={() => setOverlay((on) => !on)}
                       collapsed={collapsed}
                       onToggleCollapse={() => setCollapsed((c) => !c)}
                       markerViews={markerViews}

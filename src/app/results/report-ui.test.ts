@@ -5,7 +5,6 @@ import type { ScanMarker } from "@/lib/scan/types";
 import {
   buildMarkerViews,
   buildStopViews,
-  LAYER_RAIL,
   markerLabel,
   selectedStopPlacement,
   stepFocusStop,
@@ -180,9 +179,5 @@ describe("following the focus path on the screenshot", () => {
     expect(selectedStopPlacement(stops, 1)?.kind).toBe("placed");
     expect(selectedStopPlacement(stops, 45)).toEqual({ kind: "outside", docY: 1800 });
     expect(selectedStopPlacement(stops, null)).toBeNull();
-  });
-
-  it("offers the focus path as its own overlay", () => {
-    expect(LAYER_RAIL.map((l) => l.key)).toEqual(["markers", "focus", "none"]);
   });
 });
