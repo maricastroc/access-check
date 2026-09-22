@@ -389,11 +389,11 @@ export const ptBR: Catalog = {
   "md.needsHumanCheck": "Observações que precisam de conferência humana",
   "md.needsHumanCheckNote":
     "Lido a partir do comportamento da página, não de uma regra que passa ou falha. Não entram nesta contagem, e cada um diz o que resolveria a dúvida.",
-  "standing.blocked": "Bloqueada",
+  "standing.blocked": "Barreiras críticas",
   "standing.blockedNote":
     "Pelo menos uma barreira impede que quem usa tecnologia assistiva consiga passar.",
   "standing.failing": "Com falhas",
-  "standing.failingNote": "Sem bloqueios, mas restam barreiras que dificultam tarefas reais.",
+  "standing.failingNote": "Sem barreiras críticas, mas outras ainda dificultam tarefas reais.",
   "standing.gaps": "Lacunas pequenas",
   "standing.gapsNote": "Nada sério foi encontrado automaticamente; o que restou é pequeno.",
   "standing.clean": "Nenhuma regra falhou",
@@ -425,14 +425,14 @@ export const ptBR: Catalog = {
     other: " Restam {parts}, não contabilizados.",
   },
   "summary.critical": {
-    one: "Base sólida, mas {count} problema crítico barra o nível AA da WCAG. Corrija ele primeiro.",
+    one: "{count} problema crítico impede algumas pessoas de avançar, então a página não atende ao nível AA da WCAG. Corrija ele primeiro.",
     other:
-      "Base sólida, mas {count} problemas críticos barram o nível AA da WCAG. Corrija eles primeiro.",
+      "{count} problemas críticos impedem algumas pessoas de avançar, então a página não atende ao nível AA da WCAG. Corrija eles primeiro.",
   },
   "summary.serious": {
-    one: "Nenhum bloqueio crítico{scope}, mas {count} problema grave ainda deixa a página mais difícil de usar para quem depende de tecnologia assistiva.",
+    one: "Nenhuma barreira crítica{scope}, mas {count} problema grave ainda deixa a página mais difícil de usar para quem depende de tecnologia assistiva.",
     other:
-      "Nenhum bloqueio crítico{scope}, mas {count} problemas graves ainda deixam a página mais difícil de usar para quem depende de tecnologia assistiva.",
+      "Nenhuma barreira crítica{scope}, mas {count} problemas graves ainda deixam a página mais difícil de usar para quem depende de tecnologia assistiva.",
   },
   "summary.moderatePartial": "Apenas problemas moderados entre as verificações que rodaram.",
   "summary.moderate": "Bom resultado. Restam apenas problemas moderados para ajustar.",
@@ -920,7 +920,7 @@ export const ptBR: Catalog = {
 
   "home.example.title": "Texto abaixo do contraste mínimo",
   "home.example.summary":
-    "Nenhum bloqueio crítico, mas 1 problema grave ainda deixa a página mais difícil de usar para quem depende de tecnologia assistiva.",
+    "Nenhuma barreira crítica, mas 1 problema grave ainda deixa a página mais difícil de usar para quem depende de tecnologia assistiva.",
 
   "impact.contrast":
     "Pessoas com baixa visão ou sensibilidade reduzida ao contraste podem não conseguir ler este texto, principalmente em telas de baixa qualidade ou sob luz forte.",
@@ -1133,7 +1133,7 @@ export const ptBR: Catalog = {
   "severity.moderate": "Moderado",
   "severity.minor": "Leve",
 
-  "cue.verified": "· verificado em cópia da página",
+  "cue.verified": "· verificado por reauditoria",
   "cue.needsReview": "· precisa de revisão",
   "detail.currentView": "atual",
   "detail.largeText": " (texto grande)",
@@ -1170,22 +1170,22 @@ export const ptBR: Catalog = {
       "As outras {count} ocorrências compartilham a mesma sugestão, mas não foram verificadas individualmente.",
   },
   "verdict.verifiedShared":
-    "Aplicada em uma cópia da página e reauditada: a regra parou de sinalizar cada uma das {count} ocorrências.",
+    "Aplicada temporariamente e reauditada, depois desfeita: a regra parou de sinalizar cada uma das {count} ocorrências.",
   "verdict.verifiedSingle":
-    "Aplicada em uma cópia da página e reauditada: a regra parou de sinalizar o elemento.",
+    "Aplicada temporariamente e reauditada, depois desfeita: a regra parou de sinalizar o elemento.",
   "verdict.partial":
-    "Cada ocorrência foi reauditada em uma cópia da página: {cleared} de {total} passaram e {failed} continuam falhando. Revise as que continuam.",
+    "A mudança foi aplicada em cada ocorrência e reauditada, depois desfeita: {cleared} de {total} passaram e {failed} continuam falhando. Revise as que continuam.",
   "verdict.sampledOne":
-    "O elemento representativo passou depois da mudança sugerida, em uma cópia da página. {others}",
+    "O elemento representativo passou quando a mudança sugerida foi aplicada e a regra rodou de novo. {others}",
   "verdict.sampledMany":
-    "Reauditadas {reaudited} de {total} ocorrências em uma cópia da página (uma representante por correção sugerida): {cleared} passaram{failedTail}. {others}",
+    "Reauditadas {reaudited} de {total} ocorrências com a mudança aplicada (uma representante por correção sugerida), depois desfeita: {cleared} passaram{failedTail}. {others}",
   "verdict.sampledFailedTail": " e {failed} continuam falhando",
   "verdict.failedSubjectSingle": "Este elemento",
   "verdict.failedSubjectSampled": "O elemento representativo",
   "verdict.failedMeasured":
     "{subject} continua falhando depois da mudança sugerida: a nova cor chega a {ratio}:1 contra o fundo detectado, mas a regra ainda sinaliza. O fundo real pode ser uma imagem, um gradiente ou uma camada sobreposta.{tail}",
   "verdict.failedPlain":
-    "{subject} continua falhando mesmo com a mudança aplicada em uma cópia da página. Revise esse caso manualmente.{tail}",
+    "{subject} continua falhando com a mudança aplicada. Revise esse caso manualmente.{tail}",
   "verdict.unverifiable":
     "Não deu para reexecutar esta correção na página — o elemento sumiu, ou não sobrou tempo. Confirme manualmente.",
   "verdict.contextual":

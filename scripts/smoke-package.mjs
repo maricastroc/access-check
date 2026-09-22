@@ -109,7 +109,7 @@ try {
             ?.trim() ?? null;
         seen.push({
           rule: (row.innerText.match(/\n([a-z][a-z0-9-]+)\n/) ?? [])[1] ?? null,
-          cue: /verified in sandbox|needs review/.test(row.innerText),
+          cue: /verified by re-audit|needs review/.test(row.innerText),
           section: /VERIFICATION RESULT/.test(text),
           seal: (text.match(/VERIFICATION RESULT\n\S\s*(.+)/) ?? [])[1] ?? null,
           element: element ? element.split("\n").map((l) => l.trim()) : null,

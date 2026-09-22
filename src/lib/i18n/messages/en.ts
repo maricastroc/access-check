@@ -374,11 +374,11 @@ export const en = {
   "md.needsHumanCheck": "Observations that need a human check",
   "md.needsHumanCheckNote":
     "Read from how the page behaved, not from a rule that passes or fails. These are not counted here, and each one says what would settle it.",
-  "standing.blocked": "Blocked",
+  "standing.blocked": "Critical barriers",
   "standing.blockedNote":
     "At least one barrier stops people using assistive technology from getting through.",
   "standing.failing": "Failing",
-  "standing.failingNote": "No blockers, but barriers that make real tasks harder remain.",
+  "standing.failingNote": "No critical barriers, but some still make real tasks harder.",
   "standing.gaps": "Minor gaps",
   "standing.gapsNote": "Nothing serious was found automatically; what is left is small.",
   "standing.clean": "No rule failed",
@@ -410,13 +410,14 @@ export const en = {
     other: " {parts} remain, not counted here.",
   },
   "summary.critical": {
-    one: "Strong foundation, but {count} critical finding blocks WCAG level AA. Fix it first.",
-    other: "Strong foundation, but {count} critical findings block WCAG level AA. Fix them first.",
+    one: "{count} critical finding stops some people from getting through, so the page cannot meet WCAG level AA. Fix it first.",
+    other:
+      "{count} critical findings stop some people from getting through, so the page cannot meet WCAG level AA. Fix them first.",
   },
   "summary.serious": {
-    one: "No critical blockers{scope}, but {count} serious finding still makes the page harder to use for people who rely on assistive technology.",
+    one: "No critical barriers{scope}, but {count} serious finding still makes the page harder to use for people who rely on assistive technology.",
     other:
-      "No critical blockers{scope}, but {count} serious findings still make the page harder to use for people who rely on assistive technology.",
+      "No critical barriers{scope}, but {count} serious findings still make the page harder to use for people who rely on assistive technology.",
   },
   "summary.moderatePartial": "Only moderate findings among the checks that ran.",
   "summary.moderate": "Solid result. Only moderate findings are left to polish.",
@@ -893,7 +894,7 @@ export const en = {
 
   "home.example.title": "Text below the minimum contrast",
   "home.example.summary":
-    "No critical blockers, but 1 serious finding still makes the page harder to use for people who rely on assistive technology.",
+    "No critical barriers, but 1 serious finding still makes the page harder to use for people who rely on assistive technology.",
 
   "impact.contrast":
     "People with low vision or reduced contrast sensitivity may be unable to read this text, especially on low-quality screens or in bright light.",
@@ -1104,7 +1105,7 @@ export const en = {
   "severity.moderate": "Moderate",
   "severity.minor": "Minor",
 
-  "cue.verified": "· verified in sandbox",
+  "cue.verified": "· verified by re-audit",
   "cue.needsReview": "· needs review",
   "detail.sampleText": "Sample text",
   "detail.currentView": "current",
@@ -1139,22 +1140,21 @@ export const en = {
       "The other {count} occurrences share the same suggestion but were not individually verified.",
   },
   "verdict.verifiedShared":
-    "Applied in a sandbox copy and re-audited: the rule stopped flagging each of the {count} occurrences.",
+    "Applied temporarily and re-audited, then undone: the rule stopped flagging each of the {count} occurrences.",
   "verdict.verifiedSingle":
-    "Applied in a sandbox copy and re-audited: the rule stopped flagging the element.",
+    "Applied temporarily and re-audited, then undone: the rule stopped flagging the element.",
   "verdict.partial":
-    "Re-audited each occurrence in a sandbox copy: {cleared} of {total} cleared, {failed} still flag. Review the ones that still flag.",
+    "Applied to each occurrence and re-audited, then undone: {cleared} of {total} cleared, {failed} still flag. Review the ones that still flag.",
   "verdict.sampledOne":
-    "The sampled element passed after the suggested change in a sandbox copy. {others}",
+    "The sampled element passed when the suggested change was applied and the rule re-run. {others}",
   "verdict.sampledMany":
-    "Re-audited {reaudited} of {total} occurrences in a sandbox copy (one representative per suggested fix): {cleared} passed{failedTail}. {others}",
+    "Re-audited {reaudited} of {total} occurrences with the change applied (one representative per suggested fix), then undone: {cleared} passed{failedTail}. {others}",
   "verdict.sampledFailedTail": ", {failed} still flag",
   "verdict.failedSubjectSingle": "This element",
   "verdict.failedSubjectSampled": "The sampled element",
   "verdict.failedMeasured":
     "{subject} still fails after the suggested change: the new color reaches {ratio}:1 against the sampled background, but the rule still flags it. The real background may be an image, gradient or overlapping layer.{tail}",
-  "verdict.failedPlain":
-    "{subject} still fails after the change was applied in a sandbox copy. Review it by hand.{tail}",
+  "verdict.failedPlain": "{subject} still fails with the change applied. Review it by hand.{tail}",
   "verdict.unverifiable":
     "This fix could not be re-run on the page — the element was gone, or there was no time left. Confirm it by hand.",
   "verdict.contextual":
