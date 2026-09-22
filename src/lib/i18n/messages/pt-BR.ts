@@ -391,6 +391,11 @@ export const ptBR: Catalog = {
   "standing.cleanNote":
     "Nenhuma regra falhou. Uma ferramenta não enxerga tudo, então os itens abaixo ainda precisam de uma pessoa.",
   "standing.kicker": "Como esta página está",
+  "standing.pending": "Ainda verificando",
+  "standing.pendingNote":
+    "A primeira leitura chegou. Teclado, viewport de celular, menus expandidos, movimento e regiões dinâmicas ainda estão sendo verificados, e qualquer um deles pode mudar como esta página está.",
+  "standing.pendingAside":
+    "O que corrigir primeiro e a leitura dos níveis A e AA da WCAG aparecem quando todas as verificações terminarem, junto com as exportações.",
   "standing.issueCount": {
     one: "{count} problema {severity}",
     other: "{count} problemas {severity}",
@@ -817,6 +822,7 @@ export const ptBR: Catalog = {
     other: "{count} itens ainda precisam da conferência de uma pessoa, listados abaixo.",
   },
   "results.noVisibleFocus": "sem foco visível",
+  "results.stillChecking": "ainda verificando…",
   "results.measuredNeeds": "{measured}:1 \u00b7 mínimo {required}:1",
   "results.outsideScore": " não contabilizado",
   "results.runFullAuditNote":

@@ -92,7 +92,7 @@ export function MobileReport({
         <div className="flex items-center justify-between gap-2">
           <span className="truncate font-mono text-[12.5px] text-muted">{host}</span>
           <span className="shrink-0 text-[12px] text-muted tabular-nums">
-            {(result.durationMs / 1000).toFixed(1)}s
+            {pending ? t("results.stillChecking") : `${(result.durationMs / 1000).toFixed(1)}s`}
           </span>
         </div>
         <div className="mt-2" aria-live="polite">

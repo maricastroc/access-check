@@ -377,6 +377,11 @@ export const en = {
   "standing.cleanNote":
     "No rule failed. A tool cannot see everything, so the items below still need a person.",
   "standing.kicker": "Where this page stands",
+  "standing.pending": "Still checking",
+  "standing.pendingNote":
+    "The first pass is in. Keyboard, mobile viewport, expanded menus, motion and live regions are still being checked, and any of them can change where this page stands.",
+  "standing.pendingAside":
+    "What to fix first and the WCAG A and AA reading appear when every check has finished, and so do the exports.",
   "standing.issueCount": {
     one: "{count} {severity} finding",
     other: "{count} {severity} findings",
@@ -793,6 +798,7 @@ export const en = {
     other: "{count} items still need a person to review, listed below.",
   },
   "results.noVisibleFocus": "no visible focus",
+  "results.stillChecking": "still checking…",
   "results.measuredNeeds": "{measured}:1 \u00b7 needs {required}:1",
   "results.outsideScore": " not counted here",
   "results.runFullAuditNote":
