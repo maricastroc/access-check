@@ -2,6 +2,7 @@ import { accessibleName, identityOf, type ElementIdentity } from "./identity";
 import { overlayClear } from "./overlay";
 import { flowOffsetOf } from "./rects";
 import { cssPath } from "./selector";
+import { isRendered } from "./visibility";
 
 export type FocusStyle = {
   outlineStyle: string;
@@ -131,15 +132,6 @@ function htmlOf(el: Element): string {
   return `<${parts.join(" ")}>${inner}</${tag}>`;
 }
 
-function isVisible(el: Element): boolean {
-  const he = el as HTMLElement;
-  if (he.offsetParent === null && getComputedStyle(he).position !== "fixed") {
-    return el.getClientRects().length > 0;
-  }
-  const r = el.getBoundingClientRect();
-  return r.width > 0 && r.height > 0;
-}
-
 function tabbableCandidates(): Element[] {
   return Array.from(document.querySelectorAll(INTERACTIVE)).filter((el) => {
     const tabindex = el.getAttribute("tabindex");
@@ -147,7 +139,7 @@ function tabbableCandidates(): Element[] {
     if ((el as HTMLButtonElement).disabled) return false;
     if (el.matches(":disabled")) return false;
     if (el.closest('[inert], [aria-hidden="true"]')) return false;
-    return isVisible(el);
+    return isRendered(el);
   });
 }
 
