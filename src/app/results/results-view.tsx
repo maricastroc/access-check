@@ -183,7 +183,8 @@ export function ResultsView({
         siteId={siteId}
         onRerun={() => scan(url, { force: true })}
         onMarkdown={exportMarkdown}
-        busy={status === "loading"}
+        busy={status === "loading" || streaming}
+        pending={streaming}
       />
 
       <main id="main">
@@ -227,7 +228,13 @@ export function ResultsView({
 
             {desktop ? (
               <>
-                <SummaryBand t={t} result={result} breakdown={view.breakdown} wcag={view.wcag} />
+                <SummaryBand
+                  t={t}
+                  result={result}
+                  breakdown={view.breakdown}
+                  wcag={view.wcag}
+                  pending={streaming}
+                />
                 <div className="mx-auto grid w-full max-w-[1560px] grid-cols-[minmax(0,1fr)_420px] items-start">
                   <div className="p-4">
                     <EvidenceFrame

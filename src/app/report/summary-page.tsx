@@ -1,7 +1,7 @@
 import type { ScanResult } from "@/lib/scan/types";
 import { scoreBreakdown } from "@/lib/report/score";
 import { violationsBehindScore } from "@/lib/scan/scored";
-import { buildWcagReading } from "@/lib/report/wcag";
+import { wcagReadingOf } from "@/lib/report/wcag";
 import { PriorityList, WcagChips } from "@/components/ui";
 import { standingOf, STANDING_LABEL, STANDING_NOTE, type Standing } from "@/lib/report/standing";
 import { safeHost, sevHex, shortId } from "./shared";
@@ -19,7 +19,7 @@ export function SummaryPage({ result }: { result: ScanResult }) {
   const t = translator(result.locale);
   const host = safeHost(result.finalUrl);
   const breakdown = scoreBreakdown(violationsBehindScore(result), result.score);
-  const wcag = buildWcagReading(result.violations);
+  const wcag = wcagReadingOf(result);
   const standing = standingOf(result.counts);
   const at = result.scannedAt ? new Date(result.scannedAt) : new Date();
   const date = new Intl.DateTimeFormat("en-US", {

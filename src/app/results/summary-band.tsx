@@ -22,25 +22,60 @@ export function StaleScoringNotice({ t }: { t: Translate }) {
   );
 }
 
+export function PendingStanding({ t, size }: { t: Translate; size: "lg" | "sm" }) {
+  return (
+    <>
+      <p
+        className={`font-cond leading-[1.05] text-muted ${size === "lg" ? "mt-1 text-[40px]" : "text-[30px]"}`}
+      >
+        {t("standing.pending")}
+      </p>
+      <p
+        className={`max-w-[560px] leading-normal text-body ${size === "lg" ? "mt-1 text-[13.5px]" : "mt-0.5 text-[12.5px]"}`}
+      >
+        {t("standing.pendingNote")}
+      </p>
+    </>
+  );
+}
+
 export function SummaryBand({
   result,
   breakdown,
   wcag,
   t,
+  pending = false,
 }: {
   result: ScanResult;
   breakdown: ScoreBreakdown;
   wcag: WcagReadingModel;
   t: Translate;
+  pending?: boolean;
 }) {
   const { counts } = result;
   const standing = standingOf(counts);
   const counted = countedSeverities(counts);
 
+  if (pending) {
+    return (
+      <section className="border-b border-border">
+        <div className="mx-auto grid w-full max-w-[1560px] grid-cols-1 gap-x-8 gap-y-6 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(0,1fr)_420px]">
+          <div aria-live="polite">
+            <SectionKicker>{t("standing.kicker")}</SectionKicker>
+            <PendingStanding t={t} size="lg" />
+          </div>
+          <div className="border-t border-hairline pt-5 lg:border-t-0 lg:border-l lg:border-border lg:pt-0 lg:pl-8">
+            <p className="text-[13.5px] leading-normal text-muted">{t("standing.pendingAside")}</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="border-b border-border">
       <div className="mx-auto grid w-full max-w-[1560px] grid-cols-1 gap-x-8 gap-y-6 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(0,1fr)_420px]">
-        <div>
+        <div aria-live="polite">
           <SectionKicker>{t("standing.kicker")}</SectionKicker>
           <p
             className="mt-1 font-cond text-[40px] leading-[1.05]"

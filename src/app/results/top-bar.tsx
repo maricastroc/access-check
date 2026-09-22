@@ -72,6 +72,7 @@ export function TopBar({
   onRerun,
   onMarkdown,
   busy,
+  pending = false,
 }: {
   result: ScanResult | null;
   viewport: string;
@@ -79,6 +80,7 @@ export function TopBar({
   onRerun: () => void;
   onMarkdown: () => void;
   busy: boolean;
+  pending?: boolean;
 }) {
   const t = useT();
 
@@ -105,11 +107,17 @@ export function TopBar({
           {result && (
             <div className="hidden min-w-0 items-baseline gap-3 text-[13px] text-muted lg:flex">
               <span className="truncate font-mono text-ink">{result.finalUrl}</span>
-              {result.scannedAt && <AuditTime iso={result.scannedAt} />}
-              <Dot />
-              <span className="whitespace-nowrap tabular-nums">
-                {(result.durationMs / 1000).toFixed(1)}s
-              </span>
+              {pending ? (
+                <span className="whitespace-nowrap">{t("results.stillChecking")}</span>
+              ) : (
+                <>
+                  {result.scannedAt && <AuditTime iso={result.scannedAt} />}
+                  <Dot />
+                  <span className="whitespace-nowrap tabular-nums">
+                    {(result.durationMs / 1000).toFixed(1)}s
+                  </span>
+                </>
+              )}
               <Dot />
               <span className="whitespace-nowrap tabular-nums">{viewport}</span>
             </div>
@@ -127,10 +135,19 @@ export function TopBar({
             <span className="hidden sm:inline">{t("results.reaudit")}</span>
           </Button>
           <div className="hidden items-center gap-2 lg:flex">
-            <Button variant="secondary" size="sm" onClick={onMarkdown} disabled={!result}>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={onMarkdown}
+              disabled={!result || pending}
+            >
               {t("results.exportMarkdown")}
             </Button>
-            {result ? (
+            {result && pending ? (
+              <Button variant="primary" size="sm" disabled>
+                {t("results.exportPdf")}
+              </Button>
+            ) : result ? (
               <Button
                 href={`/report?url=${encodeURIComponent(result.finalUrl)}`}
                 variant="primary"
