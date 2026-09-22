@@ -270,7 +270,7 @@ try {
       sealed.push({
         rule: each.innerText.split("\n").find((l) => /^[a-z-]+$/.test(l.trim())) ?? "",
         section: /verification result/i.test(text),
-        cue: /verified in sandbox|needs review/i.test(each.innerText),
+        cue: /verified by re-audit|needs review/i.test(each.innerText),
       });
       each.click();
       await new Promise((r) => setTimeout(r, 20));

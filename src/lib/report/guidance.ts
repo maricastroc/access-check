@@ -76,6 +76,7 @@ const RULE_CATEGORY: Record<string, Category> = {
   "duplicate-id-aria": "duplicate-id",
   "frame-title": "frame",
   "focus-not-visible": "focus-visible",
+  "focus-indicator-unclear": "focus-visible",
   "focus-order": "focus-order",
   "keyboard-trap": "keyboard-trap",
   "positive-tabindex": "tabindex",

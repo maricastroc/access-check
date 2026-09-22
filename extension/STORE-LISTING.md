@@ -85,20 +85,32 @@ order, highlighting an element on the page — serves that one purpose.
 
 Short answers for the dashboard fields, one per permission.
 
-- **activeTab** — "The audit reads only the tab the user clicked the icon on.
-  This grants access to that one tab, at that moment, instead of standing access
-  to any site."
-- **scripting** — "Injects the audit into the clicked tab and draws the
-  temporary highlight when the user asks to locate an element."
-- **sidePanel** — "The report is shown in Chrome's side panel, beside the page
-  being audited."
-- **storage** — "Keeps the current report in chrome.storage.session so it
-  survives Chrome suspending the extension's service worker while the user reads
-  it. Nothing is written to disk and nothing persists after the browser closes."
-- **debugger** — "The keyboard focus path is walked with real Tab keystrokes,
-  which only the DevTools Protocol can produce. The debugger is attached when
-  the user starts an audit, used only to send Tab and Shift+Tab, and detached
-  before the finished report is shown."
+- **activeTab** — "AccessCheck uses activeTab only after the user invokes the
+  extension, so it can inspect the currently active page and display its
+  accessibility audit. It does not access tabs in the background or without a
+  user action."
+- **scripting** — "AccessCheck uses scripting to run its packaged accessibility
+  audit code in the current tab, inspect the page DOM and computed styles,
+  identify affected elements, and display temporary location and focus-path
+  markers requested by the user. To confirm a computed contrast fix, it
+  temporarily applies that single style to the element, re-runs the one rule,
+  and restores the original attribute immediately."
+- **sidePanel** — "AccessCheck uses the Chrome Side Panel to display the audit
+  verdict, coverage limitations, findings, occurrence evidence, element details,
+  and keyboard focus path alongside the page being inspected."
+- **storage** — "AccessCheck keeps the current report in chrome.storage.session
+  so it survives Chrome suspending the extension's service worker while the user
+  reads it; that is cleared when the browser closes. It also saves the report
+  language the user picks in the panel (auto, en or pt-BR) in
+  chrome.storage.local. Nothing about the audited pages is kept after the
+  browser closes."
+- **debugger** — "AccessCheck uses the debugger permission only when the user
+  explicitly chooses to walk the keyboard focus path. It temporarily attaches to
+  the current tab to dispatch real Tab and Shift+Tab key events, so it can
+  follow the page's actual keyboard focus order; the page itself is read through
+  scripting, not through the debugger protocol. It detaches when the walk
+  finishes, is cancelled, or fails. The standard accessibility audit does not
+  use the debugger permission."
 
 ## Remote code
 

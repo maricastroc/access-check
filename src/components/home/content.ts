@@ -2,6 +2,9 @@ import type { Severity } from "@/lib/scan/types";
 import type { Standing } from "@/lib/report/standing";
 import type { MessageKey } from "@/lib/i18n/t";
 
+export const CHROME_WEB_STORE_URL =
+  "https://chromewebstore.google.com/detail/accesscheck/odhbdcnojfgjbkbfajidablhibhhckgf";
+
 export type AxeRule = { sc: string; label: MessageKey };
 
 export const axeRules: AxeRule[] = [

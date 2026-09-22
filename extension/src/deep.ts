@@ -3,7 +3,7 @@ import {
   collectFocusPath,
   type KeyboardReport,
 } from "../../src/lib/scan/keyboard";
-import type { FocusStyle } from "../../src/lib/scan/dom/focus";
+import type { RestingStyle } from "../../src/lib/scan/dom/focus";
 import { translator, type Translate } from "../../src/lib/i18n/t";
 
 export class DeepAuditError extends Error {
@@ -108,7 +108,7 @@ export async function runDeepAudit(
             func: (sel: string[]) => window.__accessCheckDom!.readBaseStyles(sel),
             args: [selectors],
           });
-          return frame.result as Record<string, FocusStyle>;
+          return frame.result as Record<string, RestingStyle>;
         },
         readReach: () => inPage(tabId, () => window.__accessCheckDom!.readFocusReach()),
         end: () => inPage(tabId, () => window.__accessCheckDom!.focusProbeEnd()),

@@ -67,13 +67,21 @@ export const en = {
   "audit.live.invalidFix":
     'Set aria-live to "polite" for routine updates or "assertive" for urgent ones.',
   "audit.live.hiddenTitle": {
-    one: "{count} live region is hidden and can't announce",
-    other: "{count} live regions are hidden and can't announce",
+    one: "{count} live region is on screen but hidden from assistive technology",
+    other: "{count} live regions are on screen but hidden from assistive technology",
   },
   "audit.live.hiddenDesc":
-    "The region is removed from the accessibility tree (display:none, visibility:hidden or aria-hidden), so updates written into it are never announced. Note this is different from the valid visually-hidden pattern, which keeps the node in the tree.",
+    'The region shows text on screen but carries aria-hidden="true", so screen readers are told it is not there: what sighted people read in it is never announced.',
   "audit.live.hiddenFix":
-    "Keep the live region in the accessibility tree: use a clip or screen-reader-only pattern instead of display:none, and remove aria-hidden from it.",
+    "Remove aria-hidden from the live region. If you need it off screen, use a clip or screen-reader-only pattern, which keeps it in the accessibility tree.",
+  "audit.live.conditionalTitle": {
+    one: "{count} live region starts out hidden",
+    other: "{count} live regions start out hidden",
+  },
+  "audit.live.conditionalDesc":
+    'When the page was read, the region was hidden (display:none, visibility:hidden, the hidden attribute or aria-hidden) and showed nothing yet. That is expected for a message the page reveals after an action, and a role="alert" revealed that way is announced by most screen readers. Text written into it while it stays hidden is never announced, though, and a read of the page cannot tell the two apart.',
+  "audit.live.conditionalFix":
+    "Trigger what fills the region — submit the form, add to the cart — and listen with a screen reader. If the update is not announced, keep the region in the accessibility tree and change its text, instead of revealing a hidden one.",
   "audit.live.mutedTitle": {
     one: '{count} alert is muted with aria-live="off"',
     other: '{count} alerts are muted with aria-live="off"',
@@ -366,11 +374,11 @@ export const en = {
   "md.needsHumanCheck": "Observations that need a human check",
   "md.needsHumanCheckNote":
     "Read from how the page behaved, not from a rule that passes or fails. These are not counted here, and each one says what would settle it.",
-  "standing.blocked": "Blocked",
+  "standing.blocked": "Critical barriers",
   "standing.blockedNote":
     "At least one barrier stops people using assistive technology from getting through.",
   "standing.failing": "Failing",
-  "standing.failingNote": "No blockers, but barriers that make real tasks harder remain.",
+  "standing.failingNote": "No critical barriers, but some still make real tasks harder.",
   "standing.gaps": "Minor gaps",
   "standing.gapsNote": "Nothing serious was found automatically; what is left is small.",
   "standing.clean": "No rule failed",
@@ -402,13 +410,14 @@ export const en = {
     other: " {parts} remain, not counted here.",
   },
   "summary.critical": {
-    one: "Strong foundation, but {count} critical finding blocks WCAG level AA. Fix it first.",
-    other: "Strong foundation, but {count} critical findings block WCAG level AA. Fix them first.",
+    one: "{count} critical finding stops some people from getting through, so the page cannot meet WCAG level AA. Fix it first.",
+    other:
+      "{count} critical findings stop some people from getting through, so the page cannot meet WCAG level AA. Fix them first.",
   },
   "summary.serious": {
-    one: "No critical blockers{scope}, but {count} serious finding still makes the page harder to use for people who rely on assistive technology.",
+    one: "No critical barriers{scope}, but {count} serious finding still makes the page harder to use for people who rely on assistive technology.",
     other:
-      "No critical blockers{scope}, but {count} serious findings still make the page harder to use for people who rely on assistive technology.",
+      "No critical barriers{scope}, but {count} serious findings still make the page harder to use for people who rely on assistive technology.",
   },
   "summary.moderatePartial": "Only moderate findings among the checks that ran.",
   "summary.moderate": "Solid result. Only moderate findings are left to polish.",
@@ -764,7 +773,7 @@ export const en = {
   "home.lens.contrastStory":
     "The white text on the light-green button disappears for people with low vision, or for anyone in bright sunlight. And this is the checkout button.",
   "home.lens.sandboxNote": "Tested in a sandbox copy. aurora-coffee.com was not altered.",
-  "home.form.noAccount": "No account, no extension, no change to the audited site",
+  "home.form.noAccount": "No account, nothing to install, no change to the audited site",
   "home.form.exportNote": "Export as PDF or Markdown",
   "home.demo.roasted": "Roasted in Porto every Tuesday and shipped the same week.",
 
@@ -799,6 +808,7 @@ export const en = {
   },
   "results.noVisibleFocus": "no visible focus",
   "results.stillChecking": "still checking…",
+  "results.focusOnContainer": "check focus",
   "results.measuredNeeds": "{measured}:1 \u00b7 needs {required}:1",
   "results.outsideScore": " not counted here",
   "results.runFullAuditNote":
@@ -846,7 +856,9 @@ export const en = {
   "home.cta.verified": "Verified",
   "home.cta.title": "Audit a page now and see where each barrier is",
   "home.cta.body":
-    "No account, no extension, no change to your site. The report is ready in under half a minute and exports as PDF or Markdown.",
+    "No account, nothing to install, no change to your site. The report is ready in under half a minute and exports as PDF or Markdown.",
+  "home.form.behindLogin": "Behind a login, on localhost or on staging?",
+  "home.form.useExtension": "Audit the tab you are on with the Chrome extension",
   "home.cta.publicOnly":
     "We can only audit public pages. Private or internal addresses will be refused.",
 
@@ -884,7 +896,7 @@ export const en = {
 
   "home.example.title": "Text below the minimum contrast",
   "home.example.summary":
-    "No critical blockers, but 1 serious finding still makes the page harder to use for people who rely on assistive technology.",
+    "No critical barriers, but 1 serious finding still makes the page harder to use for people who rely on assistive technology.",
 
   "impact.contrast":
     "People with low vision or reduced contrast sensitivity may be unable to read this text, especially on low-quality screens or in bright light.",
@@ -1095,7 +1107,7 @@ export const en = {
   "severity.moderate": "Moderate",
   "severity.minor": "Minor",
 
-  "cue.verified": "· verified in sandbox",
+  "cue.verified": "· verified by re-audit",
   "cue.needsReview": "· needs review",
   "detail.sampleText": "Sample text",
   "detail.currentView": "current",
@@ -1130,22 +1142,21 @@ export const en = {
       "The other {count} occurrences share the same suggestion but were not individually verified.",
   },
   "verdict.verifiedShared":
-    "Applied in a sandbox copy and re-audited: the rule stopped flagging each of the {count} occurrences.",
+    "Applied temporarily and re-audited, then undone: the rule stopped flagging each of the {count} occurrences.",
   "verdict.verifiedSingle":
-    "Applied in a sandbox copy and re-audited: the rule stopped flagging the element.",
+    "Applied temporarily and re-audited, then undone: the rule stopped flagging the element.",
   "verdict.partial":
-    "Re-audited each occurrence in a sandbox copy: {cleared} of {total} cleared, {failed} still flag. Review the ones that still flag.",
+    "Applied to each occurrence and re-audited, then undone: {cleared} of {total} cleared, {failed} still flag. Review the ones that still flag.",
   "verdict.sampledOne":
-    "The sampled element passed after the suggested change in a sandbox copy. {others}",
+    "The sampled element passed when the suggested change was applied and the rule re-run. {others}",
   "verdict.sampledMany":
-    "Re-audited {reaudited} of {total} occurrences in a sandbox copy (one representative per suggested fix): {cleared} passed{failedTail}. {others}",
+    "Re-audited {reaudited} of {total} occurrences with the change applied (one representative per suggested fix), then undone: {cleared} passed{failedTail}. {others}",
   "verdict.sampledFailedTail": ", {failed} still flag",
   "verdict.failedSubjectSingle": "This element",
   "verdict.failedSubjectSampled": "The sampled element",
   "verdict.failedMeasured":
     "{subject} still fails after the suggested change: the new color reaches {ratio}:1 against the sampled background, but the rule still flags it. The real background may be an image, gradient or overlapping layer.{tail}",
-  "verdict.failedPlain":
-    "{subject} still fails after the change was applied in a sandbox copy. Review it by hand.{tail}",
+  "verdict.failedPlain": "{subject} still fails with the change applied. Review it by hand.{tail}",
   "verdict.unverifiable":
     "This fix could not be re-run on the page — the element was gone, or there was no time left. Confirm it by hand.",
   "verdict.contextual":
@@ -1169,6 +1180,8 @@ export const en = {
   "keyboard.invisible.boxShadow": "the box-shadow stayed {value}",
   "keyboard.invisible.border": "the border stayed {width} {color}",
   "keyboard.invisible.background": "the background stayed {value}",
+  "keyboard.invisible.component":
+    "nothing drawn around it changed either — not its wrapper, the parts beside it or their ::before and ::after",
   "keyboard.invisible.nothingChanged":
     "Focus reached this element and nothing changed: {unchanged}. A focus indicator is expected here — an outline, a box-shadow, a border or a background that differs from the element's resting style.",
   "keyboard.invisible.title": {
@@ -1182,6 +1195,25 @@ export const en = {
   },
   "keyboard.invisible.fix":
     "Add a clear :focus-visible style (for example outline: 2px solid; outline-offset: 2px;) instead of removing the outline with outline: none.",
+
+  "keyboard.unclear.title": {
+    one: "{count} focus indicator needs a human check",
+    other: "{count} focus indicators need a human check",
+  },
+  "keyboard.unclear.desc": {
+    one: "Focus reached this element and the element itself did not change. What did change, or whether anything changed at all, is not something this reading can settle: either the change was on a container shared with other controls, or focus moved into a shadow root it cannot read.",
+    other:
+      "Focus reached these elements and they did not change themselves. What did change, or whether anything changed at all, is not something this reading can settle: either the change was on a container shared with other controls, or focus moved into a shadow root it cannot read.",
+  },
+  "keyboard.unclear.fix":
+    "Tab to each one and look. If the highlight on the container does not single out the focused control, give the control its own :focus-visible style.",
+  "keyboard.unclear.opaque":
+    "Focus moved into this element's shadow root, which this build cannot read, so whether an indicator appeared inside it was never measured.",
+  "keyboard.unclear.occurrence": {
+    one: "Focus reached this element and it did not change. The only change was on {container}, which also holds {count} other control.",
+    other:
+      "Focus reached this element and it did not change. The only change was on {container}, which also holds {count} other controls.",
+  },
 
   "keyboard.jump.up": "focus moved back up the page",
   "keyboard.jump.back": "focus moved back to the left on the same line",
@@ -1307,6 +1339,7 @@ export const en = {
 
   "panel.mark.noFocusRing": "no focus ring",
   "panel.mark.checkOrder": "check order",
+  "panel.mark.checkFocus": "check focus",
   "panel.mark.stop": "stop",
 
   "panel.focusPath": "Focus path",

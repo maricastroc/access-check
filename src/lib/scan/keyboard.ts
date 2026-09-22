@@ -1,12 +1,13 @@
 import type { Page } from "playwright-core";
 import type { EvidenceClass, Severity } from "./types";
-import type { FocusProbe, FocusReach, FocusStyle } from "./dom/focus";
+import type { FocusProbe, FocusReach, FocusScopePart, FocusStyle, RestingStyle } from "./dom/focus";
 import type { ElementIdentity } from "./dom/identity";
 import { severityOrder } from "./derive";
 import type { MessageKey, Translate } from "../i18n/t";
 
 export type KeyboardIssueId =
   | "focus-not-visible"
+  | "focus-indicator-unclear"
   | "focus-order"
   | "keyboard-trap"
   | "positive-tabindex"
@@ -43,7 +44,12 @@ export type FocusStop = {
   onScreen?: boolean;
   focusStyle?: FocusStyle;
   baseStyle?: FocusStyle | null;
+  focusIndicator?: FocusIndicator;
+  indicatorOn?: string | null;
+  indicatorSharedWith?: number;
 };
+
+export type FocusIndicator = "own" | "component" | "shared" | "opaque" | "none";
 
 export type KeyboardCertainty = "conclusive" | "needs-review";
 
@@ -105,6 +111,7 @@ export type RawKeyboard = {
 
 const CRITERION: Record<KeyboardIssueId, string> = {
   "focus-not-visible": "WCAG 2.4.7 · Focus Visible",
+  "focus-indicator-unclear": "WCAG 2.4.7 · Focus Visible",
   "focus-order": "WCAG 2.4.3 · Focus Order",
   "keyboard-trap": "WCAG 2.1.2 · No Keyboard Trap",
   "positive-tabindex": "WCAG 2.4.3 · Focus Order",
@@ -300,6 +307,7 @@ function invisibleReason(stop: FocusStop, t: Translate): string {
   if (focused.backgroundColor === base.backgroundColor) {
     unchanged.push(t("keyboard.invisible.background", { value: base.backgroundColor }));
   }
+  if (stop.focusIndicator === "none") unchanged.push(t("keyboard.invisible.component"));
 
   return t("keyboard.invisible.nothingChanged", { unchanged: unchanged.join("; ") });
 }
@@ -431,6 +439,36 @@ export function buildKeyboardReport(raw: RawKeyboard, t: Translate): KeyboardRep
     });
   }
 
+  const unclear = stops.filter(
+    (s) => s.focusIndicator === "shared" || s.focusIndicator === "opaque",
+  );
+  if (unclear.length > 0) {
+    const n = unclear.length;
+    findings.push({
+      id: "focus-indicator-unclear",
+      severity: "moderate",
+      evidence: "heuristic",
+      criterion: CRITERION["focus-indicator-unclear"],
+      title: t("keyboard.unclear.title", { count: n }),
+      desc: t("keyboard.unclear.desc", { count: n }),
+      fix: t("keyboard.unclear.fix"),
+      count: n,
+      selectors: unclear.slice(0, MAX_FINDING_SELECTORS).map((s) => s.selector),
+      occurrences: unclear.map((s) =>
+        occurrenceOf(
+          s,
+          s.focusIndicator === "opaque"
+            ? t("keyboard.unclear.opaque")
+            : t("keyboard.unclear.occurrence", {
+                container: s.indicatorOn ?? "",
+                count: s.indicatorSharedWith ?? 0,
+              }),
+          "needs-review",
+        ),
+      ),
+    });
+  }
+
   const inv = readingOrderInversions(stops);
   if (inv.count > 0) {
     findings.push({
@@ -502,6 +540,19 @@ const MAX_REWIND_STEPS = 25;
 
 export type Viewport = { width: number; height: number };
 
+const PAINTED: (keyof FocusStyle)[] = [
+  "borderBottomWidth",
+  "borderBottomColor",
+  "backgroundImage",
+  "color",
+  "textDecorationLine",
+  "opacity",
+  "transform",
+];
+
+const differs = (a: FocusStyle, b: FocusStyle, key: keyof FocusStyle) =>
+  a[key] !== undefined && b[key] !== undefined && a[key] !== b[key];
+
 function hasFocusIndicator(focused: FocusStyle, base: FocusStyle): boolean {
   if (focused.outlineStyle !== "none" && parseFloat(focused.outlineWidth) > 0) return true;
   if (focused.boxShadow !== base.boxShadow && focused.boxShadow !== "none") return true;
@@ -509,7 +560,72 @@ function hasFocusIndicator(focused: FocusStyle, base: FocusStyle): boolean {
   if (focused.borderTopColor !== base.borderTopColor) return true;
   if (focused.backgroundColor !== base.backgroundColor) return true;
   if (focused.outlineColor !== base.outlineColor) return true;
-  return false;
+  return PAINTED.some((key) => differs(focused, base, key));
+}
+
+const drawn = (s: FocusStyle) =>
+  s.content === undefined || (s.content !== "none" && s.content !== "normal");
+
+const outlined = (s: FocusStyle) => s.outlineStyle !== "none" && parseFloat(s.outlineWidth) > 0;
+
+export function visiblyChanged(focused: FocusStyle, base: FocusStyle): boolean {
+  if (!drawn(focused) && !drawn(base)) return false;
+  if (drawn(focused) !== drawn(base)) return true;
+  if (focused.content !== base.content) return true;
+  if (outlined(focused) || outlined(base)) {
+    if (
+      focused.outlineStyle !== base.outlineStyle ||
+      focused.outlineWidth !== base.outlineWidth ||
+      focused.outlineColor !== base.outlineColor
+    )
+      return true;
+  }
+  return (
+    focused.boxShadow !== base.boxShadow ||
+    focused.borderTopWidth !== base.borderTopWidth ||
+    focused.borderTopColor !== base.borderTopColor ||
+    focused.backgroundColor !== base.backgroundColor ||
+    PAINTED.some((key) => differs(focused, base, key))
+  );
+}
+
+export type IndicatorReading = {
+  indicator: FocusIndicator;
+  on: string | null;
+  sharedWith: number;
+};
+
+export function focusIndicatorOf(
+  focused: FocusStyle,
+  focusedScope: FocusScopePart[] | undefined,
+  base: RestingStyle,
+): IndicatorReading {
+  if (hasFocusIndicator(focused, base)) return { indicator: "own", on: null, sharedWith: 0 };
+  if (!focusedScope || !base.scope) return { indicator: "none", on: null, sharedWith: 0 };
+
+  const resting = new Map((base.scope ?? []).map((part) => [part.key, part]));
+  const current = new Map((focusedScope ?? []).map((part) => [part.key, part]));
+  let shared: FocusScopePart | null = null;
+
+  for (const key of new Set([...current.keys(), ...resting.keys()])) {
+    const now = current.get(key);
+    const before = resting.get(key);
+    const changed = !now || !before || visiblyChanged(now.style, before.style);
+    if (!changed) continue;
+    const part = (now ?? before)!;
+    if (!part.shared) return { indicator: "component", on: null, sharedWith: 0 };
+    shared ??= part;
+  }
+
+  if (shared)
+    return { indicator: "shared", on: shared.name || null, sharedWith: shared.sharedWith };
+  return { indicator: "none", on: null, sharedWith: 0 };
+}
+
+function stripScope(base: RestingStyle): FocusStyle {
+  const style: RestingStyle = { ...base };
+  delete style.scope;
+  return style;
 }
 
 export type FocusPathIO = {
@@ -521,7 +637,7 @@ export type FocusPathIO = {
   pressShiftTab(): Promise<void>;
   readStop(): Promise<FocusProbe>;
   peekStop(): Promise<FocusProbe>;
-  readBaseStyles(selectors: string[]): Promise<Record<string, FocusStyle>>;
+  readBaseStyles(selectors: string[]): Promise<Record<string, RestingStyle>>;
   readReach(): Promise<FocusReach>;
   end(): Promise<unknown>;
 };
@@ -635,7 +751,10 @@ export async function collectFocusPath(
 
     const walked: FocusStop[] = stops.map((s, i) => {
       const base = baseStyles[s.selector];
-      const focusVisible = base ? hasFocusIndicator(s.style, base) : true;
+      const reading = base ? focusIndicatorOf(s.style, s.scope, base) : null;
+      const indicator =
+        reading && reading.indicator === "none" && s.hasShadowRoot ? "opaque" : reading?.indicator;
+      const focusVisible = indicator ? indicator !== "none" : true;
       const r = s.rect;
       const onScreen =
         r !== null && r.y >= 0 && r.y <= viewport.height && r.x >= 0 && r.x <= viewport.width;
@@ -656,7 +775,14 @@ export async function collectFocusPath(
         rect: r,
         onScreen,
         focusStyle: s.style,
-        baseStyle: base ?? null,
+        baseStyle: base ? stripScope(base) : null,
+        ...(reading && indicator
+          ? {
+              focusIndicator: indicator,
+              indicatorOn: reading.on,
+              indicatorSharedWith: reading.sharedWith,
+            }
+          : {}),
       };
     });
 

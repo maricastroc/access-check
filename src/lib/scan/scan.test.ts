@@ -150,6 +150,7 @@ const PAGES: Record<string, { status?: number; html: string }> = {
       <img src="/logo.png" alt="Company logo" />
       <div role="status" aria-live="polite" style="display:none">Saved</div>
       <div role="log" aria-live="polite" aria-hidden="true">History</div>
+      <div role="status" aria-live="polite" aria-hidden="true">2 items saved</div>
     </main>
   </body>
 </html>`,
@@ -383,8 +384,9 @@ describe("runScan (integration — real browser)", () => {
     const motion = a?.reducedMotion?.findings.find((f) => f.id === "reduced-motion");
     expect(motion?.selectors).toContain("#spinner");
 
-    const live = a?.liveRegions?.findings.find((f) => f.id === "live-region-hidden");
+    const live = a?.liveRegions?.findings.find((f) => f.id === "live-region-conditional");
     expect(live?.count).toBe(1);
+    expect(live?.evidence).toBe("heuristic");
 
     expect(typeof result.score).toBe("number");
   }, 60_000);
@@ -767,8 +769,10 @@ describe("score and counts cover this project's own rules", () => {
     expect(result.violations).toEqual([]);
 
     const own = result.audits?.liveRegions?.findings ?? [];
-    expect(own).toHaveLength(1);
-    expect(own[0].severity).toBe("serious");
+    const failing = own.filter((f) => f.evidence !== "heuristic");
+    expect(failing).toHaveLength(1);
+    expect(failing[0].id).toBe("live-region-hidden");
+    expect(failing[0].severity).toBe("serious");
 
     expect(result.counts.serious).toBe(1);
     expect(result.score).toBeLessThan(100);
@@ -779,7 +783,8 @@ describe("score and counts cover this project's own rules", () => {
     const result = await audit();
 
     expect(result.counts.serious).toBe(1);
-    expect(result.audits!.liveRegions!.findings[0].count).toBe(2);
+    const hidden = result.audits!.liveRegions!.findings.find((f) => f.id === "live-region-hidden");
+    expect(hidden!.count).toBe(2);
   });
 
   it("does not call a complete hosted reading partial", async () => {

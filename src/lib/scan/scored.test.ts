@@ -219,7 +219,7 @@ describe("partial readings never claim a clean page", () => {
 
   it("scopes an absence claim that sits next to real findings", () => {
     expect(buildSummary({ critical: 0, serious: 2, moderate: 0 }, t, { partial: true })).toContain(
-      "No critical blockers among the checks that ran",
+      "No critical barriers among the checks that ran",
     );
   });
 });
