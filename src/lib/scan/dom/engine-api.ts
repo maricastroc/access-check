@@ -4,13 +4,13 @@ import type { ElementIdentity } from "./identity";
 import type { RawLiveRegions } from "../live-regions";
 import type { RawTargetSize } from "../target-size";
 import type { DomRect } from "./rects";
-import type { FocusProbe, FocusReach, FocusStyle } from "./focus";
+import type { FocusProbe, FocusReach, RestingStyle } from "./focus";
 import type { VerifyOp } from "./verify";
 import type { FixVerification } from "../types";
 import type { OverlayMark, OverlayReport } from "./overlay";
 import type { PaintCalm, PrimeReport } from "./prime";
 
-export const DOM_ENGINE_VERSION = 16;
+export const DOM_ENGINE_VERSION = 17;
 
 export type DomEngine = {
   version: number;
@@ -37,7 +37,7 @@ export type DomEngine = {
   focusSelector(selector: string): boolean;
   focusRelativeToSeed(): "before" | "at" | "after" | "unknown";
   readFocusedStop(record?: boolean): FocusProbe;
-  readBaseStyles(selectors: string[]): Record<string, FocusStyle>;
+  readBaseStyles(selectors: string[]): Record<string, RestingStyle>;
   readFocusReach(): FocusReach;
   focusProbeEnd(): { x: number; y: number } | null;
   overlayShow(

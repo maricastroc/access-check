@@ -71,13 +71,22 @@ export const ptBR: Catalog = {
   "audit.live.invalidFix":
     'Use aria-live="polite" para atualizações de rotina e "assertive" para as urgentes.',
   "audit.live.hiddenTitle": {
-    one: "{count} região dinâmica está oculta e não consegue anunciar",
-    other: "{count} regiões dinâmicas estão ocultas e não conseguem anunciar",
+    one: "{count} região dinâmica aparece na tela, mas está oculta para tecnologias assistivas",
+    other:
+      "{count} regiões dinâmicas aparecem na tela, mas estão ocultas para tecnologias assistivas",
   },
   "audit.live.hiddenDesc":
-    "A região está fora da árvore de acessibilidade (display:none, visibility:hidden ou aria-hidden), então nada escrito nela chega a ser anunciado. Isso é diferente do padrão de esconder só visualmente, que mantém o elemento na árvore.",
+    'A região mostra texto na tela, mas tem aria-hidden="true", então o leitor de tela é informado de que ela não existe: o que quem enxerga lê ali nunca é anunciado.',
   "audit.live.hiddenFix":
-    "Mantenha a região dinâmica na árvore de acessibilidade: em vez de display:none, use um padrão visível apenas para leitores de tela e remova o aria-hidden.",
+    "Remova o aria-hidden da região dinâmica. Se ela precisa ficar fora da tela, use um padrão visível apenas para leitores de tela, que a mantém na árvore de acessibilidade.",
+  "audit.live.conditionalTitle": {
+    one: "{count} região dinâmica começa oculta",
+    other: "{count} regiões dinâmicas começam ocultas",
+  },
+  "audit.live.conditionalDesc":
+    'Quando a página foi lida, a região estava oculta (display:none, visibility:hidden, o atributo hidden ou aria-hidden) e ainda não mostrava nada. Isso é esperado para uma mensagem que a página revela depois de uma ação, e um role="alert" revelado assim é anunciado pela maioria dos leitores de tela. Mas um texto escrito nela enquanto continua oculta nunca é anunciado, e a leitura da página não consegue distinguir os dois casos.',
+  "audit.live.conditionalFix":
+    "Dispare o que preenche a região — envie o formulário, adicione ao carrinho — e ouça com um leitor de tela. Se a atualização não for anunciada, mantenha a região na árvore de acessibilidade e troque o texto dela, em vez de revelar uma região oculta.",
   "audit.live.mutedTitle": {
     one: '{count} alerta silenciado por aria-live="off"',
     other: '{count} alertas silenciados por aria-live="off"',
@@ -380,17 +389,22 @@ export const ptBR: Catalog = {
   "md.needsHumanCheck": "Observações que precisam de conferência humana",
   "md.needsHumanCheckNote":
     "Lido a partir do comportamento da página, não de uma regra que passa ou falha. Não entram nesta contagem, e cada um diz o que resolveria a dúvida.",
-  "standing.blocked": "Bloqueada",
+  "standing.blocked": "Barreiras críticas",
   "standing.blockedNote":
     "Pelo menos uma barreira impede que quem usa tecnologia assistiva consiga passar.",
   "standing.failing": "Com falhas",
-  "standing.failingNote": "Sem bloqueios, mas restam barreiras que dificultam tarefas reais.",
+  "standing.failingNote": "Sem barreiras críticas, mas outras ainda dificultam tarefas reais.",
   "standing.gaps": "Lacunas pequenas",
   "standing.gapsNote": "Nada sério foi encontrado automaticamente; o que restou é pequeno.",
   "standing.clean": "Nenhuma regra falhou",
   "standing.cleanNote":
     "Nenhuma regra falhou. Uma ferramenta não enxerga tudo, então os itens abaixo ainda precisam de uma pessoa.",
   "standing.kicker": "Como esta página está",
+  "standing.pending": "Ainda verificando",
+  "standing.pendingNote":
+    "A primeira leitura chegou. Teclado, viewport de celular, menus expandidos, movimento e regiões dinâmicas ainda estão sendo verificados, e qualquer um deles pode mudar como esta página está.",
+  "standing.pendingAside":
+    "O que corrigir primeiro e a leitura dos níveis A e AA da WCAG aparecem quando todas as verificações terminarem, junto com as exportações.",
   "standing.issueCount": {
     one: "{count} problema {severity}",
     other: "{count} problemas {severity}",
@@ -411,14 +425,14 @@ export const ptBR: Catalog = {
     other: " Restam {parts}, não contabilizados.",
   },
   "summary.critical": {
-    one: "Base sólida, mas {count} problema crítico barra o nível AA da WCAG. Corrija ele primeiro.",
+    one: "{count} problema crítico impede algumas pessoas de avançar, então a página não atende ao nível AA da WCAG. Corrija ele primeiro.",
     other:
-      "Base sólida, mas {count} problemas críticos barram o nível AA da WCAG. Corrija eles primeiro.",
+      "{count} problemas críticos impedem algumas pessoas de avançar, então a página não atende ao nível AA da WCAG. Corrija eles primeiro.",
   },
   "summary.serious": {
-    one: "Nenhum bloqueio crítico{scope}, mas {count} problema grave ainda deixa a página mais difícil de usar para quem depende de tecnologia assistiva.",
+    one: "Nenhuma barreira crítica{scope}, mas {count} problema grave ainda deixa a página mais difícil de usar para quem depende de tecnologia assistiva.",
     other:
-      "Nenhum bloqueio crítico{scope}, mas {count} problemas graves ainda deixam a página mais difícil de usar para quem depende de tecnologia assistiva.",
+      "Nenhuma barreira crítica{scope}, mas {count} problemas graves ainda deixam a página mais difícil de usar para quem depende de tecnologia assistiva.",
   },
   "summary.moderatePartial": "Apenas problemas moderados entre as verificações que rodaram.",
   "summary.moderate": "Bom resultado. Restam apenas problemas moderados para ajustar.",
@@ -817,6 +831,8 @@ export const ptBR: Catalog = {
     other: "{count} itens ainda precisam da conferência de uma pessoa, listados abaixo.",
   },
   "results.noVisibleFocus": "sem foco visível",
+  "results.stillChecking": "ainda verificando…",
+  "results.focusOnContainer": "conferir foco",
   "results.measuredNeeds": "{measured}:1 \u00b7 mínimo {required}:1",
   "results.outsideScore": " não contabilizado",
   "results.runFullAuditNote":
@@ -864,7 +880,9 @@ export const ptBR: Catalog = {
   "home.cta.verified": "Verificado",
   "home.cta.title": "Audite uma página agora e veja onde está cada barreira",
   "home.cta.body":
-    "Sem cadastro, sem extensão e sem alterar o seu site. O relatório fica pronto em menos de meio minuto e sai em PDF ou Markdown.",
+    "Sem cadastro, sem instalar nada e sem alterar o seu site. O relatório fica pronto em menos de meio minuto e sai em PDF ou Markdown.",
+  "home.form.behindLogin": "Atrás de um login, no localhost ou em staging?",
+  "home.form.useExtension": "Audite a aba em que você está com a extensão do Chrome",
   "home.cta.publicOnly":
     "Só conseguimos auditar páginas públicas. Endereços privados ou internos serão recusados.",
 
@@ -904,7 +922,7 @@ export const ptBR: Catalog = {
 
   "home.example.title": "Texto abaixo do contraste mínimo",
   "home.example.summary":
-    "Nenhum bloqueio crítico, mas 1 problema grave ainda deixa a página mais difícil de usar para quem depende de tecnologia assistiva.",
+    "Nenhuma barreira crítica, mas 1 problema grave ainda deixa a página mais difícil de usar para quem depende de tecnologia assistiva.",
 
   "impact.contrast":
     "Pessoas com baixa visão ou sensibilidade reduzida ao contraste podem não conseguir ler este texto, principalmente em telas de baixa qualidade ou sob luz forte.",
@@ -1117,7 +1135,7 @@ export const ptBR: Catalog = {
   "severity.moderate": "Moderado",
   "severity.minor": "Leve",
 
-  "cue.verified": "· verificado em cópia da página",
+  "cue.verified": "· verificado por reauditoria",
   "cue.needsReview": "· precisa de revisão",
   "detail.currentView": "atual",
   "detail.largeText": " (texto grande)",
@@ -1154,22 +1172,22 @@ export const ptBR: Catalog = {
       "As outras {count} ocorrências compartilham a mesma sugestão, mas não foram verificadas individualmente.",
   },
   "verdict.verifiedShared":
-    "Aplicada em uma cópia da página e reauditada: a regra parou de sinalizar cada uma das {count} ocorrências.",
+    "Aplicada temporariamente e reauditada, depois desfeita: a regra parou de sinalizar cada uma das {count} ocorrências.",
   "verdict.verifiedSingle":
-    "Aplicada em uma cópia da página e reauditada: a regra parou de sinalizar o elemento.",
+    "Aplicada temporariamente e reauditada, depois desfeita: a regra parou de sinalizar o elemento.",
   "verdict.partial":
-    "Cada ocorrência foi reauditada em uma cópia da página: {cleared} de {total} passaram e {failed} continuam falhando. Revise as que continuam.",
+    "A mudança foi aplicada em cada ocorrência e reauditada, depois desfeita: {cleared} de {total} passaram e {failed} continuam falhando. Revise as que continuam.",
   "verdict.sampledOne":
-    "O elemento representativo passou depois da mudança sugerida, em uma cópia da página. {others}",
+    "O elemento representativo passou quando a mudança sugerida foi aplicada e a regra rodou de novo. {others}",
   "verdict.sampledMany":
-    "Reauditadas {reaudited} de {total} ocorrências em uma cópia da página (uma representante por correção sugerida): {cleared} passaram{failedTail}. {others}",
+    "Reauditadas {reaudited} de {total} ocorrências com a mudança aplicada (uma representante por correção sugerida), depois desfeita: {cleared} passaram{failedTail}. {others}",
   "verdict.sampledFailedTail": " e {failed} continuam falhando",
   "verdict.failedSubjectSingle": "Este elemento",
   "verdict.failedSubjectSampled": "O elemento representativo",
   "verdict.failedMeasured":
     "{subject} continua falhando depois da mudança sugerida: a nova cor chega a {ratio}:1 contra o fundo detectado, mas a regra ainda sinaliza. O fundo real pode ser uma imagem, um gradiente ou uma camada sobreposta.{tail}",
   "verdict.failedPlain":
-    "{subject} continua falhando mesmo com a mudança aplicada em uma cópia da página. Revise esse caso manualmente.{tail}",
+    "{subject} continua falhando com a mudança aplicada. Revise esse caso manualmente.{tail}",
   "verdict.unverifiable":
     "Não deu para reexecutar esta correção na página — o elemento sumiu, ou não sobrou tempo. Confirme manualmente.",
   "verdict.contextual":
@@ -1193,6 +1211,8 @@ export const ptBR: Catalog = {
   "keyboard.invisible.boxShadow": "o box-shadow continuou {value}",
   "keyboard.invisible.border": "a borda continuou {width} {color}",
   "keyboard.invisible.background": "o fundo continuou {value}",
+  "keyboard.invisible.component":
+    "nada desenhado em volta dele mudou — nem o contêiner, nem as partes ao lado, nem os ::before e ::after delas",
   "keyboard.invisible.nothingChanged":
     "O foco chegou a este elemento e nada mudou: {unchanged}. Espera-se um indicador de foco aqui — um outline, um box-shadow, uma borda ou um fundo diferente do estado de repouso do elemento.",
   "keyboard.invisible.title": {
@@ -1206,6 +1226,25 @@ export const ptBR: Catalog = {
   },
   "keyboard.invisible.fix":
     "Adicione um estilo :focus-visible claro (por exemplo outline: 2px solid; outline-offset: 2px;) em vez de remover o contorno com outline: none.",
+
+  "keyboard.unclear.title": {
+    one: "{count} indicador de foco precisa de conferência humana",
+    other: "{count} indicadores de foco precisam de conferência humana",
+  },
+  "keyboard.unclear.desc": {
+    one: "O foco chegou a este elemento e ele mesmo não mudou. O que mudou, ou se algo chegou a mudar, não é algo que esta leitura consiga resolver: ou a mudança foi num contêiner compartilhado com outros controles, ou o foco entrou num shadow root que ela não consegue ler.",
+    other:
+      "O foco chegou a estes elementos e eles mesmos não mudaram. O que mudou, ou se algo chegou a mudar, não é algo que esta leitura consiga resolver: ou a mudança foi num contêiner compartilhado com outros controles, ou o foco entrou num shadow root que ela não consegue ler.",
+  },
+  "keyboard.unclear.fix":
+    "Navegue com Tab até cada um e observe. Se o destaque no contêiner não indicar qual controle está focado, dê ao controle um estilo :focus-visible próprio.",
+  "keyboard.unclear.opaque":
+    "O foco entrou no shadow root deste elemento, que esta versão não consegue ler, então se apareceu um indicador lá dentro nunca foi medido.",
+  "keyboard.unclear.occurrence": {
+    one: "O foco chegou a este elemento e ele não mudou. A única mudança foi em {container}, que também tem {count} outro controle.",
+    other:
+      "O foco chegou a este elemento e ele não mudou. A única mudança foi em {container}, que também tem outros {count} controles.",
+  },
 
   "keyboard.jump.up": "o foco voltou para cima na página",
   "keyboard.jump.back": "o foco voltou para a esquerda na mesma linha",
@@ -1332,6 +1371,7 @@ export const ptBR: Catalog = {
 
   "panel.mark.noFocusRing": "sem indicador de foco",
   "panel.mark.checkOrder": "conferir ordem",
+  "panel.mark.checkFocus": "conferir foco",
   "panel.mark.stop": "parada",
 
   "panel.focusPath": "Caminho do foco",

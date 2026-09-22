@@ -115,7 +115,7 @@ describe("buildSummary tells the four kinds apart", () => {
   it("keeps the failure sentence first when something did fail", () => {
     const text = buildSummary({ critical: 1, serious: 0, moderate: 0, bestPractice: 1 }, t);
 
-    expect(text).toMatch(/^Strong foundation, but 1 critical finding blocks/);
+    expect(text).toMatch(/^1 critical finding stops some people from getting through/);
     expect(text).toContain("1 best-practice recommendation remains");
   });
 
@@ -128,10 +128,10 @@ describe("buildSummary tells the four kinds apart", () => {
       "2 manual-review items remain",
     );
     expect(buildSummary({ critical: 1, serious: 0, moderate: 0 }, t, { partial: true })).toContain(
-      "critical finding blocks",
+      "cannot meet WCAG level AA",
     );
     expect(buildSummary({ critical: 0, serious: 2, moderate: 0 }, t, { partial: true })).toContain(
-      "No critical blockers among the checks that ran",
+      "No critical barriers among the checks that ran",
     );
   });
 });

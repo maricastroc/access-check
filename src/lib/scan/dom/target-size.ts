@@ -1,16 +1,8 @@
 import { cssPath } from "./selector";
+import { collapsedAway, isRendered } from "./visibility";
 import type { RawTargetSize } from "../target-size";
 
 export function collectTargetSizeRaw(interactive: string): RawTargetSize {
-  const isVisible = (el: Element): boolean => {
-    const he = el as HTMLElement;
-    if (he.offsetParent === null && getComputedStyle(he).position !== "fixed") {
-      return el.getClientRects().length > 0;
-    }
-    const r = el.getBoundingClientRect();
-    return r.width > 0 && r.height > 0;
-  };
-
   const isInline = (el: Element): boolean => {
     if (getComputedStyle(el).display !== "inline") return false;
     const parent = el.parentElement;
@@ -34,7 +26,7 @@ export function collectTargetSizeRaw(interactive: string): RawTargetSize {
     if (tabindex !== null && parseInt(tabindex, 10) < 0) continue;
     if ((el as HTMLButtonElement).disabled) continue;
     if (el.getAttribute("aria-hidden") === "true") continue;
-    if (!isVisible(el)) continue;
+    if (!isRendered(el) || collapsedAway(el)) continue;
     const r = el.getBoundingClientRect();
     const sel = cssPath(el);
     if (!sel) continue;

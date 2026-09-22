@@ -1,6 +1,6 @@
 # AccessCheck extension — privacy policy
 
-**Effective 20 September 2026.** This policy covers the AccessCheck browser
+**Effective 21 September 2026.** This policy covers the AccessCheck browser
 extension. The hosted scanner at the AccessCheck website is a separate product
 with its own accounts and storage; this policy is only about the extension.
 
@@ -51,6 +51,10 @@ Nowhere. It stays in the extension's own memory and in `chrome.storage.session`,
 which Chrome keeps in memory and clears when you close the browser. That is what
 lets the report survive Chrome putting the extension to sleep while you read it.
 
+The one thing kept after the browser closes is the report language you picked in
+the panel — `auto`, `en` or `pt-BR` — in `chrome.storage.local`. Nothing about the
+pages you audit is kept.
+
 The extension sends nothing to us or to anyone else — no telemetry, no error
 reports, no uploads. The only requests it can cause are axe-core re-reading a
 stylesheet the page has already loaded, from that page's own origin, because a
@@ -84,8 +88,8 @@ fails the build if the report is ever published while it is still attached.
 - **scripting** — injects the audit into that tab and draws the temporary
   highlight when you ask to locate an element.
 - **sidePanel** — shows the report beside the page.
-- **storage** — `chrome.storage.session` only, for the single report described
-  above.
+- **storage** — `chrome.storage.session` for the single report described above,
+  and `chrome.storage.local` for the report language you picked. Nothing else.
 - **debugger** — the keyboard focus walk, as described above.
 
 The extension requests no host permissions.
