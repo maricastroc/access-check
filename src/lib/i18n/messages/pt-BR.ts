@@ -880,7 +880,9 @@ export const ptBR: Catalog = {
   "home.cta.verified": "Verificado",
   "home.cta.title": "Audite uma página agora e veja onde está cada barreira",
   "home.cta.body":
-    "Sem cadastro, sem extensão e sem alterar o seu site. O relatório fica pronto em menos de meio minuto e sai em PDF ou Markdown.",
+    "Sem cadastro, sem instalar nada e sem alterar o seu site. O relatório fica pronto em menos de meio minuto e sai em PDF ou Markdown.",
+  "home.form.behindLogin": "Atrás de um login, no localhost ou em staging?",
+  "home.form.useExtension": "Audite a aba em que você está com a extensão do Chrome",
   "home.cta.publicOnly":
     "Só conseguimos auditar páginas públicas. Endereços privados ou internos serão recusados.",
 

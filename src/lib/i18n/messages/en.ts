@@ -773,7 +773,7 @@ export const en = {
   "home.lens.contrastStory":
     "The white text on the light-green button disappears for people with low vision, or for anyone in bright sunlight. And this is the checkout button.",
   "home.lens.sandboxNote": "Tested in a sandbox copy. aurora-coffee.com was not altered.",
-  "home.form.noAccount": "No account, no extension, no change to the audited site",
+  "home.form.noAccount": "No account, nothing to install, no change to the audited site",
   "home.form.exportNote": "Export as PDF or Markdown",
   "home.demo.roasted": "Roasted in Porto every Tuesday and shipped the same week.",
 
@@ -856,7 +856,9 @@ export const en = {
   "home.cta.verified": "Verified",
   "home.cta.title": "Audit a page now and see where each barrier is",
   "home.cta.body":
-    "No account, no extension, no change to your site. The report is ready in under half a minute and exports as PDF or Markdown.",
+    "No account, nothing to install, no change to your site. The report is ready in under half a minute and exports as PDF or Markdown.",
+  "home.form.behindLogin": "Behind a login, on localhost or on staging?",
+  "home.form.useExtension": "Audit the tab you are on with the Chrome extension",
   "home.cta.publicOnly":
     "We can only audit public pages. Private or internal addresses will be refused.",
 

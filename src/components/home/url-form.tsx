@@ -5,6 +5,7 @@ import { useId, useState } from "react";
 import { cn } from "@/lib/cn";
 import { SectionKicker } from "@/components/ui";
 import { useT } from "@/lib/i18n/provider";
+import { CHROME_WEB_STORE_URL } from "./content";
 
 export function UrlField({
   value,
@@ -173,6 +174,15 @@ export function UrlForm({ accent = false, examples }: { accent?: boolean; exampl
           ))}
         </p>
       )}
+      <p className={cn("mt-2 text-[13px]", accent ? "text-band" : "text-muted")}>
+        {t("home.form.behindLogin")}{" "}
+        <a
+          href={CHROME_WEB_STORE_URL}
+          className={cn("underline underline-offset-2", accent ? "text-surface" : "text-ink")}
+        >
+          {t("home.form.useExtension")}
+        </a>
+      </p>
     </div>
   );
 }
