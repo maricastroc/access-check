@@ -10,6 +10,7 @@ const region = (selector: string, extra: Partial<LiveRegion> = {}): LiveRegion =
   ariaLive: extra.ariaLive ?? null,
   hidden: extra.hidden ?? false,
   ariaHidden: extra.ariaHidden ?? false,
+  hasText: extra.hasText,
 });
 
 describe("analyzeLiveRegions", () => {
@@ -50,24 +51,63 @@ describe("analyzeLiveRegions", () => {
     expect(f?.severity).toBe("serious");
   });
 
-  it("display:none live region is flagged as hidden", () => {
+  it("a display:none live region asks for a human check instead of failing", () => {
     const r = analyzeLiveRegions(
       {
-        regions: [region("#toast", { ariaLive: "polite", hidden: true })],
+        regions: [region("#toast", { ariaLive: "polite", hidden: true, hasText: false })],
       },
       t,
     );
-    expect(r.findings.find((x) => x.id === "live-region-hidden")?.count).toBe(1);
+    expect(r.findings.find((x) => x.id === "live-region-hidden")).toBeUndefined();
+    const f = r.findings.find((x) => x.id === "live-region-conditional");
+    expect(f?.count).toBe(1);
+    expect(f?.evidence).toBe("heuristic");
   });
 
-  it("aria-hidden live region is flagged as hidden", () => {
+  it("an alert that starts hidden, waiting to be revealed, is not a failure", () => {
     const r = analyzeLiveRegions(
       {
-        regions: [region("#s", { role: "status", ariaHidden: true })],
+        regions: [region("#thanks", { role: "alert", hidden: true, hasText: true })],
       },
       t,
     );
-    expect(r.findings.find((x) => x.id === "live-region-hidden")?.count).toBe(1);
+    expect(r.findings.map((x) => x.id)).toEqual(["live-region-conditional"]);
+    expect(r.findings[0].evidence).toBe("heuristic");
+  });
+
+  it("a region showing text with aria-hidden is a measured failure", () => {
+    const r = analyzeLiveRegions(
+      {
+        regions: [region("#s", { role: "status", ariaHidden: true, hasText: true })],
+      },
+      t,
+    );
+    const f = r.findings.find((x) => x.id === "live-region-hidden");
+    expect(f?.count).toBe(1);
+    expect(f?.evidence).toBe("measured");
+    expect(f?.severity).toBe("serious");
+  });
+
+  it("an empty region with aria-hidden asks for a human check", () => {
+    const r = analyzeLiveRegions(
+      {
+        regions: [region("#s", { role: "status", ariaHidden: true, hasText: false })],
+      },
+      t,
+    );
+    expect(r.findings.map((x) => x.id)).toEqual(["live-region-conditional"]);
+  });
+
+  it("a region hidden both ways is read as starting hidden", () => {
+    const r = analyzeLiveRegions(
+      {
+        regions: [
+          region("#s", { ariaLive: "polite", ariaHidden: true, hidden: true, hasText: true }),
+        ],
+      },
+      t,
+    );
+    expect(r.findings.map((x) => x.id)).toEqual(["live-region-conditional"]);
   });
 
   it('alert muted with aria-live="off" is flagged', () => {

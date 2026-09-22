@@ -12,6 +12,7 @@ export type LiveRegion = {
   ariaLive: string | null;
   hidden: boolean;
   ariaHidden: boolean;
+  hasText?: boolean;
 };
 
 export type RawLiveRegions = {
@@ -29,6 +30,7 @@ function group(
   regions: LiveRegion[],
   keys: { title: MessageKey; desc: MessageKey; fix: MessageKey },
   t: Translate,
+  evidence: AuditFinding["evidence"] = "measured",
 ): AuditFinding | null {
   if (regions.length === 0) return null;
   const selectors = [...new Set(regions.map((r) => r.selector))].filter(Boolean);
@@ -36,7 +38,7 @@ function group(
   return {
     id,
     severity,
-    evidence: "measured",
+    evidence,
     criterion: t("audit.live.criterion"),
     title: t(keys.title, { count }),
     desc: t(keys.desc, { count }),
@@ -50,7 +52,9 @@ export function analyzeLiveRegions(raw: RawLiveRegions, t: Translate): LiveRegio
   const regions = raw.regions;
 
   const invalid = regions.filter((r) => r.ariaLive !== null && !VALID_LIVE.has(r.ariaLive));
-  const hidden = regions.filter((r) => r.hidden || r.ariaHidden);
+  const shownButSilenced = (r: LiveRegion) => r.ariaHidden && !r.hidden && r.hasText !== false;
+  const hidden = regions.filter(shownButSilenced);
+  const conditional = regions.filter((r) => !shownButSilenced(r) && (r.hidden || r.ariaHidden));
   const muted = regions.filter(
     (r) => r.role !== null && ASSERTIVE_ROLES.has(r.role) && r.ariaLive === "off",
   );
@@ -77,6 +81,18 @@ export function analyzeLiveRegions(raw: RawLiveRegions, t: Translate): LiveRegio
         fix: "audit.live.hiddenFix",
       },
       t,
+    ),
+    group(
+      "live-region-conditional",
+      "moderate",
+      conditional,
+      {
+        title: "audit.live.conditionalTitle",
+        desc: "audit.live.conditionalDesc",
+        fix: "audit.live.conditionalFix",
+      },
+      t,
+      "heuristic",
     ),
     group(
       "live-region-muted",

@@ -67,13 +67,21 @@ export const en = {
   "audit.live.invalidFix":
     'Set aria-live to "polite" for routine updates or "assertive" for urgent ones.',
   "audit.live.hiddenTitle": {
-    one: "{count} live region is hidden and can't announce",
-    other: "{count} live regions are hidden and can't announce",
+    one: "{count} live region is on screen but hidden from assistive technology",
+    other: "{count} live regions are on screen but hidden from assistive technology",
   },
   "audit.live.hiddenDesc":
-    "The region is removed from the accessibility tree (display:none, visibility:hidden or aria-hidden), so updates written into it are never announced. Note this is different from the valid visually-hidden pattern, which keeps the node in the tree.",
+    'The region shows text on screen but carries aria-hidden="true", so screen readers are told it is not there: what sighted people read in it is never announced.',
   "audit.live.hiddenFix":
-    "Keep the live region in the accessibility tree: use a clip or screen-reader-only pattern instead of display:none, and remove aria-hidden from it.",
+    "Remove aria-hidden from the live region. If you need it off screen, use a clip or screen-reader-only pattern, which keeps it in the accessibility tree.",
+  "audit.live.conditionalTitle": {
+    one: "{count} live region starts out hidden",
+    other: "{count} live regions start out hidden",
+  },
+  "audit.live.conditionalDesc":
+    'When the page was read, the region was hidden (display:none, visibility:hidden, the hidden attribute or aria-hidden) and showed nothing yet. That is expected for a message the page reveals after an action, and a role="alert" revealed that way is announced by most screen readers. Text written into it while it stays hidden is never announced, though, and a read of the page cannot tell the two apart.',
+  "audit.live.conditionalFix":
+    "Trigger what fills the region — submit the form, add to the cart — and listen with a screen reader. If the update is not announced, keep the region in the accessibility tree and change its text, instead of revealing a hidden one.",
   "audit.live.mutedTitle": {
     one: '{count} alert is muted with aria-live="off"',
     other: '{count} alerts are muted with aria-live="off"',

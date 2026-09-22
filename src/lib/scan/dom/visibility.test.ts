@@ -4,6 +4,8 @@ import { acquireBrowser, closeSharedBrowser } from "../browser";
 import { injectDomEngine } from "../scan";
 import { collectKeyboard } from "../keyboard";
 import { analyzeTargetSize, INTERACTIVE } from "../target-size";
+import { analyzeLiveRegions } from "../live-regions";
+import { chargeable } from "../evidence";
 import { translator } from "../../i18n/t";
 import type { RawTargetSize } from "../target-size";
 
@@ -37,6 +39,21 @@ const COLLAPSED = `<!doctype html>
       <details><summary>More</summary><a href="/inside-details" id="in-details">In details</a></details>
       <div class="accordion tiny" id="accordion"><a href="/c1">c1</a><a href="/c2">c2</a></div>
       <a href="/last" id="last">Last</a>
+    </main>
+  </body>
+</html>`;
+
+const LIVE = `<!doctype html>
+<html lang="en">
+  <head><meta charset="utf-8" /><title>Live regions</title></head>
+  <body>
+    <main>
+      <h1>Live regions</h1>
+      <div role="alert" hidden id="thanks">Thank you for your feedback</div>
+      <div style="display: none"><p role="status" id="inside-hidden">Saved</p></div>
+      <div aria-live="polite" aria-hidden="true" id="silenced">3 items in your basket</div>
+      <div aria-live="polite" aria-hidden="true" id="silenced-empty"></div>
+      <p role="status" id="visible">Ready</p>
     </main>
   </body>
 </html>`;
@@ -132,5 +149,32 @@ describe("which targets are measured for size", () => {
     await page.evaluate(() => document.getElementById("languages")!.classList.add("open"));
     const ids = analyzeTargetSize(await measured(), t).findings.map((f) => f.id);
     expect(ids).toContain("target-size-crowding");
+  });
+});
+
+describe("reading live regions", () => {
+  const read = () => page.evaluate(() => window.__accessCheckDom!.collectLiveRegionsRaw());
+
+  it("reports a region as hidden when an ancestor hides it", async () => {
+    await load(LIVE);
+    const regions = (await read()).regions;
+    expect(regions.find((r) => r.selector === "#inside-hidden")?.hidden).toBe(true);
+    expect(regions.find((r) => r.selector === "#thanks")).toMatchObject({
+      hidden: true,
+      hasText: true,
+    });
+  });
+
+  it("tells a region on screen with aria-hidden apart from one that starts hidden", async () => {
+    await load(LIVE);
+    const report = analyzeLiveRegions(await read(), t);
+    const byId = Object.fromEntries(report.findings.map((f) => [f.id, f]));
+
+    expect(byId["live-region-hidden"]?.selectors).toEqual(["#silenced"]);
+    expect(byId["live-region-conditional"]?.selectors).toEqual(
+      expect.arrayContaining(["#thanks", "#inside-hidden", "#silenced-empty"]),
+    );
+    expect(byId["live-region-conditional"]?.evidence).toBe("heuristic");
+    expect(chargeable(report.findings).map((f) => f.id)).toEqual(["live-region-hidden"]);
   });
 });

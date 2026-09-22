@@ -71,13 +71,22 @@ export const ptBR: Catalog = {
   "audit.live.invalidFix":
     'Use aria-live="polite" para atualizações de rotina e "assertive" para as urgentes.',
   "audit.live.hiddenTitle": {
-    one: "{count} região dinâmica está oculta e não consegue anunciar",
-    other: "{count} regiões dinâmicas estão ocultas e não conseguem anunciar",
+    one: "{count} região dinâmica aparece na tela, mas está oculta para tecnologias assistivas",
+    other:
+      "{count} regiões dinâmicas aparecem na tela, mas estão ocultas para tecnologias assistivas",
   },
   "audit.live.hiddenDesc":
-    "A região está fora da árvore de acessibilidade (display:none, visibility:hidden ou aria-hidden), então nada escrito nela chega a ser anunciado. Isso é diferente do padrão de esconder só visualmente, que mantém o elemento na árvore.",
+    'A região mostra texto na tela, mas tem aria-hidden="true", então o leitor de tela é informado de que ela não existe: o que quem enxerga lê ali nunca é anunciado.',
   "audit.live.hiddenFix":
-    "Mantenha a região dinâmica na árvore de acessibilidade: em vez de display:none, use um padrão visível apenas para leitores de tela e remova o aria-hidden.",
+    "Remova o aria-hidden da região dinâmica. Se ela precisa ficar fora da tela, use um padrão visível apenas para leitores de tela, que a mantém na árvore de acessibilidade.",
+  "audit.live.conditionalTitle": {
+    one: "{count} região dinâmica começa oculta",
+    other: "{count} regiões dinâmicas começam ocultas",
+  },
+  "audit.live.conditionalDesc":
+    'Quando a página foi lida, a região estava oculta (display:none, visibility:hidden, o atributo hidden ou aria-hidden) e ainda não mostrava nada. Isso é esperado para uma mensagem que a página revela depois de uma ação, e um role="alert" revelado assim é anunciado pela maioria dos leitores de tela. Mas um texto escrito nela enquanto continua oculta nunca é anunciado, e a leitura da página não consegue distinguir os dois casos.',
+  "audit.live.conditionalFix":
+    "Dispare o que preenche a região — envie o formulário, adicione ao carrinho — e ouça com um leitor de tela. Se a atualização não for anunciada, mantenha a região na árvore de acessibilidade e troque o texto dela, em vez de revelar uma região oculta.",
   "audit.live.mutedTitle": {
     one: '{count} alerta silenciado por aria-live="off"',
     other: '{count} alertas silenciados por aria-live="off"',
