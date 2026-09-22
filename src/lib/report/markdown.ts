@@ -4,7 +4,7 @@ import { buildFindings, type FindingView } from "./findings";
 import { describeElement, identityLabel } from "./identity";
 import { violationsBehindScore } from "../scan/scored";
 import { scoreBreakdown } from "./score";
-import { buildWcagReading } from "./wcag";
+import { wcagReadingOf } from "./wcag";
 import { severityLabel } from "./severity";
 import { standingOf, STANDING_LABEL, STANDING_NOTE, scoringIsCurrent } from "./standing";
 import { verdictLabel, verdictMessage } from "./verdict";
@@ -79,7 +79,7 @@ export function buildReportMarkdown(result: ScanResult): string {
   const t = translator(result.locale);
   const out: string[] = [];
   const breakdown = scoreBreakdown(violationsBehindScore(result), result.score);
-  const wcag = buildWcagReading(result.violations);
+  const wcag = wcagReadingOf(result);
   const findings = buildFindings(result);
   const standing = standingOf(result.counts);
 

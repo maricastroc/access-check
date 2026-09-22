@@ -89,6 +89,11 @@ export function FocusPathList({
                     {t("results.noVisibleFocus")}
                   </span>
                 )}
+                {s.focusIndicator === "shared" && (
+                  <span className="ml-auto shrink-0 text-[11px] text-serious">
+                    {t("results.focusOnContainer")}
+                  </span>
+                )}
                 {s.rect?.scrolled && (
                   <span className="ml-auto shrink-0 text-[11px] text-muted">
                     {t("focusPath.insideScroller")}

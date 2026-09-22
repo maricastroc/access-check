@@ -2,6 +2,7 @@ import { accessibleName, identityOf, type ElementIdentity } from "./identity";
 import { overlayClear } from "./overlay";
 import { flowOffsetOf } from "./rects";
 import { cssPath } from "./selector";
+import { isRendered } from "./visibility";
 
 export type FocusStyle = {
   outlineStyle: string;
@@ -11,7 +12,25 @@ export type FocusStyle = {
   borderTopWidth: string;
   borderTopColor: string;
   backgroundColor: string;
+  borderBottomWidth?: string;
+  borderBottomColor?: string;
+  backgroundImage?: string;
+  color?: string;
+  textDecorationLine?: string;
+  opacity?: string;
+  transform?: string;
+  content?: string;
 };
+
+export type FocusScopePart = {
+  key: string;
+  shared: boolean;
+  name: string;
+  sharedWith: number;
+  style: FocusStyle;
+};
+
+export type RestingStyle = FocusStyle & { scope?: FocusScopePart[] };
 
 export type FocusProbe = {
   isBody: boolean;
@@ -23,6 +42,7 @@ export type FocusProbe = {
   isIframe: boolean;
   hasShadowRoot: boolean;
   style: FocusStyle;
+  scope?: FocusScopePart[];
   rect: {
     x: number;
     y: number;
@@ -78,9 +98,9 @@ function restoreScrolls(): void {
   scrollMarks = [];
 }
 
-function styleOf(el: Element): FocusStyle {
-  const cs = getComputedStyle(el);
-  return {
+function styleOf(el: Element, pseudo?: "::before" | "::after"): FocusStyle {
+  const cs = getComputedStyle(el, pseudo);
+  const style: FocusStyle = {
     outlineStyle: cs.outlineStyle,
     outlineWidth: cs.outlineWidth,
     outlineColor: cs.outlineColor,
@@ -88,7 +108,86 @@ function styleOf(el: Element): FocusStyle {
     borderTopWidth: cs.borderTopWidth,
     borderTopColor: cs.borderTopColor,
     backgroundColor: cs.backgroundColor,
+    borderBottomWidth: cs.borderBottomWidth,
+    borderBottomColor: cs.borderBottomColor,
+    backgroundImage: cs.backgroundImage,
+    color: cs.color,
+    textDecorationLine: cs.textDecorationLine,
+    opacity: cs.opacity,
+    transform: cs.transform,
   };
+  if (pseudo) style.content = cs.content;
+  return style;
+}
+
+const SCOPE_DEPTH = 3;
+
+const SCOPE_PARTS = 40;
+
+function otherControlsWithin(container: Element, el: Element): number {
+  return Array.from(container.querySelectorAll(INTERACTIVE)).filter(
+    (other) => other !== el && !el.contains(other) && isTabbable(other),
+  ).length;
+}
+
+function nameOf(el: Element): string {
+  const identity = identityOf(el);
+  return `${identity.tag}${identity.ref ?? ""}`;
+}
+
+function focusScope(el: Element): FocusScopePart[] {
+  const parts: FocusScopePart[] = [];
+  let nodes = 0;
+  const add = (key: string, node: Element, shared: boolean, sharedWith = 0) => {
+    nodes += 1;
+    const name = shared ? nameOf(node) : "";
+    parts.push({ key, shared, name, sharedWith, style: styleOf(node) });
+    parts.push({
+      key: `${key}::before`,
+      shared,
+      name,
+      sharedWith,
+      style: styleOf(node, "::before"),
+    });
+    parts.push({ key: `${key}::after`, shared, name, sharedWith, style: styleOf(node, "::after") });
+  };
+
+  parts.push({
+    key: "self::before",
+    shared: false,
+    name: "",
+    sharedWith: 0,
+    style: styleOf(el, "::before"),
+  });
+  parts.push({
+    key: "self::after",
+    shared: false,
+    name: "",
+    sharedWith: 0,
+    style: styleOf(el, "::after"),
+  });
+
+  let inner: Element = el;
+  let node = el.parentElement;
+  for (let depth = 1; depth <= SCOPE_DEPTH && node; depth++) {
+    if (node === document.body || node === document.documentElement) break;
+
+    const others = otherControlsWithin(node, el);
+    if (others > 0) {
+      add(`up${depth}`, node, true, others);
+      break;
+    }
+
+    add(`up${depth}`, node, false);
+    const branch = Array.from(node.querySelectorAll("*")).filter((n) => !inner.contains(n));
+    if (nodes + branch.length > SCOPE_PARTS) break;
+    branch.forEach((n, i) => add(`up${depth}/${i}`, n, false));
+
+    inner = node;
+    node = node.parentElement;
+  }
+
+  return parts;
 }
 
 function labelOf(el: Element): string {
@@ -131,24 +230,17 @@ function htmlOf(el: Element): string {
   return `<${parts.join(" ")}>${inner}</${tag}>`;
 }
 
-function isVisible(el: Element): boolean {
-  const he = el as HTMLElement;
-  if (he.offsetParent === null && getComputedStyle(he).position !== "fixed") {
-    return el.getClientRects().length > 0;
-  }
-  const r = el.getBoundingClientRect();
-  return r.width > 0 && r.height > 0;
+function isTabbable(el: Element): boolean {
+  const tabindex = el.getAttribute("tabindex");
+  if (tabindex !== null && parseInt(tabindex, 10) < 0) return false;
+  if ((el as HTMLButtonElement).disabled) return false;
+  if (el.matches(":disabled")) return false;
+  if (el.closest('[inert], [aria-hidden="true"]')) return false;
+  return isRendered(el);
 }
 
 function tabbableCandidates(): Element[] {
-  return Array.from(document.querySelectorAll(INTERACTIVE)).filter((el) => {
-    const tabindex = el.getAttribute("tabindex");
-    if (tabindex !== null && parseInt(tabindex, 10) < 0) return false;
-    if ((el as HTMLButtonElement).disabled) return false;
-    if (el.matches(":disabled")) return false;
-    if (el.closest('[inert], [aria-hidden="true"]')) return false;
-    return isVisible(el);
-  });
+  return Array.from(document.querySelectorAll(INTERACTIVE)).filter(isTabbable);
 }
 
 export function focusFirstStop(): "focused" | "empty" | "failed" {
@@ -240,6 +332,7 @@ export function readFocusedStop(record = true): FocusProbe {
     isIframe: el.tagName === "IFRAME",
     hasShadowRoot: el.shadowRoot !== null,
     style: styleOf(el),
+    scope: record ? focusScope(el) : undefined,
     rect:
       r.width > 0 || r.height > 0
         ? {
@@ -258,14 +351,14 @@ export function readFocusedStop(record = true): FocusProbe {
   };
 }
 
-export function readBaseStyles(selectors: string[]): Record<string, FocusStyle> {
+export function readBaseStyles(selectors: string[]): Record<string, RestingStyle> {
   (document.activeElement as HTMLElement | null)?.blur?.();
 
-  const out: Record<string, FocusStyle> = {};
+  const out: Record<string, RestingStyle> = {};
   for (const sel of selectors) {
     try {
       const el = document.querySelector(sel);
-      if (el) out[sel] = styleOf(el);
+      if (el) out[sel] = { ...styleOf(el), scope: focusScope(el) };
     } catch {
       continue;
     }

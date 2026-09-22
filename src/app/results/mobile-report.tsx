@@ -17,7 +17,7 @@ import { cn } from "@/lib/cn";
 import { langAttrs } from "@/lib/i18n/locale";
 import { CaptureStage } from "./evidence-frame";
 import { FocusPathList } from "./focus-path-list";
-import { StaleScoringNotice } from "./summary-band";
+import { PendingStanding, StaleScoringNotice } from "./summary-band";
 import {
   scoringIsCurrent,
   standingOf,
@@ -92,31 +92,41 @@ export function MobileReport({
         <div className="flex items-center justify-between gap-2">
           <span className="truncate font-mono text-[12.5px] text-muted">{host}</span>
           <span className="shrink-0 text-[12px] text-muted tabular-nums">
-            {(result.durationMs / 1000).toFixed(1)}s
+            {pending ? t("results.stillChecking") : `${(result.durationMs / 1000).toFixed(1)}s`}
           </span>
         </div>
-        <div className="mt-2">
-          <p
-            className="font-cond text-[30px] leading-[1.05]"
-            style={{ color: STANDING_TONE[standingOf(result.counts)] }}
-          >
-            {t(STANDING_LABEL[standingOf(result.counts)])}
-          </p>
-          <p className="mt-0.5 text-[12.5px] leading-normal text-body">
-            {t(STANDING_NOTE[standingOf(result.counts)])}
-          </p>
+        <div className="mt-2" aria-live="polite">
+          {pending ? (
+            <PendingStanding t={t} size="sm" />
+          ) : (
+            <>
+              <p
+                className="font-cond text-[30px] leading-[1.05]"
+                style={{ color: STANDING_TONE[standingOf(result.counts)] }}
+              >
+                {t(STANDING_LABEL[standingOf(result.counts)])}
+              </p>
+              <p className="mt-0.5 text-[12.5px] leading-normal text-body">
+                {t(STANDING_NOTE[standingOf(result.counts)])}
+              </p>
+            </>
+          )}
         </div>
-        <div className="mt-2.5">
-          <PriorityList breakdown={breakdown} t={t} />
-        </div>
-        {!scoringIsCurrent(result) && (
-          <div className="mt-2.5">
-            <StaleScoringNotice t={t} />
-          </div>
+        {!pending && (
+          <>
+            <div className="mt-2.5">
+              <PriorityList breakdown={breakdown} t={t} />
+            </div>
+            {!scoringIsCurrent(result) && (
+              <div className="mt-2.5">
+                <StaleScoringNotice t={t} />
+              </div>
+            )}
+            <div className="mt-2.5">
+              <WcagChips model={wcag} t={t} />
+            </div>
+          </>
         )}
-        <div className="mt-2.5">
-          <WcagChips model={wcag} t={t} />
-        </div>
       </div>
 
       <div
