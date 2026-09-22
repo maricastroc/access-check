@@ -799,6 +799,7 @@ export const en = {
   },
   "results.noVisibleFocus": "no visible focus",
   "results.stillChecking": "still checking…",
+  "results.focusOnContainer": "check focus",
   "results.measuredNeeds": "{measured}:1 \u00b7 needs {required}:1",
   "results.outsideScore": " not counted here",
   "results.runFullAuditNote":
@@ -1169,6 +1170,8 @@ export const en = {
   "keyboard.invisible.boxShadow": "the box-shadow stayed {value}",
   "keyboard.invisible.border": "the border stayed {width} {color}",
   "keyboard.invisible.background": "the background stayed {value}",
+  "keyboard.invisible.component":
+    "nothing drawn around it changed either — not its wrapper, the parts beside it or their ::before and ::after",
   "keyboard.invisible.nothingChanged":
     "Focus reached this element and nothing changed: {unchanged}. A focus indicator is expected here — an outline, a box-shadow, a border or a background that differs from the element's resting style.",
   "keyboard.invisible.title": {
@@ -1182,6 +1185,25 @@ export const en = {
   },
   "keyboard.invisible.fix":
     "Add a clear :focus-visible style (for example outline: 2px solid; outline-offset: 2px;) instead of removing the outline with outline: none.",
+
+  "keyboard.unclear.title": {
+    one: "{count} focus indicator needs a human check",
+    other: "{count} focus indicators need a human check",
+  },
+  "keyboard.unclear.desc": {
+    one: "Focus reached this element and the element itself did not change. What did change, or whether anything changed at all, is not something this reading can settle: either the change was on a container shared with other controls, or focus moved into a shadow root it cannot read.",
+    other:
+      "Focus reached these elements and they did not change themselves. What did change, or whether anything changed at all, is not something this reading can settle: either the change was on a container shared with other controls, or focus moved into a shadow root it cannot read.",
+  },
+  "keyboard.unclear.fix":
+    "Tab to each one and look. If the highlight on the container does not single out the focused control, give the control its own :focus-visible style.",
+  "keyboard.unclear.opaque":
+    "Focus moved into this element's shadow root, which this build cannot read, so whether an indicator appeared inside it was never measured.",
+  "keyboard.unclear.occurrence": {
+    one: "Focus reached this element and it did not change. The only change was on {container}, which also holds {count} other control.",
+    other:
+      "Focus reached this element and it did not change. The only change was on {container}, which also holds {count} other controls.",
+  },
 
   "keyboard.jump.up": "focus moved back up the page",
   "keyboard.jump.back": "focus moved back to the left on the same line",
@@ -1307,6 +1329,7 @@ export const en = {
 
   "panel.mark.noFocusRing": "no focus ring",
   "panel.mark.checkOrder": "check order",
+  "panel.mark.checkFocus": "check focus",
   "panel.mark.stop": "stop",
 
   "panel.focusPath": "Focus path",

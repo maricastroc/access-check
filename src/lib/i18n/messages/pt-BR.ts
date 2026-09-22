@@ -823,6 +823,7 @@ export const ptBR: Catalog = {
   },
   "results.noVisibleFocus": "sem foco visível",
   "results.stillChecking": "ainda verificando…",
+  "results.focusOnContainer": "conferir foco",
   "results.measuredNeeds": "{measured}:1 \u00b7 mínimo {required}:1",
   "results.outsideScore": " não contabilizado",
   "results.runFullAuditNote":
@@ -1199,6 +1200,8 @@ export const ptBR: Catalog = {
   "keyboard.invisible.boxShadow": "o box-shadow continuou {value}",
   "keyboard.invisible.border": "a borda continuou {width} {color}",
   "keyboard.invisible.background": "o fundo continuou {value}",
+  "keyboard.invisible.component":
+    "nada desenhado em volta dele mudou — nem o contêiner, nem as partes ao lado, nem os ::before e ::after delas",
   "keyboard.invisible.nothingChanged":
     "O foco chegou a este elemento e nada mudou: {unchanged}. Espera-se um indicador de foco aqui — um outline, um box-shadow, uma borda ou um fundo diferente do estado de repouso do elemento.",
   "keyboard.invisible.title": {
@@ -1212,6 +1215,25 @@ export const ptBR: Catalog = {
   },
   "keyboard.invisible.fix":
     "Adicione um estilo :focus-visible claro (por exemplo outline: 2px solid; outline-offset: 2px;) em vez de remover o contorno com outline: none.",
+
+  "keyboard.unclear.title": {
+    one: "{count} indicador de foco precisa de conferência humana",
+    other: "{count} indicadores de foco precisam de conferência humana",
+  },
+  "keyboard.unclear.desc": {
+    one: "O foco chegou a este elemento e ele mesmo não mudou. O que mudou, ou se algo chegou a mudar, não é algo que esta leitura consiga resolver: ou a mudança foi num contêiner compartilhado com outros controles, ou o foco entrou num shadow root que ela não consegue ler.",
+    other:
+      "O foco chegou a estes elementos e eles mesmos não mudaram. O que mudou, ou se algo chegou a mudar, não é algo que esta leitura consiga resolver: ou a mudança foi num contêiner compartilhado com outros controles, ou o foco entrou num shadow root que ela não consegue ler.",
+  },
+  "keyboard.unclear.fix":
+    "Navegue com Tab até cada um e observe. Se o destaque no contêiner não indicar qual controle está focado, dê ao controle um estilo :focus-visible próprio.",
+  "keyboard.unclear.opaque":
+    "O foco entrou no shadow root deste elemento, que esta versão não consegue ler, então se apareceu um indicador lá dentro nunca foi medido.",
+  "keyboard.unclear.occurrence": {
+    one: "O foco chegou a este elemento e ele não mudou. A única mudança foi em {container}, que também tem {count} outro controle.",
+    other:
+      "O foco chegou a este elemento e ele não mudou. A única mudança foi em {container}, que também tem outros {count} controles.",
+  },
 
   "keyboard.jump.up": "o foco voltou para cima na página",
   "keyboard.jump.back": "o foco voltou para a esquerda na mesma linha",
@@ -1338,6 +1360,7 @@ export const ptBR: Catalog = {
 
   "panel.mark.noFocusRing": "sem indicador de foco",
   "panel.mark.checkOrder": "conferir ordem",
+  "panel.mark.checkFocus": "conferir foco",
   "panel.mark.stop": "parada",
 
   "panel.focusPath": "Caminho do foco",

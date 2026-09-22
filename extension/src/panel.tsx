@@ -577,16 +577,21 @@ function marksFor(result: ScanResult): OverlayMark[] {
       .filter((n): n is number => n !== null),
   );
 
-  return keyboard.focusPath.map((s) => ({
-    n: s.n,
-    selector: s.selector,
-    kind: !s.focusVisible ? "failure" : jumped.has(s.n) ? "attention" : "stop",
-    label: !s.focusVisible
-      ? t("panel.mark.noFocusRing")
-      : jumped.has(s.n)
-        ? t("panel.mark.checkOrder")
-        : (s.label || t("panel.mark.stop")).slice(0, 28),
-  }));
+  return keyboard.focusPath.map((s) => {
+    const unclear = s.focusIndicator === "shared";
+    return {
+      n: s.n,
+      selector: s.selector,
+      kind: !s.focusVisible ? "failure" : jumped.has(s.n) || unclear ? "attention" : "stop",
+      label: !s.focusVisible
+        ? t("panel.mark.noFocusRing")
+        : unclear
+          ? t("panel.mark.checkFocus")
+          : jumped.has(s.n)
+            ? t("panel.mark.checkOrder")
+            : (s.label || t("panel.mark.stop")).slice(0, 28),
+    };
+  });
 }
 
 const NEIGHBOURS = 2;

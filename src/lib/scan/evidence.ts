@@ -1,6 +1,6 @@
 import type { EvidenceClass, ScanViolation } from "./types";
 
-const HEURISTIC_RULES = new Set(["focus-order"]);
+const HEURISTIC_RULES = new Set(["focus-order", "focus-indicator-unclear"]);
 
 const MEASURED_RULES = new Set([
   "focus-not-visible",
