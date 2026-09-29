@@ -6,7 +6,7 @@ submitted automatically.
 ## Basics
 
 - **Item name:** AccessCheck
-- **Version:** 1.3.0
+- **Version:** 1.3.1
 - **Category:** Developer Tools
 - **Default language:** English (United States)
 - **Visibility:** Public
@@ -142,7 +142,13 @@ Certifications to accept, all of which the code supports:
 > extension's own checks and the fix verification, without attaching the
 > debugger at all.
 
-## What changed since 1.2.1
+## What changed in 1.3.1
+
+- The queue puts the most severe problem first again. A serious problem the
+  extension measured itself, such as target size or a missing focus ring, no
+  longer sorts ahead of a critical one from axe.
+
+## What changed in 1.3.0 (since 1.2.1)
 
 - The panel works as a queue: To fix, To check by hand and Recommendations,
   with a top line such as "7 to fix · 3 to check by hand".
