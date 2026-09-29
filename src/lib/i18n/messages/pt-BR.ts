@@ -1107,7 +1107,7 @@ export const ptBR: Catalog = {
     "Passagens complementares: teclado, viewport de celular, UI expandida, movimento, regiões dinâmicas.",
   "stepper.previous": "Ocorrência anterior",
   "stepper.next": "Próxima ocorrência",
-  "seal.verified": "Verificado: a regra parou de sinalizar o elemento",
+  "seal.verified": "Correção testada: aplicada temporariamente e verificada novamente com sucesso",
   "seal.needsReview": "Precisa de revisão: a sugestão sozinha não resolve",
   "history.kicker": "Histórico",
   "history.scoreLabel": "Nota",
@@ -1136,7 +1136,7 @@ export const ptBR: Catalog = {
   "severity.moderate": "Moderado",
   "severity.minor": "Leve",
 
-  "cue.verified": "· verificado por reauditoria",
+  "cue.verified": "· correção testada",
   "cue.needsReview": "· precisa de revisão",
   "detail.currentView": "atual",
   "detail.largeText": " (texto grande)",
@@ -1164,7 +1164,7 @@ export const ptBR: Catalog = {
   "detail.sandboxNote":
     "As correções são aplicadas e revertidas em uma cópia da página. {host} não foi alterado.",
 
-  "verdict.label.verified": "Correção verificada",
+  "verdict.label.verified": "Correção testada",
   "verdict.label.needsReview": "Precisa de revisão",
 
   "verdict.others": {
@@ -1173,9 +1173,8 @@ export const ptBR: Catalog = {
       "As outras {count} ocorrências compartilham a mesma sugestão, mas não foram verificadas individualmente.",
   },
   "verdict.verifiedShared":
-    "Aplicada temporariamente e reauditada, depois desfeita: a regra parou de sinalizar cada uma das {count} ocorrências.",
-  "verdict.verifiedSingle":
-    "Aplicada temporariamente e reauditada, depois desfeita: a regra parou de sinalizar o elemento.",
+    "Aplicada temporariamente a cada uma das {count} ocorrências e verificada novamente com sucesso.",
+  "verdict.verifiedSingle": "Aplicada temporariamente e verificada novamente com sucesso.",
   "verdict.partial":
     "A mudança foi aplicada em cada ocorrência e reauditada, depois desfeita: {cleared} de {total} passaram e {failed} continuam falhando. Revise as que continuam.",
   "verdict.sampledOne":
@@ -1337,7 +1336,6 @@ export const ptBR: Catalog = {
   "panel.copySelector": "Copiar seletor",
   "panel.copyHtml": "Copiar HTML",
 
-  "panel.occurrences": "Ocorrências",
   "panel.occurrenceOf": "Ocorrência {at} de {total}",
   "panel.neverReached": "Nunca alcançado por Tab",
   "panel.stopN": "Parada {n}",
@@ -1346,15 +1344,21 @@ export const ptBR: Catalog = {
   "panel.position": "Posição",
   "panel.positionValue": "{w}×{h}px em {x}, {y}",
   "panel.offViewport": " · fora do viewport no momento da medição",
-  "panel.element": "Elemento",
+  "panel.selector": "Seletor",
+  "panel.html": "HTML",
   "panel.abbreviated":
     "Abreviado com … , e atributos que podem carregar o que você digitou ficam de fora. Serve como evidência, não como código para colar de volta.",
   "panel.locating": "Procurando…",
   "panel.locate": "Localizar na página",
 
   "panel.alsoFailsIn": "Também falha em {contexts}",
-  "panel.problem": "Problema",
-  "panel.suggestedFix": "Correção sugerida",
+  "panel.where": "Onde",
+  "panel.whatToChange": "O que mudar",
+  "panel.why": "Por quê",
+  "panel.details": "Detalhes",
+  "panel.problemNavigation": "Navegação entre problemas",
+  "panel.previousProblem": "Problema anterior",
+  "panel.nextProblem": "Próximo problema",
   "panel.findings": "Problemas",
   "panel.readingLanguage":
     "Esta leitura foi gerada em {language}. Audite a página de novo para recebê-la neste idioma.",

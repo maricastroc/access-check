@@ -116,18 +116,15 @@ describe("the panel reuses the product's own report", () => {
     expect(panel).toContain('<CopyButton label={t("panel.copySelector")}');
     expect(panel).toContain('<CopyButton label={t("panel.copyHtml")}');
     expect(panel).toContain("aria-label={label}");
-    expect(panel).toContain('<Field label={t("panel.element")}>');
+    expect(panel).toContain('<Field label={t("panel.selector")}>');
     expect(panel).toContain('t("panel.abbreviated")');
   });
 
   it("answers a highlight where the button that asked for it is", () => {
-    const occurrences = panel.slice(
-      panel.indexOf("function Occurrences("),
-      panel.indexOf("function Findings("),
-    );
-    expect(occurrences).toContain('t("panel.locate")');
-    expect(occurrences).toContain('role="status"');
-    expect(occurrences).toContain("setNotice(await onLocate(occurrence))");
+    const where = between(panel, "function Where(", "function ElementDetails(");
+    expect(where).toContain('t("panel.locate")');
+    expect(where).toContain('role="status"');
+    expect(panel).toContain("setNotice(await onLocate(location, location.stop ?? finding.n))");
   });
 
   it("reopens the panel's port when the reader acts, rather than holding it open", () => {
@@ -590,41 +587,53 @@ describe("the panel is an inspector, not a squeezed report", () => {
   });
 
   it("gives locating the page its own full-width action, with the copies below", () => {
-    const occurrences = panel.slice(
-      panel.indexOf("function Occurrences("),
-      panel.indexOf("function Findings("),
-    );
-    const locate = occurrences.indexOf('t("panel.locate")');
-    const copies = occurrences.indexOf('label={t("panel.copySelector")}');
+    const detail = between(panel, "function FindingDetail(", "function Where(");
+    const where = between(panel, "function Where(", "function ElementDetails(");
+    const details = between(panel, "function ElementDetails(", "function ReadingLanguage(");
 
-    expect(locate).toBeGreaterThan(-1);
-    expect(copies).toBeGreaterThan(locate);
-    expect(occurrences).toContain("${PRIMARY_BUTTON}");
+    expect(where).toContain('t("panel.locate")');
+    expect(where).toContain("${PRIMARY_BUTTON}");
+    expect(details).toContain('label={t("panel.copySelector")}');
+    expect(detail.indexOf("<ElementDetails")).toBeGreaterThan(detail.indexOf("<Where"));
     expect(panel).toMatch(/const PRIMARY_BUTTON =\s*\n?\s*"w-full[^"]*bg-ink /);
   });
 
-  it("orders an opened finding as problem, fix, occurrence, evidence, element", () => {
-    const findings = panel.slice(
-      panel.indexOf("function Findings("),
-      panel.indexOf("function ChecksPerformed("),
-    );
-    const occurrences = panel.slice(
-      panel.indexOf("function Occurrences("),
-      panel.indexOf("function Findings("),
-    );
+  it("orders an opened finding as where, what to change, why, details", () => {
+    const detail = between(panel, "function FindingDetail(", "function Where(");
+    const order = [
+      "<Where",
+      '<Field label={t("panel.whatToChange")}>',
+      '<Field label={t("panel.why")}>',
+      "<ElementDetails",
+      't("panel.previousProblem")',
+    ].map((token) => detail.indexOf(token));
 
-    expect(findings.indexOf('<Field label={t("panel.problem")}>')).toBeLessThan(
-      findings.indexOf('<Field label={t("panel.suggestedFix")}>'),
+    expect(order.every((i) => i > -1)).toBe(true);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+  });
+
+  it("starts the raw element data closed, below the action", () => {
+    const details = between(panel, "function ElementDetails(", "function ReadingLanguage(");
+    expect(details).toContain("<details");
+    expect(details).not.toMatch(/<details[^>]*\sopen/);
+    expect(details).toContain('t("panel.position")');
+    expect(details).toContain('t("panel.abbreviated")');
+  });
+
+  it("steps between problems in list order and stops at either end", () => {
+    const findings = between(panel, "function Findings(", "function ChecksPerformed(");
+    expect(findings).toContain("previous={i > 0 ? () => open(findings[i - 1].id) : null}");
+    expect(findings).toContain(
+      "next={i < findings.length - 1 ? () => open(findings[i + 1].id) : null}",
     );
-    expect(findings.indexOf('<Field label={t("panel.suggestedFix")}>')).toBeLessThan(
-      findings.indexOf("<Occurrences"),
-    );
-    expect(occurrences.indexOf('t("panel.occurrenceOf"')).toBeLessThan(
-      occurrences.indexOf('<Field label={t("panel.evidence")}>'),
-    );
-    expect(occurrences.indexOf('<Field label={t("panel.evidence")}>')).toBeLessThan(
-      occurrences.indexOf('<Field label={t("panel.element")}>'),
-    );
+    const detail = between(panel, "function FindingDetail(", "function Where(");
+    expect(detail).toContain("disabled={!previous}");
+    expect(detail).toContain("disabled={!next}");
+  });
+
+  it("no longer calls the explanation of a keyboard stop evidence", () => {
+    const detail = between(panel, "function FindingDetail(", "function ReadingLanguage(");
+    expect(detail).not.toContain('t("panel.evidence")');
   });
 
   it("names the focus-path controls, and says which stop is current", () => {
@@ -900,33 +909,31 @@ describe("the panel reads as a document, not a stack of boxes", () => {
   });
 
   it("breaks selectors, sentences and attributes rather than widening the panel", () => {
-    const occurrences = panel.slice(
-      panel.indexOf("function Occurrences("),
-      panel.indexOf("function Findings("),
-    );
-    expect(occurrences).toMatch(/break-words text-muted">\{where\.join/);
-    expect(occurrences).toMatch(/break-words text-body">\{occurrence\.reason\}/);
-    expect(occurrences).toMatch(/break-all text-steel">\s*\n?\s*\{occurrence\.selector\}/);
-    expect(occurrences).toMatch(/<pre[\s\S]{0,200}overflow-auto[\s\S]{0,120}break-all/);
+    const where = between(panel, "function Where(", "function ElementDetails(");
+    expect(where).toMatch(/break-words text-ink">\{named\}/);
+    expect(where).toMatch(/break-words text-body">\{location\.reason\}/);
 
-    const findings = panel.slice(
-      panel.indexOf("function Findings("),
-      panel.indexOf("function ChecksPerformed("),
-    );
-    expect(findings).toMatch(/break-words text-body">\{f\.desc\}/);
-    expect(findings).toMatch(/break-words text-body">\{f\.fixText\}/);
+    const details = between(panel, "function ElementDetails(", "function ReadingLanguage(");
+    expect(details).toMatch(/break-all text-steel">\s*\n?\s*\{location\.selector\}/);
+    expect(details).toMatch(/<pre[\s\S]{0,200}overflow-auto[\s\S]{0,120}break-all/);
+
+    const detail = between(panel, "function FindingDetail(", "function Where(");
+    expect(detail).toMatch(/break-words text-body">\{finding\.desc\}/);
+    expect(detail).toMatch(/break-words text-body">\{finding\.fixText\}/);
   });
 
-  it("labels each part of an occurrence instead of running them together", () => {
-    const occurrences = panel.slice(
-      panel.indexOf("function Occurrences("),
-      panel.indexOf("function Findings("),
-    );
-    for (const key of ["panel.evidence", "panel.position", "panel.element"]) {
-      expect(occurrences).toContain(`<Field label={t("${key}")}>`);
+  it("labels each part of a problem instead of running them together", () => {
+    const detail = between(panel, "function FindingDetail(", "function Where(");
+    for (const key of ["panel.whatToChange", "panel.why"]) {
+      expect(detail).toContain(`<Field label={t("${key}")}>`);
     }
-    expect(occurrences).toContain('t("panel.occurrenceOf", { at: at + 1, total })');
-    expect(occurrences).toMatch(/total > 1 &&[\s\S]{0,80}<OccurrenceStepper/);
+    const details = between(panel, "function ElementDetails(", "function ReadingLanguage(");
+    for (const key of ["panel.selector", "panel.html", "panel.position"]) {
+      expect(details).toContain(`<Field label={t("${key}")}>`);
+    }
+    const where = between(panel, "function Where(", "function ElementDetails(");
+    expect(where).toContain('t("panel.occurrenceOf", { at: at + 1, total })');
+    expect(where).toMatch(/total > 1 &&[\s\S]{0,400}<OccurrenceStepper/);
   });
 
   it("says the severity once, in the row, and not again in the body", () => {
@@ -993,13 +1000,13 @@ describe("the service worker follows the same choice", () => {
 
 describe("what the panel says about a reading-order guess", () => {
   it("shows the shared explanation instead of presenting it as a settled failure", () => {
-    expect(panel).toContain('f.evidence === "heuristic"');
+    expect(panel).toContain('finding.evidence === "heuristic"');
     expect(panel).toContain("evidence.heuristic.title");
     expect(panel).toContain("evidence.heuristic.body");
   });
 
   it("writes none of that wording itself", () => {
-    const block = between(panel, 'f.evidence === "heuristic"', "panel.problem");
+    const block = between(panel, 'finding.evidence === "heuristic"', "panel.alsoFailsIn");
     expect(block).not.toMatch(/[Gg]eometric|[Rr]eading order|[Ss]core/);
   });
 
@@ -1019,13 +1026,14 @@ describe("naming the element comes from the shared engine", () => {
 
   it("renders the identity through the report's own formatter", () => {
     expect(panel).toContain('from "../../src/lib/report/identity"');
-    expect(panel).toContain("describeElement(occurrence.selector");
+    expect(panel).toContain("describeElement(location.selector");
   });
 
   it("keeps the selector as the thing Locate and Copy act on", () => {
-    const occurrence = between(panel, "function Occurrences(", "function ReadingLanguage(");
-    expect(occurrence).toContain("{occurrence.selector}");
-    expect(occurrence).toContain("value={occurrence.selector}");
+    const details = between(panel, "function ElementDetails(", "function ReadingLanguage(");
+    expect(details).toContain("{location.selector}");
+    expect(details).toContain("value={location.selector}");
+    expect(panel).toContain("selector: location.selector,");
   });
 
   it("carries the identities into the published result", () => {
@@ -1040,11 +1048,11 @@ describe("the panel speaks about verification only when it happened", () => {
     expect(panel).not.toContain("border-verified");
   });
 
-  it("puts the quiet case beside the fix, not under a verification heading", () => {
-    const list = between(panel, 'label={t("panel.suggestedFix")}', "<Occurrences");
-    expect(list).toContain('verdictTone(f.verdict) === "quiet"');
-    expect(list).toContain('verdictTone(f.verdict) !== "quiet"');
-    expect(list).toContain('t("detail.verificationResult")');
+  it("keeps the fix's own test inside what to change, never under a heading of its own", () => {
+    const change = between(panel, 'label={t("panel.whatToChange")}', 'label={t("panel.why")}');
+    expect(change).toContain('verdictTone(finding.verdict) === "quiet"');
+    expect(change).toContain("<VerdictSeal");
+    expect(panel).not.toContain('t("detail.verificationResult")');
   });
 
   it("has no retired verification vocabulary left", () => {

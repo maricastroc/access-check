@@ -787,7 +787,7 @@ try {
     const doc = document.documentElement;
     const body = [...document.querySelectorAll("span, h4")]
       .map((s) => s.textContent.trim())
-      .filter((t) => /^(Suggested fix|Occurrence \d+ of \d+|Evidence|Element)/.test(t));
+      .filter((t) => /^(Where|Occurrence \d+ of \d+|What to change|Why|Details)$/.test(t));
     return {
       focused,
       body,
@@ -806,16 +806,17 @@ try {
   check(opened.reason, "an occurrence does not say what visual change was missing");
   check(opened.locate, "there is no Locate on page action");
   check(
-    opened.body.indexOf("Suggested fix") < opened.body.indexOf(opened.counter) &&
-      opened.body.indexOf(opened.counter) < opened.body.indexOf("Evidence") &&
-      opened.body.indexOf("Evidence") < opened.body.findIndex((t) => t.startsWith("Element")),
+    opened.body.indexOf("Where") === 0 &&
+      opened.body.indexOf(opened.counter) < opened.body.indexOf("What to change") &&
+      opened.body.indexOf("What to change") < opened.body.indexOf("Why") &&
+      opened.body.indexOf("Why") < opened.body.indexOf("Details"),
     `the expanded finding is out of order: ${JSON.stringify(opened.body)}`,
   );
   check(opened.overflow <= 0, `the panel overflows 400px by ${opened.overflow}px`);
 
   const stepped = await panel.evaluate(async () => {
     const counter = () =>
-      [...document.querySelectorAll("h4")]
+      [...document.querySelectorAll("span")]
         .map((s) => s.textContent.trim())
         .find((t) => /^Occurrence \d+ of \d+$/.test(t));
     const press = async (label) => {
@@ -936,7 +937,7 @@ try {
       indicator: [...document.querySelectorAll("span")]
         .map((s) => s.textContent.trim())
         .find((t) => /^Stop \d+ of \d+$/.test(t)),
-      occurrence: [...document.querySelectorAll("h4")]
+      occurrence: [...document.querySelectorAll("span")]
         .map((s) => s.textContent.trim())
         .find((t) => /^Occurrence \d+ of \d+$/.test(t)),
     };
@@ -997,7 +998,7 @@ try {
 
   const byKeyboard = await panel.evaluate(async () => {
     const focusable = [...document.querySelectorAll("button, summary, [tabindex]")].filter(
-      (el) => !el.disabled,
+      (el) => !el.disabled && el.checkVisibility(),
     );
     const ringless = focusable.filter((el) => {
       el.focus();
@@ -1021,7 +1022,7 @@ try {
   });
   const gone = await panel.evaluate(async () => {
     const counter = () =>
-      [...document.querySelectorAll("h4")]
+      [...document.querySelectorAll("span")]
         .map((s) => s.textContent.trim())
         .find((t) => /^Occurrence \d+ of \d+$/.test(t));
     for (let i = 0; i < 4 && counter() !== "Occurrence 3 of 3"; i++) {
