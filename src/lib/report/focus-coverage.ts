@@ -7,7 +7,8 @@ export function focusPathLines(
 ): { line: string; notes: string[] } {
   const stops = keyboard.focusPath.length;
   const total = keyboard.totalInteractive;
-  const rest = Math.max(0, total - stops);
+  const reached = Math.min(total, keyboard.reachableInteractive);
+  const rest = Math.max(0, total - reached);
   const notes: string[] = [];
 
   if (total === 0 && stops === 0) {
@@ -20,7 +21,9 @@ export function focusPathLines(
   const line =
     keyboard.stoppedBy === "cycle"
       ? t("focusPath.full", { stops: stopsText, controls: controlsText })
-      : t("focusPath.firstOnly", { count: stops, stops, controls: controlsText });
+      : reached === stops
+        ? t("focusPath.firstOnly", { count: stops, stops, controls: controlsText })
+        : t("focusPath.walkedSome", { stops: stopsText, reached, controls: controlsText });
 
   if (!keyboard.startedAtTop) {
     notes.push(t("focusPath.notFromTop", { stops: stopsText }));

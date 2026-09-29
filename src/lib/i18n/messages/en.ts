@@ -326,6 +326,7 @@ export const en = {
     one: "Checked the first {stops} of {controls}.",
     other: "Checked the first {stops} of {controls}.",
   },
+  "focusPath.walkedSome": "Walked {stops} and visited {reached} of {controls}.",
   "focusPath.notFromTop":
     "Partial: the walk could not be taken back to the first control, so these {stops} start somewhere inside the tab order.",
   "focusPath.leftoverSome": {

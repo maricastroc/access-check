@@ -16,7 +16,7 @@ function walk(over: Partial<KeyboardReport>): KeyboardReport {
   return {
     totalStops: 0,
     totalInteractive: 0,
-    reachableInteractive: 0,
+    reachableInteractive: Math.min(over.focusPath?.length ?? 0, over.totalInteractive ?? 0),
     truncated: false,
     cycleComplete: true,
     startedAtTop: true,

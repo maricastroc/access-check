@@ -338,6 +338,7 @@ export const ptBR: Catalog = {
     one: "Verificou o primeiro de {controls}.",
     other: "Verificou os {stops} primeiros de {controls}.",
   },
+  "focusPath.walkedSome": "Percorreu {stops} e passou por {reached} de {controls}.",
   "focusPath.notFromTop":
     "Parcial: não foi possível levar o percurso de volta ao primeiro controle, então estas {stops} começam em algum ponto dentro da ordem de tabulação.",
   "focusPath.leftoverSome": {

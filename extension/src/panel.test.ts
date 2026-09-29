@@ -664,7 +664,7 @@ describe("what the walk says it covered", () => {
   const walk = (over: Partial<KeyboardReport> = {}): KeyboardReport => ({
     totalStops: 0,
     totalInteractive: 0,
-    reachableInteractive: 0,
+    reachableInteractive: Math.min(over.focusPath?.length ?? 0, over.totalInteractive ?? 0),
     truncated: false,
     cycleComplete: true,
     startedAtTop: true,
@@ -698,6 +698,24 @@ describe("what the walk says it covered", () => {
       "Partial: the walk reached its 50-stop limit, so the remaining 119 controls were not evaluated.",
     ]);
     expect([line, ...notes].join(" ")).not.toMatch(/reachable/i);
+  });
+
+  it("counts the controls it reached, not the stops, when the two differ", () => {
+    const { line, notes } = focusPathLines(
+      walk({
+        focusPath: path(100),
+        totalInteractive: 99,
+        reachableInteractive: 73,
+        truncated: true,
+        stoppedBy: "cap",
+      }),
+      t,
+    );
+
+    expect(line).toBe("Walked 100 stops and visited 73 of 99 detected controls.");
+    expect(notes).toEqual([
+      "Partial: the walk reached its 100-stop limit, so the remaining 26 controls were not evaluated.",
+    ]);
   });
 
   it("claims the whole tab order only when it went all the way round", () => {
