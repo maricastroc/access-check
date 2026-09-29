@@ -39,7 +39,8 @@ const manifest = JSON.parse(file("../manifest.json")) as {
 describe("the panel reuses the product's own report", () => {
   it("renders the shared findings list, not a second one", () => {
     expect(panel).toContain('from "../../src/lib/report/findings"');
-    expect(panel).toContain("buildFindings(result)");
+    expect(panel).toContain("workQueue(result)");
+    expect(panel).not.toContain("buildFindings(");
   });
 
   it("uses the shared components rather than copies", () => {
@@ -882,7 +883,7 @@ describe("the panel reads as a document, not a stack of boxes", () => {
 
   it("descends h1 → h2 → h3 → h4 without skipping a level", () => {
     expect(panel).toMatch(/as="h2" id="verdict-heading"/);
-    expect(panel).toMatch(/as="h2" id="findings-heading"/);
+    expect(panel).toMatch(/as="h2"\s+id=\{`group-\$\{group\}`\}/);
     expect(panel).toMatch(/function Field\([\s\S]{0,300}as="h4"/);
     const collapsed = panel.slice(panel.indexOf("function Collapsed("));
     expect(collapsed.slice(0, 600)).toContain("<h2 className=");
@@ -947,6 +948,47 @@ describe("the panel reads as a document, not a stack of boxes", () => {
   });
 });
 
+describe("the panel works through a queue, not a report", () => {
+  const findings = between(panel, "const GROUP_TITLE", "function ChecksPerformed(");
+
+  it("names each group of the queue", () => {
+    expect(findings).toContain('fix: "panel.group.fix"');
+    expect(findings).toContain('check: "panel.group.check"');
+    expect(findings).toContain('recommend: "panel.group.recommend"');
+  });
+
+  it("keeps what to fix open, and what to check or consider behind a closed section", () => {
+    expect(findings).toMatch(/group === "fix"[\s\S]{0,400}<section/);
+    expect(findings).toContain('<details key={group} className="border-t border-border">');
+    expect(findings).not.toMatch(/<details[^>]*\sopen/);
+  });
+
+  it("shows no empty group but the one that says nothing is left to fix", () => {
+    expect(findings).toContain("if (findings.length === 0) return null;");
+    expect(findings).toContain('t("panel.noFailures")');
+  });
+
+  it("steps from a problem only to the next one in the same group", () => {
+    expect(findings).toContain("const rows = (findings: FindingView[]) =>");
+    expect(findings).toContain(
+      "next={i < findings.length - 1 ? () => open(findings[i + 1].id) : null}",
+    );
+  });
+
+  it("drops the screenshot's vocabulary from the rows", () => {
+    expect(findings).toContain("markerNote={false}");
+  });
+
+  it("tells a reader how to check a manual review instead of what to change", () => {
+    const detail = between(panel, "function FindingDetail(", "function HowToCheck(");
+    expect(detail).toMatch(/finding\.kind === "manual-review" \? \(\s*<HowToCheck/);
+    const how = between(panel, "function HowToCheck(", "function Where(");
+    expect(how).toContain("reviewGuidance(ruleId, t)");
+    expect(how).toContain('t("panel.howToCheck")');
+    expect(how).toContain("<ol");
+  });
+});
+
 describe("choosing the report language from the panel", () => {
   it("offers every language the report ships in, plus the browser's own", () => {
     expect(panel).toContain("REPORT_LOCALES.map");
@@ -975,7 +1017,7 @@ describe("choosing the report language from the panel", () => {
 
   it("translates its own section headings instead of leaving one in English", () => {
     expect(panel).not.toContain("Findings · {findings.length}");
-    expect(panel).toContain('{t("panel.findings")} · {findings.length}');
+    expect(panel).toContain("{t(GROUP_TITLE[group])} · {findings.length}");
   });
 
   it("says so when the reading on screen was produced in another language", () => {

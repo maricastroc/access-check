@@ -7,6 +7,7 @@ import type {
   Severity,
 } from "@/lib/scan/types";
 import { concernOf } from "@/lib/scan/concern";
+import { reviewGuidance } from "@/lib/scan/review";
 import { shownSelectors } from "@/lib/scan/violations";
 import type { ElementIdentity } from "@/lib/scan/dom/identity";
 import { evidenceForRule, evidenceOf } from "@/lib/scan/evidence";
@@ -33,7 +34,8 @@ export type FindingKind =
   | "reduced-motion"
   | "live-regions"
   | "context"
-  | "best-practice";
+  | "best-practice"
+  | "manual-review";
 
 const PASS_LABEL_KEY: Partial<Record<FindingKind, MessageKey>> = {
   keyboard: "finding.kind.keyboard",
@@ -371,6 +373,71 @@ export function buildFindings(result: ScanResult): FindingView[] {
 
   const ordered = [...withSeverity, ...bestPractice];
   return ordered.map((f, i) => ({ ...f, n: i + 1 }));
+}
+
+export function reviewFindings(result: ScanResult): FindingView[] {
+  const t = translator(result.locale);
+  const known = result.identities;
+  return result.incomplete.map((inc, i) => {
+    const affected = distinct(inc.selectors);
+    const { sc, name } = splitCriterion(inc.criterion);
+    return {
+      id: `manual-review:${inc.id}`,
+      n: i + 1,
+      kind: "manual-review" as const,
+      evidence: "heuristic" as const,
+      isWcag: true,
+      severity: null,
+      passLabel: t("finding.kind.manualReview"),
+      title: inc.title,
+      criterionSc: sc,
+      criterionName: name,
+      elements: inc.nodes,
+      ruleId: inc.id,
+      desc: inc.desc,
+      impact: humanImpact(inc.id, t),
+      fixText: reviewGuidance(inc.id, t).how,
+      fixCode: null,
+      fixGroups: null,
+      guidance: null,
+      measurement: null,
+      preview: null,
+      verdict: buildVerdict({
+        kind: "manual-review",
+        isWcag: true,
+        elements: inc.nodes,
+        fixGroups: null,
+        fixConfidence: null,
+      }),
+      affectedSelectors: affected,
+      selectors: affected,
+      identities: identitiesFor(affected, known),
+      markers: [],
+      located: false,
+      contexts: [],
+      occurrences: [],
+      noMarkerReason: markerReason(inc.id, "manual-review", false, t),
+    };
+  });
+}
+
+export type QueueGroup = "fix" | "check" | "recommend";
+
+export const QUEUE_GROUPS: readonly QueueGroup[] = ["fix", "check", "recommend"];
+
+export function queueGroupOf(finding: Pick<FindingView, "kind" | "evidence">): QueueGroup {
+  if (finding.kind === "best-practice") return "recommend";
+  if (finding.kind === "manual-review" || finding.evidence === "heuristic") return "check";
+  return "fix";
+}
+
+export function workQueue(result: ScanResult): { group: QueueGroup; findings: FindingView[] }[] {
+  const all = [...buildFindings(result), ...reviewFindings(result)];
+  let n = 0;
+  return QUEUE_GROUPS.map((group) => ({
+    group,
+    findings: all.filter((f) => queueGroupOf(f) === group).map((f) => ({ ...f, n: ++n })),
+  }));
 }
 
 export function orderedMarkers(result: ScanResult): ScanMarker[] {

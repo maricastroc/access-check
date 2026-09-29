@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ScanMarker, ScanResult, ScanViolation } from "@/lib/scan/types";
-import { buildFindings } from "./findings";
+import { buildFindings, queueGroupOf, reviewFindings, workQueue } from "./findings";
 
 function baseResult(over: Partial<ScanResult>): ScanResult {
   return {
@@ -587,5 +587,96 @@ describe("how a reading-order guess reaches the report", () => {
       baseResult({ audits: { targetSize: { measured: 200, findings: [measured] } } }),
     );
     expect(rows.find((r) => r.ruleId === "target-size")?.evidence).toBe("measured");
+  });
+});
+
+describe("the work queue", () => {
+  const guess = {
+    id: "focus-order" as const,
+    severity: "moderate" as const,
+    evidence: "heuristic" as const,
+    criterion: "WCAG 2.4.3 · Focus Order",
+    title: "Focus order jumps out of sequence 2 times",
+    desc: "d",
+    fix: "f",
+    count: 2,
+    selectors: [".a"],
+    occurrences: [],
+  };
+  const review = (id: string) => ({
+    id,
+    title: `Check ${id}`,
+    desc: "axe could not decide.",
+    nodes: 2,
+    criterion: "WCAG 1.4.3 · Contrast (Minimum)",
+    selectors: [`.${id}`],
+  });
+  const result = baseResult({
+    violations: [heading, contrast],
+    incomplete: [review("color-contrast"), review("aria-valid-attr-value")],
+    bestPractice: [
+      { id: "region", title: "All content in landmarks", desc: "d", nodes: 1, selectors: [".n"] },
+    ],
+    keyboard: {
+      totalStops: 6,
+      totalInteractive: 6,
+      reachableInteractive: 6,
+      truncated: false,
+      cycleComplete: true,
+      startedAtTop: true,
+      stoppedBy: "cycle",
+      focusPath: [],
+      findings: [guess],
+    },
+  });
+
+  it("files confirmed failures to fix, guesses and manual reviews to check, best practice apart", () => {
+    const groups = Object.fromEntries(
+      workQueue(result).map((g) => [g.group, g.findings.map((f) => f.id)]),
+    );
+    expect(groups).toEqual({
+      fix: ["wcag:color-contrast", "wcag:heading-order"],
+      check: [
+        "keyboard:focus-order",
+        "manual-review:color-contrast",
+        "manual-review:aria-valid-attr-value",
+      ],
+      recommend: ["best-practice:region"],
+    });
+  });
+
+  it("lists every manual review it counted, and loses nothing along the way", () => {
+    const queue = workQueue(result);
+    const listed = queue.flatMap((g) => g.findings);
+    expect(listed.filter((f) => f.kind === "manual-review")).toHaveLength(result.incomplete.length);
+    expect(listed).toHaveLength(buildFindings(result).length + result.incomplete.length);
+  });
+
+  it("numbers the queue straight through its groups", () => {
+    const numbers = workQueue(result).flatMap((g) => g.findings.map((f) => f.n));
+    expect(numbers).toEqual([1, 2, 3, 4, 5, 6]);
+  });
+
+  it("keeps the order in the same place the counts will read it from", () => {
+    for (const { group, findings } of workQueue(result)) {
+      for (const f of findings) expect(queueGroupOf(f)).toBe(group);
+    }
+  });
+
+  it("carries a manual review's elements and names it as one", () => {
+    const [first] = reviewFindings(result);
+    expect(first).toMatchObject({
+      kind: "manual-review",
+      ruleId: "color-contrast",
+      title: "Check color-contrast",
+      elements: 2,
+      affectedSelectors: [".color-contrast"],
+      passLabel: "Manual review",
+      severity: null,
+    });
+  });
+
+  it("leaves the report the web builds untouched", () => {
+    expect(buildFindings(result).some((f) => f.kind === "manual-review")).toBe(false);
   });
 });

@@ -39,17 +39,19 @@ export function FindingRow({
   finding,
   selected,
   onSelect,
+  markerNote = true,
   t,
 }: {
   finding: FindingView;
   selected: boolean;
   onSelect?: () => void;
+  markerNote?: boolean;
   t: Translate;
 }) {
   const label = finding.severity
     ? severityLabel(finding.severity, t)
     : t("finding.kind.bestPractice");
-  const noMarker = finding.markers.length === 0;
+  const noMarker = markerNote && finding.markers.length === 0;
   const interactive = Boolean(onSelect);
 
   return (

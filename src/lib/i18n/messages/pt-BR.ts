@@ -448,6 +448,7 @@ export const ptBR: Catalog = {
   "finding.kind.liveRegions": "Regiões dinâmicas",
   "finding.kind.context": "Responsivo e dinâmico",
   "finding.kind.bestPractice": "Boas práticas",
+  "finding.kind.manualReview": "Revisão manual",
   "finding.contextOnly":
     "Encontrado só neste contexto ({where}). Não falha no primeiro carregamento em desktop.",
 
@@ -1359,7 +1360,10 @@ export const ptBR: Catalog = {
   "panel.problemNavigation": "Navegação entre problemas",
   "panel.previousProblem": "Problema anterior",
   "panel.nextProblem": "Próximo problema",
-  "panel.findings": "Problemas",
+  "panel.group.fix": "A corrigir",
+  "panel.group.check": "Conferir à mão",
+  "panel.group.recommend": "Recomendações",
+  "panel.howToCheck": "Como conferir",
   "panel.readingLanguage":
     "Esta leitura foi gerada em {language}. Audite a página de novo para recebê-la neste idioma.",
   "panel.noFailures": "Nenhuma das verificações desta versão encontrou falhas.",

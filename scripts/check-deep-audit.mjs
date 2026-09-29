@@ -685,7 +685,7 @@ try {
   const panel = await ctx.newPage();
   await panel.setViewportSize({ width: 400, height: 800 });
   await panel.goto(`chrome-extension://${extId}/panel.html`);
-  await panel.waitForFunction(() => document.body.textContent.includes("Findings ·"), null, {
+  await panel.waitForFunction(() => document.body.textContent.includes("To fix ·"), null, {
     timeout: 20000,
   });
 
@@ -725,7 +725,7 @@ try {
     const names = [
       "This tab",
       "Quick audit",
-      "Findings",
+      "To fix",
       "Focus path",
       "Coverage limitations",
       "Checks performed",
@@ -752,10 +752,10 @@ try {
   const place = (name) => layout.order.indexOf(name);
   check(place("This tab") === 0, `the standing does not lead: ${layout.order}`);
   check(
-    place("Findings") === 1,
+    place("To fix") === 1,
     `findings must come straight after the standing, got ${JSON.stringify(layout.order)}`,
   );
-  check(place("Focus path") > place("Findings"), "the focus path must come after the findings");
+  check(place("Focus path") > place("To fix"), "the focus path must come after the findings");
   for (const later of ["Coverage limitations", "Checks performed", "Evidence"]) {
     check(
       place(later) > place("Focus path"),
@@ -1571,7 +1571,7 @@ try {
   const asleep = await ctx.newPage();
   await asleep.setViewportSize({ width: 400, height: 800 });
   await asleep.goto(`chrome-extension://${extId}/panel.html`);
-  await asleep.waitForFunction(() => document.body.textContent.includes("Findings ·"), null, {
+  await asleep.waitForFunction(() => document.body.textContent.includes("To fix ·"), null, {
     timeout: 20000,
   });
 

@@ -90,7 +90,7 @@ try {
   const panel = await ctx.newPage();
   await panel.setViewportSize({ width: 400, height: 760 });
   await panel.goto(`chrome-extension://${extId}/panel.html`);
-  await panel.waitForFunction(() => document.body.textContent.includes("Findings"), null, {
+  await panel.waitForFunction(() => document.body.textContent.includes("To fix"), null, {
     timeout: 20000,
   });
 
@@ -139,20 +139,16 @@ try {
   out.locale.en = await panel.evaluate(() => document.body.innerText.slice(0, 80));
   await sw.evaluate(() => chrome.storage.local.set({ locale: "pt-BR" }));
   await panel.reload();
-  await panel.waitForFunction(
-    () => /Problemas|Achados|Findings/.test(document.body.textContent),
-    null,
-    {
-      timeout: 20000,
-    },
-  );
+  await panel.waitForFunction(() => /A corrigir|To fix/.test(document.body.textContent), null, {
+    timeout: 20000,
+  });
   out.locale.pt = await panel.evaluate(() => document.body.innerText.slice(0, 80));
   out.locale.ptHasEnglish = await panel.evaluate(() =>
     /Fix tested|Needs review|Best practice, not a WCAG/.test(document.body.innerText),
   );
   await sw.evaluate(() => chrome.storage.local.set({ locale: "en" }));
   await panel.reload();
-  await panel.waitForFunction(() => document.body.textContent.includes("Findings"), null, {
+  await panel.waitForFunction(() => document.body.textContent.includes("To fix"), null, {
     timeout: 20000,
   });
 

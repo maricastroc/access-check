@@ -12,7 +12,9 @@ const PAGES = {
       style="outline:none" title="${LONG}" aria-label="${LONG}">Deeply buried link</a></span></div></article></section></div>
   </main>`,
   "/several": `<main><h1>Several</h1><img src="/pic.png">
-    <p style="color:#bbb;background:#fff">Low contrast</p><input type="text"></main>`,
+    <p style="color:#bbb;background:#fff">Low contrast</p><input type="text">
+    <p style="color:#777;background-image:linear-gradient(#fff,#ddd)">Over a gradient</p></main>
+    <p>Outside every landmark</p>`,
   "/many": `<main><h1>Many</h1>${Array.from(
     { length: 60 },
     (_, i) => `<a href="/x${i}" style="outline:none">Link ${i}</a>`,
@@ -166,7 +168,9 @@ try {
   const severalPanel = await openPanel(400);
   const stepping = await severalPanel.evaluate(async () => {
     const rows = () =>
-      [...document.querySelectorAll("button")].filter((b) => b.querySelector("h3"));
+      [...document.querySelectorAll('section[aria-labelledby="group-fix"] button')].filter((b) =>
+        b.querySelector("h3"),
+      );
     const byText = (text) =>
       [...document.querySelectorAll("button")].find((b) => b.textContent.trim() === text);
     const opened = () => rows().findIndex((r) => r.getAttribute("aria-expanded") === "true");
@@ -213,6 +217,65 @@ try {
     check(stepping.last === stepping.total - 1, "Next problem never reached the last problem");
     check(stepping.lastNextDisabled === true, "Next problem is live on the last problem");
   }
+
+  const groups = await severalPanel.evaluate(async () => {
+    const heading = (group) => document.getElementById(`group-${group}`);
+    const read = (group) => heading(group)?.textContent.trim() ?? null;
+    const holder = (group) => heading(group)?.closest("details") ?? null;
+    const counts = Object.fromEntries(
+      [...document.querySelectorAll("dl > div")].map((row) => [
+        row.querySelector("dd").textContent.trim(),
+        Number(row.querySelector("dt").textContent),
+      ]),
+    );
+    const check = holder("check");
+    const closedAtFirst = {
+      check: check ? !check.open : null,
+      recommend: holder("recommend") ? !holder("recommend").open : null,
+    };
+    check?.querySelector("summary").click();
+    await new Promise((r) => setTimeout(r, 60));
+    const review = [...(check?.querySelectorAll("button") ?? [])].find(
+      (b) => b.querySelector("h3") && /Manual review/i.test(b.textContent),
+    );
+    review?.click();
+    await new Promise((r) => setTimeout(r, 120));
+    const detail = review?.nextElementSibling?.innerText ?? "";
+    return {
+      fix: read("fix"),
+      check: read("check"),
+      recommend: read("recommend"),
+      closedAtFirst,
+      counts,
+      reviewOpened: !!review,
+      howToCheck: /^How to check$/im.test(detail),
+      steps: review?.nextElementSibling?.querySelectorAll("ol li").length ?? 0,
+      locate: /^Locate on page$/m.test(detail),
+      whatToChange: /^What to change$/im.test(detail),
+      markerNote: /not pictured/.test(document.body.innerText),
+    };
+  });
+  console.log("the queue's groups:", JSON.stringify(groups));
+  const listed = (label) => Number(label?.split("·")[1] ?? 0);
+  check(groups.fix?.startsWith("To fix"), "there is no To fix group");
+  check(groups.closedAtFirst.check === true, "To check by hand is not closed at first");
+  check(groups.closedAtFirst.recommend === true, "Recommendations is not closed at first");
+  check(
+    listed(groups.check) === groups.counts["manual review"] + groups.counts["need a human check"],
+    `To check by hand lists ${listed(groups.check)}, the counts say ${
+      groups.counts["manual review"] + groups.counts["need a human check"]
+    }`,
+  );
+  check(groups.counts["manual review"] > 0, "the fixture produced no manual review to list");
+  check(
+    listed(groups.recommend) === groups.counts["best practice"],
+    `Recommendations lists ${listed(groups.recommend)}, the counts say ${groups.counts["best practice"]}`,
+  );
+  check(groups.reviewOpened, "no manual review row in To check by hand");
+  check(groups.howToCheck && groups.steps > 0, "a manual review does not say how to check it");
+  check(!groups.whatToChange, "a manual review is framed as something to change");
+  check(groups.locate, "a manual review cannot be located on the page");
+  check(!groups.markerNote, "a row still speaks about the screenshot");
   await severalPanel.close();
 
   await audit("/long");

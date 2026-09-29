@@ -122,7 +122,7 @@ try {
   const report = await ctx.newPage();
   await report.setViewportSize({ width: 400, height: 720 });
   await report.goto(`chrome-extension://${sw.url().split("/")[2]}/panel.html`);
-  await report.waitForFunction(() => document.body.textContent.includes("Findings"), null, {
+  await report.waitForFunction(() => document.body.textContent.includes("To fix"), null, {
     timeout: 20000,
   });
 
@@ -131,11 +131,14 @@ try {
     const rows = [...document.querySelectorAll("button h3")];
     return {
       text: text.slice(0, 160),
-      header: [...document.querySelectorAll("h2")]
-        .map((s) => s.textContent.trim())
-        .find((t) => /^Findings · \d+$/.test(t))
-        ?.split("·")[1]
-        ?.trim(),
+      groups: Object.fromEntries(
+        [...document.querySelectorAll("h2")]
+          .map((s) =>
+            s.textContent.trim().match(/^(To fix|To check by hand|Recommendations) · (\d+)$/),
+          )
+          .filter(Boolean)
+          .map((m) => [m[1], Number(m[2])]),
+      ),
       landmarks: document.querySelectorAll("main").length,
       headingOrder: [...document.querySelectorAll("h1, h2, h3, h4")].map((h) =>
         Number(h.tagName.slice(1)),
@@ -180,7 +183,7 @@ try {
       order: [...document.querySelectorAll("h1, h2")]
         .map((s) => s.textContent.trim())
         .filter((t) =>
-          /^(Quick audit score|Current-tab audit score|Findings · \d+|Focus path|Coverage limitations|Checks performed|Evidence)/.test(
+          /^(Quick audit score|Current-tab audit score|To fix · \d+|Focus path|Coverage limitations|Checks performed|Evidence)/.test(
             t,
           ),
         ),
@@ -196,7 +199,7 @@ try {
     if (!ok) failures.push(what);
   };
 
-  const shown = Number(seen.header);
+  const shown = Object.values(seen.groups).reduce((a, b) => a + b, 0);
   const c = seen.counts;
   const accounted = c.critical + c.serious + c.moderate + c.minor + c["best practice"];
 
@@ -215,7 +218,15 @@ try {
   check(!seen.claimsClean, "the panel uses language suggesting a clean bill of health");
   check(!seen.claimsNoFailures, "the panel claims there are no automated failures");
   check(shown === seen.rows.length, `header says ${shown} findings, ${seen.rows.length} rows`);
-  check(shown === accounted, `header counts ${accounted} findings, the list shows ${shown}`);
+  check(
+    shown === accounted + c["manual review"],
+    `the counts add up to ${accounted + c["manual review"]} items, the queue lists ${shown}`,
+  );
+  check(
+    (seen.groups["To check by hand"] ?? 0) >= c["manual review"],
+    "a counted manual review is missing from the queue",
+  );
+  check("To fix" in seen.groups, "the queue does not say what there is to fix");
   check(new Set(seen.rows).size === seen.rows.length, "the same finding is listed twice");
   check(
     seen.origins.some((o) => /Live regions|Target size|Keyboard/.test(o)),
@@ -249,7 +260,7 @@ try {
     `a secondary section is open by default: ${JSON.stringify(seen.openByDefault)}`,
   );
   check(
-    seen.order.findIndex((t) => t.startsWith("Findings")) <
+    seen.order.findIndex((t) => t.startsWith("To fix")) <
       seen.order.findIndex((t) => t.startsWith("Evidence")),
     `findings must come before the evidence, got ${JSON.stringify(seen.order)}`,
   );
