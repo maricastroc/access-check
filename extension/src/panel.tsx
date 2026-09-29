@@ -6,14 +6,15 @@ import { SectionKicker } from "../../src/components/ui/section-kicker";
 import { VerdictSeal } from "../../src/components/ui/verdict-seal";
 import { StageList } from "../../src/components/ui/scan-stages";
 import { WarningList } from "../../src/components/ui/warning-list";
-import { buildFindings, type FindingView } from "../../src/lib/report/findings";
+import { workQueue, type FindingView, type QueueGroup } from "../../src/lib/report/findings";
 import { describeElement } from "../../src/lib/report/identity";
+import { reviewGuidance } from "../../src/lib/scan/review";
 import { verdictMessage, verdictTone } from "../../src/lib/report/verdict";
 import type { OverlayMark } from "../../src/lib/scan/dom/overlay";
 import type { ScanResult } from "../../src/lib/scan/types";
 import { langAttrs, REPORT_LOCALES } from "../../src/lib/i18n/locale";
 import type { ReportLocale } from "../../src/lib/i18n/locale";
-import { translator } from "../../src/lib/i18n/t";
+import { translator, type MessageKey } from "../../src/lib/i18n/t";
 import { auditScope, focusPathLines } from "./coverage";
 import { locationsOf, type Location } from "./locations";
 import {
@@ -342,30 +343,34 @@ function FindingDetail({
         onLocate={() => void locate()}
       />
 
-      <Field label={t("panel.whatToChange")}>
-        <p className="text-[13px] leading-[1.55] break-words text-body">{finding.fixText}</p>
-        {finding.fixCode && (
-          <pre className="mt-1.5 overflow-x-auto bg-code p-2 font-mono text-[12px] text-ink">
-            {finding.fixCode}
-          </pre>
-        )}
-        {verdictTone(finding.verdict) === "quiet" ? (
-          <p className="mt-1.5 text-[12px] leading-normal break-words text-muted">
-            {verdictMessage(finding.verdict, t, finding.measurement)}
-          </p>
-        ) : (
-          <div className="mt-2">
-            <VerdictSeal verdict={finding.verdict} t={t} />
-            <p className="mt-1.5 text-[12.5px] leading-normal break-words text-body">
+      {finding.kind === "manual-review" ? (
+        <HowToCheck ruleId={finding.ruleId} />
+      ) : (
+        <Field label={t("panel.whatToChange")}>
+          <p className="text-[13px] leading-[1.55] break-words text-body">{finding.fixText}</p>
+          {finding.fixCode && (
+            <pre className="mt-1.5 overflow-x-auto bg-code p-2 font-mono text-[12px] text-ink">
+              {finding.fixCode}
+            </pre>
+          )}
+          {verdictTone(finding.verdict) === "quiet" ? (
+            <p className="mt-1.5 text-[12px] leading-normal break-words text-muted">
               {verdictMessage(finding.verdict, t, finding.measurement)}
             </p>
-          </div>
-        )}
-      </Field>
+          ) : (
+            <div className="mt-2">
+              <VerdictSeal verdict={finding.verdict} t={t} />
+              <p className="mt-1.5 text-[12.5px] leading-normal break-words text-body">
+                {verdictMessage(finding.verdict, t, finding.measurement)}
+              </p>
+            </div>
+          )}
+        </Field>
+      )}
 
       <Field label={t("panel.why")}>
         <p className="text-[13px] leading-[1.55] break-words text-body">{finding.desc}</p>
-        {finding.evidence === "heuristic" && (
+        {finding.evidence === "heuristic" && finding.kind !== "manual-review" && (
           <div className="mt-2 border border-dashed border-border bg-canvas px-2.5 py-2">
             <SectionKicker as="div">{t("evidence.heuristic.title")}</SectionKicker>
             <p className="mt-1 text-[12.5px] leading-normal text-body">
@@ -406,6 +411,21 @@ function FindingDetail({
         </nav>
       )}
     </>
+  );
+}
+
+function HowToCheck({ ruleId }: { ruleId: string }) {
+  const guide = reviewGuidance(ruleId, t);
+
+  return (
+    <Field label={t("panel.howToCheck")}>
+      <p className="text-[13px] leading-[1.55] break-words text-body">{guide.how}</p>
+      <ol className="mt-1.5 list-decimal space-y-1 pl-4 text-[12.5px] leading-normal text-body">
+        {guide.steps.map((step) => (
+          <li key={step}>{step}</li>
+        ))}
+      </ol>
+    </Field>
   );
 }
 
@@ -575,13 +595,19 @@ function ReadingLanguage({
   );
 }
 
+const GROUP_TITLE: Record<QueueGroup, MessageKey> = {
+  fix: "panel.group.fix",
+  check: "panel.group.check",
+  recommend: "panel.group.recommend",
+};
+
 function Findings({
-  findings,
+  groups,
   locale,
   syncStop,
   onLocate,
 }: {
-  findings: FindingView[];
+  groups: { group: QueueGroup; findings: FindingView[] }[];
   locale: ReportLocale | undefined;
   syncStop: number | null;
   onLocate: (location: Location, n: number) => Promise<string | null>;
@@ -591,7 +617,9 @@ function Findings({
 
   if (syncStop !== lastSync) {
     setLastSync(syncStop);
-    const owner = findings.find((f) => f.occurrences.some((o) => o.stop === syncStop));
+    const owner = groups
+      .flatMap((g) => g.findings)
+      .find((f) => f.occurrences.some((o) => o.stop === syncStop));
     if (owner) setSelected(owner.id);
   }
 
@@ -604,44 +632,70 @@ function Findings({
     });
   };
 
-  return (
-    <section className="mt-3 border border-border bg-surface" aria-labelledby="findings-heading">
-      <div className="border-b border-border px-3 py-2">
-        <SectionKicker as="h2" id="findings-heading">
-          {t("panel.findings")} · {findings.length}
-        </SectionKicker>
-      </div>
-      {findings.length === 0 ? (
-        <p className="px-3 py-3 text-[12.5px] text-muted">{t("panel.noFailures")}</p>
-      ) : (
-        findings.map((f, i) => (
-          <div
-            key={f.id}
-            id={`finding-${f.id}`}
-            className="scroll-mt-12"
-            {...langAttrs(locale, UI_LOCALE)}
-          >
-            <FindingRow
-              t={t}
+  const rows = (findings: FindingView[]) =>
+    findings.map((f, i) => (
+      <div
+        key={f.id}
+        id={`finding-${f.id}`}
+        className="scroll-mt-12"
+        {...langAttrs(locale, UI_LOCALE)}
+      >
+        <FindingRow
+          t={t}
+          finding={f}
+          selected={selected === f.id}
+          onSelect={() => setSelected(selected === f.id ? null : f.id)}
+          markerNote={false}
+        />
+        {selected === f.id && (
+          <div className="border-x border-b border-hairline bg-surface px-3 pt-1 pb-3">
+            <FindingDetail
               finding={f}
-              selected={selected === f.id}
-              onSelect={() => setSelected(selected === f.id ? null : f.id)}
+              syncStop={syncStop}
+              onLocate={onLocate}
+              previous={i > 0 ? () => open(findings[i - 1].id) : null}
+              next={i < findings.length - 1 ? () => open(findings[i + 1].id) : null}
             />
-            {selected === f.id && (
-              <div className="border-x border-b border-hairline bg-surface px-3 pt-1 pb-3">
-                <FindingDetail
-                  finding={f}
-                  syncStop={syncStop}
-                  onLocate={onLocate}
-                  previous={i > 0 ? () => open(findings[i - 1].id) : null}
-                  next={i < findings.length - 1 ? () => open(findings[i + 1].id) : null}
-                />
-              </div>
-            )}
           </div>
-        ))
-      )}
-    </section>
+        )}
+      </div>
+    ));
+
+  return (
+    <div className="mt-3 border border-border bg-surface">
+      {groups.map(({ group, findings }) => {
+        const heading = (
+          <SectionKicker
+            as="h2"
+            id={`group-${group}`}
+            className={group === "fix" ? undefined : "inline"}
+          >
+            {t(GROUP_TITLE[group])} · {findings.length}
+          </SectionKicker>
+        );
+
+        if (group === "fix") {
+          return (
+            <section key={group} aria-labelledby={`group-${group}`}>
+              <div className="border-b border-border px-3 py-2">{heading}</div>
+              {findings.length === 0 ? (
+                <p className="px-3 py-3 text-[12.5px] text-muted">{t("panel.noFailures")}</p>
+              ) : (
+                rows(findings)
+              )}
+            </section>
+          );
+        }
+
+        if (findings.length === 0) return null;
+        return (
+          <details key={group} className="border-t border-border">
+            <summary className="cursor-pointer px-3 py-2">{heading}</summary>
+            {rows(findings)}
+          </details>
+        );
+      })}
+    </div>
   );
 }
 
@@ -951,7 +1005,7 @@ function Report({
         <ReadingLanguage locale={result.locale} onReaudit={onReaudit} />
         <Header result={result} />
         <Findings
-          findings={buildFindings(result)}
+          groups={workQueue(result)}
           locale={result.locale}
           syncStop={syncStop}
           onLocate={locate}

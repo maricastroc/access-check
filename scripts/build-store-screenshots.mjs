@@ -169,7 +169,7 @@ try {
   const panel = await ctx.newPage();
   await panel.setViewportSize({ width: PANEL, height: HEIGHT });
   await panel.goto(`chrome-extension://${extId}/panel.html`);
-  await panel.waitForFunction(() => document.body.textContent.includes("Findings ·"), null, {
+  await panel.waitForFunction(() => document.body.textContent.includes("To fix ·"), null, {
     timeout: 20000,
   });
 
@@ -254,7 +254,7 @@ try {
 
   await walkFocusPath();
   await panel.reload();
-  await panel.waitForFunction(() => document.body.textContent.includes("Findings \u00b7"), null, {
+  await panel.waitForFunction(() => document.body.textContent.includes("To fix \u00b7"), null, {
     timeout: 20000,
   });
 

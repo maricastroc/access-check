@@ -433,6 +433,7 @@ export const en = {
   "finding.kind.liveRegions": "Live regions",
   "finding.kind.context": "Responsive & dynamic",
   "finding.kind.bestPractice": "Best practice",
+  "finding.kind.manualReview": "Manual review",
   "finding.contextOnly":
     "Found only in this context ({where}). It does not fail on the first desktop load.",
 
@@ -1328,7 +1329,10 @@ export const en = {
   "panel.problemNavigation": "Problem navigation",
   "panel.previousProblem": "Previous problem",
   "panel.nextProblem": "Next problem",
-  "panel.findings": "Findings",
+  "panel.group.fix": "To fix",
+  "panel.group.check": "To check by hand",
+  "panel.group.recommend": "Recommendations",
+  "panel.howToCheck": "How to check",
   "panel.readingLanguage":
     "This reading was produced in {language}. Audit the page again to get it in this one.",
   "panel.noFailures": "None of the checks this build runs found a failure.",
