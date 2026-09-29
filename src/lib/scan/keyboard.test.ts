@@ -438,23 +438,22 @@ describe("what each finding lets you inspect", () => {
       },
     ];
 
-    const reason = buildKeyboardReport({ ...rawBase, focusPath: path }, t).findings[0]
-      .occurrences[0].reason;
+    const { reason, measured } = buildKeyboardReport({ ...rawBase, focusPath: path }, t).findings[0]
+      .occurrences[0];
 
-    expect(reason).toContain("no outline appeared");
-    expect(reason).toContain("outline-style: none");
-    expect(reason).toContain("the box-shadow stayed none");
-    expect(reason).toContain("the background stayed rgba(0, 0, 0, 0)");
-    expect(reason).toContain("A focus indicator is expected");
+    expect(reason).toBe("Focus reached this element and nothing on screen changed.");
+    expect(measured).toContain("no outline (none, 0px)");
+    expect(measured).toContain("box-shadow unchanged (none)");
+    expect(measured).toContain("background unchanged (rgba(0, 0, 0, 0))");
   });
 
   it("falls back to a plain statement when the styles were never recorded", () => {
     const path = [stop(1, 10, 10, { focusVisible: false })];
-    const reason = buildKeyboardReport({ ...rawBase, focusPath: path }, t).findings[0]
-      .occurrences[0].reason;
+    const { reason, measured } = buildKeyboardReport({ ...rawBase, focusPath: path }, t).findings[0]
+      .occurrences[0];
 
-    expect(reason).toContain("no detectable outline");
-    expect(reason).not.toContain("undefined");
+    expect(reason).toBe("Focus reached this element and nothing on screen changed.");
+    expect(measured ?? "").not.toContain("undefined");
   });
 
   it("shows each order jump as a move between two numbered stops", () => {
@@ -471,11 +470,11 @@ describe("what each finding lets you inspect", () => {
     const [jump] = f.occurrences;
     expect(jump.from).toBe(1);
     expect(jump.to).toBe(2);
-    expect(jump.reason).toContain("Stop 1 → Stop 2");
+    expect(jump.reason).toContain("From stop 1 to stop 2");
     expect(jump.reason).toContain("focus moved back up the page");
     expect(jump.reason).toContain("near the bottom of the viewport");
     expect(jump.reason).toContain("near the top of the viewport");
-    expect(jump.reason).toContain("640px → 40px");
+    expect(jump.measured).toContain("640px to 40px");
   });
 
   it("does not present a geometric jump as a settled violation", () => {
@@ -485,8 +484,7 @@ describe("what each finding lets you inspect", () => {
     )!;
 
     expect(f.occurrences[0].certainty).toBe("needs-review");
-    expect(f.occurrences[0].reason).toContain("not proof");
-    expect(f.desc).toContain("need a human check");
+    expect(f.desc).toContain("check them by eye");
   });
 
   it("keeps the count and the list of jumps in step", () => {
@@ -567,7 +565,7 @@ describe("what a walk is allowed to conclude", () => {
 
     const reach = midway.findings.find((f) => f.id === "unreachable-control");
     expect(reach?.evidence).toBe("heuristic");
-    expect(reach?.title).toContain("never reached");
+    expect(reach?.title).toContain("hasn't reached yet");
     expect(midway.startedAtTop).toBe(false);
   });
 
@@ -593,7 +591,8 @@ describe("the evidence a focus-order jump shows", () => {
     const report = buildKeyboardReport({ ...rawBase, focusPath }, t);
     const finding = report.findings.find((f) => f.id === "focus-order");
     expect(finding).toBeDefined();
-    return finding!.occurrences[0].reason;
+    const { reason, measured } = finding!.occurrences[0];
+    return [reason, measured].filter(Boolean).join(" ");
   };
 
   it("quotes the flow position, not the painted one, when the flow decided it", () => {
@@ -648,7 +647,9 @@ describe("the evidence a focus-order jump shows", () => {
 describe("which axis a jump's evidence quotes", () => {
   const reasonOf = (focusPath: FocusStop[]): string => {
     const report = buildKeyboardReport({ ...rawBase, focusPath }, t);
-    return report.findings.find((f) => f.id === "focus-order")!.occurrences[0].reason;
+    const { reason, measured } = report.findings.find((f) => f.id === "focus-order")!
+      .occurrences[0];
+    return [reason, measured].filter(Boolean).join(" ");
   };
 
   const at = (n: number, x: number, y: number, viewport: { left: number; top: number }) =>
@@ -709,7 +710,7 @@ describe("which axis a jump's evidence quotes", () => {
 
   it("says nothing about pixels when it never measured a rectangle", () => {
     const reason = reasonOf([stop(1, 70, 40), stop(2, 20, 40)]);
-    expect(reason).not.toContain("px →");
+    expect(reason).not.toContain("px to");
   });
 
   it("never reports a horizontal move as two identical numbers", () => {
@@ -717,7 +718,7 @@ describe("which axis a jump's evidence quotes", () => {
       at(1, 880, 1533, { left: 70, top: 50 }),
       at(2, 240, 1533, { left: 20, top: 50 }),
     ]);
-    const numbers = reason.match(/(\d+)px → (\d+)px/);
+    const numbers = reason.match(/(\d+)px to (\d+)px/);
 
     expect(numbers).not.toBeNull();
     expect(numbers![1]).not.toBe(numbers![2]);
@@ -750,8 +751,8 @@ describe("what an incomplete walk is allowed to say about reach", () => {
 
   it("says the walk ended rather than calling them unreachable", () => {
     const f = buildKeyboardReport(partial, t).findings.find((x) => x.id === "unreachable-control");
-    expect(f?.title).toContain("never reached");
-    expect(f?.desc).toContain("not proof");
+    expect(f?.title).toContain("hasn't reached yet");
+    expect(f?.desc).toContain("doesn't mean they can't be reached");
   });
 
   it("keeps the conclusive reading measured and serious", () => {
@@ -762,7 +763,7 @@ describe("what an incomplete walk is allowed to say about reach", () => {
 
     expect(complete?.evidence).toBe("measured");
     expect(complete?.severity).toBe("serious");
-    expect(complete?.title).not.toContain("never reached");
+    expect(complete?.title).not.toContain("hasn't reached yet");
   });
 
   it("does not flood the report when a capped walk left many behind", () => {

@@ -196,7 +196,7 @@ describe("assets the audit is not allowed to fetch", () => {
 
     expect(one.code).toBe("cross-origin-assets");
     expect(one.message).toContain("1 stylesheet on this page comes from another origin");
-    expect(one.message).toContain("orientation-lock");
+    expect(one.message).toContain("orientation lock");
     expect(one.message).not.toMatch(/https?:\/\//);
     expect(one.message).not.toContain("ProgressEvent");
   });
@@ -717,6 +717,14 @@ describe("the panel is an inspector, not a squeezed report", () => {
 
     expect(order.every((i) => i > -1)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
+  });
+
+  it("keeps what was measured in the details, apart from the plain reason", () => {
+    const details = between(panel, "function ElementDetails(", "function ReadingLanguage(");
+    expect(details).toContain('<Field label={t("panel.measured")}>');
+    expect(details).toContain("{location.measured}");
+    const where = between(panel, "function Where(", "function ElementDetails(");
+    expect(where).not.toContain("location.measured");
   });
 
   it("starts the raw element data closed, below the action", () => {

@@ -786,7 +786,7 @@ try {
       focused,
       body,
       counter: body.find((t) => /^Occurrence \d+ of \d+$/.test(t)),
-      reason: text.includes("A focus indicator is expected"),
+      reason: text.includes("Focus reached this element and nothing on screen changed."),
       locate: [...document.querySelectorAll("button")].some(
         (b) => b.textContent.trim() === "Locate on page",
       ),

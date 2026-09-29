@@ -10,6 +10,7 @@ export type Location = {
   stop: number | null;
   keyboard: boolean;
   reason: string | null;
+  measured: string | null;
   html: string | null;
   rect: FocusRect | null;
   onScreen: boolean;
@@ -38,6 +39,7 @@ export function locationsOf(finding: FindingView): Location[] {
       stop: o.stop,
       keyboard: true,
       reason: o.reason || null,
+      measured: o.measured ?? null,
       html: o.html,
       rect: o.rect,
       onScreen: o.onScreen,
@@ -55,6 +57,7 @@ export function locationsOf(finding: FindingView): Location[] {
       stop: null,
       keyboard: false,
       reason: null,
+      measured: null,
       html: null,
       rect: null,
       onScreen: false,

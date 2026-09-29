@@ -133,4 +133,14 @@ describe("the catalog carries nothing the product no longer says", () => {
   it("keeps both catalogs on exactly the same keys", () => {
     expect(Object.keys(ptBR).sort()).toEqual(Object.keys(en).sort());
   });
+
+  it("writes without em dashes, in either language", () => {
+    const dashed = [
+      ...Object.entries(en).map(([key, value]) => ["en", key, JSON.stringify(value)]),
+      ...Object.entries(ptBR).map(([key, value]) => ["pt-BR", key, JSON.stringify(value)]),
+    ]
+      .filter(([, , text]) => text.includes("\u2014"))
+      .map(([locale, key]) => `${locale} ${key}`);
+    expect(dashed, `em dashes in: ${dashed.join(", ")}`).toEqual([]);
+  });
 });

@@ -680,6 +680,12 @@ function ElementDetails({ location }: { location: Location }) {
         </Field>
       )}
 
+      {location.measured && (
+        <Field label={t("panel.measured")}>
+          <p className="text-[12px] leading-normal break-words text-muted">{location.measured}</p>
+        </Field>
+      )}
+
       {location.rect && (
         <Field label={t("panel.position")}>
           <p className="text-[12px] text-muted tabular-nums">

@@ -11,7 +11,7 @@ export const en = {
   "unit.elementNoun": { one: "element", other: "elements" },
   "unit.and": "and",
 
-  "privacy.metaTitle": "Privacy \u2014 AccessCheck extension",
+  "privacy.metaTitle": "Privacy · AccessCheck extension",
   "privacy.metaDescription": "What the AccessCheck browser extension reads, and where it goes.",
   "meta.title": "AccessCheck: measure, locate and trace every accessibility barrier",
   "meta.description":
@@ -81,7 +81,7 @@ export const en = {
   "audit.live.conditionalDesc":
     'When the page was read, the region was hidden (display:none, visibility:hidden, the hidden attribute or aria-hidden) and showed nothing yet. That is expected for a message the page reveals after an action, and a role="alert" revealed that way is announced by most screen readers. Text written into it while it stays hidden is never announced, though, and a read of the page cannot tell the two apart.',
   "audit.live.conditionalFix":
-    "Trigger what fills the region — submit the form, add to the cart — and listen with a screen reader. If the update is not announced, keep the region in the accessibility tree and change its text, instead of revealing a hidden one.",
+    "Trigger whatever fills the region, such as submitting the form or adding to the cart, and listen with a screen reader. If the update isn't announced, keep the region in the accessibility tree and change its text instead of revealing a hidden one.",
   "audit.live.mutedTitle": {
     one: '{count} alert is muted with aria-live="off"',
     other: '{count} alerts are muted with aria-live="off"',
@@ -272,7 +272,7 @@ export const en = {
     "You stopped it, so the focus path was not walked. The rest of this report is unchanged.",
   "deep.cancelledPlain": "The deep audit was cancelled, so the focus path was not walked.",
   "deep.alreadyAttached":
-    "Another debugger is attached to this tab — usually DevTools. Close it and run the deep audit again.",
+    "Another debugger is attached to this tab, usually DevTools. Close it and check the keyboard again.",
   "deep.notDebuggable":
     "Chrome does not allow debugging this page, so the focus path cannot be walked here.",
   "deep.attachRefused": "Chrome refused to attach the debugger: {reason}",
@@ -297,11 +297,11 @@ export const en = {
   "warning.reducedMotionSkipped":
     "The reduced-motion check needs media emulation, not available in this build. Target size and live regions were checked.",
   "warning.walkChangedPage":
-    "Typing Tab through this page opened content that stayed open — a menu, a panel or a suggestion list. The rules had already read the page by then, so auditing again can give a slightly different reading of the same page.",
+    "Pressing Tab through this page opened something that stayed open, like a menu, a panel or a suggestion list. The rules had already read the page, so auditing again may give a slightly different reading.",
   "warning.contentUnsettled":
     "The page was still changing after six seconds of waiting, so the rules read a moving target. Findings from a page that has not settled are not reliable, and will differ between runs.",
   "warning.crossOrigin":
-    "{assets} on this page {verb} from another origin, which this build is not allowed to fetch. Rules that read those files — the orientation-lock check — report as needing review instead of passing. Everything read from the page itself is unaffected.",
+    "{assets} on this page {verb} from another origin, which this build isn't allowed to fetch. Rules that read those files, such as the orientation lock check, report as needing review instead of passing. Everything read from the page itself is unaffected.",
   "warning.crossOriginComes": "comes",
   "warning.crossOriginCome": "come",
 
@@ -500,7 +500,7 @@ export const en = {
   "home.lens.frameLabel": "Screenshot \u00b7 scale 43%",
 
   "home.md.filename": "accesscheck-aurora-coffee-com.md",
-  "home.md.line1": "## aurora-coffee.com \u2014 Failing",
+  "home.md.line1": "## aurora-coffee.com · Failing",
   "home.md.line2": "| severity | findings | elements |",
   "home.md.line3": "| serious  | 1 | 7 |",
   "home.md.line4": "| moderate | 2 | 2 |",
@@ -551,8 +551,7 @@ export const en = {
   "capture.failed": "The screenshot could not be taken this time.",
   "capture.runFullNote":
     "The findings for this page are complete. Run the full audit to add the screenshot, the issue markers and the focus path.",
-  "capture.unaffected":
-    "The findings for this page are unaffected \u2014 only the capture is missing.",
+  "capture.unaffected": "The findings for this page are unaffected. Only the capture is missing.",
   "capture.runFull": "Run full audit",
   "capture.tryAgain": "Try again",
   "capture.collapsed": "Screenshot collapsed",
@@ -845,13 +844,13 @@ export const en = {
   "home.track.kicker": "Over time",
   "home.track.title": "Audit again later and see exactly what moved",
   "home.track.body":
-    "A page that passes today can fail after the next deploy. Every audit you run signed in is saved, and the next one is compared rule by rule against it \u2014 which barriers cleared, which came back, and whether that moved where the page stands.",
+    "A page that passes today can fail after the next deploy. Every audit you run signed in is saved, and the next one is compared with it rule by rule: which barriers cleared, which came back, and whether that changed where the page stands.",
   "home.track.cleared": { one: "{count} cleared", other: "{count} cleared" },
   "home.track.previousAudit": "Previous audit",
   "home.track.thisAudit": "This audit",
   "home.track.daysLater": { one: "{count} day later", other: "{count} days later" },
   "home.track.note":
-    "History is saved when you sign in with GitHub or Google. Everything else on this page \u2014 the audit, the fixes and the exports \u2014 works without an account.",
+    "History is saved when you sign in with GitHub or Google. Everything else on this page, including the audit, the fixes and the exports, works without an account.",
 
   "home.cta.measured": "Measured",
   "home.cta.located": "Located",
@@ -1159,134 +1158,128 @@ export const en = {
     "{subject} still fails after the suggested change: the new color reaches {ratio}:1 against the sampled background, but the rule still flags it. The real background may be an image, gradient or overlapping layer.{tail}",
   "verdict.failedPlain": "{subject} still fails with the change applied. Review it by hand.{tail}",
   "verdict.unverifiable":
-    "This fix could not be re-run on the page — the element was gone, or there was no time left. Confirm it by hand.",
+    "This fix couldn't be tried on the page, because the element was gone or there was no time left. Check it by hand.",
   "verdict.contextual":
     "This suggestion clears the rule, but whether it says the right thing for this page is a judgement only a person can make.",
   "verdict.noAutoFix":
     "No automatic fix applies here. The right change depends on the page, so it needs a person.",
   "verdict.bestPractice":
     "Best practice, not a WCAG success criterion. Worth fixing, but it does not affect the WCAG reading.",
-  "verdict.complementary":
-    "Found by a complementary pass (keyboard, mobile, motion or dynamic state). Fix it and run the audit again to confirm.",
+  "verdict.complementary": "Fix it, then audit again to confirm.",
 
   "keyboard.region.offscreen": "outside the visible viewport",
   "keyboard.region.top": "near the top of the viewport",
   "keyboard.region.middle": "in the middle of the viewport",
   "keyboard.region.bottom": "near the bottom of the viewport",
 
-  "keyboard.invisible.noStyles":
-    "Focus reached this element and produced no detectable outline, box-shadow, border or background change.",
-  "keyboard.invisible.noOutline":
-    "no outline appeared (outline-style: {style}, outline-width: {width})",
-  "keyboard.invisible.boxShadow": "the box-shadow stayed {value}",
-  "keyboard.invisible.border": "the border stayed {width} {color}",
-  "keyboard.invisible.background": "the background stayed {value}",
+  "keyboard.invisible.noOutline": "no outline ({style}, {width})",
+  "keyboard.invisible.boxShadow": "box-shadow unchanged ({value})",
+  "keyboard.invisible.border": "border unchanged ({width} {color})",
+  "keyboard.invisible.background": "background unchanged ({value})",
   "keyboard.invisible.component":
-    "nothing drawn around it changed either — not its wrapper, the parts beside it or their ::before and ::after",
-  "keyboard.invisible.nothingChanged":
-    "Focus reached this element and nothing changed: {unchanged}. A focus indicator is expected here — an outline, a box-shadow, a border or a background that differs from the element's resting style.",
+    "nothing around it changed either, including its container and its ::before and ::after",
+  "keyboard.invisible.reason": "Focus reached this element and nothing on screen changed.",
+  "keyboard.invisible.measured": "{unchanged}.",
   "keyboard.invisible.title": {
     one: "No visible focus indicator on {count} element",
     other: "No visible focus indicator on {count} elements",
   },
   "keyboard.invisible.desc": {
-    one: "Focusing this element by keyboard produced no detectable outline, box-shadow, border or background change. Sighted keyboard users can't tell where they are on the page.",
-    other:
-      "Focusing these elements by keyboard produced no detectable outline, box-shadow, border or background change. Sighted keyboard users can't tell where they are on the page.",
+    one: "People who use a keyboard can't see where they are on the page.",
+    other: "People who use a keyboard can't see where they are on the page.",
   },
   "keyboard.invisible.fix":
-    "Add a clear :focus-visible style (for example outline: 2px solid; outline-offset: 2px;) instead of removing the outline with outline: none.",
+    "Give it a visible :focus-visible style, such as outline: 2px solid with outline-offset: 2px, instead of removing the outline.",
 
   "keyboard.unclear.title": {
     one: "{count} focus indicator needs a human check",
     other: "{count} focus indicators need a human check",
   },
   "keyboard.unclear.desc": {
-    one: "Focus reached this element and the element itself did not change. What did change, or whether anything changed at all, is not something this reading can settle: either the change was on a container shared with other controls, or focus moved into a shadow root it cannot read.",
+    one: "Focus reached this element, but the element itself didn't change. Something around it may have, so check it by eye.",
     other:
-      "Focus reached these elements and they did not change themselves. What did change, or whether anything changed at all, is not something this reading can settle: either the change was on a container shared with other controls, or focus moved into a shadow root it cannot read.",
+      "Focus reached these elements, but they didn't change themselves. Something around them may have, so check them by eye.",
   },
   "keyboard.unclear.fix":
-    "Tab to each one and look. If the highlight on the container does not single out the focused control, give the control its own :focus-visible style.",
+    "Tab to each one and look. If the highlight doesn't clearly point at the focused control, give the control its own :focus-visible style.",
   "keyboard.unclear.opaque":
-    "Focus moved into this element's shadow root, which this build cannot read, so whether an indicator appeared inside it was never measured.",
+    "Focus moved inside this element's shadow root, which this version can't read, so any indicator in there wasn't measured.",
   "keyboard.unclear.occurrence": {
-    one: "Focus reached this element and it did not change. The only change was on {container}, which also holds {count} other control.",
+    one: "The element didn't change. Only {container} did, and it also holds {count} other control.",
     other:
-      "Focus reached this element and it did not change. The only change was on {container}, which also holds {count} other controls.",
+      "The element didn't change. Only {container} did, and it also holds {count} other controls.",
   },
 
   "keyboard.jump.up": "focus moved back up the page",
   "keyboard.jump.back": "focus moved back to the left on the same line",
   "keyboard.jump.where": ', from {fromRegion} ("{fromLabel}") to {toRegion} ("{toLabel}")',
   "keyboard.jump.whereLabels": ', from "{fromLabel}" to "{toLabel}"',
-  "keyboard.jump.measured": " Measured from the top of the viewport: {from}px → {to}px.",
-  "keyboard.jump.measuredDown": " Measured down the document: {from}px → {to}px.",
-  "keyboard.jump.measuredAcross": " Measured across the document: {from}px → {to}px.",
-  "keyboard.jump.measuredFromLeft": " Measured from the left of the viewport: {from}px → {to}px.",
-  "keyboard.jump.reason":
-    "Stop {from} → Stop {to}: {movement}{where}.{measured} This is geometric evidence, not proof: check whether it matches the reading order you intend.",
+  "keyboard.jump.measured": "From the top of the viewport: {from}px to {to}px.",
+  "keyboard.jump.measuredDown": "Down the page: {from}px to {to}px.",
+  "keyboard.jump.measuredAcross": "Across the page: {from}px to {to}px.",
+  "keyboard.jump.measuredFromLeft": "From the left of the viewport: {from}px to {to}px.",
+  "keyboard.jump.reason": "From stop {from} to stop {to}, {movement}{where}.",
 
   "keyboard.trap.title": "Keyboard focus is trapped",
   "keyboard.trap.desc":
-    "Pressing Tab kept focus on the same element instead of advancing. Keyboard and screen-reader users can get stuck here with no way out.",
+    "Pressing Tab left focus on the same element. Keyboard and screen reader users can get stuck here with no way out.",
   "keyboard.trap.fix":
-    "Make sure the element doesn't intercept Tab, or (if it's a dialog) give a clear way to leave: press Esc to close it and return focus to the control that opened it.",
+    "Make sure the element doesn't capture Tab. If it's a dialog, let Esc close it and send focus back to the control that opened it.",
   "keyboard.trap.occurrence":
-    "Tab was pressed here and focus stayed on this same element, so the walk could go no further.",
+    "Tab was pressed here and focus didn't move, so the check couldn't go any further.",
 
   "keyboard.notReached.title": {
-    one: "{count} control the walk never reached",
-    other: "{count} controls the walk never reached",
+    one: "{count} control the keyboard check hasn't reached yet",
+    other: "{count} controls the keyboard check hasn't reached yet",
   },
   "keyboard.notReached.desc": {
-    one: "The walk stopped before it came round, so this control was never focused. That is not proof it cannot be reached by keyboard.",
+    one: "The keyboard check stopped before getting to this control, so it hasn't been tested. That doesn't mean it can't be reached.",
     other:
-      "The walk stopped before it came round, so these controls were never focused. That is not proof they cannot be reached by keyboard.",
+      "The keyboard check stopped before getting to these controls, so they haven't been tested. That doesn't mean they can't be reached.",
   },
   "keyboard.notReached.fix":
-    "Continue the walk, or run it again with more room, before treating any of these as unreachable.",
-  "keyboard.notReached.occurrence": "The walk ended before focus arrived here.",
+    "Let the keyboard check finish before treating any of these as unreachable.",
+  "keyboard.notReached.occurrence": "The keyboard check ended before focus got here.",
   "keyboard.unreachable.title": {
-    one: "{count} interactive control is not keyboard-reachable",
-    other: "{count} interactive controls are not keyboard-reachable",
+    one: "{count} interactive control can't be reached by keyboard",
+    other: "{count} interactive controls can't be reached by keyboard",
   },
   "keyboard.unreachable.desc": {
-    one: "{count} element behaves as interactive (click handlers or ARIA roles) but Tab never reaches it, so it's usable by mouse only.",
+    one: "{count} element acts like a control, with a click handler or an ARIA role, but Tab never reaches it. Only mouse users can use it.",
     other:
-      "{count} elements behave as interactive (click handlers or ARIA roles) but Tab never reaches them, so they're usable by mouse only.",
+      "{count} elements act like controls, with click handlers or ARIA roles, but Tab never reaches them. Only mouse users can use them.",
   },
   "keyboard.unreachable.fix":
-    'Give each control a native focusable element (<button>, <a href>) or add tabindex="0" and keyboard handlers so it can be reached and operated.',
+    'Use a native control such as <button> or <a href>, or add tabindex="0" and keyboard handlers so people can reach it and use it.',
   "keyboard.unreachable.occurrence":
-    "This element looks interactive (a click handler or an ARIA role) but the Tab walk never landed on it. Confirm it is meant to be operable.",
+    "This element acts like a control, but Tab never landed on it. Check whether it's meant to be usable.",
 
   "keyboard.order.title": {
     one: "Focus order jumps out of sequence {count} time",
     other: "Focus order jumps out of sequence {count} times",
   },
   "keyboard.order.desc":
-    "The Tab order doesn't follow the visual reading order (top-to-bottom, left-to-right). Focus jumps backwards or upward, which is disorienting for keyboard and screen-reader users. Each jump is listed below: whether it is wrong depends on the reading order the page intends, so they need a human check.",
+    "The Tab order doesn't follow the order people read the page, so focus jumps back or up. Whether each jump is a problem depends on the order the page intends, so check them by eye.",
   "keyboard.order.fix":
-    "Match the DOM order to the visual order and avoid reordering with CSS (order, flex-direction: row-reverse, absolute positioning) or positive tabindex.",
+    "Make the DOM order match the visual order, and avoid reordering with CSS (order, row-reverse, absolute positioning) or a positive tabindex.",
 
   "keyboard.tabindex.title": {
     one: "{count} element uses a positive tabindex",
     other: "{count} elements use a positive tabindex",
   },
   "keyboard.tabindex.desc":
-    "A positive tabindex overrides the natural tab order and is almost always a source of confusing, hard-to-maintain focus behavior.",
+    "A positive tabindex overrides the natural tab order and usually makes focus jump around in confusing ways.",
   "keyboard.tabindex.fix":
-    'Replace positive tabindex values with tabindex="0" (or none) and let the DOM order define the sequence.',
+    'Replace positive values with tabindex="0", or remove the attribute, and let the DOM order set the sequence.',
   "keyboard.tabindex.occurrence":
-    "This element carries a positive tabindex, so it is pulled out of the document order and visited before elements that come before it on the page.",
+    "This element has a positive tabindex, so it gets focus before elements that come earlier on the page.",
 
   "stage.structure": "Checking page structure",
   "stage.rules": "Running accessibility rules",
   "stage.focus": "Walking the focus path",
   "stage.report": "Preparing the report",
 
-  "panel.backToSummary": " — back to the summary",
+  "panel.backToSummary": ", back to the summary",
   "panel.count.manualReview": "manual review",
   "panel.toFix": { one: "{count} to fix", other: "{count} to fix" },
   "panel.toCheck": { one: "{count} to check by hand", other: "{count} to check by hand" },
@@ -1305,8 +1298,9 @@ export const en = {
   "panel.neverReached": "Never reached by Tab",
   "panel.stopN": "Stop {n}",
   "panel.geometryUnsure":
-    "Geometry alone cannot settle this one — check it against the reading order you intend.",
+    "The layout alone can't settle this one. Compare it with the reading order you intend.",
   "panel.position": "Position",
+  "panel.measured": "Measured",
   "panel.positionValue": "{w}×{h}px at {x}, {y}",
   "panel.offViewport": " · outside the viewport when it was measured",
   "panel.selector": "Selector",

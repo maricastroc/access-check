@@ -65,6 +65,7 @@ export type KeyboardOccurrence = {
   rect: FocusRect | null;
   onScreen: boolean;
   reason: string;
+  measured?: string | null;
   certainty: KeyboardCertainty;
   from?: number;
   to?: number;
@@ -276,10 +277,10 @@ function occurrenceForSelector(
   };
 }
 
-function invisibleReason(stop: FocusStop, t: Translate): string {
+function invisibleMeasured(stop: FocusStop, t: Translate): string | null {
   const focused = stop.focusStyle;
   const base = stop.baseStyle;
-  if (!focused || !base) return t("keyboard.invisible.noStyles");
+  if (!focused || !base) return null;
 
   const unchanged: string[] = [];
   if (focused.outlineStyle === "none" || parseFloat(focused.outlineWidth) === 0) {
@@ -309,7 +310,7 @@ function invisibleReason(stop: FocusStop, t: Translate): string {
   }
   if (stop.focusIndicator === "none") unchanged.push(t("keyboard.invisible.component"));
 
-  return t("keyboard.invisible.nothingChanged", { unchanged: unchanged.join("; ") });
+  return t("keyboard.invisible.measured", { unchanged: unchanged.join("; ") });
 }
 
 function measuredOn(
@@ -331,7 +332,11 @@ const MEASURED_KEY: Record<OrderBasis, Record<OrderJump["direction"], MessageKey
   viewport: { back: "keyboard.jump.measuredFromLeft", up: "keyboard.jump.measured" },
 };
 
-function jumpReason(jump: OrderJump, byStop: Map<number, FocusStop>, t: Translate): string {
+function jumpReason(
+  jump: OrderJump,
+  byStop: Map<number, FocusStop>,
+  t: Translate,
+): { reason: string; measured: string | null } {
   const from = byStop.get(jump.from);
   const to = byStop.get(jump.to);
   const movement = jump.direction === "up" ? t("keyboard.jump.up") : t("keyboard.jump.back");
@@ -354,13 +359,16 @@ function jumpReason(jump: OrderJump, byStop: Map<number, FocusStop>, t: Translat
 
   const measured =
     a === null || b === null
-      ? ""
+      ? null
       : t(MEASURED_KEY[jump.basis][jump.direction], {
           from: Math.round(a),
           to: Math.round(b),
         });
 
-  return t("keyboard.jump.reason", { from: jump.from, to: jump.to, movement, where, measured });
+  return {
+    reason: t("keyboard.jump.reason", { from: jump.from, to: jump.to, movement, where }),
+    measured,
+  };
 }
 
 export function buildKeyboardReport(raw: RawKeyboard, t: Translate): KeyboardReport {
@@ -435,7 +443,11 @@ export function buildKeyboardReport(raw: RawKeyboard, t: Translate): KeyboardRep
       fix: t("keyboard.invisible.fix"),
       count: n,
       selectors: invisible.slice(0, MAX_FINDING_SELECTORS).map((s) => s.selector),
-      occurrences: invisible.map((s) => occurrenceOf(s, invisibleReason(s, t), "conclusive")),
+      occurrences: invisible.map((s) =>
+        occurrenceOf(s, t("keyboard.invisible.reason"), "conclusive", {
+          measured: invisibleMeasured(s, t),
+        }),
+      ),
     });
   }
 
@@ -483,13 +495,14 @@ export function buildKeyboardReport(raw: RawKeyboard, t: Translate): KeyboardRep
       selectors: inv.selectors.slice(0, MAX_FINDING_SELECTORS),
       occurrences: inv.jumps.map((jump) => {
         const to = byStop.get(jump.to);
-        const reason = jumpReason(jump, byStop, t);
+        const { reason, measured } = jumpReason(jump, byStop, t);
         return to
-          ? occurrenceOf(to, reason, "needs-review", { from: jump.from, to: jump.to })
+          ? occurrenceOf(to, reason, "needs-review", { from: jump.from, to: jump.to, measured })
           : {
               ...occurrenceForSelector(jump.selector, stops, reason, "needs-review"),
               from: jump.from,
               to: jump.to,
+              measured,
             };
       }),
     });
