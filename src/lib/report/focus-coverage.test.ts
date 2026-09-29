@@ -82,11 +82,13 @@ describe("both surfaces put that statement above the stops", () => {
   it("the panel does", () => {
     expect(panel.indexOf("lines.line")).toBeGreaterThan(-1);
     expect(panel.indexOf("lines.line")).toBeLessThan(panel.indexOf("panel.showFocusPath"));
-    expect(panel.indexOf("lines?.notes")).toBeLessThan(panel.indexOf("panel.showFocusPath"));
+    expect(panel.indexOf("lines.notes")).toBeGreaterThan(-1);
+    expect(panel.indexOf("lines.notes")).toBeLessThan(panel.indexOf("panel.showFocusPath"));
   });
 
   it("the panel offers to carry on only when the walk was cut short", () => {
-    expect(panel).toContain("walked.truncated && (");
+    expect(panel).toContain('const cut = scope.focusPath === "truncated";');
+    expect(panel).toMatch(/\{cut && \([\s\S]{0,200}onClick=\{onContinue\}/);
     expect(panel).toContain("panel.continueWalk");
   });
 });

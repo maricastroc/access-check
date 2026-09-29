@@ -742,7 +742,9 @@ try {
       order: [...new Set(order)],
       details,
       shortSummary: /Partial coverage · \d+ check/.test(text),
-      badge: text.includes("Includes keyboard focus path"),
+      keyboardAsked: /Keyboard not checked yet|Keyboard check stopped|Check keyboard/.test(
+        document.querySelector('[aria-labelledby="verdict-heading"]')?.textContent ?? "",
+      ),
       claimsExpanded: text.includes("Expanded audit"),
       overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
     };
@@ -763,7 +765,7 @@ try {
     );
   }
   check(layout.shortSummary, "the score card does not carry the one-line coverage summary");
-  check(layout.badge, "a walked focus path is not announced next to the score");
+  check(!layout.keyboardAsked, "a keyboard walked to the end is still asked for at the top");
   check(!layout.claimsExpanded, 'the panel still calls the reading an "Expanded audit"');
   check(
     layout.details.every((d) => !d.open),

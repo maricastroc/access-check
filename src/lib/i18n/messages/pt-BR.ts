@@ -300,7 +300,7 @@ export const ptBR: Catalog = {
     "O motor de auditoria na página informa a versão {found}, e esta versão precisa da {needed}.",
 
   "warning.keyboardSkipped":
-    'O caminho do foco não foi percorrido. Use "Percorrer o caminho do foco agora" para enviar pressionamentos reais de Tab pela página.',
+    'O caminho do foco não foi percorrido. Use "Verificar teclado" para enviar pressionamentos reais de Tab pela página.',
   "warning.keyboardFailed": "O caminho do foco não foi percorrido. {reason}",
   "warning.lazyContent":
     "Conteúdo que só aparece quando você rola até ele não foi carregado, então nada abaixo da dobra foi lido. A auditoria expandida percorre a página antes; esta leitura não fez isso.",
@@ -356,14 +356,14 @@ export const ptBR: Catalog = {
 
   "scope.stillMissing":
     "O viewport de celular e o movimento reduzido continuam fora daqui, então esta não é uma auditoria completa.",
-  "scope.focusPathPending": "Caminho de foco ainda não percorrido",
+  "scope.focusPathPending": "Teclado ainda não verificado",
   "scope.currentTabKicker": "Esta aba",
   "scope.skippedNote":
     "O caminho do foco não foi verificado, então nada aqui responde pelo uso com teclado. {why} {rest}",
-  "scope.partialBadge": "Inclui o caminho do foco do teclado · parcial",
+  "scope.partialBadge": "A verificação de teclado não começou no primeiro controle",
   "scope.partialNote":
     "Não foi possível levar o caminho do foco de volta ao primeiro controle, então estas {stops} paradas começam em algum ponto dentro da página, e não no início da ordem de tabulação. {rest}",
-  "scope.truncatedBadge": "Inclui o caminho do foco do teclado · parou em {stops}",
+  "scope.truncatedBadge": "Verificação de teclado parou em {stops} paradas",
   "scope.truncatedNote":
     "O caminho do foco parou cedo, depois de {stops} paradas, então nada além desse ponto foi alcançado. {rest}",
   "scope.walkedBadge": "Inclui o caminho do foco do teclado",
@@ -1318,14 +1318,9 @@ export const ptBR: Catalog = {
   "stage.report": "Preparando o relatório",
 
   "panel.backToSummary": " — voltar ao resumo",
-  "panel.count.critical": "críticos",
-  "panel.count.serious": "graves",
-  "panel.count.moderate": "moderados",
-  "panel.count.minor": "leves",
-  "panel.count.passed": "aprovados",
-  "panel.count.bestPractice": "boas práticas",
   "panel.count.manualReview": "revisão manual",
-  "panel.count.needsReview": "precisam de conferência humana",
+  "panel.toFix": { one: "{count} para corrigir", other: "{count} para corrigir" },
+  "panel.toCheck": { one: "{count} para conferir à mão", other: "{count} para conferir à mão" },
 
   "panel.evidence": "Evidências",
   "panel.evidenceNote": "captura do viewport",
@@ -1384,8 +1379,6 @@ export const ptBR: Catalog = {
   "panel.mark.stop": "parada",
 
   "panel.focusPath": "Caminho do foco",
-  "panel.focusPathAbsent":
-    "Esta leitura não tem caminho do foco. Percorrê-lo anexa o depurador do Chrome pelo tempo do percurso — o Chrome mostra o próprio aviso enquanto isso —, tecla Tab na página e devolve foco e rolagem no fim.",
   "panel.showFocusPath": "Mostrar o caminho do foco",
   "panel.previousStop": "Parada anterior",
   "panel.previous": "Anterior",
@@ -1405,8 +1398,8 @@ export const ptBR: Catalog = {
     "O Chrome mostra o próprio aviso enquanto o depurador está conectado. Ele é liberado antes do relatório voltar, e a página não é modificada.",
   "panel.walkDebuggerNote":
     "Percorrer a ordem de tabulação precisa do depurador do Chrome, então o Chrome vai mostrar o próprio aviso e o DevTools não consegue se conectar a esta aba enquanto isso. Ele é liberado assim que a caminhada termina.",
-  "panel.walkNow": "Percorrer o caminho do foco agora",
-  "panel.continueWalk": "Continuar a caminhada",
+  "panel.walkNow": "Verificar teclado",
+  "panel.continueWalk": "Continuar de onde parou",
   "panel.continueWalkNote": "Retoma na parada {stops} e segue adiante, sem recomeçar.",
 
   "panel.auditingTab": "Auditando esta aba",

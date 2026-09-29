@@ -149,7 +149,11 @@ try {
         (s) => s.textContent,
       ),
       readsThisTab: text.includes("This tab"),
-      focusPending: text.includes("Keyboard focus path not walked yet"),
+      focusPending:
+        text.includes("Keyboard not checked yet") &&
+        [...document.querySelectorAll("button")].some(
+          (b) => b.textContent.trim() === "Check keyboard",
+        ),
       partialNote: text.includes("not a full audit"),
       focusPathNamed: text.includes("focus path was not verified"),
       claimsComplete: /\bcomplete audit\b|\bfull audit score\b/i.test(text),
@@ -161,12 +165,12 @@ try {
       ),
       claimsClean: /\bExcellent\b/i.test(text),
       claimsNoFailures: /no automated .* failures/i.test(text),
-      counts: Object.fromEntries(
-        [...document.querySelectorAll("dl > div")].map((row) => [
-          row.querySelector("dd").textContent.trim(),
-          Number(row.querySelector("dt").textContent),
-        ]),
-      ),
+      band: (() => {
+        const band =
+          document.querySelector('[aria-labelledby="verdict-heading"]')?.textContent ?? "";
+        const read = (label) => Number(band.match(new RegExp(`(\\d+) ${label}`))?.[1] ?? 0);
+        return { fix: read("to fix"), check: read("to check by hand"), dl: /<dl/.test(band) };
+      })(),
       screenshot: !!document.querySelector("img[alt^='Screenshot of']"),
       markers: document.querySelectorAll("span[title]").length,
       evidenceCollapsed: [...document.querySelectorAll("details")].some(
@@ -200,8 +204,12 @@ try {
   };
 
   const shown = Object.values(seen.groups).reduce((a, b) => a + b, 0);
-  const c = seen.counts;
-  const accounted = c.critical + c.serious + c.moderate + c.minor + c["best practice"];
+  const c = await sw.evaluate(async () => {
+    const { panelState } = await chrome.storage.session.get("panelState");
+    const r = panelState.state.result;
+    return { ...r.counts, manualReview: r.incomplete.length };
+  });
+  const accounted = c.critical + c.serious + c.moderate + c.minor + c.bestPractice;
 
   check(before.html === after.html, "the audited DOM was modified");
   check(before.scrollY === after.scrollY, "the audited page was scrolled");
@@ -219,12 +227,20 @@ try {
   check(!seen.claimsNoFailures, "the panel claims there are no automated failures");
   check(shown === seen.rows.length, `header says ${shown} findings, ${seen.rows.length} rows`);
   check(
-    shown === accounted + c["manual review"],
-    `the counts add up to ${accounted + c["manual review"]} items, the queue lists ${shown}`,
+    shown === accounted + c.manualReview,
+    `the counts add up to ${accounted + c.manualReview} items, the queue lists ${shown}`,
   );
   check(
-    (seen.groups["To check by hand"] ?? 0) >= c["manual review"],
+    (seen.groups["To check by hand"] ?? 0) >= c.manualReview,
     "a counted manual review is missing from the queue",
+  );
+  check(
+    seen.band.fix === (seen.groups["To fix"] ?? 0),
+    `the top says ${seen.band.fix} to fix, the queue lists ${seen.groups["To fix"]}`,
+  );
+  check(
+    seen.band.check === (seen.groups["To check by hand"] ?? 0),
+    `the top says ${seen.band.check} to check by hand, the queue lists ${seen.groups["To check by hand"] ?? 0}`,
   );
   check("To fix" in seen.groups, "the queue does not say what there is to fix");
   check(new Set(seen.rows).size === seen.rows.length, "the same finding is listed twice");

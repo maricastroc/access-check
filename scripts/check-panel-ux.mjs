@@ -222,12 +222,8 @@ try {
     const heading = (group) => document.getElementById(`group-${group}`);
     const read = (group) => heading(group)?.textContent.trim() ?? null;
     const holder = (group) => heading(group)?.closest("details") ?? null;
-    const counts = Object.fromEntries(
-      [...document.querySelectorAll("dl > div")].map((row) => [
-        row.querySelector("dd").textContent.trim(),
-        Number(row.querySelector("dt").textContent),
-      ]),
-    );
+    const band = document.querySelector('[aria-labelledby="verdict-heading"]').textContent;
+    const said = (label) => Number(band.match(new RegExp(`(\\d+) ${label}`))?.[1] ?? 0);
     const check = holder("check");
     const closedAtFirst = {
       check: check ? !check.open : null,
@@ -246,7 +242,7 @@ try {
       check: read("check"),
       recommend: read("recommend"),
       closedAtFirst,
-      counts,
+      band: { fix: said("to fix"), check: said("to check by hand") },
       reviewOpened: !!review,
       howToCheck: /^How to check$/im.test(detail),
       steps: review?.nextElementSibling?.querySelectorAll("ol li").length ?? 0,
@@ -257,19 +253,32 @@ try {
   });
   console.log("the queue's groups:", JSON.stringify(groups));
   const listed = (label) => Number(label?.split("·")[1] ?? 0);
+  const counted = await sw.evaluate(async () => {
+    const { panelState } = await chrome.storage.session.get("panelState");
+    const r = panelState.state.result;
+    return { ...r.counts, manualReview: r.incomplete.length };
+  });
+  check(
+    groups.band.fix === listed(groups.fix),
+    `the top says ${groups.band.fix} to fix, the queue lists ${listed(groups.fix)}`,
+  );
+  check(
+    groups.band.check === listed(groups.check),
+    `the top says ${groups.band.check} to check by hand, the queue lists ${listed(groups.check)}`,
+  );
   check(groups.fix?.startsWith("To fix"), "there is no To fix group");
   check(groups.closedAtFirst.check === true, "To check by hand is not closed at first");
   check(groups.closedAtFirst.recommend === true, "Recommendations is not closed at first");
   check(
-    listed(groups.check) === groups.counts["manual review"] + groups.counts["need a human check"],
+    listed(groups.check) === counted.manualReview + (counted.needsReview ?? 0),
     `To check by hand lists ${listed(groups.check)}, the counts say ${
-      groups.counts["manual review"] + groups.counts["need a human check"]
+      counted.manualReview + (counted.needsReview ?? 0)
     }`,
   );
-  check(groups.counts["manual review"] > 0, "the fixture produced no manual review to list");
+  check(counted.manualReview > 0, "the fixture produced no manual review to list");
   check(
-    listed(groups.recommend) === groups.counts["best practice"],
-    `Recommendations lists ${listed(groups.recommend)}, the counts say ${groups.counts["best practice"]}`,
+    listed(groups.recommend) === counted.bestPractice,
+    `Recommendations lists ${listed(groups.recommend)}, the counts say ${counted.bestPractice}`,
   );
   check(groups.reviewOpened, "no manual review row in To check by hand");
   check(groups.howToCheck && groups.steps > 0, "a manual review does not say how to check it");
@@ -297,6 +306,56 @@ try {
   console.log("with very long content:", JSON.stringify(long));
   check(long.overflow <= 0, `long content overflows the panel by ${long.overflow}px`);
   await longPanel.close();
+
+  await audit("/many");
+  const keepPlace = await openPanel(400);
+  await keepPlace.setViewportSize({ width: 400, height: 360 });
+  const staysPut = async (label) => {
+    const before = await keepPlace.evaluate((text) => {
+      window.scrollTo(0, 0);
+      const button = [...document.querySelectorAll("button")].find(
+        (b) => b.textContent.trim() === text,
+      );
+      if (!button) return null;
+      window.scrollTo(0, Math.max(0, button.getBoundingClientRect().top - 120));
+      document.getElementById("verdict-heading").dataset.probe = text;
+      const y = window.scrollY;
+      button.click();
+      return y;
+    }, label);
+    if (before === null) return { label, missing: true };
+    await keepPlace.waitForFunction(
+      () =>
+        !document.body.textContent.includes("Walking the focus path") &&
+        document.getElementById("focus-heading") !== null,
+      null,
+      { timeout: 30000 },
+    );
+    return keepPlace.evaluate(
+      ({ text, y }) => ({
+        label: text,
+        missing: false,
+        before: y,
+        after: window.scrollY,
+        sameReport: document.getElementById("verdict-heading")?.dataset.probe === text,
+      }),
+      { text: label, y: before },
+    );
+  };
+  const walkedFrom = await staysPut("Check keyboard");
+  const continuedFrom = await staysPut("Continue where it stopped");
+  console.log("checking the keyboard in place:", JSON.stringify([walkedFrom, continuedFrom]));
+  for (const moved of [walkedFrom, continuedFrom]) {
+    check(!moved.missing, `there is no ${moved.label} action to press`);
+    if (moved.missing) continue;
+    check(moved.before > 100, `${moved.label} was pressed without the panel scrolled`);
+    check(moved.sameReport, `${moved.label} replaced the reading instead of keeping it`);
+    check(
+      Math.abs(moved.after - moved.before) <= 2,
+      `${moved.label} moved the panel from ${moved.before}px to ${moved.after}px`,
+    );
+  }
+  await keepPlace.close();
 
   await audit("/many");
   await walkFocusPath();

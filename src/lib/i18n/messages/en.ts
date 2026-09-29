@@ -288,7 +288,7 @@ export const en = {
     "The audit engine in the page reports version {found}, this build needs {needed}.",
 
   "warning.keyboardSkipped":
-    'The focus path was not walked. Use "Walk the focus path now" to send real Tab presses through the page.',
+    'The focus path was not walked. Use "Check keyboard" to send real Tab presses through the page.',
   "warning.keyboardFailed": "The focus path was not walked. {reason}",
   "warning.lazyContent":
     "Content that only renders once you scroll to it was not loaded, so anything below the fold was not read. The expanded audit walks the page first; this reading did not.",
@@ -342,14 +342,14 @@ export const en = {
 
   "scope.stillMissing":
     "The mobile viewport and reduced motion are still not checked here, so this is not a full audit.",
-  "scope.focusPathPending": "Keyboard focus path not walked yet",
+  "scope.focusPathPending": "Keyboard not checked yet",
   "scope.currentTabKicker": "This tab",
   "scope.skippedNote":
     "The focus path was not verified, so nothing here can speak for keyboard use. {why} {rest}",
-  "scope.partialBadge": "Includes keyboard focus path · partial",
+  "scope.partialBadge": "Keyboard check did not start at the first control",
   "scope.partialNote":
     "The focus path could not be taken back to the first control, so these {stops} stops start somewhere inside the page rather than at the beginning of the tab order. {rest}",
-  "scope.truncatedBadge": "Includes keyboard focus path · stopped at {stops}",
+  "scope.truncatedBadge": "Keyboard check stopped at {stops} stops",
   "scope.truncatedNote":
     "The focus path stopped early after {stops} stops, so anything past that point was never reached. {rest}",
   "scope.walkedBadge": "Includes keyboard focus path",
@@ -1287,14 +1287,9 @@ export const en = {
   "stage.report": "Preparing the report",
 
   "panel.backToSummary": " — back to the summary",
-  "panel.count.critical": "critical",
-  "panel.count.serious": "serious",
-  "panel.count.moderate": "moderate",
-  "panel.count.minor": "minor",
-  "panel.count.passed": "passed",
-  "panel.count.bestPractice": "best practice",
   "panel.count.manualReview": "manual review",
-  "panel.count.needsReview": "need a human check",
+  "panel.toFix": { one: "{count} to fix", other: "{count} to fix" },
+  "panel.toCheck": { one: "{count} to check by hand", other: "{count} to check by hand" },
 
   "panel.evidence": "Evidence",
   "panel.evidenceNote": "viewport screenshot",
@@ -1352,8 +1347,6 @@ export const en = {
   "panel.mark.stop": "stop",
 
   "panel.focusPath": "Focus path",
-  "panel.focusPathAbsent":
-    "This reading has no focus path. Walking it attaches Chrome's debugger for the length of the walk — Chrome shows its own banner meanwhile — types Tab into the page, and puts focus and scroll back afterwards.",
   "panel.showFocusPath": "Show focus path",
   "panel.previousStop": "Previous stop",
   "panel.previous": "Previous",
@@ -1372,8 +1365,8 @@ export const en = {
     "Chrome shows its own banner while the debugger is attached. It is released before the report comes back, and the page is not modified.",
   "panel.walkDebuggerNote":
     "Walking the tab order needs Chrome's debugger, so Chrome will show its own banner and DevTools cannot attach to this tab meanwhile. It is released as soon as the walk ends.",
-  "panel.walkNow": "Walk the focus path now",
-  "panel.continueWalk": "Continue the walk",
+  "panel.walkNow": "Check keyboard",
+  "panel.continueWalk": "Continue where it stopped",
   "panel.continueWalkNote": "Picks up at stop {stops} and keeps going, without starting over.",
 
   "panel.auditingTab": "Auditing this tab",

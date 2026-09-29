@@ -45,7 +45,7 @@ order, highlighting an element on the page — serves that one purpose.
 > what the page means carry no verification badge at all, because no re-run can
 > settle them.
 >
-> "Walk the focus path" is a separate action that follows the real keyboard
+> "Check keyboard" is a separate action that follows the real keyboard
 > focus order with genuine Tab keystrokes. "Locate on page" scrolls to the
 > element and draws a temporary highlight; "Show focus path" numbers the stops
 > on the page and lets you step through them, with the current stop highlighted
@@ -77,7 +77,7 @@ order, highlighting an element on the page — serves that one purpose.
    runs. No debugger is attached at this point.
 3. Read the findings and open one: it names the element, keeps its selector, and
    says whether the suggested fix was re-run on the page.
-4. Press "Walk the focus path now" to follow the real tab order. Chrome shows
+4. Press "Check keyboard" to follow the real tab order. Chrome shows
    its own banner while the debugger is attached, and releases it when the walk
    ends.
 
@@ -158,4 +158,4 @@ Certifications to accept, all of which the code supports:
 >
 > Clicking the toolbar icon runs the whole audit — the rules, the own-rule
 > checks and the fix verification — without attaching the debugger at all. It is
-> attached only if the user presses "Walk the focus path now".
+> attached only if the user presses "Check keyboard".
