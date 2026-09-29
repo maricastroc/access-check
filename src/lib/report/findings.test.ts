@@ -680,3 +680,138 @@ describe("the work queue", () => {
     expect(buildFindings(result).some((f) => f.kind === "manual-review")).toBe(false);
   });
 });
+
+describe("the most severe problem comes first, whatever produced it", () => {
+  const axe = (id: string, severity: ScanViolation["severity"], nodes = 1): ScanViolation => ({
+    id,
+    severity,
+    title: id,
+    criterion: "WCAG 4.1.2 · Name, Role, Value",
+    where: `.${id}`,
+    desc: "d",
+    fix: "f",
+    nodes,
+    verification: "unchecked",
+  });
+
+  const own = (id: string, severity: ScanViolation["severity"], count = 1) => ({
+    id,
+    severity,
+    evidence: "measured" as const,
+    criterion: "WCAG 2.5.8 · Target Size (Minimum)",
+    title: id,
+    desc: "d",
+    fix: "f",
+    count,
+    selectors: [`.${id}`],
+  });
+
+  const guess = {
+    id: "focus-order" as const,
+    severity: "critical" as const,
+    evidence: "heuristic" as const,
+    criterion: "WCAG 2.4.3 · Focus Order",
+    title: "Focus order jumps",
+    desc: "d",
+    fix: "f",
+    count: 1,
+    selectors: [".a"],
+    occurrences: [],
+  };
+
+  const keyboard = (findings: unknown[]) =>
+    ({
+      totalStops: 1,
+      totalInteractive: 1,
+      reachableInteractive: 1,
+      truncated: false,
+      cycleComplete: true,
+      startedAtTop: true,
+      stoppedBy: "cycle",
+      focusPath: [],
+      findings,
+    }) as ScanResult["keyboard"];
+
+  const order = (result: ScanResult) =>
+    buildFindings(result).map((f) => `${f.severity}:${f.evidence}:${f.ruleId}`);
+
+  it("puts a critical axe finding before a serious one the extension measured", () => {
+    const rows = order(
+      baseResult({
+        violations: [axe("button-name", "critical")],
+        audits: { targetSize: { measured: 5, findings: [own("target-size", "serious", 3)] } },
+      }),
+    );
+    expect(rows).toEqual(["critical:deterministic:button-name", "serious:measured:target-size"]);
+  });
+
+  it("puts a critical measured finding before a serious axe finding", () => {
+    const rows = order(
+      baseResult({
+        violations: [axe("color-contrast", "serious", 9)],
+        audits: { targetSize: { measured: 5, findings: [own("target-size", "critical")] } },
+      }),
+    );
+    expect(rows).toEqual(["critical:measured:target-size", "serious:deterministic:color-contrast"]);
+  });
+
+  it("orders mixed evidence strictly by severity, then by how many elements", () => {
+    const rows = order(
+      baseResult({
+        violations: [
+          axe("region-a", "minor", 4),
+          axe("button-name", "critical"),
+          axe("list", "moderate"),
+        ],
+        audits: {
+          targetSize: { measured: 5, findings: [own("target-size", "serious", 2)] },
+          liveRegions: { regions: 1, findings: [own("live-region-muted", "moderate", 7)] },
+        },
+      }),
+    );
+    expect(rows.map((r) => r.split(":")[0])).toEqual([
+      "critical",
+      "serious",
+      "moderate",
+      "moderate",
+      "minor",
+    ]);
+    expect(rows[2]).toBe("moderate:measured:live-region-muted");
+  });
+
+  it("gives the same order whichever source listed its findings first", () => {
+    const a = order(
+      baseResult({
+        violations: [axe("button-name", "critical"), axe("list", "moderate")],
+        audits: { targetSize: { measured: 5, findings: [own("target-size", "serious")] } },
+      }),
+    );
+    const b = order(
+      baseResult({
+        violations: [axe("list", "moderate"), axe("button-name", "critical")],
+        audits: { targetSize: { measured: 5, findings: [own("target-size", "serious")] } },
+      }),
+    );
+    expect(a).toEqual(b);
+  });
+
+  it("still lists a guess after every confirmed failure, even a critical guess", () => {
+    const rows = order(
+      baseResult({
+        violations: [axe("list", "minor")],
+        keyboard: keyboard([guess]),
+      }),
+    );
+    expect(rows).toEqual(["minor:deterministic:list", "critical:heuristic:focus-order"]);
+  });
+
+  it("leads the work queue with its most severe problem", () => {
+    const [fix] = workQueue(
+      baseResult({
+        violations: [axe("button-name", "critical")],
+        audits: { targetSize: { measured: 5, findings: [own("target-size", "serious", 3)] } },
+      }),
+    );
+    expect(fix.findings.map((f) => f.severity)).toEqual(["critical", "serious"]);
+  });
+});

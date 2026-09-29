@@ -1160,6 +1160,8 @@ export const ptBR: Catalog = {
   "detail.affectedElement": "Elemento afetado",
   "detail.technicalSelector": "Seletor",
   "detail.howToFix": "Como corrigir",
+  "detail.humanDecision":
+    "A mudança certa depende da estrutura da página, então confirme no contexto.",
   "detail.verificationResult": "Resultado da verificação",
   "detail.sandboxNote":
     "As correções são aplicadas e revertidas em uma cópia da página. {host} não foi alterado.",

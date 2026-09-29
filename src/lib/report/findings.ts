@@ -360,7 +360,9 @@ export function buildFindings(result: ScanResult): FindingView[] {
   }
 
   withSeverity.sort((a, b) => {
-    if (a.evidence !== b.evidence) return a.evidence === "heuristic" ? 1 : -1;
+    const guessA = a.evidence === "heuristic";
+    const guessB = b.evidence === "heuristic";
+    if (guessA !== guessB) return guessA ? 1 : -1;
     const sa = SEVERITY_ORDER.indexOf(a.severity as Severity);
     const sb = SEVERITY_ORDER.indexOf(b.severity as Severity);
     if (sa !== sb) return sa - sb;
