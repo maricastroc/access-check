@@ -195,7 +195,7 @@ export function FindingDetail({
                   key={`${o.from ?? o.stop}-${o.selector}`}
                   className="text-[12.5px] leading-normal break-words text-muted"
                 >
-                  {o.reason}
+                  {[o.reason, o.measured].filter(Boolean).join(" ")}
                 </li>
               ))}
             </ul>

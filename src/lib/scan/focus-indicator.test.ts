@@ -165,7 +165,8 @@ describe("a control where nothing changes at all", () => {
 
   it("says the component around it was checked too", () => {
     const occurrence = findingFor("focus-not-visible")?.occurrences[0];
-    expect(occurrence?.reason).toContain("wrapper");
+    expect(occurrence?.reason).toBe("Focus reached this element and nothing on screen changed.");
+    expect(occurrence?.measured).toContain("including its container");
   });
 });
 

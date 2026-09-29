@@ -14,7 +14,7 @@ export const ptBR: Catalog = {
   "unit.elementNoun": { one: "elemento", other: "elementos" },
   "unit.and": "e",
 
-  "privacy.metaTitle": "Privacidade \u2014 extensão AccessCheck",
+  "privacy.metaTitle": "Privacidade · extensão AccessCheck",
   "privacy.metaDescription":
     "O que a extensão de navegador do AccessCheck lê, e para onde isso vai.",
   "meta.title": "AccessCheck: meça, localize e rastreie cada barreira de acessibilidade",
@@ -86,7 +86,7 @@ export const ptBR: Catalog = {
   "audit.live.conditionalDesc":
     'Quando a página foi lida, a região estava oculta (display:none, visibility:hidden, o atributo hidden ou aria-hidden) e ainda não mostrava nada. Isso é esperado para uma mensagem que a página revela depois de uma ação, e um role="alert" revelado assim é anunciado pela maioria dos leitores de tela. Mas um texto escrito nela enquanto continua oculta nunca é anunciado, e a leitura da página não consegue distinguir os dois casos.',
   "audit.live.conditionalFix":
-    "Dispare o que preenche a região — envie o formulário, adicione ao carrinho — e ouça com um leitor de tela. Se a atualização não for anunciada, mantenha a região na árvore de acessibilidade e troque o texto dela, em vez de revelar uma região oculta.",
+    "Dispare o que preenche a região, como enviar o formulário ou adicionar ao carrinho, e ouça com um leitor de tela. Se a atualização não for anunciada, mantenha a região na árvore de acessibilidade e troque o texto dela, em vez de revelar uma região oculta.",
   "audit.live.mutedTitle": {
     one: '{count} alerta silenciado por aria-live="off"',
     other: '{count} alertas silenciados por aria-live="off"',
@@ -94,7 +94,7 @@ export const ptBR: Catalog = {
   "audit.live.mutedDesc":
     'Um elemento com role="alert" existe para interromper, mas aria-live="off" o silencia. Como as duas declarações se contradizem, nada é anunciado.',
   "audit.live.mutedFix":
-    'Remova o aria-live="off" do alerta — role="alert" já é assertivo por padrão.',
+    'Remova o aria-live="off" do alerta. O role="alert" já é assertivo por padrão.',
 
   "audit.motion.criterion": "WCAG 2.3.3 \u00b7 Animação a partir de interações",
   "audit.motion.title": {
@@ -107,7 +107,7 @@ export const ptBR: Catalog = {
       "Mesmo com prefers-reduced-motion: reduce ativo, {count} elementos mantiveram animações longas ou em repetição. Movimento que a pessoa pediu para evitar pode causar náusea, tontura ou enxaqueca em quem tem distúrbios vestibulares.",
   },
   "audit.motion.fix":
-    "Coloque as animações não essenciais dentro de @media (prefers-reduced-motion: reduce) e desligue ou encurte a animação ali — por exemplo, animation: none ou uma transição rápida de opacidade no lugar do movimento.",
+    "Coloque as animações não essenciais dentro de @media (prefers-reduced-motion: reduce) e desligue ou encurte a animação ali, por exemplo com animation: none ou uma transição rápida de opacidade no lugar do movimento.",
 
   "audit.target.criterion": "WCAG 2.5.8 \u00b7 Tamanho do alvo (mínimo)",
   "audit.target.title": {
@@ -120,7 +120,7 @@ export const ptBR: Catalog = {
       "{count} controles interativos ficam abaixo do mínimo de 24\u00d724 pixels CSS e estão perto demais de outros alvos para se enquadrarem na exceção de espaçamento. Alvos pequenos e amontoados são difíceis de acertar para quem tem limitação motora ou usa tela sensível ao toque.",
   },
   "audit.target.fix":
-    "Aumente cada controle para pelo menos 24\u00d724px, ou dê espaçamento suficiente para que um círculo de 24px centrado nele não encoste nos vizinhos — em geral, preencher o controle resolve os dois lados.",
+    "Aumente cada controle para pelo menos 24×24px, ou dê espaço suficiente para que um círculo de 24px centrado nele não encoste nos vizinhos. Em geral, aumentar a área clicável do controle resolve os dois casos.",
 
   "scanFail.browserUnavailable":
     "O navegador que usamos para abrir a página parou de responder antes de a auditoria rodar.",
@@ -284,7 +284,7 @@ export const ptBR: Catalog = {
   "deep.cancelledPlain":
     "A auditoria profunda foi cancelada, então o caminho do foco não foi percorrido.",
   "deep.alreadyAttached":
-    "Já existe um depurador anexado a esta aba — normalmente o DevTools. Feche-o e rode a auditoria profunda de novo.",
+    "Já existe um depurador anexado a esta aba, normalmente o DevTools. Feche-o e verifique o teclado de novo.",
   "deep.notDebuggable":
     "O Chrome não permite depurar esta página, então o caminho do foco não pode ser percorrido aqui.",
   "deep.attachRefused": "O Chrome recusou anexar o depurador: {reason}",
@@ -309,11 +309,11 @@ export const ptBR: Catalog = {
   "warning.reducedMotionSkipped":
     "A checagem de movimento reduzido precisa de emulação de mídia, indisponível nesta versão. Tamanho de alvo e regiões dinâmicas foram verificados.",
   "warning.walkChangedPage":
-    "Pressionar Tab por esta página abriu conteúdo que ficou aberto — um menu, um painel ou uma lista de sugestões. As regras já tinham lido a página até então, então auditar de novo pode dar uma leitura um pouco diferente da mesma página.",
+    "Pressionar Tab por esta página abriu algo que ficou aberto, como um menu, um painel ou uma lista de sugestões. As regras já tinham lido a página, então auditar de novo pode dar uma leitura um pouco diferente.",
   "warning.contentUnsettled":
     "A página ainda estava mudando depois de seis segundos de espera, então as regras leram um alvo em movimento. Problemas de uma página que não estabilizou não são confiáveis e variam entre execuções.",
   "warning.crossOrigin":
-    "{assets} nesta página {verb} de outra origem, que esta versão não tem permissão para buscar. Regras que leem esses arquivos — a checagem de trava de orientação — aparecem como precisando de revisão em vez de aprovadas. Tudo que foi lido da própria página não é afetado.",
+    "{assets} nesta página {verb} de outra origem, que esta versão não tem permissão para buscar. Regras que leem esses arquivos, como a checagem de trava de orientação, aparecem como precisando de revisão em vez de aprovadas. Tudo que foi lido da própria página não é afetado.",
   "warning.crossOriginComes": "vem",
   "warning.crossOriginCome": "vêm",
 
@@ -520,7 +520,7 @@ export const ptBR: Catalog = {
   "home.lens.frameLabel": "Captura \u00b7 escala 43%",
 
   "home.md.filename": "accesscheck-aurora-coffee-com.md",
-  "home.md.line1": "## aurora-coffee.com — Com falhas",
+  "home.md.line1": "## aurora-coffee.com · Com falhas",
   "home.md.line2": "| severidade | problemas | elementos |",
   "home.md.line3": "| grave    | 1 | 7 |",
   "home.md.line4": "| moderado | 2 | 2 |",
@@ -571,8 +571,7 @@ export const ptBR: Catalog = {
   "capture.failed": "Não foi possível tirar a captura desta vez.",
   "capture.runFullNote":
     "Os problemas desta página estão completos. Rode a auditoria completa para acrescentar a captura, os marcadores de problema e o caminho do foco.",
-  "capture.unaffected":
-    "Os problemas desta página não são afetados \u2014 só a captura está faltando.",
+  "capture.unaffected": "Os problemas desta página não são afetados. Só a captura está faltando.",
   "capture.runFull": "Rodar auditoria completa",
   "capture.tryAgain": "Tentar de novo",
   "capture.collapsed": "Captura recolhida",
@@ -662,7 +661,7 @@ export const ptBR: Catalog = {
     "São os passos que o AccessCheck executa de fato, na ordem em que acontecem.",
   "results.partialReport": "Relatório parcial",
   "results.partialNote":
-    "Esta leitura cobre apenas o que conseguimos medir. O que ficou de fora está listado abaixo — nada foi estimado.",
+    "Esta leitura cobre apenas o que conseguimos medir. O que ficou de fora está listado abaixo, e nada foi estimado.",
 
   "home.lens.locatedOccurrence": "Ocorrência localizada",
   "home.lens.verifiedInSandbox": "Verificado em cópia da página",
@@ -869,13 +868,13 @@ export const ptBR: Catalog = {
   "home.track.kicker": "Ao longo do tempo",
   "home.track.title": "Audite de novo depois e veja exatamente o que mudou",
   "home.track.body":
-    "Uma página que passa hoje pode falhar no próximo deploy. Cada auditoria feita com login fica salva, e a seguinte é comparada regra a regra com ela \u2014 quais barreiras foram resolvidas, quais voltaram, e se isso mudou como a página está.",
+    "Uma página que passa hoje pode falhar no próximo deploy. Cada auditoria feita com login fica salva, e a seguinte é comparada com ela regra a regra: quais barreiras foram resolvidas, quais voltaram e se isso mudou a situação da página.",
   "home.track.cleared": { one: "{count} resolvido", other: "{count} resolvidos" },
   "home.track.previousAudit": "Auditoria anterior",
   "home.track.thisAudit": "Esta auditoria",
   "home.track.daysLater": { one: "{count} dia depois", other: "{count} dias depois" },
   "home.track.note":
-    "O histórico é salvo quando você entra com GitHub ou Google. Todo o resto desta página \u2014 a auditoria, as correções e as exportações \u2014 funciona sem cadastro.",
+    "O histórico é salvo quando você entra com GitHub ou Google. Todo o resto desta página, incluindo a auditoria, as correções e as exportações, funciona sem cadastro.",
 
   "home.cta.measured": "Medido",
   "home.cta.located": "Localizado",
@@ -1190,134 +1189,128 @@ export const ptBR: Catalog = {
   "verdict.failedPlain":
     "{subject} continua falhando com a mudança aplicada. Revise esse caso manualmente.{tail}",
   "verdict.unverifiable":
-    "Não deu para reexecutar esta correção na página — o elemento sumiu, ou não sobrou tempo. Confirme manualmente.",
+    "Não deu para testar esta correção na página, porque o elemento sumiu ou o tempo acabou. Confira manualmente.",
   "verdict.contextual":
     "Esta sugestão resolve a regra, mas se ela diz a coisa certa para esta página é um julgamento que só uma pessoa pode fazer.",
   "verdict.noAutoFix":
     "Nenhuma correção automática se aplica aqui. A mudança certa depende da página, então precisa de uma pessoa.",
   "verdict.bestPractice":
     "Boa prática, não um critério de sucesso da WCAG. Vale corrigir, mas não altera a leitura WCAG.",
-  "verdict.complementary":
-    "Encontrado por uma análise complementar (teclado, celular, movimento ou estado dinâmico). Corrija e rode a auditoria de novo para confirmar.",
+  "verdict.complementary": "Corrija e audite de novo para confirmar.",
 
   "keyboard.region.offscreen": "fora do viewport visível",
   "keyboard.region.top": "perto do topo do viewport",
   "keyboard.region.middle": "no meio do viewport",
   "keyboard.region.bottom": "perto do fim do viewport",
 
-  "keyboard.invisible.noStyles":
-    "O foco chegou a este elemento e não produziu nenhuma mudança detectável de outline, box-shadow, borda ou fundo.",
-  "keyboard.invisible.noOutline":
-    "nenhum outline apareceu (outline-style: {style}, outline-width: {width})",
-  "keyboard.invisible.boxShadow": "o box-shadow continuou {value}",
-  "keyboard.invisible.border": "a borda continuou {width} {color}",
-  "keyboard.invisible.background": "o fundo continuou {value}",
-  "keyboard.invisible.component":
-    "nada desenhado em volta dele mudou — nem o contêiner, nem as partes ao lado, nem os ::before e ::after delas",
-  "keyboard.invisible.nothingChanged":
-    "O foco chegou a este elemento e nada mudou: {unchanged}. Espera-se um indicador de foco aqui — um outline, um box-shadow, uma borda ou um fundo diferente do estado de repouso do elemento.",
+  "keyboard.invisible.noOutline": "sem outline ({style}, {width})",
+  "keyboard.invisible.boxShadow": "box-shadow sem mudança ({value})",
+  "keyboard.invisible.border": "borda sem mudança ({width} {color})",
+  "keyboard.invisible.background": "fundo sem mudança ({value})",
+  "keyboard.invisible.component": "nada em volta mudou, nem o contêiner nem os ::before e ::after",
+  "keyboard.invisible.reason": "O foco chegou a este elemento e nada mudou na tela.",
+  "keyboard.invisible.measured": "{unchanged}.",
   "keyboard.invisible.title": {
     one: "Sem indicador de foco visível em {count} elemento",
     other: "Sem indicador de foco visível em {count} elementos",
   },
   "keyboard.invisible.desc": {
-    one: "Focar este elemento pelo teclado não produziu nenhuma mudança detectável de outline, box-shadow, borda ou fundo. Quem enxerga e usa teclado não consegue saber onde está na página.",
-    other:
-      "Focar estes elementos pelo teclado não produziu nenhuma mudança detectável de outline, box-shadow, borda ou fundo. Quem enxerga e usa teclado não consegue saber onde está na página.",
+    one: "Quem usa teclado não consegue ver onde está na página.",
+    other: "Quem usa teclado não consegue ver onde está na página.",
   },
   "keyboard.invisible.fix":
-    "Adicione um estilo :focus-visible claro (por exemplo outline: 2px solid; outline-offset: 2px;) em vez de remover o contorno com outline: none.",
+    "Dê a ele um estilo :focus-visible visível, como outline: 2px solid com outline-offset: 2px, em vez de remover o contorno.",
 
   "keyboard.unclear.title": {
     one: "{count} indicador de foco precisa de conferência humana",
     other: "{count} indicadores de foco precisam de conferência humana",
   },
   "keyboard.unclear.desc": {
-    one: "O foco chegou a este elemento e ele mesmo não mudou. O que mudou, ou se algo chegou a mudar, não é algo que esta leitura consiga resolver: ou a mudança foi num contêiner compartilhado com outros controles, ou o foco entrou num shadow root que ela não consegue ler.",
+    one: "O foco chegou a este elemento, mas ele mesmo não mudou. Algo em volta pode ter mudado, então confira visualmente.",
     other:
-      "O foco chegou a estes elementos e eles mesmos não mudaram. O que mudou, ou se algo chegou a mudar, não é algo que esta leitura consiga resolver: ou a mudança foi num contêiner compartilhado com outros controles, ou o foco entrou num shadow root que ela não consegue ler.",
+      "O foco chegou a estes elementos, mas eles mesmos não mudaram. Algo em volta pode ter mudado, então confira visualmente.",
   },
   "keyboard.unclear.fix":
-    "Navegue com Tab até cada um e observe. Se o destaque no contêiner não indicar qual controle está focado, dê ao controle um estilo :focus-visible próprio.",
+    "Navegue com Tab até cada um e observe. Se o destaque não apontar com clareza para o controle focado, dê ao controle um estilo :focus-visible próprio.",
   "keyboard.unclear.opaque":
-    "O foco entrou no shadow root deste elemento, que esta versão não consegue ler, então se apareceu um indicador lá dentro nunca foi medido.",
+    "O foco entrou no shadow root deste elemento, que esta versão não consegue ler, então nenhum indicador lá dentro foi medido.",
   "keyboard.unclear.occurrence": {
-    one: "O foco chegou a este elemento e ele não mudou. A única mudança foi em {container}, que também tem {count} outro controle.",
+    one: "O elemento não mudou. Só {container} mudou, e ele também contém {count} outro controle.",
     other:
-      "O foco chegou a este elemento e ele não mudou. A única mudança foi em {container}, que também tem outros {count} controles.",
+      "O elemento não mudou. Só {container} mudou, e ele também contém outros {count} controles.",
   },
 
   "keyboard.jump.up": "o foco voltou para cima na página",
   "keyboard.jump.back": "o foco voltou para a esquerda na mesma linha",
   "keyboard.jump.where": ', de {fromRegion} ("{fromLabel}") para {toRegion} ("{toLabel}")',
   "keyboard.jump.whereLabels": ', de "{fromLabel}" para "{toLabel}"',
-  "keyboard.jump.measured": " Medido a partir do topo do viewport: {from}px → {to}px.",
-  "keyboard.jump.measuredDown": " Medido ao longo do documento: {from}px → {to}px.",
-  "keyboard.jump.measuredAcross": " Medido ao largo do documento: {from}px → {to}px.",
-  "keyboard.jump.measuredFromLeft": " Medido a partir da esquerda do viewport: {from}px → {to}px.",
-  "keyboard.jump.reason":
-    "Parada {from} → Parada {to}: {movement}{where}.{measured} Isto é evidência geométrica, não prova: confira se corresponde à ordem de leitura que você pretende.",
+  "keyboard.jump.measured": "A partir do topo do viewport: de {from}px para {to}px.",
+  "keyboard.jump.measuredDown": "Ao longo da página: de {from}px para {to}px.",
+  "keyboard.jump.measuredAcross": "Na largura da página: de {from}px para {to}px.",
+  "keyboard.jump.measuredFromLeft": "A partir da esquerda do viewport: de {from}px para {to}px.",
+  "keyboard.jump.reason": "Da parada {from} para a parada {to}, {movement}{where}.",
 
   "keyboard.trap.title": "O foco do teclado está preso",
   "keyboard.trap.desc":
-    "Pressionar Tab manteve o foco no mesmo elemento em vez de avançar. Quem usa teclado ou leitor de tela pode ficar preso aqui sem saída.",
+    "Pressionar Tab deixou o foco no mesmo elemento. Quem usa teclado ou leitor de tela pode ficar preso aqui sem saída.",
   "keyboard.trap.fix":
-    "Garanta que o elemento não intercepte o Tab ou, se for um diálogo, ofereça uma saída clara: Esc fecha e devolve o foco ao controle que o abriu.",
+    "Garanta que o elemento não capture o Tab. Se for um diálogo, faça o Esc fechá-lo e devolver o foco ao controle que o abriu.",
   "keyboard.trap.occurrence":
-    "O Tab foi pressionado aqui e o foco continuou neste mesmo elemento, então o percurso não pôde seguir.",
+    "O Tab foi pressionado aqui e o foco não saiu do lugar, então a verificação não pôde seguir.",
 
   "keyboard.notReached.title": {
-    one: "{count} controle que a caminhada não alcançou",
-    other: "{count} controles que a caminhada não alcançou",
+    one: "{count} controle que a verificação de teclado ainda não alcançou",
+    other: "{count} controles que a verificação de teclado ainda não alcançou",
   },
   "keyboard.notReached.desc": {
-    one: "A caminhada parou antes de completar a volta, então este controle nunca recebeu foco. Isso não prova que ele seja inalcançável pelo teclado.",
+    one: "A verificação de teclado parou antes de chegar a este controle, então ele ainda não foi testado. Isso não significa que ele seja inalcançável.",
     other:
-      "A caminhada parou antes de completar a volta, então estes controles nunca receberam foco. Isso não prova que sejam inalcançáveis pelo teclado.",
+      "A verificação de teclado parou antes de chegar a estes controles, então eles ainda não foram testados. Isso não significa que sejam inalcançáveis.",
   },
   "keyboard.notReached.fix":
-    "Continue a caminhada, ou repita com mais folga, antes de tratar qualquer um deles como inalcançável.",
-  "keyboard.notReached.occurrence": "A caminhada terminou antes de o foco chegar aqui.",
+    "Deixe a verificação de teclado terminar antes de tratar qualquer um deles como inalcançável.",
+  "keyboard.notReached.occurrence":
+    "A verificação de teclado terminou antes de o foco chegar aqui.",
   "keyboard.unreachable.title": {
-    one: "{count} controle interativo não é alcançável por teclado",
-    other: "{count} controles interativos não são alcançáveis por teclado",
+    one: "{count} controle interativo não pode ser alcançado pelo teclado",
+    other: "{count} controles interativos não podem ser alcançados pelo teclado",
   },
   "keyboard.unreachable.desc": {
-    one: "{count} elemento se comporta como interativo (eventos de clique ou papéis ARIA), mas o Tab nunca chega nele, então só dá para usar com mouse.",
+    one: "{count} elemento funciona como controle, com um evento de clique ou um papel ARIA, mas o Tab nunca chega nele. Só quem usa mouse consegue usá-lo.",
     other:
-      "{count} elementos se comportam como interativos (eventos de clique ou papéis ARIA), mas o Tab nunca chega neles, então só dá para usar com mouse.",
+      "{count} elementos funcionam como controles, com eventos de clique ou papéis ARIA, mas o Tab nunca chega neles. Só quem usa mouse consegue usá-los.",
   },
   "keyboard.unreachable.fix":
-    'Dê a cada controle um elemento focalizável nativo (<button>, <a href>) ou acrescente tabindex="0" e trate os eventos de teclado para que ele possa ser alcançado e operado.',
+    'Use um controle nativo, como <button> ou <a href>, ou acrescente tabindex="0" e os eventos de teclado para que ele possa ser alcançado e usado.',
   "keyboard.unreachable.occurrence":
-    "Este elemento parece interativo (um evento de clique ou um papel ARIA), mas o percurso do Tab nunca parou nele. Confirme se ele deveria ser operável.",
+    "Este elemento funciona como controle, mas o Tab nunca parou nele. Confira se ele deveria ser utilizável.",
 
   "keyboard.order.title": {
     one: "A ordem de foco sai de sequência {count} vez",
     other: "A ordem de foco sai de sequência {count} vezes",
   },
   "keyboard.order.desc":
-    "A ordem do Tab não segue a ordem visual de leitura (de cima para baixo, da esquerda para a direita). O foco pula para trás ou para cima, o que desorienta quem usa teclado e leitor de tela. Cada salto está listado abaixo: se está errado depende da ordem de leitura que a página pretende, então precisam de conferência humana.",
+    "A ordem do Tab não segue a ordem em que a página é lida, então o foco volta para trás ou para cima. Se cada salto é um problema depende da ordem que a página pretende, então confira visualmente.",
   "keyboard.order.fix":
-    "Alinhe a ordem do DOM à ordem visual e evite reordenar com CSS (order, flex-direction: row-reverse, posicionamento absoluto) ou com tabindex positivo.",
+    "Faça a ordem do DOM acompanhar a ordem visual e evite reordenar com CSS (order, row-reverse, posicionamento absoluto) ou com tabindex positivo.",
 
   "keyboard.tabindex.title": {
     one: "{count} elemento usa tabindex positivo",
     other: "{count} elementos usam tabindex positivo",
   },
   "keyboard.tabindex.desc":
-    "Um tabindex positivo sobrepõe a ordem natural de tabulação e quase sempre é fonte de um comportamento de foco confuso e difícil de manter.",
+    "Um tabindex positivo passa por cima da ordem natural de tabulação e costuma fazer o foco pular de forma confusa.",
   "keyboard.tabindex.fix":
-    'Troque os valores positivos de tabindex por tabindex="0" (ou nenhum) e deixe a ordem do DOM definir a sequência.',
+    'Troque os valores positivos por tabindex="0", ou remova o atributo, e deixe a ordem do DOM definir a sequência.',
   "keyboard.tabindex.occurrence":
-    "Este elemento carrega um tabindex positivo, então é retirado da ordem do documento e visitado antes de elementos que vêm antes dele na página.",
+    "Este elemento tem tabindex positivo, então recebe o foco antes de elementos que vêm antes dele na página.",
 
   "stage.structure": "Lendo a estrutura da página",
   "stage.rules": "Rodando as regras de acessibilidade",
   "stage.focus": "Percorrendo o caminho do foco",
   "stage.report": "Preparando o relatório",
 
-  "panel.backToSummary": " — voltar ao resumo",
+  "panel.backToSummary": ", voltar ao resumo",
   "panel.count.manualReview": "revisão manual",
   "panel.toFix": { one: "{count} para corrigir", other: "{count} para corrigir" },
   "panel.toCheck": { one: "{count} para conferir à mão", other: "{count} para conferir à mão" },
@@ -1336,8 +1329,9 @@ export const ptBR: Catalog = {
   "panel.neverReached": "Nunca alcançado por Tab",
   "panel.stopN": "Parada {n}",
   "panel.geometryUnsure":
-    "A geometria sozinha não decide este caso — confira com a ordem de leitura que você pretende.",
+    "A posição na tela sozinha não resolve este caso. Compare com a ordem de leitura que você pretende.",
   "panel.position": "Posição",
+  "panel.measured": "Medido",
   "panel.positionValue": "{w}×{h}px em {x}, {y}",
   "panel.offViewport": " · fora do viewport no momento da medição",
   "panel.selector": "Seletor",

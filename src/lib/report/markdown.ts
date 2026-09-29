@@ -87,7 +87,7 @@ export function buildReportMarkdown(result: ScanResult): string {
   out.push("");
   out.push(`- **${t("md.url")}:** ${result.finalUrl}`);
   out.push(
-    `- **${t("standing.kicker")}:** ${t(STANDING_LABEL[standing])} — ${t(STANDING_NOTE[standing])}`,
+    `- **${t("standing.kicker")}:** ${t(STANDING_LABEL[standing])} · ${t(STANDING_NOTE[standing])}`,
   );
   out.push(`- **${t("md.elementsScanned")}:** ${result.scannedElements}`);
   out.push(`- **${t("md.generated")}:** ${new Date().toISOString().slice(0, 10)}`);
