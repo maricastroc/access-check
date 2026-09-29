@@ -106,14 +106,28 @@ function StickyBar({
   title,
   standing,
   onTop,
+  onReaudit,
+  busy = false,
 }: {
   title: string;
   standing?: Standing;
   onTop?: () => void;
+  onReaudit?: () => void;
+  busy?: boolean;
 }) {
   return (
-    <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-border bg-canvas px-3 py-2">
+    <div className="sticky top-0 z-10 flex flex-wrap items-center gap-x-2 gap-y-1.5 border-b border-border bg-canvas px-3 py-2">
       <h1 className="min-w-0 flex-1 truncate text-[13px] font-semibold text-ink">{title}</h1>
+      {onReaudit && (
+        <button
+          type="button"
+          onClick={onReaudit}
+          disabled={busy}
+          className={`${SMALL_BUTTON} shrink-0 bg-surface py-1 text-[12px]`}
+        >
+          {t("panel.reaudit")}
+        </button>
+      )}
       {standing && onTop && (
         <button
           type="button"
@@ -288,11 +302,14 @@ function Capture({ result }: { result: ScanResult }) {
   const marked = result.markers.length;
 
   return (
-    <Collapsed
-      title={t("panel.evidence")}
-      note={marked > 0 ? t("panel.evidenceNoteMarked", { count: marked }) : t("panel.evidenceNote")}
-    >
-      <div className="relative border border-hairline">
+    <section className="mt-4" aria-labelledby="about-screenshot">
+      <SectionKicker as="h3" id="about-screenshot">
+        {t("panel.screenshot")}
+      </SectionKicker>
+      <p className="mt-0.5 text-[12px] text-muted">
+        {marked > 0 ? t("panel.evidenceNoteMarked", { count: marked }) : t("panel.evidenceNote")}
+      </p>
+      <div className="relative mt-2 border border-hairline">
         {/* eslint-disable-next-line @next/next/no-img-element -- the panel is not a Next page */}
         <img
           src={result.screenshot}
@@ -314,7 +331,7 @@ function Capture({ result }: { result: ScanResult }) {
           />
         ))}
       </div>
-    </Collapsed>
+    </section>
   );
 }
 
@@ -775,13 +792,16 @@ function ChecksPerformed({ result }: { result: ScanResult }) {
   ].filter((x): x is string => x !== null);
 
   return (
-    <Collapsed title={t("panel.checksPerformed")} note={`${ran.length}`}>
-      <ul className="list-disc space-y-1 pl-4 text-[12.5px] leading-[1.5] text-body">
+    <section className="mt-4" aria-labelledby="about-checks">
+      <SectionKicker as="h3" id="about-checks">
+        {t("panel.checksPerformed")} · {ran.length}
+      </SectionKicker>
+      <ul className="mt-1.5 list-disc space-y-1 pl-4 text-[12.5px] leading-[1.5] text-body">
         {ran.map((item) => (
           <li key={item}>{item}</li>
         ))}
       </ul>
-    </Collapsed>
+    </section>
   );
 }
 
@@ -993,6 +1013,8 @@ function Report({
         title={result.title}
         standing={standingOf(result.counts)}
         onTop={() => window.scrollTo({ top: 0, behavior: "instant" })}
+        onReaudit={onReaudit}
+        busy={walking !== null}
       />
       <div className="px-3">
         <p className="mt-2 truncate font-mono text-[12px] text-muted">{result.finalUrl}</p>
@@ -1027,25 +1049,23 @@ function Report({
         />
       </div>
 
-      <Collapsed title={t("panel.coverageLimitations")} note={scope.summary}>
-        <p className="text-[13px] leading-[1.55] text-body">{scope.note}</p>
-        <div className="mt-2.5">
-          <WarningList
-            warnings={result.warnings ?? []}
-            title={t("panel.notChecked")}
-            note={t("panel.notCheckedNote")}
-          />
-        </div>
+      <Collapsed title={t("panel.aboutAudit")} note={scope.summary}>
+        <section aria-labelledby="about-coverage">
+          <SectionKicker as="h3" id="about-coverage">
+            {t("panel.coverageLimitations")}
+          </SectionKicker>
+          <p className="mt-1 text-[13px] leading-[1.55] text-body">{scope.note}</p>
+          <div className="mt-2.5">
+            <WarningList
+              warnings={result.warnings ?? []}
+              title={t("panel.notChecked")}
+              note={t("panel.notCheckedNote")}
+            />
+          </div>
+        </section>
+        <ChecksPerformed result={result} />
+        <Capture result={result} />
       </Collapsed>
-
-      <ChecksPerformed result={result} />
-      <Capture result={result} />
-
-      <div className="mt-4 border-t border-hairline px-3 pt-3">
-        <button type="button" onClick={onReaudit} className={SECONDARY_BUTTON}>
-          {t("panel.auditAgain")}
-        </button>
-      </div>
     </>
   );
 }

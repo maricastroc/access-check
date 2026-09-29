@@ -722,15 +722,7 @@ try {
 
   const layout = await panel.evaluate(() => {
     const text = document.body.textContent;
-    const names = [
-      "This tab",
-      "Quick audit",
-      "To fix",
-      "Focus path",
-      "Coverage limitations",
-      "Checks performed",
-      "Evidence",
-    ];
+    const names = ["This tab", "Quick audit", "To fix", "Focus path", "About this audit"];
     const order = [...document.querySelectorAll("h1, h2")]
       .map((el) => names.find((n) => el.textContent.trim().startsWith(n)))
       .filter(Boolean);
@@ -758,7 +750,7 @@ try {
     `findings must come straight after the standing, got ${JSON.stringify(layout.order)}`,
   );
   check(place("Focus path") > place("To fix"), "the focus path must come after the findings");
-  for (const later of ["Coverage limitations", "Checks performed", "Evidence"]) {
+  for (const later of ["About this audit"]) {
     check(
       place(later) > place("Focus path"),
       `${later} must come after the focus path, got ${JSON.stringify(layout.order)}`,
@@ -772,8 +764,8 @@ try {
     `a secondary section is open by default: ${JSON.stringify(layout.details)}`,
   );
   check(
-    layout.details.some((d) => d.title.startsWith("Coverage limitations")),
-    "the limitations are not behind a Coverage limitations section",
+    layout.details.some((d) => d.title.startsWith("About this audit")),
+    "the limitations are not behind an About this audit section",
   );
   check(layout.overflow <= 0, `the panel overflows 400px by ${layout.overflow}px`);
 
@@ -1165,7 +1157,7 @@ try {
         /quick audit/i.test(b.textContent),
       ),
       reauditNamed: [...document.querySelectorAll("button")].some(
-        (b) => b.textContent.trim() === "Audit this tab again",
+        (b) => b.textContent.trim() === "Audit again",
       ),
     };
   });

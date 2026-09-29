@@ -159,9 +159,11 @@ try {
       claimsComplete: /\bcomplete audit\b|\bfull audit score\b/i.test(text),
       notChecked: text.includes("Not checked in this build"),
       notCheckedItems: [...document.querySelectorAll("li")].map((li) => li.textContent),
-      checksPerformed: !!document.querySelector("details"),
-      reaudit: [...document.querySelectorAll("button")].some((b) =>
-        b.textContent.includes("Audit this tab again"),
+      checksPerformed: [...document.querySelectorAll("details h3")].some((h) =>
+        h.textContent.startsWith("Checks performed"),
+      ),
+      reaudit: [...document.querySelectorAll("[class*='sticky'] button")].some(
+        (b) => b.textContent.trim() === "Audit again",
       ),
       claimsClean: /\bExcellent\b/i.test(text),
       claimsNoFailures: /no automated .* failures/i.test(text),
@@ -174,7 +176,7 @@ try {
       screenshot: !!document.querySelector("img[alt^='Screenshot of']"),
       markers: document.querySelectorAll("span[title]").length,
       evidenceCollapsed: [...document.querySelectorAll("details")].some(
-        (d) => d.textContent.includes("Evidence") && !d.open,
+        (d) => !!d.querySelector("img[alt^='Screenshot of']") && !d.open,
       ),
       shortSummary: /Partial coverage · \d+ check/.test(text),
       openByDefault: [...document.querySelectorAll("details")]
@@ -182,12 +184,14 @@ try {
         .map((d) => d.querySelector("summary")?.textContent?.trim()),
       limitationsCollapsed: [...document.querySelectorAll("details")].some(
         (d) =>
-          /^Coverage limitations/.test(d.querySelector("summary")?.textContent ?? "") && !d.open,
+          /^About this audit/.test(d.querySelector("summary")?.textContent ?? "") &&
+          d.textContent.includes("Coverage limitations") &&
+          !d.open,
       ),
       order: [...document.querySelectorAll("h1, h2")]
         .map((s) => s.textContent.trim())
         .filter((t) =>
-          /^(Quick audit score|Current-tab audit score|To fix · \d+|Focus path|Coverage limitations|Checks performed|Evidence)/.test(
+          /^(Quick audit score|Current-tab audit score|To fix · \d+|Focus path|About this audit)/.test(
             t,
           ),
         ),
@@ -277,7 +281,7 @@ try {
   );
   check(
     seen.order.findIndex((t) => t.startsWith("To fix")) <
-      seen.order.findIndex((t) => t.startsWith("Evidence")),
+      seen.order.findIndex((t) => t.startsWith("About this audit")),
     `findings must come before the evidence, got ${JSON.stringify(seen.order)}`,
   );
 
