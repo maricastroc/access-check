@@ -144,3 +144,17 @@ describe("the catalog carries nothing the product no longer says", () => {
     expect(dashed, `em dashes in: ${dashed.join(", ")}`).toEqual([]);
   });
 });
+
+describe("the web finding detail speaks through the catalog", () => {
+  const detail = readFileSync(fromRepo("src/components/ui/finding-detail.tsx"), "utf8");
+
+  it("writes no sentence of its own between tags", () => {
+    const fixed = detail.match(/>\s*[A-Z][a-z]+ [a-z]+[^<{]*</g) ?? [];
+    expect(fixed).toEqual([]);
+  });
+
+  it("asks the catalog for the note on changes that need a person", () => {
+    expect(detail).toContain('t("detail.humanDecision")');
+    expect(ptBR["detail.humanDecision"]).not.toBe(en["detail.humanDecision"]);
+  });
+});

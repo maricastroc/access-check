@@ -1131,6 +1131,8 @@ export const en = {
   "detail.affectedElement": "Affected element",
   "detail.technicalSelector": "Selector",
   "detail.howToFix": "How to fix",
+  "detail.humanDecision":
+    "The right change depends on the page's structure, so confirm it in context.",
   "detail.verificationResult": "Verification result",
   "detail.sandboxNote": "Fixes are applied and reverted in a sandbox copy. {host} was not altered.",
 

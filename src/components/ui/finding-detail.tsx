@@ -309,9 +309,7 @@ export function FindingDetail({
               <p className="mt-2 text-[12px] text-moderate-text">{finding.guidance.caution}</p>
             )}
             {finding.guidance.humanDecision && (
-              <p className="mt-2 text-[12px] text-muted">
-                The right change depends on the page&apos;s structure, so confirm it in context.
-              </p>
+              <p className="mt-2 text-[12px] text-muted">{t("detail.humanDecision")}</p>
             )}
           </>
         ) : (
