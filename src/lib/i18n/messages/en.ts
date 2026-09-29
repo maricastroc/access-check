@@ -1365,6 +1365,16 @@ export const en = {
   "panel.walkDebuggerNote":
     "Walking the tab order needs Chrome's debugger, so Chrome will show its own banner and DevTools cannot attach to this tab meanwhile. It is released as soon as the walk ends.",
   "panel.walkNow": "Check keyboard",
+  "panel.roundChecked": {
+    one: "This round checked {count} stop.",
+    other: "This round checked {count} stops.",
+  },
+  "panel.roundProblems": {
+    one: "{count} keyboard problem is in the queue.",
+    other: "{count} keyboard problems are in the queue.",
+  },
+  "panel.roundNoProblems": "No keyboard problems found so far.",
+  "panel.showKeyboardProblems": "Show keyboard problems",
   "panel.continueWalk": "Continue where it stopped",
   "panel.continueWalkNote": "Picks up at stop {stops} and keeps going, without starting over.",
 

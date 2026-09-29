@@ -32,7 +32,7 @@ const PAGES = {
     <button tabindex="1">Positive tabindex</button>
     <button>Natural</button>
   </main>`,
-  "/many": `<main>${Array.from({ length: 80 }, (_, i) => `<button>Button ${i}</button>`).join("")}</main>`,
+  "/many": `<main>${Array.from({ length: 260 }, (_, i) => `<button>Button ${i}</button>`).join("")}</main>`,
   "/opens": `<main>
     <button id="menu">Menu</button>
     <div id="panel"></div>
@@ -338,7 +338,7 @@ try {
       score: capped.deep?.result?.score,
     }),
   );
-  check(cappedKb?.truncated === true, "the eighty-button page did not hit the cap");
+  check(cappedKb?.truncated === true, "the 260-button page did not hit the cap");
   check(!!cappedReach, "a capped walk said nothing about the controls it never reached");
   check(
     cappedReach?.evidence === "heuristic",
@@ -427,8 +427,8 @@ try {
       truncated: many.deep?.result?.keyboard?.truncated,
     }),
   );
-  check(many.deep?.result?.keyboard?.truncated === true, "80 controls should truncate the walk");
-  check(kbMany?.focusPath.length <= 50, "the walk went past its own cap of 50 stops");
+  check(many.deep?.result?.keyboard?.truncated === true, "260 controls should truncate the walk");
+  check(kbMany?.focusPath.length <= 200, "the walk went past its own cap of 200 stops");
 
   console.log(
     "findings reach the score:",

@@ -148,15 +148,19 @@ function Header({
   groups,
   walking,
   deepError,
+  round,
   onWalk,
   onContinue,
+  onShowKeyboard,
 }: {
   result: ScanResult;
   groups: { group: QueueGroup; findings: FindingView[] }[];
   walking: AuditStage | null;
   deepError?: string;
+  round: RoundOutcome | null;
   onWalk: () => void;
   onContinue: () => void;
+  onShowKeyboard: (() => void) | null;
 }) {
   const scope = auditScope(result, t);
   const standing = standingOf(result.counts);
@@ -190,8 +194,10 @@ function Header({
         walking={walking}
         error={deepError}
         stops={result.keyboard?.focusPath.length ?? 0}
+        round={round}
         onWalk={onWalk}
         onContinue={onContinue}
+        onShowKeyboard={onShowKeyboard}
       />
 
       {!scoringIsCurrent(result) && (
@@ -204,25 +210,32 @@ function Header({
   );
 }
 
+type RoundOutcome = { checked: number; problems: number };
+
 function KeyboardCheck({
   scope,
   walking,
   error,
   stops,
+  round,
   onWalk,
   onContinue,
+  onShowKeyboard,
 }: {
   scope: AuditScope;
   walking: AuditStage | null;
   error?: string;
   stops: number;
+  round: RoundOutcome | null;
   onWalk: () => void;
   onContinue: () => void;
+  onShowKeyboard: (() => void) | null;
 }) {
   const pending = scope.focusPath === "skipped";
   const cut = scope.focusPath === "truncated";
   const started = scope.focusPath === "partial";
-  if (!walking && !error && !pending && !cut && !started) return null;
+  const outcome = error ? null : round;
+  if (!walking && !error && !pending && !cut && !started && !outcome) return null;
 
   if (walking) {
     return (
@@ -235,9 +248,26 @@ function KeyboardCheck({
 
   return (
     <div className="mt-3 border-t border-hairline pt-2.5">
-      <p className="text-[12.5px] leading-normal font-semibold text-moderate-text">
-        {pending ? scope.lead : scope.badge}
-      </p>
+      {outcome && (
+        <div role="status" className="mb-2.5">
+          <p className="text-[12.5px] leading-normal text-body">
+            {t("panel.roundChecked", { count: outcome.checked })}{" "}
+            {outcome.problems > 0
+              ? t("panel.roundProblems", { count: outcome.problems })
+              : t("panel.roundNoProblems")}
+          </p>
+          {onShowKeyboard && (
+            <button type="button" onClick={onShowKeyboard} className={`${SMALL_BUTTON} mt-1.5`}>
+              {t("panel.showKeyboardProblems")}
+            </button>
+          )}
+        </div>
+      )}
+      {(pending || cut || started) && (
+        <p className="text-[12.5px] leading-normal font-semibold text-moderate-text">
+          {pending ? scope.lead : scope.badge}
+        </p>
+      )}
       {error && (
         <p role="alert" className="mt-1.5 text-[12.5px] leading-normal text-critical">
           {error}
@@ -693,23 +723,18 @@ const GROUP_TITLE: Record<QueueGroup, MessageKey> = {
 function Findings({
   groups,
   locale,
+  selected,
+  setSelected,
+  open,
   onLocate,
 }: {
   groups: { group: QueueGroup; findings: FindingView[] }[];
   locale: ReportLocale | undefined;
+  selected: string | null;
+  setSelected: (id: string | null) => void;
+  open: (id: string) => void;
   onLocate: (location: Location, n: number) => Promise<string | null>;
 }) {
-  const [selected, setSelected] = useState<string | null>(null);
-
-  const open = (id: string) => {
-    setSelected(id);
-    requestAnimationFrame(() => {
-      const row = document.getElementById(`finding-${id}`);
-      row?.scrollIntoView({ block: "start" });
-      row?.querySelector("button")?.focus({ preventScroll: true });
-    });
-  };
-
   const rows = (findings: FindingView[]) =>
     findings.map((f, i) => (
       <div
@@ -982,9 +1007,35 @@ function Report({
   const [showing, setShowing] = useState(false);
   const [complete, setComplete] = useState(false);
   const [at, setAt] = useState(1);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [roundFrom, setRoundFrom] = useState<number | null>(null);
+  const [wasWalking, setWasWalking] = useState(walking !== null);
   const marks = marksFor(result);
   const scope = auditScope(result, t);
   const groups = workQueue(result);
+  const stops = result.keyboard?.focusPath.length ?? 0;
+
+  if ((walking !== null) !== wasWalking) {
+    setWasWalking(walking !== null);
+    if (walking !== null) setRoundFrom(stops);
+  }
+
+  const keyboardProblems = groups.flatMap((g) => g.findings).filter((f) => f.kind === "keyboard");
+  const round =
+    roundFrom !== null && walking === null
+      ? { checked: Math.max(0, stops - roundFrom), problems: keyboardProblems.length }
+      : null;
+
+  const open = (id: string) => {
+    setSelected(id);
+    requestAnimationFrame(() => {
+      const row = document.getElementById(`finding-${id}`);
+      const group = row?.closest("details");
+      if (group) group.open = true;
+      row?.scrollIntoView({ block: "start" });
+      row?.querySelector("button")?.focus({ preventScroll: true });
+    });
+  };
 
   const locate = async (location: Location, n: number) => {
     setShowing(false);
@@ -1024,10 +1075,19 @@ function Report({
           groups={groups}
           walking={walking}
           deepError={deepError}
+          round={round}
           onWalk={onWalk}
           onContinue={onContinue}
+          onShowKeyboard={keyboardProblems.length > 0 ? () => open(keyboardProblems[0].id) : null}
         />
-        <Findings groups={groups} locale={result.locale} onLocate={locate} />
+        <Findings
+          groups={groups}
+          locale={result.locale}
+          selected={selected}
+          setSelected={setSelected}
+          open={open}
+          onLocate={locate}
+        />
         <FocusPath
           result={result}
           notice={notice}

@@ -611,6 +611,34 @@ describe("the panel is an inspector, not a squeezed report", () => {
     expect(focus).toContain("if (!walked) return null;");
   });
 
+  it("says what a keyboard round did, and leads to the problems it found", () => {
+    const report = between(panel, "function Report(", "function Message(");
+    expect(report).toContain("if (walking !== null) setRoundFrom(stops);");
+    expect(report).toContain('.filter((f) => f.kind === "keyboard");');
+    expect(report).toMatch(
+      /keyboardProblems\.length > 0 \? \(\) => open\(keyboardProblems\[0\]\.id\) : null/,
+    );
+    const keyboard = between(panel, "function KeyboardCheck(", "function Collapsed(");
+    expect(keyboard).toContain('role="status"');
+    expect(keyboard).toContain('t("panel.roundChecked", { count: outcome.checked })');
+    expect(keyboard).toContain("onClick={onShowKeyboard}");
+    expect(keyboard).toContain("const outcome = error ? null : round;");
+    expect(t("panel.roundChecked", { count: 200 })).toBe("This round checked 200 stops.");
+    expect(pt("panel.roundProblems", { count: 1 })).toBe("1 problema de teclado está na fila.");
+  });
+
+  it("opens a problem inside a closed group when asked to show it", () => {
+    const report = between(panel, "function Report(", "function Message(");
+    expect(report).toContain('const group = row?.closest("details");');
+    expect(report).toContain("if (group) group.open = true;");
+  });
+
+  it("walks further in each round than the hosted scan, which has a time budget to keep", () => {
+    const deep = file("./deep.ts");
+    expect(deep).toContain("const ROUND_STOPS = 200;");
+    expect(deep).toContain("{ maxMs: MAX_MS, maxStops: ROUND_STOPS, resumeFrom }");
+  });
+
   it("keeps the reading in place while the keyboard is checked", () => {
     expect(panel).toContain(
       'const walking = state.kind === "running" && state.task === "focus-path" ? state.stage : null;',
@@ -932,7 +960,8 @@ describe("the panel reads as a document, not a stack of boxes", () => {
   it("wraps every screen in that one shell, and heads each with the sticky bar", () => {
     expect(panel.match(/<Shell[\s>]/g)).toHaveLength(1);
     for (const screen of ["function Running(", "function Message(", "function Report("]) {
-      const body = panel.slice(panel.indexOf(screen), panel.indexOf(screen) + 2400);
+      const start = panel.indexOf(screen);
+      const body = panel.slice(start, panel.indexOf("\nfunction ", start + 1));
       expect(body).not.toContain("<main");
       expect(body).toContain("<StickyBar");
     }

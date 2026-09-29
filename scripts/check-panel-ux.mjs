@@ -16,7 +16,7 @@ const PAGES = {
     <p style="color:#777;background-image:linear-gradient(#fff,#ddd)">Over a gradient</p></main>
     <p>Outside every landmark</p>`,
   "/many": `<main><h1>Many</h1>${Array.from(
-    { length: 60 },
+    { length: 260 },
     (_, i) => `<a href="/x${i}" style="outline:none">Link ${i}</a>`,
   ).join("")}</main>`,
 };
@@ -325,6 +325,11 @@ try {
     }, label);
     if (before === null) return { label, missing: true };
     await keepPlace.waitForFunction(
+      () => document.body.textContent.includes("Walking the focus path"),
+      null,
+      { timeout: 30000 },
+    );
+    await keepPlace.waitForFunction(
       () =>
         !document.body.textContent.includes("Walking the focus path") &&
         document.getElementById("focus-heading") !== null,
@@ -338,6 +343,10 @@ try {
         before: y,
         after: window.scrollY,
         sameReport: document.getElementById("verdict-heading")?.dataset.probe === text,
+        said:
+          document
+            .querySelector('[aria-labelledby="verdict-heading"] [role="status"]')
+            ?.textContent.trim() ?? null,
       }),
       { text: label, y: before },
     );
@@ -354,7 +363,44 @@ try {
       Math.abs(moved.after - moved.before) <= 2,
       `${moved.label} moved the panel from ${moved.before}px to ${moved.after}px`,
     );
+    check(
+      /^This round checked \d+ stops?\. \d+ keyboard problems? (is|are) in the queue\./.test(
+        moved.said ?? "",
+      ),
+      `${moved.label} said nothing about what the round did: ${moved.said}`,
+    );
   }
+  check(
+    walkedFrom.said?.startsWith("This round checked 200 stops."),
+    `the first round reported ${walkedFrom.said}`,
+  );
+  check(
+    continuedFrom.said?.startsWith("This round checked 60 stops."),
+    `the second round reported ${continuedFrom.said}`,
+  );
+
+  const shown = await keepPlace.evaluate(async () => {
+    window.scrollTo(0, 0);
+    const button = [...document.querySelectorAll("button")].find(
+      (b) => b.textContent.trim() === "Show keyboard problems",
+    );
+    if (!button) return { button: false };
+    button.click();
+    await new Promise((r) => setTimeout(r, 300));
+    const open = document.querySelector("button[aria-expanded='true']");
+    const box = open?.getBoundingClientRect();
+    return {
+      button: true,
+      kind: open?.textContent.match(/KEYBOARD|Keyboard/)?.[0] ?? null,
+      focused: document.activeElement === open,
+      inView: !!box && box.top >= 0 && box.top < innerHeight,
+    };
+  });
+  console.log("showing the keyboard problems:", JSON.stringify(shown));
+  check(shown.button, "a round that found keyboard problems offers no way to them");
+  check(!!shown.kind, "Show keyboard problems opened something other than a keyboard problem");
+  check(shown.focused, "Show keyboard problems did not move focus to the problem");
+  check(shown.inView, "Show keyboard problems left the problem out of view");
   await keepPlace.close();
 
   await audit("/many");

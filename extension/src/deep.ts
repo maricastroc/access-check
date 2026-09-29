@@ -32,6 +32,8 @@ const SHIFT = 8;
 
 const MAX_MS = 20_000;
 
+const ROUND_STOPS = 200;
+
 function attachReason(message: string, t: Translate): string {
   if (/already attached/i.test(message)) return t("deep.alreadyAttached");
   if (/Cannot access|chrome:\/\/|extensions gallery|devtools/i.test(message)) {
@@ -114,7 +116,7 @@ export async function runDeepAudit(
         end: () => inPage(tabId, () => window.__accessCheckDom!.focusProbeEnd()),
       },
       viewport,
-      { maxMs: MAX_MS, resumeFrom },
+      { maxMs: MAX_MS, maxStops: ROUND_STOPS, resumeFrom },
     );
 
     report = buildKeyboardReport(raw, t);
