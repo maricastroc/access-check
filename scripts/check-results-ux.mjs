@@ -151,6 +151,68 @@ try {
     await context.close();
   }
 
+  {
+    const { page, context } = await open(1440);
+    const top = await page.evaluate(() => {
+      const heading = [...document.querySelectorAll("section")].find((s) =>
+        /Where this page stands/i.test(s.textContent ?? ""),
+      );
+      const firstRow = [...document.querySelectorAll("button")].find((b) => b.querySelector("h3"));
+      const about = [...document.querySelectorAll("details")].find((d) =>
+        /About this audit/.test(d.querySelector("summary")?.textContent ?? ""),
+      );
+      const text = document.body.innerText;
+      return {
+        bandHeight: heading ? Math.round(heading.getBoundingClientRect().height) : null,
+        firstRow: firstRow ? Math.round(firstRow.getBoundingClientRect().top + scrollY) : null,
+        work: /\d+ to fix|\d+ to check by hand/.test(heading?.textContent ?? ""),
+        chips: /fails|No failures|not evaluated/i.test(heading?.textContent ?? ""),
+        share: /of what is left|What to fix first/i.test(text),
+        partialAtTop: [...document.querySelectorAll("h3")].some(
+          (h) => /^Partial report$/.test(h.textContent.trim()) && !h.closest("details"),
+        ),
+        about: about
+          ? {
+              open: about.open,
+              summary: about.querySelector("summary").textContent,
+              provenance: /Provenance/i.test(about.textContent),
+              passed: /automated checks passed/.test(about.textContent),
+            }
+          : null,
+        provenanceOutside: [...document.querySelectorAll("*")].some(
+          (el) =>
+            el.children.length === 0 &&
+            /^Provenance$/i.test(el.textContent.trim()) &&
+            !el.closest("details"),
+        ),
+      };
+    });
+    console.log("the top of the results:", JSON.stringify(top));
+    check(
+      top.bandHeight !== null && top.bandHeight <= 200,
+      `the summary band is ${top.bandHeight}px tall`,
+    );
+    check(
+      top.firstRow !== null && top.firstRow < 450,
+      `the first finding starts at ${top.firstRow}px`,
+    );
+    check(top.work, "the top does not say how much work is left");
+    check(top.chips, "the WCAG chips left the top");
+    check(!top.share, "the share of what is left is still on the page");
+    check(!top.partialAtTop, "the partial report still opens the page");
+    check(top.about && !top.about.open, "About this audit is missing or open by default");
+    check(
+      /Partial report/.test(top.about?.summary ?? ""),
+      "About this audit hides that the report is partial",
+    );
+    check(
+      top.about?.provenance && top.about?.passed,
+      "About this audit lost the provenance or the passed checks",
+    );
+    check(!top.provenanceOutside, "the provenance still sits beside the screenshot");
+    await context.close();
+  }
+
   for (const width of [420, 800]) {
     const { page, context } = await open(width);
     const at = await overflow(page);

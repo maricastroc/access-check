@@ -2,8 +2,8 @@
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
-import type { ScanPhase, ScanWarning } from "@/lib/scan/types";
-import { Button, ProgressCard, ScanStages, useElapsed, WarningList } from "@/components/ui";
+import type { ScanPhase } from "@/lib/scan/types";
+import { Button, ProgressCard, ScanStages, useElapsed } from "@/components/ui";
 import { UrlField } from "@/components/home/url-form";
 import { TYPICAL_SCAN_MS } from "@/lib/scan/policy";
 import { useT } from "@/lib/i18n/provider";
@@ -81,31 +81,6 @@ export function ErrorState({
             </Button>
           </div>
         </form>
-      </div>
-    </div>
-  );
-}
-
-export function PartialNotice({
-  warnings,
-  onRerun,
-}: {
-  warnings: ScanWarning[];
-  onRerun: () => void;
-}) {
-  const t = useT();
-  if (warnings.length === 0) return null;
-  return (
-    <div className="mx-auto w-full max-w-[1560px] px-4 pt-4 sm:px-6">
-      <WarningList
-        warnings={warnings}
-        title={t("results.partialReport")}
-        note={t("results.partialNote")}
-      />
-      <div className="mt-2">
-        <Button variant="secondary" size="sm" onClick={onRerun}>
-          {t("results.runAgainMoreTime")}
-        </Button>
       </div>
     </div>
   );

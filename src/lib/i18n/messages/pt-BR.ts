@@ -162,9 +162,6 @@ export const ptBR: Catalog = {
   "md.url": "URL",
   "md.elementsScanned": "Elementos analisados",
   "md.generated": "Gerado em",
-  "md.colIfYouFix": "Se corrigir",
-  "md.colElements": "Elementos",
-  "md.colShare": "Fatia do que resta",
   "md.manualOutside": {
     one: "{count} item de revisão manual não entra nesta contagem.",
     other: "{count} itens de revisão manual não entram nesta contagem.",
@@ -404,8 +401,6 @@ export const ptBR: Catalog = {
   "standing.pending": "Ainda verificando",
   "standing.pendingNote":
     "A primeira leitura chegou. Teclado, viewport de celular, menus expandidos, movimento e regiões dinâmicas ainda estão sendo verificados, e qualquer um deles pode mudar como esta página está.",
-  "standing.pendingAside":
-    "O que corrigir primeiro e a leitura dos níveis A e AA da WCAG aparecem quando todas as verificações terminarem, junto com as exportações.",
   "standing.issueCount": {
     one: "{count} problema {severity}",
     other: "{count} problemas {severity}",
@@ -534,10 +529,6 @@ export const ptBR: Catalog = {
   "focusPath.previousStop": "Parada anterior",
   "focusPath.nextStop": "Próxima parada",
   "focusPath.selectedStop": "Parada {stop} de {total}",
-  "results.manualReviewItems": {
-    one: "{count} item de revisão manual \u00b7",
-    other: "{count} itens de revisão manual \u00b7",
-  },
   "capture.openEvidence": "Ver a evidência",
   "capture.markerHint": "Selecione um marcador para abrir o problema a que ele pertence.",
   "detail.sharedColorPair": {
@@ -835,7 +826,6 @@ export const ptBR: Catalog = {
   "results.stillChecking": "ainda verificando…",
   "results.focusOnContainer": "conferir foco",
   "results.measuredNeeds": "{measured}:1 \u00b7 mínimo {required}:1",
-  "results.outsideScore": " não contabilizado",
   "results.runFullAuditNote":
     "a auditoria completa para incluir a captura de tela, as verificações de teclado e o teste das correções.",
   "results.siteAuditPassNote":

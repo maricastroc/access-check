@@ -1,8 +1,6 @@
 import type { ScanResult } from "@/lib/scan/types";
-import { scoreBreakdown } from "@/lib/report/score";
-import { violationsBehindScore } from "@/lib/scan/scored";
 import { wcagReadingOf } from "@/lib/report/wcag";
-import { PriorityList, WcagChips } from "@/components/ui";
+import { WcagChips } from "@/components/ui";
 import { standingOf, STANDING_LABEL, STANDING_NOTE, type Standing } from "@/lib/report/standing";
 import { safeHost, sevHex, shortId } from "./shared";
 import { PageShell, SectionKicker, SectionKickerMuted } from "./primitives";
@@ -18,7 +16,6 @@ const STANDING_HEX: Record<Standing, string> = {
 export function SummaryPage({ result }: { result: ScanResult }) {
   const t = translator(result.locale);
   const host = safeHost(result.finalUrl);
-  const breakdown = scoreBreakdown(violationsBehindScore(result), result.score);
   const wcag = wcagReadingOf(result);
   const standing = standingOf(result.counts);
   const at = result.scannedAt ? new Date(result.scannedAt) : new Date();
@@ -104,24 +101,16 @@ export function SummaryPage({ result }: { result: ScanResult }) {
             ))}
           </div>
           <div className="border border-hairline p-3">
-            <SectionKickerMuted>{t("priority.kicker")}</SectionKickerMuted>
-            <p className="mt-1 text-[10.5px] leading-tight text-muted">{t("priority.note")}</p>
-            <div className="mt-2">
-              <PriorityList breakdown={breakdown} t={t} size="compact" />
-            </div>
+            <SectionKickerMuted>{t("report.executiveSummary")}</SectionKickerMuted>
+            <p className="mt-1.5 text-[12.5px] leading-normal text-body">
+              {result.summary} {t("report.pagePassed")}{" "}
+              <strong className="font-semibold text-ink">
+                {result.counts.passed} {t("report.automatedChecks")}
+              </strong>
+              . {t("report.wcagDependsOn", { count: result.counts.manualReview })}
+            </p>
           </div>
         </div>
-      </div>
-
-      <div className="mt-4">
-        <SectionKickerMuted>{t("report.executiveSummary")}</SectionKickerMuted>
-        <p className="mt-2 max-w-[6.7in] text-[13px] leading-normal text-body">
-          {result.summary} {t("report.pagePassed")}{" "}
-          <strong className="font-semibold text-ink">
-            {result.counts.passed} {t("report.automatedChecks")}
-          </strong>
-          . {t("report.wcagDependsOn", { count: result.counts.manualReview })}
-        </p>
       </div>
 
       {fixes.length > 0 && (

@@ -25,7 +25,8 @@ import { SummaryBand } from "./summary-band";
 import { EvidenceFrame } from "./evidence-frame";
 import { FindingsMargin } from "./findings-margin";
 import { MobileReport } from "./mobile-report";
-import { ScanningState, ErrorState, PartialNotice } from "./states";
+import { ScanningState, ErrorState } from "./states";
+import { AboutAudit } from "./about-audit";
 import { useT } from "@/lib/i18n/provider";
 
 const VIEWPORT_LABEL = "1200 × 800";
@@ -219,22 +220,9 @@ export function ResultsView({
               </div>
             )}
 
-            {(result.partial || (result.warnings?.length ?? 0) > 0) && (
-              <PartialNotice
-                warnings={result.warnings ?? []}
-                onRerun={() => scan(url, { force: true })}
-              />
-            )}
-
             {desktop ? (
               <>
-                <SummaryBand
-                  t={t}
-                  result={result}
-                  breakdown={view.breakdown}
-                  wcag={view.wcag}
-                  pending={streaming}
-                />
+                <SummaryBand t={t} result={result} wcag={view.wcag} pending={streaming} />
                 <div className="mx-auto grid w-full max-w-[1560px] grid-cols-[minmax(0,1fr)_420px] items-start">
                   <div className="p-4">
                     <EvidenceFrame
@@ -275,12 +263,17 @@ export function ResultsView({
                     />
                   </div>
                 </div>
+                <AboutAudit
+                  result={result}
+                  viewport={result.screenshot ? VIEWPORT_LABEL : undefined}
+                  quickFromSite={quickFromSite}
+                  onRerun={() => scan(url, { force: true })}
+                />
               </>
             ) : (
               <MobileReport
                 result={result}
                 host={host}
-                breakdown={view.breakdown}
                 wcag={view.wcag}
                 layer={effectiveLayer}
                 capture={capture}
@@ -302,6 +295,8 @@ export function ResultsView({
                 onMarkdown={exportMarkdown}
                 quickFromSite={quickFromSite}
                 onRunFull={() => scan(url, { force: true })}
+                onRerun={() => scan(url, { force: true })}
+                viewport={result.screenshot ? VIEWPORT_LABEL : undefined}
                 pending={streaming}
               />
             )}

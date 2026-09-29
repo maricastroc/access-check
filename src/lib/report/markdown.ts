@@ -2,10 +2,7 @@ import type { ScanResult } from "@/lib/scan/types";
 import { reviewGuidance } from "../scan/review";
 import { buildFindings, type FindingView } from "./findings";
 import { describeElement, identityLabel } from "./identity";
-import { violationsBehindScore } from "../scan/scored";
-import { scoreBreakdown } from "./score";
 import { wcagReadingOf } from "./wcag";
-import { severityLabel } from "./severity";
 import { standingOf, STANDING_LABEL, STANDING_NOTE, scoringIsCurrent } from "./standing";
 import { verdictLabel, verdictMessage } from "./verdict";
 import { translator, type Translate } from "../i18n/t";
@@ -78,7 +75,6 @@ function findingBlock(f: FindingView, out: string[], t: Translate) {
 export function buildReportMarkdown(result: ScanResult): string {
   const t = translator(result.locale);
   const out: string[] = [];
-  const breakdown = scoreBreakdown(violationsBehindScore(result), result.score);
   const wcag = wcagReadingOf(result);
   const findings = buildFindings(result);
   const standing = standingOf(result.counts);
@@ -95,23 +91,6 @@ export function buildReportMarkdown(result: ScanResult): string {
   out.push(`> ${result.summary}`);
   out.push("");
 
-  out.push(`## ${t("priority.kicker")}`);
-  out.push("");
-  out.push(t("priority.note"));
-  out.push("");
-  if (breakdown.deductions.length > 0) {
-    out.push(`| ${t("md.colIfYouFix")} | ${t("md.colElements")} | ${t("md.colShare")} |`);
-    out.push("| --- | --- | --- |");
-    for (const d of breakdown.deductions) {
-      out.push(
-        `| ${d.issues} ${severityLabel(d.severity, t).toLowerCase()} | ${d.elements} | ${t("priority.share", { share: d.share })} |`,
-      );
-    }
-    out.push("");
-  } else {
-    out.push(t("priority.nothing"));
-    out.push("");
-  }
   out.push(t("md.manualOutside", { count: result.counts.manualReview }));
   out.push("");
   if (!scoringIsCurrent(result)) {
