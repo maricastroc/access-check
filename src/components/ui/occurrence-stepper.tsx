@@ -39,12 +39,9 @@ export function OccurrenceStepper({
       </button>
       <span
         aria-live="polite"
-        className={cn(
-          "text-center font-cond text-[15px] font-medium text-ink tabular-nums",
-          counterWidth,
-        )}
+        className={cn("text-center text-[12px] text-muted tabular-nums", counterWidth)}
       >
-        {total === 0 ? "0 of 0" : `${index + 1} of ${total}`}
+        {t("stepper.position", { at: total === 0 ? 0 : index + 1, total })}
       </span>
       <button
         type="button"

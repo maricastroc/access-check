@@ -1049,6 +1049,7 @@ export const en = {
     "Complementary passes: keyboard, mobile viewport, expanded UI, motion, live regions.",
   "stepper.previous": "Previous occurrence",
   "stepper.next": "Next occurrence",
+  "stepper.position": "Occurrence {at} of {total}",
   "seal.verified": "Fix tested: applied temporarily and rechecked successfully",
   "seal.needsReview": "Needs review: the suggestion alone doesn't clear it",
   "history.title": "Audit history",
@@ -1264,7 +1265,6 @@ export const en = {
   "panel.copySelector": "Copy selector",
   "panel.copyHtml": "Copy HTML",
 
-  "panel.occurrenceOf": "Occurrence {at} of {total}",
   "panel.neverReached": "Never reached by Tab",
   "panel.stopN": "Stop {n}",
   "panel.geometryUnsure":

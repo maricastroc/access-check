@@ -1069,8 +1069,14 @@ describe("the panel reads as a document, not a stack of boxes", () => {
       expect(details).toContain(`<Field label={t("${key}")}>`);
     }
     const where = between(panel, "function Where(", "function ElementDetails(");
-    expect(where).toContain('t("panel.occurrenceOf", { at: at + 1, total })');
-    expect(where).toMatch(/total > 1 &&[\s\S]{0,400}<OccurrenceStepper/);
+    expect(where).toMatch(/total > 1 &&[\s\S]{0,100}<OccurrenceStepper/);
+    expect(where).not.toContain("panel.occurrenceOf");
+    const stepper = readFileSync(
+      new URL("../../src/components/ui/occurrence-stepper.tsx", import.meta.url),
+      "utf8",
+    );
+    expect(stepper).toContain('t("stepper.position"');
+    expect(stepper).not.toMatch(/ of \$\{/);
   });
 
   it("says the severity once, in the row, and not again in the body", () => {

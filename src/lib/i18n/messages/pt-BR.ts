@@ -1075,6 +1075,7 @@ export const ptBR: Catalog = {
     "Passagens complementares: teclado, viewport de celular, UI expandida, movimento, regiões dinâmicas.",
   "stepper.previous": "Ocorrência anterior",
   "stepper.next": "Próxima ocorrência",
+  "stepper.position": "Ocorrência {at} de {total}",
   "seal.verified": "Correção testada: aplicada temporariamente e verificada novamente com sucesso",
   "seal.needsReview": "Precisa de revisão: a sugestão sozinha não resolve",
   "history.kicker": "Histórico",
@@ -1293,7 +1294,6 @@ export const ptBR: Catalog = {
   "panel.copySelector": "Copiar seletor",
   "panel.copyHtml": "Copiar HTML",
 
-  "panel.occurrenceOf": "Ocorrência {at} de {total}",
   "panel.neverReached": "Nunca alcançado por Tab",
   "panel.stopN": "Parada {n}",
   "panel.geometryUnsure":

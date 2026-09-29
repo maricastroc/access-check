@@ -604,18 +604,13 @@ function Where({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <SectionKicker as="h4">{t("panel.where")}</SectionKicker>
         {total > 1 && (
-          <div className="flex items-center gap-2">
-            <span className="text-[12px] text-muted tabular-nums">
-              {t("panel.occurrenceOf", { at: at + 1, total })}
-            </span>
-            <OccurrenceStepper
-              t={t}
-              index={at}
-              total={total}
-              onPrev={() => onStep(-1)}
-              onNext={() => onStep(1)}
-            />
-          </div>
+          <OccurrenceStepper
+            t={t}
+            index={at}
+            total={total}
+            onPrev={() => onStep(-1)}
+            onNext={() => onStep(1)}
+          />
         )}
       </div>
 
