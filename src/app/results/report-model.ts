@@ -1,23 +1,21 @@
 import type { ScanResult } from "@/lib/scan/types";
-import {
-  buildFindings,
-  workQueue,
-  type FindingView,
-  type QueueGroup,
-} from "../../lib/report/findings";
+import { workQueue, type FindingView, type QueueGroup } from "../../lib/report/findings";
 import type { Translate } from "@/lib/i18n/t";
 import { wcagReadingOf, type WcagReadingModel } from "../../lib/report/wcag";
 import { safeHost } from "./shared";
 
 export type ReportView = {
+  groups: { group: QueueGroup; findings: FindingView[] }[];
   findings: FindingView[];
   wcag: WcagReadingModel;
   host: string;
 };
 
 export function buildReportView(result: ScanResult): ReportView {
+  const groups = workQueue(result);
   return {
-    findings: buildFindings(result),
+    groups,
+    findings: groups.flatMap((g) => g.findings),
     wcag: wcagReadingOf(result),
     host: safeHost(result.finalUrl),
   };

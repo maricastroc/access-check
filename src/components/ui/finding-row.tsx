@@ -111,9 +111,7 @@ export function FindingRow({
       <h3 className="mt-2 text-[15.5px] leading-snug font-semibold text-ink">{finding.title}</h3>
 
       <p className="mt-1.5 flex flex-wrap items-center gap-x-1.5 text-[12.5px] leading-normal text-muted">
-        <span>
-          {finding.elements} element{finding.elements === 1 ? "" : "s"}
-        </span>
+        <span>{t("unit.element", { count: finding.elements })}</span>
         <span aria-hidden>·</span>
         <span className="font-mono text-[11.5px]">{finding.ruleId}</span>
         <VerdictCue verdict={finding.verdict} t={t} />

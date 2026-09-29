@@ -251,7 +251,7 @@ export function ResultsView({
                   <div className="scroll-slim sticky top-15.5 max-h-[calc(100vh-62px)] self-start overflow-y-auto">
                     <FindingsMargin
                       t={t}
-                      findings={view.findings}
+                      groups={view.groups}
                       result={result}
                       host={host}
                       selectedId={selection.selectedId}
@@ -278,7 +278,7 @@ export function ResultsView({
                 layer={effectiveLayer}
                 capture={capture}
                 onBackToFirst={() => setCaptureId(VIEWPORT_CAPTURE)}
-                findings={view.findings}
+                groups={view.groups}
                 selectedFinding={selection.selectedFinding}
                 selectedId={selection.selectedId}
                 onSelect={selection.toggleFinding}

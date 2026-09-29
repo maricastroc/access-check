@@ -57,6 +57,32 @@ describe("buildReportView", () => {
   });
 });
 
+describe("the queue the results page reads from", () => {
+  const review = {
+    id: "label-content-name-mismatch",
+    title: "Check the visible label",
+    desc: "d",
+    nodes: 2,
+    criterion: "WCAG 2.5.3 · Label in Name",
+    selectors: [".y"],
+  };
+
+  it("groups what to fix, what to check by hand and the recommendations", () => {
+    const view = buildReportView(result({ violations: [contrast], incomplete: [review] }));
+    expect(view.groups.map((g) => g.group)).toEqual(["fix", "check", "recommend"]);
+    expect(view.groups[0].findings.map((f) => f.ruleId)).toEqual(["color-contrast"]);
+    expect(view.groups[1].findings.map((f) => f.kind)).toEqual(["manual-review"]);
+  });
+
+  it("lists the manual reviews with the findings, numbered in queue order", () => {
+    const view = buildReportView(result({ violations: [contrast], incomplete: [review] }));
+    expect(view.findings.map((f) => f.id)).toEqual(
+      view.groups.flatMap((g) => g.findings.map((f) => f.id)),
+    );
+    expect(view.findings.map((f) => f.n)).toEqual([1, 2]);
+  });
+});
+
 describe("the line of work left at the top", () => {
   const t = translator();
   const pt = translator("pt-BR");

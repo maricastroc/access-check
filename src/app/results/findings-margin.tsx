@@ -1,26 +1,23 @@
 import type { ScanResult } from "@/lib/scan/types";
-import type { FindingView } from "@/lib/report/findings";
-import { reviewGuidance } from "@/lib/scan/review";
-import { FindingDetail, FindingRow, SectionKicker } from "@/components/ui";
+import { FindingDetail, FindingRow } from "@/components/ui";
 import { langAttrs } from "@/lib/i18n/locale";
 import { FocusPathList } from "./focus-path-list";
 import { focusPathLines } from "@/lib/report/focus-coverage";
 import type { Translate } from "@/lib/i18n/t";
+import { WorkQueue, type QueueGroups } from "./work-queue";
 
 function Secondary({
   label,
   count,
-  open = false,
   children,
 }: {
   label: string;
   count: number;
-  open?: boolean;
   children: React.ReactNode;
 }) {
   if (count === 0) return null;
   return (
-    <details className="border-t border-hairline py-3" open={open}>
+    <details className="border-t border-hairline py-3">
       <summary className="flex cursor-pointer list-none items-center gap-2 text-[13px] text-body">
         <span aria-hidden className="ac-chev font-cond text-muted transition-transform">
           ▸
@@ -34,7 +31,7 @@ function Secondary({
 }
 
 export function FindingsMargin({
-  findings,
+  groups,
   result,
   host,
   selectedId,
@@ -45,7 +42,7 @@ export function FindingsMargin({
   onStepStop,
   t,
 }: {
-  findings: FindingView[];
+  groups: QueueGroups;
   result: ScanResult;
   host: string;
   selectedId: string | null;
@@ -56,31 +53,17 @@ export function FindingsMargin({
   onStepStop: (delta: 1 | -1) => void;
   t: Translate;
 }) {
-  const totalElements = findings.reduce((sum, f) => sum + f.elements, 0);
   const focusStops = result.keyboard?.focusPath ?? [];
   const coverage = result.keyboard ? focusPathLines(result.keyboard, t) : { line: "", notes: [] };
 
   return (
     <section className="border-l border-border bg-surface">
-      <div className="flex items-baseline justify-between gap-3 border-b border-hairline px-4 py-3">
-        <SectionKicker>{t("results.findingsByPriority")}</SectionKicker>
-        <span className="text-[12px] text-muted tabular-nums">
-          {t("results.findingsAndElements", {
-            findings: t("unit.finding", { count: findings.length }),
-            elements: t("unit.element", { count: totalElements }),
-          })}
-        </span>
-      </div>
-
-      <div className="flex flex-col gap-2 p-4">
-        {findings.length === 0 ? (
-          <p className="text-[13.5px] leading-normal text-body">
-            <span className="font-semibold text-ink">{t("results.noAutomatedFailures")}</span>{" "}
-            {t("results.checksPassedNote", { passed: result.counts.passed })}{" "}
-            {t("results.manualReviewPending", { count: result.counts.manualReview })}
-          </p>
-        ) : (
-          findings.map((f) => (
+      <div className="px-4 pt-1.5">
+        <WorkQueue
+          t={t}
+          groups={groups}
+          selectedId={selectedId}
+          renderRow={(f) => (
             <div
               key={f.id}
               id={`finding-${f.id}`}
@@ -102,32 +85,12 @@ export function FindingsMargin({
                 />
               )}
             </div>
-          ))
-        )}
+          )}
+        />
       </div>
 
       <div className="px-4 pb-4">
-        <Secondary label={t("results.manualReviewLabel")} count={result.counts.manualReview}>
-          <ul className="flex flex-col gap-3">
-            {result.incomplete.map((inc) => {
-              const guide = reviewGuidance(inc.id, t);
-              return (
-                <li key={inc.id} className="border-l-2 border-hairline pl-3">
-                  <p className="text-[13.5px] font-semibold text-ink">{inc.title}</p>
-                  <p className="mt-0.5 font-mono text-[11.5px] text-steel">{inc.criterion}</p>
-                  <p className="mt-1 text-[12.5px] text-body">{guide.how}</p>
-                  <ol className="mt-1 list-decimal space-y-0.5 pl-4 text-[12px] text-muted">
-                    {guide.steps.map((s, i) => (
-                      <li key={i}>{s}</li>
-                    ))}
-                  </ol>
-                </li>
-              );
-            })}
-          </ul>
-        </Secondary>
-
-        <Secondary label={t("results.focusPathStops")} count={focusStops.length} open={false}>
+        <Secondary label={t("results.focusPathStops")} count={focusStops.length}>
           <FocusPathList
             t={t}
             stops={focusStops}
