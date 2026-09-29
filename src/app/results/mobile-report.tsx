@@ -2,14 +2,12 @@
 
 import { VIEWPORT_CAPTURE, type ScanResult } from "@/lib/scan/types";
 import { locatedMarkers, type FindingView } from "@/lib/report/findings";
-import type { ScoreBreakdown } from "@/lib/report/score";
 import type { WcagReadingModel } from "@/lib/report/wcag";
 import {
   Button,
   ElementIdentityLine,
   FindingDetail,
   FindingRow,
-  PriorityList,
   SectionKicker,
   WcagChips,
 } from "@/components/ui";
@@ -17,7 +15,9 @@ import { cn } from "@/lib/cn";
 import { langAttrs } from "@/lib/i18n/locale";
 import { CaptureStage } from "./evidence-frame";
 import { FocusPathList } from "./focus-path-list";
-import { PendingStanding, StaleScoringNotice } from "./summary-band";
+import { PendingStanding } from "./summary-band";
+import { workLine } from "./report-model";
+import { AboutAudit } from "./about-audit";
 import {
   scoringIsCurrent,
   standingOf,
@@ -33,7 +33,6 @@ import { useT } from "@/lib/i18n/provider";
 export function MobileReport({
   result,
   host,
-  breakdown,
   wcag,
   layer,
   findings,
@@ -55,11 +54,12 @@ export function MobileReport({
   onMarkdown,
   quickFromSite = false,
   onRunFull,
+  onRerun,
+  viewport,
   pending = false,
 }: {
   result: ScanResult;
   host: string;
-  breakdown: ScoreBreakdown;
   wcag: WcagReadingModel;
   layer: Layer;
   findings: FindingView[];
@@ -81,9 +81,12 @@ export function MobileReport({
   onMarkdown: () => void;
   quickFromSite?: boolean;
   onRunFull?: () => void;
+  onRerun: () => void;
+  viewport?: string;
   pending?: boolean;
 }) {
   const t = useT();
+  const work = workLine(result, t);
   const focusStops = result.keyboard?.focusPath ?? [];
   const coverage = result.keyboard ? focusPathLines(result.keyboard, t) : { line: "", notes: [] };
   return (
@@ -114,13 +117,13 @@ export function MobileReport({
         </div>
         {!pending && (
           <>
-            <div className="mt-2.5">
-              <PriorityList breakdown={breakdown} t={t} />
-            </div>
+            {work && (
+              <p className="mt-2 text-[13.5px] font-semibold text-ink tabular-nums">{work}</p>
+            )}
             {!scoringIsCurrent(result) && (
-              <div className="mt-2.5">
-                <StaleScoringNotice t={t} />
-              </div>
+              <p className="mt-1.5 text-[12px] font-semibold text-moderate-text">
+                {t("standing.staleTitle")}
+              </p>
             )}
             <div className="mt-2.5">
               <WcagChips model={wcag} t={t} />
@@ -253,13 +256,15 @@ export function MobileReport({
               </div>
             </div>
           )}
-          <div className="mt-2">
-            <SectionKicker tone="steel">
-              {result.counts.passed} passed · {result.counts.manualReview} need review
-            </SectionKicker>
-          </div>
         </div>
       )}
+
+      <AboutAudit
+        result={result}
+        viewport={viewport}
+        quickFromSite={quickFromSite}
+        onRerun={onRerun}
+      />
 
       <div className="fixed inset-x-0 bottom-0 z-30 flex gap-2 border-t border-border bg-surface px-4 py-2.5">
         <Button variant="secondary" size="md" onClick={onMarkdown} className="flex-1">

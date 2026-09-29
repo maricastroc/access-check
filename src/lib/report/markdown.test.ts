@@ -89,6 +89,19 @@ describe("buildReportMarkdown", () => {
   });
 });
 
+describe("what the export no longer ranks", () => {
+  const md = buildReportMarkdown(result({ violations: [contrast] }));
+
+  it("has no table of shares of what is left", () => {
+    expect(md).not.toContain("What to fix first");
+    expect(md).not.toMatch(/% of what is left/);
+  });
+
+  it("still says how many items need a manual review", () => {
+    expect(md).toMatch(/manual-review items? (is|are) not counted here/);
+  });
+});
+
 describe("where a reading-order observation lands in the report", () => {
   const withGuess = result({
     violations: [contrast],

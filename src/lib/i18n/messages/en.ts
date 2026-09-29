@@ -156,9 +156,6 @@ export const en = {
   "md.url": "URL",
   "md.elementsScanned": "Elements scanned",
   "md.generated": "Generated",
-  "md.colIfYouFix": "If you fix",
-  "md.colElements": "Elements",
-  "md.colShare": "Share of what is left",
   "md.manualOutside": {
     one: "{count} manual-review item is not counted here.",
     other: "{count} manual-review items are not counted here.",
@@ -389,8 +386,6 @@ export const en = {
   "standing.pending": "Still checking",
   "standing.pendingNote":
     "The first pass is in. Keyboard, mobile viewport, expanded menus, motion and live regions are still being checked, and any of them can change where this page stands.",
-  "standing.pendingAside":
-    "What to fix first and the WCAG A and AA reading appear when every check has finished, and so do the exports.",
   "standing.issueCount": {
     one: "{count} {severity} finding",
     other: "{count} {severity} findings",
@@ -514,10 +509,6 @@ export const en = {
   "focusPath.previousStop": "Previous stop",
   "focusPath.nextStop": "Next stop",
   "focusPath.selectedStop": "Stop {stop} of {total}",
-  "results.manualReviewItems": {
-    one: "{count} manual-review item \u00b7",
-    other: "{count} manual-review items \u00b7",
-  },
   "capture.openEvidence": "See the evidence",
   "capture.markerHint": "Select a marker to open the finding it belongs to.",
   "detail.sharedColorPair": {
@@ -811,7 +802,6 @@ export const en = {
   "results.stillChecking": "still checking…",
   "results.focusOnContainer": "check focus",
   "results.measuredNeeds": "{measured}:1 \u00b7 needs {required}:1",
-  "results.outsideScore": " not counted here",
   "results.runFullAuditNote":
     "the full audit to add the screenshot, keyboard checks and fix testing.",
   "results.siteAuditPassNote":

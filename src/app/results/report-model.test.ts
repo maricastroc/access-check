@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { ScanResult, ScanViolation } from "@/lib/scan/types";
-import { buildReportView } from "./report-model";
+import { buildReportView, workLine } from "./report-model";
+import { translator } from "@/lib/i18n/t";
+import { workQueue } from "@/lib/report/findings";
 
 function result(over: Partial<ScanResult>): ScanResult {
   return {
@@ -45,12 +47,49 @@ const contrast: ScanViolation = {
 };
 
 describe("buildReportView", () => {
-  it("derives findings, score breakdown, WCAG reading and host from the result", () => {
+  it("derives findings, WCAG reading and host from the result", () => {
     const view = buildReportView(result({ violations: [contrast] }));
 
     expect(view.findings.map((f) => f.ruleId)).toContain("color-contrast");
-    expect(view.breakdown.deductions.length).toBeGreaterThan(0);
+    expect(view).not.toHaveProperty("breakdown");
     expect(view.wcag.aa.fails).toBe(true);
     expect(view.host).toBe("aurora-coffee.com");
+  });
+});
+
+describe("the line of work left at the top", () => {
+  const t = translator();
+  const pt = translator("pt-BR");
+  const review = {
+    id: "color-contrast",
+    title: "Check contrast",
+    desc: "d",
+    nodes: 1,
+    criterion: "WCAG 1.4.3 · Contrast (Minimum)",
+    selectors: [".x"],
+  };
+
+  it("counts the same groups the queue is built from", () => {
+    const withBoth = result({
+      violations: [contrast],
+      incomplete: [review, { ...review, id: "x" }],
+    });
+    const [fix, check] = workQueue(withBoth);
+    expect(workLine(withBoth, t)).toBe(
+      `${fix.findings.length} to fix · ${check.findings.length} to check by hand`,
+    );
+    expect(workLine(withBoth, t)).toBe("1 to fix · 2 to check by hand");
+  });
+
+  it("leaves out a part that has nothing in it", () => {
+    expect(workLine(result({ violations: [contrast] }), t)).toBe("1 to fix");
+    expect(workLine(result({ incomplete: [review] }), t)).toBe("1 to check by hand");
+    expect(workLine(result({}), t)).toBe("");
+  });
+
+  it("speaks the reader's language", () => {
+    expect(workLine(result({ violations: [contrast], incomplete: [review] }), pt)).toBe(
+      "1 para corrigir · 1 para conferir à mão",
+    );
   });
 });

@@ -107,19 +107,6 @@ export function FindingsMargin({
       </div>
 
       <div className="px-4 pb-4">
-        <Secondary label={t("results.checksPassedLabel")} count={result.counts.passed}>
-          <ul className="flex flex-col gap-1.5 text-[12.5px] text-body">
-            {result.passed.map((p, i) => (
-              <li key={i} className="flex gap-2">
-                <span aria-hidden className="text-verified">
-                  ✓
-                </span>
-                {p}
-              </li>
-            ))}
-          </ul>
-        </Secondary>
-
         <Secondary label={t("results.manualReviewLabel")} count={result.counts.manualReview}>
           <ul className="flex flex-col gap-3">
             {result.incomplete.map((inc) => {

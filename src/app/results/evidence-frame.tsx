@@ -3,14 +3,7 @@
 import { VIEWPORT_CAPTURE, type ScanResult, type Severity } from "@/lib/scan/types";
 import { locatedMarkers, type FindingView } from "@/lib/report/findings";
 import { verdictTone } from "@/lib/report/verdict";
-import {
-  Button,
-  CodeBlock,
-  ElementIdentityLine,
-  Marker,
-  ProvenancePanel,
-  SectionKicker,
-} from "@/components/ui";
+import { Button, CodeBlock, ElementIdentityLine, Marker, SectionKicker } from "@/components/ui";
 import { clamp } from "./shared";
 import { readableContext, type StopPlacement } from "@/lib/scan/placement";
 import type { ActiveCapture, Layer, MarkerView, StopView } from "./report-ui";
@@ -465,8 +458,8 @@ export function EvidenceFrame({
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px]">
-        <div className="border-b border-ink p-4 lg:border-r lg:border-b-0">
+      <div>
+        <div className="p-4">
           <SectionKicker>{t("capture.elementAndCode")}</SectionKicker>
           {selectedFinding ? (
             <div className="mt-3 space-y-2.5">
@@ -503,15 +496,6 @@ export function EvidenceFrame({
           ) : (
             <p className="mt-3 text-[13px] text-muted">{t("results.selectFinding")}</p>
           )}
-        </div>
-
-        <div className="bg-band">
-          <ProvenancePanel
-            t={t}
-            viewport={result.screenshot ? "1200 × 800" : undefined}
-            durationMs={result.durationMs}
-            passes={quickFromSite ? t("results.siteAuditPassNote") : undefined}
-          />
         </div>
       </div>
     </div>
