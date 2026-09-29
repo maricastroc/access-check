@@ -59,7 +59,7 @@ describe("buildReportMarkdown", () => {
   });
 
   it("keeps sandbox language, the real measurement, and never extrapolates the sample", () => {
-    expect(md).toContain("**Verified fix.**");
+    expect(md).toContain("**Fix tested.**");
     expect(md).toContain("sandbox copy");
     expect(md).toContain("not individually verified");
     expect(md).toContain("the audited site is not altered");
@@ -69,7 +69,7 @@ describe("buildReportMarkdown", () => {
   });
 
   it("puts a verification label only where something was re-run", () => {
-    const labelled = md.split("\n").filter((line) => line.startsWith("**Verified fix.**"));
+    const labelled = md.split("\n").filter((line) => line.startsWith("**Fix tested.**"));
     const plain = md.split("\n").filter((line) => /^_[A-Z]/.test(line));
 
     expect(labelled.length).toBe(1);

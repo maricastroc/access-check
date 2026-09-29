@@ -1079,7 +1079,7 @@ export const en = {
     "Complementary passes: keyboard, mobile viewport, expanded UI, motion, live regions.",
   "stepper.previous": "Previous occurrence",
   "stepper.next": "Next occurrence",
-  "seal.verified": "Verified: the rule stopped flagging the element",
+  "seal.verified": "Fix tested: applied temporarily and rechecked successfully",
   "seal.needsReview": "Needs review: the suggestion alone doesn't clear it",
   "history.title": "Audit history",
   "history.kicker": "History",
@@ -1108,7 +1108,7 @@ export const en = {
   "severity.moderate": "Moderate",
   "severity.minor": "Minor",
 
-  "cue.verified": "· verified by re-audit",
+  "cue.verified": "· fix tested",
   "cue.needsReview": "· needs review",
   "detail.sampleText": "Sample text",
   "detail.currentView": "current",
@@ -1134,7 +1134,7 @@ export const en = {
   "detail.verificationResult": "Verification result",
   "detail.sandboxNote": "Fixes are applied and reverted in a sandbox copy. {host} was not altered.",
 
-  "verdict.label.verified": "Verified fix",
+  "verdict.label.verified": "Fix tested",
   "verdict.label.needsReview": "Needs review",
 
   "verdict.others": {
@@ -1143,9 +1143,8 @@ export const en = {
       "The other {count} occurrences share the same suggestion but were not individually verified.",
   },
   "verdict.verifiedShared":
-    "Applied temporarily and re-audited, then undone: the rule stopped flagging each of the {count} occurrences.",
-  "verdict.verifiedSingle":
-    "Applied temporarily and re-audited, then undone: the rule stopped flagging the element.",
+    "Applied temporarily to each of the {count} occurrences and rechecked successfully.",
+  "verdict.verifiedSingle": "Applied temporarily and rechecked successfully.",
   "verdict.partial":
     "Applied to each occurrence and re-audited, then undone: {cleared} of {total} cleared, {failed} still flag. Review the ones that still flag.",
   "verdict.sampledOne":
@@ -1306,7 +1305,6 @@ export const en = {
   "panel.copySelector": "Copy selector",
   "panel.copyHtml": "Copy HTML",
 
-  "panel.occurrences": "Occurrences",
   "panel.occurrenceOf": "Occurrence {at} of {total}",
   "panel.neverReached": "Never reached by Tab",
   "panel.stopN": "Stop {n}",
@@ -1315,15 +1313,21 @@ export const en = {
   "panel.position": "Position",
   "panel.positionValue": "{w}×{h}px at {x}, {y}",
   "panel.offViewport": " · outside the viewport when it was measured",
-  "panel.element": "Element",
+  "panel.selector": "Selector",
+  "panel.html": "HTML",
   "panel.abbreviated":
     "Abbreviated with … , and attributes that can carry what you typed are left out. Evidence, not markup to paste back.",
   "panel.locating": "Looking for it…",
   "panel.locate": "Locate on page",
 
   "panel.alsoFailsIn": "Also fails in {contexts}",
-  "panel.problem": "Problem",
-  "panel.suggestedFix": "Suggested fix",
+  "panel.where": "Where",
+  "panel.whatToChange": "What to change",
+  "panel.why": "Why",
+  "panel.details": "Details",
+  "panel.problemNavigation": "Problem navigation",
+  "panel.previousProblem": "Previous problem",
+  "panel.nextProblem": "Next problem",
   "panel.findings": "Findings",
   "panel.readingLanguage":
     "This reading was produced in {language}. Audit the page again to get it in this one.",

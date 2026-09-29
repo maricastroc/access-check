@@ -265,12 +265,17 @@ try {
     for (const each of rows) {
       each.click();
       await new Promise((r) => setTimeout(r, 40));
-      const panel = each.parentElement;
-      const text = panel.innerText;
+      const text = each.nextElementSibling?.innerText ?? "";
+      const at = (label) => text.search(new RegExp(`^${label}$`, "im"));
       sealed.push({
         rule: each.innerText.split("\n").find((l) => /^[a-z-]+$/.test(l.trim())) ?? "",
-        section: /verification result/i.test(text),
-        cue: /verified by re-audit|needs review/i.test(each.innerText),
+        section: /^(fix tested|needs review)$/im.test(text),
+        cue: /fix tested|needs review/i.test(each.innerText),
+        ordered:
+          at("where") === 0 &&
+          at("where") < at("what to change") &&
+          at("what to change") < at("why"),
+        locate: /^Locate on page$/m.test(text),
       });
       each.click();
       await new Promise((r) => setTimeout(r, 20));
@@ -284,7 +289,10 @@ try {
       fix: !!document.querySelector("button + div p"),
       overflow: doc.scrollWidth - doc.clientWidth,
       sealed,
-      stale: /not re-audited|could not verify|one example checked/i.test(document.body.innerText),
+      stale:
+        /not re-audited|could not verify|one example checked|verified by re-audit|verified fix/i.test(
+          document.body.innerText,
+        ),
     };
   });
   console.log("expanded finding:", JSON.stringify(expanded));
@@ -303,6 +311,42 @@ try {
     expanded.sealed.some((f) => !f.section),
     "every finding claims a verification result; the quiet case is not rendering",
   );
+  check(
+    expanded.sealed.some((f) => f.rule === "color-contrast" && f.section && f.cue),
+    "the contrast fix was not marked as tested",
+  );
+  for (const finding of expanded.sealed) {
+    check(finding.ordered, `${finding.rule}: the opened finding does not lead with where it is`);
+    check(finding.locate, `${finding.rule}: a finding on an element offers no Locate on page`);
+  }
+
+  const locating = await report.evaluate(async () => {
+    const row = [...document.querySelectorAll("button")].find(
+      (b) => b.querySelector("h3") && /color-contrast/.test(b.innerText),
+    );
+    if (row.getAttribute("aria-expanded") !== "true") row.click();
+    await new Promise((r) => setTimeout(r, 60));
+    const locate = [...row.nextElementSibling.querySelectorAll("button")].find(
+      (b) => b.textContent.trim() === "Locate on page",
+    );
+    locate.click();
+    await new Promise((r) => setTimeout(r, 900));
+    return { notice: row.nextElementSibling.querySelector('[role="status"]')?.textContent ?? null };
+  });
+  const drawn = await page.evaluate(() => {
+    const root = document.getElementById("accesscheck-overlay");
+    const box = root?.firstElementChild?.getBoundingClientRect();
+    const target = document.querySelector("p[style]").getBoundingClientRect();
+    return {
+      boxes: root ? root.children.length : 0,
+      onTarget:
+        !!box && Math.abs(box.top - target.top) < 12 && Math.abs(box.left - target.left) < 12,
+    };
+  });
+  console.log("locating an axe finding:", JSON.stringify({ ...locating, ...drawn }));
+  check(drawn.boxes === 1, `Locate on page drew ${drawn.boxes} boxes for one contrast element`);
+  check(drawn.onTarget, "Locate on page drew away from the low-contrast paragraph");
+  check(locating.notice === null, `Locate on page answered: ${locating.notice}`);
 
   if (failures.length > 0) {
     console.error("\nFAILED:\n- " + failures.join("\n- "));

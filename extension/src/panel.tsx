@@ -9,13 +9,13 @@ import { WarningList } from "../../src/components/ui/warning-list";
 import { buildFindings, type FindingView } from "../../src/lib/report/findings";
 import { describeElement } from "../../src/lib/report/identity";
 import { verdictMessage, verdictTone } from "../../src/lib/report/verdict";
-import type { KeyboardOccurrence } from "../../src/lib/scan/keyboard";
 import type { OverlayMark } from "../../src/lib/scan/dom/overlay";
 import type { ScanResult } from "../../src/lib/scan/types";
 import { langAttrs, REPORT_LOCALES } from "../../src/lib/i18n/locale";
 import type { ReportLocale } from "../../src/lib/i18n/locale";
 import { translator } from "../../src/lib/i18n/t";
 import { auditScope, focusPathLines } from "./coverage";
+import { locationsOf, type Location } from "./locations";
 import {
   scoringIsCurrent,
   standingOf,
@@ -289,29 +289,33 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function Occurrences({
+function FindingDetail({
   finding,
   syncStop,
   onLocate,
+  previous,
+  next,
 }: {
   finding: FindingView;
   syncStop: number | null;
-  onLocate: (occurrence: KeyboardOccurrence) => Promise<string | null>;
+  onLocate: (location: Location, n: number) => Promise<string | null>;
+  previous: (() => void) | null;
+  next: (() => void) | null;
 }) {
+  const locations = locationsOf(finding);
   const [index, setIndex] = useState(0);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [lastSync, setLastSync] = useState(syncStop);
-  const total = finding.occurrences.length;
+  const total = locations.length;
   if (syncStop !== lastSync) {
     setLastSync(syncStop);
-    const found = finding.occurrences.findIndex((o) => o.stop === syncStop);
+    const found = locations.findIndex((l) => l.stop === syncStop);
     if (found >= 0) setIndex(found);
   }
 
-  const at = Math.min(index, total - 1);
-  const occurrence = finding.occurrences[at];
-  if (!occurrence) return null;
+  const at = Math.min(index, Math.max(total - 1, 0));
+  const location = locations[at] ?? null;
 
   const step = (delta: number) => {
     setNotice(null);
@@ -319,86 +323,177 @@ function Occurrences({
   };
 
   const locate = async () => {
+    if (!location) return;
     setBusy(true);
-    setNotice(await onLocate(occurrence));
+    setNotice(await onLocate(location, location.stop ?? finding.n));
     setBusy(false);
   };
 
-  const truncated = occurrence.html?.includes("…") ?? false;
-  const element = describeElement(occurrence.selector, occurrence.identity ?? undefined, t);
-  const where = [
-    occurrence.stop === null ? t("panel.neverReached") : t("panel.stopN", { n: occurrence.stop }),
-    occurrence.identity ? element.label : occurrence.tag ? `<${occurrence.tag}>` : null,
-    occurrence.identity ? element.context : occurrence.label || null,
-  ].filter(Boolean);
+  return (
+    <>
+      <Where
+        finding={finding}
+        location={location}
+        at={at}
+        total={total}
+        busy={busy}
+        notice={notice}
+        onStep={step}
+        onLocate={() => void locate()}
+      />
+
+      <Field label={t("panel.whatToChange")}>
+        <p className="text-[13px] leading-[1.55] break-words text-body">{finding.fixText}</p>
+        {finding.fixCode && (
+          <pre className="mt-1.5 overflow-x-auto bg-code p-2 font-mono text-[12px] text-ink">
+            {finding.fixCode}
+          </pre>
+        )}
+        {verdictTone(finding.verdict) === "quiet" ? (
+          <p className="mt-1.5 text-[12px] leading-normal break-words text-muted">
+            {verdictMessage(finding.verdict, t, finding.measurement)}
+          </p>
+        ) : (
+          <div className="mt-2">
+            <VerdictSeal verdict={finding.verdict} t={t} />
+            <p className="mt-1.5 text-[12.5px] leading-normal break-words text-body">
+              {verdictMessage(finding.verdict, t, finding.measurement)}
+            </p>
+          </div>
+        )}
+      </Field>
+
+      <Field label={t("panel.why")}>
+        <p className="text-[13px] leading-[1.55] break-words text-body">{finding.desc}</p>
+        {finding.evidence === "heuristic" && (
+          <div className="mt-2 border border-dashed border-border bg-canvas px-2.5 py-2">
+            <SectionKicker as="div">{t("evidence.heuristic.title")}</SectionKicker>
+            <p className="mt-1 text-[12.5px] leading-normal text-body">
+              {t("evidence.heuristic.body")}
+            </p>
+          </div>
+        )}
+        {finding.contexts.length > 0 && (
+          <p className="mt-1.5 text-[12px] text-muted">
+            {t("panel.alsoFailsIn", { contexts: finding.contexts.join(", ") })}
+          </p>
+        )}
+      </Field>
+
+      {location && <ElementDetails location={location} />}
+
+      {(previous || next) && (
+        <nav
+          aria-label={t("panel.problemNavigation")}
+          className="mt-4 flex gap-1.5 border-t border-hairline pt-3"
+        >
+          <button
+            type="button"
+            className={`${SMALL_BUTTON} flex-1 py-1.5`}
+            disabled={!previous}
+            onClick={previous ?? undefined}
+          >
+            {t("panel.previousProblem")}
+          </button>
+          <button
+            type="button"
+            className={`${SMALL_BUTTON} flex-1 py-1.5`}
+            disabled={!next}
+            onClick={next ?? undefined}
+          >
+            {t("panel.nextProblem")}
+          </button>
+        </nav>
+      )}
+    </>
+  );
+}
+
+function Where({
+  finding,
+  location,
+  at,
+  total,
+  busy,
+  notice,
+  onStep,
+  onLocate,
+}: {
+  finding: FindingView;
+  location: Location | null;
+  at: number;
+  total: number;
+  busy: boolean;
+  notice: string | null;
+  onStep: (delta: number) => void;
+  onLocate: () => void;
+}) {
+  if (!location) {
+    return (
+      <Field label={t("panel.where")}>
+        <p className="text-[13px] leading-[1.55] break-words text-body">
+          {finding.noMarkerReason || t("marker.docLevel")}
+        </p>
+      </Field>
+    );
+  }
+
+  const element = describeElement(location.selector, location.identity ?? undefined, t);
+  const named = location.identity
+    ? element.label
+    : location.tag
+      ? `<${location.tag}>`
+      : location.selector;
+  const context = location.identity ? element.context : location.label || null;
+  const stop = location.keyboard
+    ? location.stop === null
+      ? t("panel.neverReached")
+      : t("panel.stopN", { n: location.stop })
+    : null;
 
   return (
-    <section className="mt-4 border-t border-hairline pt-3" aria-label={t("panel.occurrences")}>
+    <section className="mt-3" aria-label={t("panel.where")}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <SectionKicker as="h4">{t("panel.occurrenceOf", { at: at + 1, total })}</SectionKicker>
+        <SectionKicker as="h4">{t("panel.where")}</SectionKicker>
         {total > 1 && (
-          <OccurrenceStepper
-            t={t}
-            index={at}
-            total={total}
-            onPrev={() => step(-1)}
-            onNext={() => step(1)}
-          />
+          <div className="flex items-center gap-2">
+            <span className="text-[12px] text-muted tabular-nums">
+              {t("panel.occurrenceOf", { at: at + 1, total })}
+            </span>
+            <OccurrenceStepper
+              t={t}
+              index={at}
+              total={total}
+              onPrev={() => onStep(-1)}
+              onNext={() => onStep(1)}
+            />
+          </div>
         )}
       </div>
 
-      <p className="mt-2 text-[12px] leading-normal break-words text-muted">{where.join(" · ")}</p>
-
-      <Field label={t("panel.evidence")}>
-        <p className="text-[13px] leading-[1.55] break-words text-body">{occurrence.reason}</p>
-        {occurrence.certainty === "needs-review" && (
-          <p className="mt-1.5 text-[12px] leading-normal text-moderate-text">
-            {t("panel.geometryUnsure")}
-          </p>
-        )}
-      </Field>
-
-      {occurrence.rect && (
-        <Field label={t("panel.position")}>
-          <p className="text-[12px] text-muted tabular-nums">
-            {t("panel.positionValue", {
-              w: Math.round(occurrence.rect.w),
-              h: Math.round(occurrence.rect.h),
-              x: Math.round(occurrence.rect.x),
-              y: Math.round(occurrence.rect.y),
-            })}
-            {occurrence.onScreen ? "" : t("panel.offViewport")}
-          </p>
-        </Field>
-      )}
-
-      <Field label={t("panel.element")}>
-        <p className="overflow-x-auto font-mono text-[12px] break-all text-steel">
-          {occurrence.selector}
+      <p className="mt-1 font-mono text-[12.5px] leading-snug break-words text-ink">{named}</p>
+      {(context || stop) && (
+        <p className="text-[12px] break-words text-muted">
+          {[stop, context].filter(Boolean).join(" · ")}
         </p>
-        {occurrence.html && (
-          <pre className="mt-1.5 max-h-40 overflow-auto bg-code p-2 font-mono text-[12px] break-all whitespace-pre-wrap text-ink">
-            {occurrence.html}
-          </pre>
-        )}
-        {truncated && (
-          <p className="mt-1.5 text-[12px] leading-normal text-muted">{t("panel.abbreviated")}</p>
-        )}
-      </Field>
+      )}
+      {location.reason && (
+        <p className="mt-1.5 text-[13px] leading-[1.55] break-words text-body">{location.reason}</p>
+      )}
+      {location.keyboard && location.certainty === "needs-review" && (
+        <p className="mt-1.5 text-[12px] leading-normal text-moderate-text">
+          {t("panel.geometryUnsure")}
+        </p>
+      )}
 
       <button
         type="button"
-        className={`${PRIMARY_BUTTON} mt-3`}
+        className={`${PRIMARY_BUTTON} mt-2.5`}
         disabled={busy}
-        onClick={() => void locate()}
+        onClick={onLocate}
       >
         {busy ? t("panel.locating") : t("panel.locate")}
       </button>
-
-      <div className="mt-1.5 flex flex-wrap gap-1.5">
-        <CopyButton label={t("panel.copySelector")} value={occurrence.selector} />
-        {occurrence.html && <CopyButton label={t("panel.copyHtml")} value={occurrence.html} />}
-      </div>
 
       {notice && (
         <p role="status" className="mt-2 text-[12.5px] leading-normal text-moderate-text">
@@ -406,6 +501,56 @@ function Occurrences({
         </p>
       )}
     </section>
+  );
+}
+
+function ElementDetails({ location }: { location: Location }) {
+  const truncated = location.html?.includes("…") ?? false;
+
+  return (
+    <details className="mt-3 border-t border-hairline pt-2.5">
+      <summary className="cursor-pointer">
+        <SectionKicker as="h4" className="inline">
+          {t("panel.details")}
+        </SectionKicker>
+      </summary>
+
+      <Field label={t("panel.selector")}>
+        <p className="overflow-x-auto font-mono text-[12px] break-all text-steel">
+          {location.selector}
+        </p>
+      </Field>
+
+      {location.html && (
+        <Field label={t("panel.html")}>
+          <pre className="max-h-40 overflow-auto bg-code p-2 font-mono text-[12px] break-all whitespace-pre-wrap text-ink">
+            {location.html}
+          </pre>
+          {truncated && (
+            <p className="mt-1.5 text-[12px] leading-normal text-muted">{t("panel.abbreviated")}</p>
+          )}
+        </Field>
+      )}
+
+      {location.rect && (
+        <Field label={t("panel.position")}>
+          <p className="text-[12px] text-muted tabular-nums">
+            {t("panel.positionValue", {
+              w: Math.round(location.rect.w),
+              h: Math.round(location.rect.h),
+              x: Math.round(location.rect.x),
+              y: Math.round(location.rect.y),
+            })}
+            {location.onScreen ? "" : t("panel.offViewport")}
+          </p>
+        </Field>
+      )}
+
+      <div className="mt-2.5 flex flex-wrap gap-1.5">
+        <CopyButton label={t("panel.copySelector")} value={location.selector} />
+        {location.html && <CopyButton label={t("panel.copyHtml")} value={location.html} />}
+      </div>
+    </details>
   );
 }
 
@@ -439,7 +584,7 @@ function Findings({
   findings: FindingView[];
   locale: ReportLocale | undefined;
   syncStop: number | null;
-  onLocate: (occurrence: KeyboardOccurrence) => Promise<string | null>;
+  onLocate: (location: Location, n: number) => Promise<string | null>;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
   const [lastSync, setLastSync] = useState(syncStop);
@@ -449,6 +594,15 @@ function Findings({
     const owner = findings.find((f) => f.occurrences.some((o) => o.stop === syncStop));
     if (owner) setSelected(owner.id);
   }
+
+  const open = (id: string) => {
+    setSelected(id);
+    requestAnimationFrame(() => {
+      const row = document.getElementById(`finding-${id}`);
+      row?.scrollIntoView({ block: "start" });
+      row?.querySelector("button")?.focus({ preventScroll: true });
+    });
+  };
 
   return (
     <section className="mt-3 border border-border bg-surface" aria-labelledby="findings-heading">
@@ -460,8 +614,13 @@ function Findings({
       {findings.length === 0 ? (
         <p className="px-3 py-3 text-[12.5px] text-muted">{t("panel.noFailures")}</p>
       ) : (
-        findings.map((f) => (
-          <div key={f.id} {...langAttrs(locale, UI_LOCALE)}>
+        findings.map((f, i) => (
+          <div
+            key={f.id}
+            id={`finding-${f.id}`}
+            className="scroll-mt-12"
+            {...langAttrs(locale, UI_LOCALE)}
+          >
             <FindingRow
               t={t}
               finding={f}
@@ -469,76 +628,20 @@ function Findings({
               onSelect={() => setSelected(selected === f.id ? null : f.id)}
             />
             {selected === f.id && (
-              <div className="border-x border-b border-hairline bg-surface px-3 pt-2 pb-3">
-                {f.contexts.length > 0 && (
-                  <p className="text-[12px] text-muted">
-                    {t("panel.alsoFailsIn", { contexts: f.contexts.join(", ") })}
-                  </p>
-                )}
-                {f.evidence === "heuristic" && (
-                  <div className="mt-2 border border-dashed border-border bg-canvas px-2.5 py-2">
-                    <SectionKicker as="h4">{t("evidence.heuristic.title")}</SectionKicker>
-                    <p className="mt-1 text-[12.5px] leading-normal text-body">
-                      {t("evidence.heuristic.body")}
-                    </p>
-                  </div>
-                )}
-                <Field label={t("panel.problem")}>
-                  <p className="text-[13px] leading-[1.55] break-words text-body">{f.desc}</p>
-                </Field>
-                {f.occurrences.length === 0 && f.affectedSelectors.length > 0 && (
-                  <FindingElement finding={f} />
-                )}
-                <Field label={t("panel.suggestedFix")}>
-                  <p className="text-[13px] leading-[1.55] break-words text-body">{f.fixText}</p>
-                  {f.fixCode && (
-                    <pre className="mt-1.5 overflow-x-auto bg-code p-2 font-mono text-[12px] text-ink">
-                      {f.fixCode}
-                    </pre>
-                  )}
-                  {verdictTone(f.verdict) === "quiet" && (
-                    <p className="mt-1.5 text-[12px] leading-normal break-words text-muted">
-                      {verdictMessage(f.verdict, t, f.measurement)}
-                    </p>
-                  )}
-                </Field>
-                {verdictTone(f.verdict) !== "quiet" && (
-                  <Field label={t("detail.verificationResult")}>
-                    <VerdictSeal verdict={f.verdict} t={t} />
-                    <p className="mt-1.5 text-[12.5px] leading-normal break-words text-body">
-                      {verdictMessage(f.verdict, t, f.measurement)}
-                    </p>
-                  </Field>
-                )}
-                <Occurrences finding={f} syncStop={syncStop} onLocate={onLocate} />
+              <div className="border-x border-b border-hairline bg-surface px-3 pt-1 pb-3">
+                <FindingDetail
+                  finding={f}
+                  syncStop={syncStop}
+                  onLocate={onLocate}
+                  previous={i > 0 ? () => open(findings[i - 1].id) : null}
+                  next={i < findings.length - 1 ? () => open(findings[i + 1].id) : null}
+                />
               </div>
             )}
           </div>
         ))
       )}
     </section>
-  );
-}
-
-function FindingElement({ finding }: { finding: FindingView }) {
-  const selector = finding.affectedSelectors[0];
-  const element = describeElement(selector, finding.identities[selector], t);
-
-  return (
-    <Field label={t("panel.element")}>
-      <p className="font-mono text-[12.5px] leading-snug break-words text-ink">{element.label}</p>
-      {element.context && <p className="text-[12px] text-muted">{element.context}</p>}
-      {element.label !== element.locator && (
-        <p className="mt-1 overflow-x-auto font-mono text-[11.5px] break-all text-steel">
-          {element.locator}
-        </p>
-      )}
-      {finding.elements > 1 && (
-        <p className="mt-1 text-[12px] text-muted">
-          {t("detail.elementsAffected", { count: finding.elements })}
-        </p>
-      )}
-    </Field>
   );
 }
 
@@ -812,14 +915,14 @@ function Report({
   const marks = marksFor(result);
   const scope = auditScope(result, t);
 
-  const locate = async (occurrence: KeyboardOccurrence) => {
+  const locate = async (location: Location, n: number) => {
     setShowing(false);
     setNotice(null);
     const mark: OverlayMark = {
-      n: occurrence.stop ?? 1,
-      selector: occurrence.selector,
-      kind: occurrence.certainty === "conclusive" ? "failure" : "attention",
-      label: occurrence.label || undefined,
+      n,
+      selector: location.selector,
+      kind: location.certainty === "conclusive" ? "failure" : "attention",
+      label: location.label || undefined,
     };
     const done = await draw([mark], mark.n, 6000);
     setMoved(done.moved);

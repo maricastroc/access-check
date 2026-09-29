@@ -387,7 +387,7 @@ describe("the list and the header describe the same reading", () => {
   });
 });
 
-describe("buildFindings: the Verified fix seal needs a deterministic fix", () => {
+describe("buildFindings: the Fix tested seal needs a deterministic fix", () => {
   const lang: ScanViolation = {
     id: "html-has-lang",
     severity: "serious",
@@ -442,7 +442,7 @@ describe("buildFindings: the Verified fix seal needs a deterministic fix", () =>
     ],
   };
 
-  it("keeps Verified fix for a deterministic fix the verifier confirmed", () => {
+  it("keeps Fix tested for a deterministic fix the verifier confirmed", () => {
     const f = buildFindings(baseResult({ violations: [singleContrast] }))[0];
     expect(f.verdict.kind).toBe("verified");
     expect(f.preview?.confidence).toBe("verified");

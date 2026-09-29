@@ -104,14 +104,14 @@ try {
         const text = row.parentElement.innerText;
         const element =
           text
-            .split(/^ELEMENT$/m)[1]
+            .split(/^WHERE$/m)[1]
             ?.split(/^[A-Z ]{4,}$/m)[0]
             ?.trim() ?? null;
         seen.push({
           rule: (row.innerText.match(/\n([a-z][a-z0-9-]+)\n/) ?? [])[1] ?? null,
-          cue: /verified by re-audit|needs review/.test(row.innerText),
-          section: /VERIFICATION RESULT/.test(text),
-          seal: (text.match(/VERIFICATION RESULT\n\S\s*(.+)/) ?? [])[1] ?? null,
+          cue: /fix tested|needs review/.test(row.innerText),
+          section: /^(Fix tested|Needs review)$/m.test(text),
+          seal: (text.match(/^(Fix tested|Needs review)$/m) ?? [])[1] ?? null,
           element: element ? element.split("\n").map((l) => l.trim()) : null,
         });
         row.click();
@@ -148,7 +148,7 @@ try {
   );
   out.locale.pt = await panel.evaluate(() => document.body.innerText.slice(0, 80));
   out.locale.ptHasEnglish = await panel.evaluate(() =>
-    /Verified fix|Needs review|Best practice, not a WCAG/.test(document.body.innerText),
+    /Fix tested|Needs review|Best practice, not a WCAG/.test(document.body.innerText),
   );
   await sw.evaluate(() => chrome.storage.local.set({ locale: "en" }));
   await panel.reload();

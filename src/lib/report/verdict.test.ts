@@ -92,7 +92,7 @@ describe("buildVerdict — never extrapolates one representative to a whole clus
     const v = buildVerdict({ ...base, fixVerification: "verified" });
     expect(v.kind).toBe("verified");
     expect(v.fullyCovered).toBe(true);
-    expect(verdictMessage(v, t)).toContain("the rule stopped flagging the element");
+    expect(verdictMessage(v, t)).toBe("Applied temporarily and rechecked successfully.");
   });
 
   it("failed — applied but the rule still flags, with a contrast reason", () => {
@@ -138,11 +138,11 @@ describe("buildVerdict — never extrapolates one representative to a whole clus
 
   it("labels what happened, not how it was categorised", () => {
     expect(verdictLabel(buildVerdict({ ...base, fixVerification: "verified" }), t)).toBe(
-      "Verified fix",
+      "Fix tested",
     );
     expect(
       verdictLabel(buildVerdict({ ...base, elements: 7, fixGroups: [group(7, "verified")] }), t),
-    ).toBe("Verified fix");
+    ).toBe("Fix tested");
     expect(verdictLabel(buildVerdict({ ...base, fixVerification: "failed" }), t)).toBe(
       "Needs review",
     );
@@ -177,11 +177,11 @@ describe("buildVerdict — never extrapolates one representative to a whole clus
   });
 });
 
-describe("buildVerdict — only a deterministic fix can earn Verified fix", () => {
-  it("a deterministic fix whose re-audit passed is a Verified fix", () => {
+describe("buildVerdict — only a deterministic fix can earn Fix tested", () => {
+  it("a deterministic fix whose re-audit passed is a Fix tested", () => {
     const v = buildVerdict({ ...base, fixVerification: "verified" });
     expect(v.kind).toBe("verified");
-    expect(verdictLabel(v, t)).toBe("Verified fix");
+    expect(verdictLabel(v, t)).toBe("Fix tested");
   });
 
   it("a contextual fix is never certified, even when the rule stopped flagging", () => {

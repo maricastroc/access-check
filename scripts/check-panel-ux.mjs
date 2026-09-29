@@ -11,6 +11,8 @@ const PAGES = {
     <div id="${LONG}"><section><article><div><span><a href="/deep?token=${LONG}"
       style="outline:none" title="${LONG}" aria-label="${LONG}">Deeply buried link</a></span></div></article></section></div>
   </main>`,
+  "/several": `<main><h1>Several</h1><img src="/pic.png">
+    <p style="color:#bbb;background:#fff">Low contrast</p><input type="text"></main>`,
   "/many": `<main><h1>Many</h1>${Array.from(
     { length: 60 },
     (_, i) => `<a href="/x${i}" style="outline:none">Link ${i}</a>`,
@@ -157,7 +159,61 @@ try {
   });
   console.log("opening a finding:", JSON.stringify(shift));
   if (!shift.skipped) check(shift.moved <= 1, `the row jumped ${shift.moved}px when opened`);
+
   await panel.close();
+
+  await audit("/several");
+  const severalPanel = await openPanel(400);
+  const stepping = await severalPanel.evaluate(async () => {
+    const rows = () =>
+      [...document.querySelectorAll("button")].filter((b) => b.querySelector("h3"));
+    const byText = (text) =>
+      [...document.querySelectorAll("button")].find((b) => b.textContent.trim() === text);
+    const opened = () => rows().findIndex((r) => r.getAttribute("aria-expanded") === "true");
+    rows()[0]?.click();
+    await new Promise((r) => setTimeout(r, 120));
+    const controls = ["Locate on page", "Previous problem", "Next problem"]
+      .map(byText)
+      .filter((b) => b && !b.disabled);
+    const ringless = controls
+      .filter((b) => {
+        b.focus();
+        const s = getComputedStyle(b);
+        return s.outlineStyle === "none" && s.boxShadow === "none";
+      })
+      .map((b) => b.textContent.trim());
+    const total = rows().length;
+    const firstPrevious = byText("Previous problem")?.disabled ?? null;
+    byText("Next problem")?.focus();
+    document.activeElement.click();
+    await new Promise((r) => setTimeout(r, 150));
+    const afterNext = opened();
+    const focusedRow = rows().indexOf(document.activeElement);
+    while (byText("Next problem") && !byText("Next problem").disabled) {
+      byText("Next problem").click();
+      await new Promise((r) => setTimeout(r, 60));
+    }
+    return {
+      total,
+      ringless,
+      firstPrevious,
+      afterNext,
+      focusedRow,
+      last: opened(),
+      lastNextDisabled: byText("Next problem")?.disabled ?? null,
+    };
+  });
+  console.log("stepping between problems:", JSON.stringify(stepping));
+  check(stepping.ringless.length === 0, `no focus ring on: ${stepping.ringless.join(", ")}`);
+  check(stepping.total > 1, `the several-problem fixture produced ${stepping.total}`);
+  if (stepping.total > 1) {
+    check(stepping.firstPrevious === true, "Previous problem is live on the first problem");
+    check(stepping.afterNext === 1, `Next problem opened problem ${stepping.afterNext + 1}`);
+    check(stepping.focusedRow === 1, "Next problem did not move focus to the problem it opened");
+    check(stepping.last === stepping.total - 1, "Next problem never reached the last problem");
+    check(stepping.lastNextDisabled === true, "Next problem is live on the last problem");
+  }
+  await severalPanel.close();
 
   await audit("/long");
   const longPanel = await openPanel(400);
@@ -189,7 +245,7 @@ try {
     row?.click();
     await new Promise((r) => setTimeout(r, 250));
     const counter = () =>
-      [...document.querySelectorAll("h4")]
+      [...document.querySelectorAll("span")]
         .map((h) => h.textContent.trim())
         .find((t) => /^Occurrence \d+ of \d+$/.test(t));
     const first = counter();
