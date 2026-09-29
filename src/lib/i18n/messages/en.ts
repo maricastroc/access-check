@@ -6,7 +6,6 @@ export const en = {
   "unit.styleSheet": { one: "{count} stylesheet", other: "{count} stylesheets" },
   "unit.mediaFile": { one: "{count} media file", other: "{count} media files" },
   "unit.element": { one: "{count} element", other: "{count} elements" },
-  "unit.elementNoun": { one: "element", other: "elements" },
   "unit.and": "and",
 
   "privacy.metaTitle": "Privacy · AccessCheck extension",
@@ -507,7 +506,6 @@ export const en = {
   "focusPath.previousStop": "Previous stop",
   "focusPath.nextStop": "Next stop",
   "focusPath.selectedStop": "Stop {stop} of {total}",
-  "capture.openEvidence": "See the evidence",
   "capture.markerHint": "Select a marker to open the finding it belongs to.",
   "detail.sharedColorPair": {
     one: "{count} occurrence shares this detected colour pair.",
@@ -516,10 +514,6 @@ export const en = {
   "detail.moreSelectors": "+{count} more",
   "capture.frameLabel": "Screenshot \u00b7 {width} \u00d7 {height}",
   "capture.shownOnScreenshot": "{count} marked on a screenshot",
-  "detail.elementsAffected": {
-    one: "element affected",
-    other: "elements affected",
-  },
   "provenance.engine": "Headless Chromium \u00b7 axe-core with WCAG A & AA rules",
   "provenance.viewportNote": " \u00b7 screenshot taken at {viewport}",
   "provenance.finishedIn": " in {seconds}s",
@@ -548,7 +542,6 @@ export const en = {
   "capture.screenshot": "Screenshot",
   "capture.show": "Show screenshot",
   "capture.collapse": "Collapse screenshot",
-  "capture.elementAndCode": "Element and code",
 
   "results.auditedMinutesAgo": "Audited {minutes} min ago",
   "results.auditedAt": "Audited {when}",
@@ -683,8 +676,6 @@ export const en = {
   "results.tapMarker": "Tap a marker to open the finding it belongs to.",
   "results.showOnScreenshot": "Show on screenshot",
   "results.takingScreenshot": "Taking the screenshot of the page.",
-  "results.fullImpactNote": "Full impact, fix preview and verification are in the findings panel.",
-  "results.selectFinding": "Select a finding to inspect its element and code.",
 
   "site.tryAnotherAddress": "Try another address",
   "site.auditJustThisPage": "Audit just this page",
@@ -1105,14 +1096,12 @@ export const en = {
   "detail.property": "Property",
   "detail.detected": "Detected",
   "detail.suggested": "Suggested",
+  "detail.viewCurrent": "Current",
+  "detail.rule": "Rule",
   "detail.result": "Result",
-  "detail.impactOnUsers": "Impact on users",
-  "detail.affectedElement": "Affected element",
   "detail.technicalSelector": "Selector",
-  "detail.howToFix": "How to fix",
   "detail.humanDecision":
     "The right change depends on the page's structure, so confirm it in context.",
-  "detail.verificationResult": "Verification result",
   "detail.sandboxNote": "Fixes are applied and reverted in a sandbox copy. {host} was not altered.",
 
   "verdict.label.verified": "Fix tested",

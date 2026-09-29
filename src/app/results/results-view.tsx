@@ -28,6 +28,7 @@ import { MobileReport } from "./mobile-report";
 import { ScanningState, ErrorState } from "./states";
 import { AboutAudit } from "./about-audit";
 import { useT } from "@/lib/i18n/provider";
+import { scrollBehavior } from "@/lib/motion";
 
 const VIEWPORT_LABEL = "1200 × 800";
 const NO_FINDINGS: FindingView[] = [];
@@ -157,8 +158,13 @@ export function ResultsView({
     (id: string) => {
       selection.selectFinding(id);
       setMobileTab("capture");
+      if (desktop) {
+        document
+          .getElementById("evidence")
+          ?.scrollIntoView({ block: "start", behavior: scrollBehavior() });
+      }
     },
-    [selection],
+    [selection, desktop],
   );
 
   const host = view?.host ?? safeHost(url);

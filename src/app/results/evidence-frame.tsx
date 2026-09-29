@@ -1,9 +1,8 @@
 "use client";
 
 import { VIEWPORT_CAPTURE, type ScanResult, type Severity } from "@/lib/scan/types";
-import { locatedMarkers, type FindingView } from "@/lib/report/findings";
-import { verdictTone } from "@/lib/report/verdict";
-import { Button, CodeBlock, ElementIdentityLine, Marker, SectionKicker } from "@/components/ui";
+import type { FindingView } from "@/lib/report/findings";
+import { Button, Marker, SectionKicker } from "@/components/ui";
 import { clamp } from "./shared";
 import { readableContext, type StopPlacement } from "@/lib/scan/placement";
 import type { ActiveCapture, Layer, MarkerView, StopView } from "./report-ui";
@@ -412,7 +411,7 @@ export function EvidenceFrame({
           : t("capture.screenshot");
 
   return (
-    <div className="border border-ink bg-surface">
+    <div id="evidence" className="scroll-mt-20 border border-ink bg-surface">
       <div className="flex items-center justify-between gap-3 border-b border-ink px-3 py-2.5">
         <SectionKicker>{legend}</SectionKicker>
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
@@ -438,7 +437,7 @@ export function EvidenceFrame({
       </div>
 
       {!collapsed && (
-        <div className="border-b border-ink">
+        <div>
           <CaptureStage
             host={host}
             layer={layer}
@@ -457,47 +456,6 @@ export function EvidenceFrame({
           />
         </div>
       )}
-
-      <div>
-        <div className="p-4">
-          <SectionKicker>{t("capture.elementAndCode")}</SectionKicker>
-          {selectedFinding ? (
-            <div className="mt-3 space-y-2.5">
-              <ElementIdentityLine finding={selectedFinding} t={t} />
-              <p className="text-[12.5px] text-muted">
-                <span className="font-medium text-ink tabular-nums">
-                  {selectedFinding.elements}
-                </span>{" "}
-                {t("unit.elementNoun", { count: selectedFinding.elements })} ·{" "}
-                {t("capture.shownOnScreenshot", { count: locatedMarkers(selectedFinding) })}
-              </p>
-              {locatedMarkers(selectedFinding) === 0 && (
-                <p className="flex items-start gap-2 text-[12px] text-muted">
-                  <span
-                    aria-hidden
-                    className="mt-0.5 inline-block h-3 w-3 shrink-0 border border-dashed border-border"
-                  />
-                  {selectedFinding.noMarkerReason}
-                </p>
-              )}
-              {selectedFinding.fixCode && (
-                <CodeBlock
-                  lines={[
-                    {
-                      text: selectedFinding.fixCode,
-                      tone:
-                        verdictTone(selectedFinding.verdict) === "verified" ? "added" : "default",
-                    },
-                  ]}
-                />
-              )}
-              <p className="text-[12px] text-muted">{t("results.fullImpactNote")}</p>
-            </div>
-          ) : (
-            <p className="mt-3 text-[13px] text-muted">{t("results.selectFinding")}</p>
-          )}
-        </div>
-      </div>
     </div>
   );
 }

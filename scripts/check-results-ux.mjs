@@ -302,6 +302,95 @@ try {
     await context.close();
   }
 
+  const readDetail = (page, pattern) =>
+    page.evaluate(async (source) => {
+      const row = [...document.querySelectorAll("button")].find(
+        (b) => b.querySelector("h3") && new RegExp(source, "i").test(b.textContent ?? ""),
+      );
+      row?.click();
+      await new Promise((r) => setTimeout(r, 500));
+      const detail = row?.nextElementSibling;
+      if (!detail) return null;
+      const parts = [...detail.querySelectorAll("h4")].map((h) => h.textContent.trim());
+      const change = [...detail.querySelectorAll("section")].find((s) =>
+        /^What to change/.test(s.querySelector("h4")?.textContent ?? ""),
+      );
+      const details = detail.querySelector("details");
+      return {
+        parts,
+        sealInChange: /Fix tested/.test(change?.textContent ?? ""),
+        detailsOpen: details?.open ?? null,
+        showButton: [...detail.querySelectorAll("button")].some((b) =>
+          /Show on screenshot/.test(b.textContent ?? ""),
+        ),
+      };
+    }, pattern);
+
+  {
+    const { page, context } = await open(1440);
+    const contrast = await readDetail(page, "contrast ratio");
+    const under = await page.evaluate(() => {
+      const frame = document.getElementById("evidence");
+      return {
+        elementAndCode: /Element and code/i.test(frame?.textContent ?? ""),
+        code: Boolean(frame?.querySelector("pre, code")),
+      };
+    });
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await page.waitForTimeout(200);
+    const altText = await readDetail(page, "alternative text");
+    await page.evaluate(() =>
+      [...document.querySelectorAll("button")]
+        .find((b) => /Show on screenshot/.test(b.textContent ?? ""))
+        ?.click(),
+    );
+    await page.waitForTimeout(800);
+    const frameTop = await page.evaluate(() =>
+      Math.round(document.getElementById("evidence")?.getBoundingClientRect().top ?? -1),
+    );
+    console.log("an opened finding:", JSON.stringify({ contrast, altText, under, frameTop }));
+    check(
+      contrast?.parts.join(" > ") === "Where > What to change > Why > Details",
+      `the detail reads ${contrast?.parts.join(" > ")}`,
+    );
+    check(contrast?.sealInChange, "Fix tested sits outside what to change");
+    check(contrast?.detailsOpen === false, "the details start open");
+    check(altText?.showButton, "where does not lead to the screenshot");
+    check(frameTop >= 0 && frameTop < 200, `Show on screenshot left the frame at ${frameTop}px`);
+    check(
+      !under.elementAndCode && !under.code,
+      "the screenshot still repeats the element and code",
+    );
+    await context.close();
+  }
+
+  {
+    const { page, context } = await open(420);
+    await page.evaluate(() =>
+      [...document.querySelectorAll('[role="tab"]')]
+        .find((b) => /Findings/.test(b.textContent ?? ""))
+        ?.click(),
+    );
+    await page.waitForTimeout(300);
+    const altText = await readDetail(page, "alternative text");
+    await page.evaluate(() =>
+      [...document.querySelectorAll("button")]
+        .find((b) => /Show on screenshot/.test(b.textContent ?? ""))
+        ?.click(),
+    );
+    await page.waitForTimeout(400);
+    const tab = await page.evaluate(
+      () => document.querySelector('[role="tab"][aria-selected="true"]')?.textContent ?? "",
+    );
+    console.log("an opened finding on a phone:", JSON.stringify({ altText, tab }));
+    check(
+      altText?.parts.join(" > ") === "Where > What to change > Why > Details",
+      `the phone detail reads ${altText?.parts.join(" > ")}`,
+    );
+    check(/Screenshot/.test(tab), "Show on screenshot did not bring the phone to the screenshot");
+    await context.close();
+  }
+
   for (const width of [420, 800]) {
     const { page, context } = await open(width);
     const at = await overflow(page);

@@ -75,6 +75,7 @@ export function FindingsMargin({
                 finding={f}
                 selected={f.id === selectedId}
                 onSelect={() => onSelect(f.id)}
+                markerNote={f.id !== selectedId}
               />
               {f.id === selectedId && (
                 <FindingDetail
