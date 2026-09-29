@@ -135,9 +135,9 @@ try {
 
   const panel = await openPanel(400);
   const keyboard = await panel.evaluate(() => {
-    const focusable = [...document.querySelectorAll("button, summary, a[href], [tabindex]")].filter(
-      (el) => !el.disabled && el.offsetParent !== null,
-    );
+    const focusable = [
+      ...document.querySelectorAll("button, summary, select, a[href], [tabindex]"),
+    ].filter((el) => !el.disabled && el.offsetParent !== null);
     const ringless = [];
     for (const el of focusable) {
       el.focus();
@@ -397,17 +397,55 @@ try {
     await new Promise((r) => setTimeout(r, 60));
     const scrolled = Math.round(window.scrollY);
     const afterScroll = Math.round(bar.getBoundingClientRect().top);
+    const reaudit = [...bar.querySelectorAll("button")].find(
+      (b) => b.textContent.trim() === "Audit again",
+    );
+    const box = reaudit?.getBoundingClientRect();
+    const reauditInView = !!box && box.top >= 0 && box.bottom <= innerHeight;
     const chip = [...bar.querySelectorAll("button")].at(-1);
     chip?.click();
     await new Promise((r) => setTimeout(r, 60));
-    return { atTop, scrolled, afterScroll, backTo: Math.round(window.scrollY) };
+    return { atTop, scrolled, afterScroll, reauditInView, backTo: Math.round(window.scrollY) };
   });
   console.log("the header while scrolling:", JSON.stringify(pinned));
   check(pinned.scrolled > 0, "the fixture report was too short to scroll");
   check(pinned.afterScroll === pinned.atTop, `the header drifted to ${pinned.afterScroll}px`);
   check(pinned.backTo === 0, `the score chip left the reader at ${pinned.backTo}px`);
+  check(pinned.reauditInView, "Audit again is out of view once the reader scrolls down");
 
-  await audit("/plain");
+  const scannedAt = () =>
+    sw.evaluate(async () => {
+      const { panelState } = await chrome.storage.session.get("panelState");
+      return panelState?.state?.result?.scannedAt ?? null;
+    });
+  const firstReading = await scannedAt();
+  await page.bringToFront();
+  const focusedReaudit = await live.evaluate(() => {
+    window.scrollTo(0, document.body.scrollHeight);
+    const button = [...document.querySelectorAll("[class*='sticky'] button")].find(
+      (b) => b.textContent.trim() === "Audit again",
+    );
+    button?.focus();
+    return document.activeElement === button;
+  });
+  await live.keyboard.press("Enter");
+  let secondReading = await scannedAt();
+  for (let i = 0; i < 100 && (secondReading === null || secondReading === firstReading); i++) {
+    await live.waitForTimeout(200);
+    secondReading = await scannedAt();
+  }
+  await live.waitForFunction(() => document.body.textContent.includes("To fix ·"), null, {
+    timeout: 20000,
+  });
+  console.log(
+    "auditing again from the bar:",
+    JSON.stringify({ focusedReaudit, firstReading, secondReading }),
+  );
+  check(focusedReaudit, "Audit again cannot take keyboard focus");
+  check(
+    secondReading !== null && secondReading !== firstReading,
+    "pressing Audit again from the keyboard did not audit the tab again",
+  );
   await live.waitForFunction(() => document.querySelector("h1") !== null, null, { timeout: 20000 });
   const again = await structure(live);
   console.log("after a re-audit mid-reading:", JSON.stringify(again));

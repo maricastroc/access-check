@@ -561,9 +561,11 @@ describe("the panel is an inspector, not a squeezed report", () => {
       "<Header",
       "<Findings",
       "<FocusPath",
+      '<Collapsed title={t("panel.aboutAudit")}',
       't("panel.coverageLimitations")',
       "<ChecksPerformed",
       "<Capture",
+      "</Collapsed>",
     ];
     const found = order.map((token) => report.indexOf(token));
 
@@ -619,9 +621,34 @@ describe("the panel is an inspector, not a squeezed report", () => {
   });
 
   it("keeps the long limitations behind a section that starts closed", () => {
-    expect(panel).toContain('<Collapsed title={t("panel.coverageLimitations")}');
+    expect(panel).toContain('<Collapsed title={t("panel.aboutAudit")} note={scope.summary}>');
     expect(panel).toContain("{scope.note}");
     expect(panel).not.toMatch(/<details[^>]*\sopen/);
+  });
+
+  it("gathers coverage, the checks and the screenshot into one section about the audit", () => {
+    const report = between(panel, "function Report(", "function Message(");
+    expect(report.match(/<Collapsed /g)).toHaveLength(1);
+    const checks = between(panel, "function ChecksPerformed(", "function marksFor(");
+    const capture = between(panel, "function Capture(", "const PRIMARY_BUTTON");
+    expect(checks).not.toContain("<Collapsed");
+    expect(capture).not.toContain("<Collapsed");
+    expect(checks).toContain('as="h3"');
+    expect(capture).toContain('as="h3"');
+    expect(capture).toContain('t("panel.screenshot")');
+    expect(panel).not.toContain('t("panel.evidence")');
+  });
+
+  it("keeps auditing again within reach from anywhere in the reading", () => {
+    const bar = between(panel, "function StickyBar(", "function Header(");
+    expect(bar).toContain('{t("panel.reaudit")}');
+    expect(bar).toContain("disabled={busy}");
+    const report = between(panel, "function Report(", "function Message(");
+    expect(report).toContain("onReaudit={onReaudit}");
+    expect(report).toContain("busy={walking !== null}");
+    expect(report).not.toContain('t("panel.auditAgain")');
+    expect(t("panel.reaudit")).toBe("Audit again");
+    expect(pt("panel.reaudit")).toBe("Auditar de novo");
   });
 
   it("gives locating the page its own full-width action, with the copies below", () => {

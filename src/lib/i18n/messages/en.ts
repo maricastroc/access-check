@@ -1291,7 +1291,7 @@ export const en = {
   "panel.toFix": { one: "{count} to fix", other: "{count} to fix" },
   "panel.toCheck": { one: "{count} to check by hand", other: "{count} to check by hand" },
 
-  "panel.evidence": "Evidence",
+  "panel.screenshot": "Screenshot of the visible page",
   "panel.evidenceNote": "viewport screenshot",
   "panel.evidenceNoteMarked": "viewport screenshot · {count} marked",
   "panel.screenshotAlt": "Screenshot of {url}",
@@ -1377,6 +1377,8 @@ export const en = {
   "panel.notChecked": "Not checked in this build",
   "panel.notCheckedNote": "A reading from this build is never a clean bill of health for the page.",
   "panel.auditAgain": "Audit this tab again",
+  "panel.reaudit": "Audit again",
+  "panel.aboutAudit": "About this audit",
 
   "panel.idleTitle": "Nothing audited yet",
   "panel.idleBody":

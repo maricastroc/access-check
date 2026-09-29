@@ -1322,7 +1322,7 @@ export const ptBR: Catalog = {
   "panel.toFix": { one: "{count} para corrigir", other: "{count} para corrigir" },
   "panel.toCheck": { one: "{count} para conferir à mão", other: "{count} para conferir à mão" },
 
-  "panel.evidence": "Evidências",
+  "panel.screenshot": "Captura da parte visível da página",
   "panel.evidenceNote": "captura do viewport",
   "panel.evidenceNoteMarked": "captura do viewport · {count} marcados",
   "panel.screenshotAlt": "Captura de tela de {url}",
@@ -1411,6 +1411,8 @@ export const ptBR: Catalog = {
   "panel.notCheckedNote":
     "Uma leitura desta versão nunca atesta que a página está livre de barreiras.",
   "panel.auditAgain": "Auditar esta aba de novo",
+  "panel.reaudit": "Auditar de novo",
+  "panel.aboutAudit": "Sobre esta auditoria",
 
   "panel.idleTitle": "Nada auditado ainda",
   "panel.idleBody":
