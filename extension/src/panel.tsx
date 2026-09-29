@@ -15,7 +15,7 @@ import type { ScanResult } from "../../src/lib/scan/types";
 import { langAttrs, REPORT_LOCALES } from "../../src/lib/i18n/locale";
 import type { ReportLocale } from "../../src/lib/i18n/locale";
 import { translator, type MessageKey } from "../../src/lib/i18n/t";
-import { auditScope, focusPathLines } from "./coverage";
+import { auditScope, focusPathLines, type AuditScope } from "./coverage";
 import { locationsOf, type Location } from "./locations";
 import {
   scoringIsCurrent,
@@ -36,6 +36,8 @@ import {
   type LocalePreference,
 } from "./locale-preference";
 import type { AuditStage, AuditTask, HighlightReply, PanelMessage, PanelState } from "./state";
+
+type DoneState = Extract<PanelState, { kind: "done" }>;
 
 let UI_LOCALE: ReportLocale = browserLocale();
 let t = translator(UI_LOCALE);
@@ -127,52 +129,57 @@ function StickyBar({
   );
 }
 
-function Header({ result }: { result: ScanResult }) {
+function Header({
+  result,
+  groups,
+  walking,
+  deepError,
+  onWalk,
+  onContinue,
+}: {
+  result: ScanResult;
+  groups: { group: QueueGroup; findings: FindingView[] }[];
+  walking: AuditStage | null;
+  deepError?: string;
+  onWalk: () => void;
+  onContinue: () => void;
+}) {
   const scope = auditScope(result, t);
+  const standing = standingOf(result.counts);
+  const inGroup = (group: QueueGroup) =>
+    groups.find((g) => g.group === group)?.findings.length ?? 0;
+  const toFix = inGroup("fix");
+  const toCheck = inGroup("check");
+  const work = [
+    toFix > 0 ? t("panel.toFix", { count: toFix }) : null,
+    toCheck > 0 ? t("panel.toCheck", { count: toCheck }) : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <section className="mt-3 border border-border bg-surface p-3" aria-labelledby="verdict-heading">
       <SectionKicker as="h2" id="verdict-heading">
         {scope.kicker}
       </SectionKicker>
-      {scope.lead && (
-        <p className="mt-0.5 text-[12.5px] font-semibold text-moderate-text">{scope.lead}</p>
-      )}
       <p
         className="mt-1 font-cond text-[30px] leading-[1.05]"
-        style={{ color: STANDING_TONE[standingOf(result.counts)] }}
+        style={{ color: STANDING_TONE[standing] }}
       >
-        {t(STANDING_LABEL[standingOf(result.counts)])}
+        {t(STANDING_LABEL[standing])}
       </p>
-      <p className="mt-0.5 text-[12.5px] leading-normal text-body">
-        {t(STANDING_NOTE[standingOf(result.counts)])}
-      </p>
+      <p className="mt-0.5 text-[12.5px] leading-normal text-body">{t(STANDING_NOTE[standing])}</p>
+      {work && <p className="mt-2 text-[13px] font-semibold text-ink tabular-nums">{work}</p>}
 
-      <p className="mt-1.5 text-[12.5px] leading-normal font-medium text-moderate-text">
-        {scope.summary}
-      </p>
-      {scope.badge && <p className="mt-0.5 text-[12px] text-muted">{scope.badge}</p>}
+      <KeyboardCheck
+        scope={scope}
+        walking={walking}
+        error={deepError}
+        stops={result.keyboard?.focusPath.length ?? 0}
+        onWalk={onWalk}
+        onContinue={onContinue}
+      />
 
-      <dl className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1 text-[12.5px] text-muted">
-        {(
-          [
-            ["panel.count.critical", result.counts.critical],
-            ["panel.count.serious", result.counts.serious],
-            ["panel.count.moderate", result.counts.moderate],
-            ["panel.count.minor", result.counts.minor],
-            ["panel.count.passed", result.counts.passed],
-            ["panel.count.bestPractice", result.counts.bestPractice],
-            ["panel.count.manualReview", result.counts.manualReview],
-            ["panel.count.needsReview", result.counts.needsReview ?? 0],
-          ] as const
-        ).map(([label, n]) => (
-          <div key={label} className="whitespace-nowrap">
-            <dt className="inline font-semibold text-ink tabular-nums">{n}</dt>{" "}
-            <dd className="inline">{t(label)}</dd>
-          </div>
-        ))}
-      </dl>
-      <p className="mt-2.5 text-[13px] leading-[1.55] text-body">{result.summary}</p>
       {!scoringIsCurrent(result) && (
         <div className="mt-2.5 border border-dashed border-border bg-canvas px-2.5 py-2">
           <SectionKicker as="h3">{t("standing.staleTitle")}</SectionKicker>
@@ -180,6 +187,79 @@ function Header({ result }: { result: ScanResult }) {
         </div>
       )}
     </section>
+  );
+}
+
+function KeyboardCheck({
+  scope,
+  walking,
+  error,
+  stops,
+  onWalk,
+  onContinue,
+}: {
+  scope: AuditScope;
+  walking: AuditStage | null;
+  error?: string;
+  stops: number;
+  onWalk: () => void;
+  onContinue: () => void;
+}) {
+  const pending = scope.focusPath === "skipped";
+  const cut = scope.focusPath === "truncated";
+  const started = scope.focusPath === "partial";
+  if (!walking && !error && !pending && !cut && !started) return null;
+
+  if (walking) {
+    return (
+      <div className="mt-3 border-t border-hairline pt-2.5">
+        <p className="text-[12.5px] font-semibold text-ink">{t("panel.walkingFocusPath")}</p>
+        <StageList stages={FOCUS_STAGES} current={STAGE_AT["focus-path"][walking] ?? 0} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 border-t border-hairline pt-2.5">
+      <p className="text-[12.5px] leading-normal font-semibold text-moderate-text">
+        {pending ? scope.lead : scope.badge}
+      </p>
+      {error && (
+        <p role="alert" className="mt-1.5 text-[12.5px] leading-normal text-critical">
+          {error}
+        </p>
+      )}
+      {pending && (
+        <>
+          <p id="walk-debugger-note" className="mt-1.5 text-[12px] leading-normal text-body">
+            {t("panel.walkDebuggerNote")}
+          </p>
+          <button
+            type="button"
+            onClick={onWalk}
+            aria-describedby="walk-debugger-note"
+            className={`${SECONDARY_BUTTON} mt-2`}
+          >
+            {t("panel.walkNow")}
+          </button>
+        </>
+      )}
+      {cut && (
+        <>
+          <button
+            type="button"
+            onClick={onContinue}
+            aria-describedby="continue-walk-note"
+            className={`${SECONDARY_BUTTON} mt-2`}
+          >
+            {t("panel.continueWalk")}
+          </button>
+          <p id="continue-walk-note" className="mt-1.5 text-[12px] leading-normal text-muted">
+            {t("panel.continueWalkNote", { stops })}
+          </p>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -761,14 +841,11 @@ function windowAround(marks: OverlayMark[], at: number): OverlayMark[] {
 
 function FocusPath({
   result,
-  error,
   notice,
   showing,
   at,
   complete,
   moved,
-  onWalk,
-  onContinue,
   onShow,
   onStep,
   onToggleComplete,
@@ -776,14 +853,11 @@ function FocusPath({
   onRestoreScroll,
 }: {
   result: ScanResult;
-  error?: string;
   notice: string | null;
   showing: boolean;
   at: number;
   complete: boolean;
   moved: boolean;
-  onWalk: () => void;
-  onContinue: () => void;
   onShow: () => void;
   onStep: (delta: number) => void;
   onToggleComplete: () => void;
@@ -791,8 +865,9 @@ function FocusPath({
   onRestoreScroll: () => void;
 }) {
   const walked = result.keyboard;
-  const stops = walked?.focusPath.length ?? 0;
-  const lines = walked ? focusPathLines(walked, t) : null;
+  if (!walked) return null;
+  const stops = walked.focusPath.length;
+  const lines = focusPathLines(walked, t);
 
   return (
     <section className="mt-3 border-t border-hairline px-3 pt-3" aria-labelledby="focus-heading">
@@ -800,27 +875,15 @@ function FocusPath({
         {t("panel.focusPath")}
       </SectionKicker>
 
-      {walked && lines ? (
-        <p className="mt-1.5 text-[12.5px] leading-normal text-body">{lines.line}</p>
-      ) : (
-        <p className="mt-1.5 text-[12.5px] leading-normal text-body">
-          {t("panel.focusPathAbsent")}
-        </p>
-      )}
+      <p className="mt-1.5 text-[12.5px] leading-normal text-body">{lines.line}</p>
 
-      {lines?.notes.map((note) => (
+      {lines.notes.map((note) => (
         <p key={note} className="mt-1.5 text-[12px] leading-normal text-moderate-text">
           {note}
         </p>
       ))}
 
-      {error && (
-        <p role="alert" className="mt-2 text-[12.5px] leading-normal text-critical">
-          {error}
-        </p>
-      )}
-
-      {walked && stops > 0 && (
+      {stops > 0 && (
         <>
           {!showing ? (
             <button type="button" onClick={onShow} className={`${SECONDARY_BUTTON} mt-3`}>
@@ -878,41 +941,6 @@ function FocusPath({
       )}
 
       {notice && <p className="mt-2 text-[12px] leading-normal text-moderate-text">{notice}</p>}
-
-      {!walked && (
-        <>
-          <p
-            id="walk-debugger-note"
-            className="mt-3 border-l-2 border-steel bg-band px-2.5 py-2 text-[12px] leading-normal text-body"
-          >
-            {t("panel.walkDebuggerNote")}
-          </p>
-          <button
-            type="button"
-            onClick={onWalk}
-            aria-describedby="walk-debugger-note"
-            className={`${PRIMARY_BUTTON} mt-2`}
-          >
-            {t("panel.walkNow")}
-          </button>
-        </>
-      )}
-
-      {walked && walked.truncated && (
-        <>
-          <button
-            type="button"
-            onClick={onContinue}
-            aria-describedby="continue-walk-note"
-            className={`${PRIMARY_BUTTON} mt-3`}
-          >
-            {t("panel.continueWalk")}
-          </button>
-          <p id="continue-walk-note" className="mt-1.5 text-[12px] leading-normal text-muted">
-            {t("panel.continueWalkNote", { stops })}
-          </p>
-        </>
-      )}
     </section>
   );
 }
@@ -940,6 +968,7 @@ function Running({ url, task, stage }: { url: string; task: AuditTask; stage: Au
 function Report({
   result,
   deepError,
+  walking,
   onReaudit,
   onWalk,
   onContinue,
@@ -949,6 +978,7 @@ function Report({
 }: {
   result: ScanResult;
   deepError?: string;
+  walking: AuditStage | null;
   onReaudit: () => void;
   onWalk: () => void;
   onContinue: () => void;
@@ -968,6 +998,7 @@ function Report({
   const [syncStop, setSyncStop] = useState<number | null>(null);
   const marks = marksFor(result);
   const scope = auditScope(result, t);
+  const groups = workQueue(result);
 
   const locate = async (location: Location, n: number) => {
     setShowing(false);
@@ -1003,23 +1034,22 @@ function Report({
       <div className="px-3">
         <p className="mt-2 truncate font-mono text-[12px] text-muted">{result.finalUrl}</p>
         <ReadingLanguage locale={result.locale} onReaudit={onReaudit} />
-        <Header result={result} />
-        <Findings
-          groups={workQueue(result)}
-          locale={result.locale}
-          syncStop={syncStop}
-          onLocate={locate}
+        <Header
+          result={result}
+          groups={groups}
+          walking={walking}
+          deepError={deepError}
+          onWalk={onWalk}
+          onContinue={onContinue}
         />
+        <Findings groups={groups} locale={result.locale} syncStop={syncStop} onLocate={locate} />
         <FocusPath
           result={result}
-          error={deepError}
           notice={notice}
           showing={showing}
           at={at}
           complete={complete}
           moved={moved}
-          onWalk={onWalk}
-          onContinue={onContinue}
           onShow={() => void showPath(at)}
           onStep={(delta) => void showPath(((at - 1 + delta + marks.length) % marks.length) + 1)}
           onToggleComplete={() => {
@@ -1097,6 +1127,8 @@ function Panel({
   retranslate: boolean;
 }) {
   const [state, setState] = useState<PanelState>({ kind: "idle" });
+  const [lastDone, setLastDone] = useState<DoneState | null>(null);
+  if (state.kind === "done" && state !== lastDone) setLastDone(state);
   const port = useRef<chrome.runtime.Port | null>(null);
 
   const keepPort = () => {
@@ -1168,6 +1200,8 @@ function Panel({
   };
 
   const running = state.kind === "running";
+  const walking = state.kind === "running" && state.task === "focus-path" ? state.stage : null;
+  const shown = state.kind === "done" ? state : walking && lastDone ? lastDone : null;
 
   return (
     <Shell preference={preference}>
@@ -1186,7 +1220,7 @@ function Panel({
         <Message kicker="AccessCheck" title={t("panel.idleTitle")} body={t("panel.idleBody")} />
       )}
 
-      {state.kind === "running" && (
+      {state.kind === "running" && !shown && (
         <Running url={state.url} task={state.task} stage={state.stage} />
       )}
 
@@ -1212,10 +1246,11 @@ function Panel({
         </Message>
       )}
 
-      {state.kind === "done" && (
+      {shown && (
         <Report
-          result={state.result}
-          deepError={state.deepError}
+          result={shown.result}
+          deepError={walking ? undefined : shown.deepError}
+          walking={walking}
           onReaudit={() => void send({ type: "panel:audit" })}
           onWalk={() => void send({ type: "panel:focus-path" })}
           onContinue={() => void send({ type: "panel:continue-walk" })}

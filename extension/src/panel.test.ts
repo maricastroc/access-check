@@ -50,7 +50,7 @@ describe("the panel reuses the product's own report", () => {
   });
 
   it("has no second implementation of the counts or the summary", () => {
-    expect(panel).toContain("result.summary");
+    expect(panel).toContain("groups.find((g) => g.group === group)?.findings.length");
     expect(panel).not.toMatch(/violations\.filter\(/);
     expect(panel).not.toContain("computeScore");
     expect(panel).not.toContain("buildSummary");
@@ -110,7 +110,10 @@ describe("the panel reuses the product's own report", () => {
     );
     expect(running).not.toContain("result.score");
     expect(running).not.toContain("/100");
-    expect(panel).toMatch(/state\.kind === "done" && \(\s*<Report/);
+    expect(panel).toContain(
+      'const shown = state.kind === "done" ? state : walking && lastDone ? lastDone : null;',
+    );
+    expect(panel).toMatch(/\{shown && \(\s*<Report/);
   });
 
   it("names what each copy action copies, and titles the block it came from", () => {
@@ -438,9 +441,7 @@ describe("how much of the audit is behind the number", () => {
 
   const result = (over: Partial<ScanResult> = {}) =>
     ({
-      warnings: [
-        { code: "keyboard-skipped", message: "Walk the focus path now." },
-      ] as ScanWarning[],
+      warnings: [{ code: "keyboard-skipped", message: "Check keyboard." }] as ScanWarning[],
       ...over,
     }) as ScanResult;
 
@@ -448,10 +449,10 @@ describe("how much of the audit is behind the number", () => {
     const scope = auditScope(result(), t);
 
     expect(scope.kicker).toBe("This tab");
-    expect(scope.lead).toBe("Keyboard focus path not walked yet");
+    expect(scope.lead).toBe("Keyboard not checked yet");
     expect(scope.focusPath).toBe("skipped");
     expect(scope.note).toContain("not verified");
-    expect(scope.note).toContain("Walk the focus path now");
+    expect(scope.note).toContain("Check keyboard");
   });
 
   it("never calls a reading complete, even with the focus path walked", () => {
@@ -514,14 +515,14 @@ describe("how much of the audit is behind the number", () => {
 
     expect(scope.focusPath).toBe("truncated");
     expect(scope.kicker).toBe("This tab");
-    expect(scope.badge).toBe("Includes keyboard focus path · stopped at 12");
+    expect(scope.badge).toBe("Keyboard check stopped at 12 stops");
     expect(scope.note).toContain("stopped early after 12 stops");
   });
 
   it("carries the reason the focus path did not finish into the report itself", () => {
     const kept = warningsAfterDeepAudit(
       [
-        { code: "keyboard-skipped", message: "Walk the focus path now." },
+        { code: "keyboard-skipped", message: "Check keyboard." },
         { code: "audits-skipped", message: "reduced motion" },
       ],
       t,
@@ -538,7 +539,7 @@ describe("how much of the audit is behind the number", () => {
   it("drops the invitation once the path has actually been walked", () => {
     const kept = warningsAfterDeepAudit(
       [
-        { code: "keyboard-skipped", message: "Walk the focus path now." },
+        { code: "keyboard-skipped", message: "Check keyboard." },
         { code: "audits-skipped", message: "reduced motion" },
       ],
       t,
@@ -570,15 +571,51 @@ describe("the panel is an inspector, not a squeezed report", () => {
     expect([...found].sort((a, b) => a - b)).toEqual(found);
   });
 
-  it("leads the score card with one line, not with the whole story", () => {
-    const header = panel.slice(
-      panel.indexOf("function Header("),
-      panel.indexOf("function Collapsed("),
-    );
+  it("leads with the verdict, what is left to do, and what is left to check", () => {
+    const header = between(panel, "function Header(", "function KeyboardCheck(");
+    const order = [
+      "{t(STANDING_LABEL[standing])}",
+      "{t(STANDING_NOTE[standing])}",
+      "{work &&",
+      "<KeyboardCheck",
+    ].map((token) => header.indexOf(token));
 
-    expect(header).toContain("{scope.summary}");
-    expect(header).toContain("{scope.badge}");
+    expect(order.every((i) => i > -1)).toBe(true);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+    expect(header).not.toContain("{scope.summary}");
     expect(header).not.toContain("{scope.note}");
+    expect(header).not.toContain("result.summary");
+    expect(header).not.toContain("<dl");
+  });
+
+  it("names only the work that exists", () => {
+    const header = between(panel, "function Header(", "function KeyboardCheck(");
+    expect(header).toContain('toFix > 0 ? t("panel.toFix", { count: toFix }) : null');
+    expect(header).toContain('toCheck > 0 ? t("panel.toCheck", { count: toCheck }) : null');
+    expect(t("panel.toFix", { count: 3 })).toBe("3 to fix");
+    expect(pt("panel.toCheck", { count: 1 })).toBe("1 para conferir à mão");
+  });
+
+  it("offers the keyboard check where the reading says it is missing", () => {
+    const keyboard = between(panel, "function KeyboardCheck(", "function Collapsed(");
+    expect(keyboard).toContain("{pending ? scope.lead : scope.badge}");
+    expect(keyboard).toMatch(/\{pending && \([\s\S]{0,400}onClick=\{onWalk\}/);
+    expect(keyboard).toContain('aria-describedby="walk-debugger-note"');
+    expect(keyboard).toContain('role="alert"');
+    expect(keyboard).not.toContain("PRIMARY_BUTTON");
+    const focus = between(panel, "function FocusPath(", "function Running(");
+    expect(focus).not.toContain("onWalk");
+    expect(focus).not.toContain("onContinue");
+    expect(focus).toContain("if (!walked) return null;");
+  });
+
+  it("keeps the reading in place while the keyboard is checked", () => {
+    expect(panel).toContain(
+      'const walking = state.kind === "running" && state.task === "focus-path" ? state.stage : null;',
+    );
+    expect(panel).toContain('state.kind === "running" && !shown && (');
+    const keyboard = between(panel, "function KeyboardCheck(", "function Collapsed(");
+    expect(keyboard).toMatch(/if \(walking\) \{[\s\S]{0,300}<StageList/);
   });
 
   it("keeps the long limitations behind a section that starts closed", () => {
@@ -873,7 +910,8 @@ describe("the panel reads as a document, not a stack of boxes", () => {
 
     expect(header).not.toContain("result.score");
     expect(header).not.toContain('t("panel.perHundred")');
-    expect(header).toContain("STANDING_LABEL[standingOf(result.counts)]");
+    expect(header).toContain("const standing = standingOf(result.counts);");
+    expect(header).toContain("STANDING_LABEL[standing]");
   });
 
   it("says when a stored reading came from an older scoring model", () => {
@@ -1053,8 +1091,9 @@ describe("what the panel says about a reading-order guess", () => {
   });
 
   it("counts what needs a human apart from the failures", () => {
-    expect(panel).toContain("panel.count.needsReview");
-    expect(panel).toContain("result.counts.needsReview");
+    const header = between(panel, "function Header(", "function KeyboardCheck(");
+    expect(header).toContain('const toCheck = inGroup("check");');
+    expect(header).toContain('const toFix = inGroup("fix");');
   });
 });
 
