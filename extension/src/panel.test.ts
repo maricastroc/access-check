@@ -128,7 +128,21 @@ describe("the panel reuses the product's own report", () => {
     const where = between(panel, "function Where(", "function ElementDetails(");
     expect(where).toContain('t("panel.locate")');
     expect(where).toContain('role="status"');
-    expect(panel).toContain("setNotice(await onLocate(location, location.stop ?? finding.n))");
+    expect(panel).toContain("const answer = await onLocate(place, place.stop ?? finding.n);");
+  });
+
+  it("shows each element on the page as the reader steps to it", () => {
+    const detail = between(panel, "function FindingDetail(", "function HowToCheck(");
+    expect(detail).toMatch(
+      /const step = \(delta: number\) => \{[\s\S]{0,200}void show\(locations\[next\]\);/,
+    );
+    expect(detail).toContain("if (location) await show(location);");
+  });
+
+  it("keeps only the answer to the latest request when the reader steps quickly", () => {
+    const detail = between(panel, "function FindingDetail(", "function HowToCheck(");
+    expect(detail).toContain("const ask = ++latest.current;");
+    expect(detail).toContain("if (ask !== latest.current) return;");
   });
 
   it("reopens the panel's port when the reader acts, rather than holding it open", () => {

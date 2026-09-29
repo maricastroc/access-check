@@ -831,6 +831,24 @@ try {
   check(stepped.back === "Occurrence 1 of 3", `Previous went to ${stepped.back}`);
   check(stepped.wrapped === "Occurrence 3 of 3", `Previous from the first should wrap`);
 
+  await new Promise((r) => setTimeout(r, 600));
+  const followed = await panel.evaluate(
+    () =>
+      document.querySelector("section[aria-label='Where']")?.textContent.match(/Stop (\d+)/)?.[1] ??
+      null,
+  );
+  const drawnForStep = await readOverlay();
+  console.log(
+    "the page follows the stepper:",
+    JSON.stringify({ stop: followed, boxes: drawnForStep.boxes?.map((b) => b.badge) }),
+  );
+  check(drawnForStep.present, "stepping to an occurrence drew nothing on the page");
+  check(
+    drawnForStep.boxes?.length === 1 && drawnForStep.boxes[0].badge.startsWith(`${followed} `),
+    `the page shows ${JSON.stringify(drawnForStep.boxes?.map((b) => b.badge))}, not stop ${followed}`,
+  );
+  await panel.evaluate(() => chrome.runtime.sendMessage({ type: "panel:clear-highlight" }));
+
   const copying = await panel.evaluate(async () => {
     const asked = [];
     const realWrite = navigator.clipboard.writeText.bind(navigator.clipboard);

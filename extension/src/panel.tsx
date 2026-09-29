@@ -402,21 +402,30 @@ function FindingDetail({
   const [index, setIndex] = useState(0);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const latest = useRef(0);
   const total = locations.length;
 
   const at = Math.min(index, Math.max(total - 1, 0));
   const location = locations[at] ?? null;
 
-  const step = (delta: number) => {
+  const show = async (place: Location) => {
+    const ask = ++latest.current;
     setNotice(null);
-    setIndex((i) => (i + delta + total) % total);
+    setBusy(true);
+    const answer = await onLocate(place, place.stop ?? finding.n);
+    if (ask !== latest.current) return;
+    setNotice(answer);
+    setBusy(false);
+  };
+
+  const step = (delta: number) => {
+    const next = (at + delta + total) % total;
+    setIndex(next);
+    void show(locations[next]);
   };
 
   const locate = async () => {
-    if (!location) return;
-    setBusy(true);
-    setNotice(await onLocate(location, location.stop ?? finding.n));
-    setBusy(false);
+    if (location) await show(location);
   };
 
   return (
