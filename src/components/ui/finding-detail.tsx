@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { locatedMarkers, type FindingView } from "@/lib/report/findings";
 import { describeElement } from "@/lib/report/identity";
 import { verdictMessage, verdictTone } from "@/lib/report/verdict";
@@ -11,6 +11,7 @@ import { reviewGuidance } from "@/lib/scan/review";
 import { SectionKicker } from "./section-kicker";
 import { VerdictSeal } from "./verdict-seal";
 import { CodeBlock } from "./code-block";
+import { Button } from "./button";
 import { cn } from "@/lib/cn";
 import type { Translate } from "@/lib/i18n/t";
 
@@ -104,12 +105,12 @@ function ContrastFixPreview({ preview, t }: { preview: ContrastPreview; t: Trans
             aria-pressed={view === v}
             onClick={() => setView(v)}
             className={cn(
-              "cursor-pointer px-3 py-1.5 font-medium capitalize",
+              "cursor-pointer px-3 py-1.5 font-medium",
               i > 0 && "border-l border-border",
               view === v ? "bg-ink text-surface" : "bg-surface text-ink hover:bg-band",
             )}
           >
-            {v}
+            {v === "original" ? t("detail.viewCurrent") : t("detail.suggested")}
           </button>
         ))}
       </div>
@@ -160,6 +161,241 @@ function ContrastFixPreview({ preview, t }: { preview: ContrastPreview; t: Trans
   );
 }
 
+function Part({
+  label,
+  first = false,
+  children,
+}: {
+  label: string;
+  first?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <section className={cn("p-3.5", !first && "border-t border-hairline")}>
+      <SectionKicker as="h4">{label}</SectionKicker>
+      <div className="mt-2">{children}</div>
+    </section>
+  );
+}
+
+function Where({
+  finding,
+  t,
+  onOpenEvidence,
+}: {
+  finding: FindingView;
+  t: Translate;
+  onOpenEvidence?: () => void;
+}) {
+  const located = locatedMarkers(finding);
+  const marks = [...new Set(finding.markers.map((m) => m.n))].slice(0, 4);
+  const primary = finding.affectedSelectors[0];
+  const element = primary ? describeElement(primary, finding.identities[primary], t) : null;
+  const others = finding.affectedSelectors.slice(1, 6);
+  const extra = finding.affectedSelectors.length - 1 - others.length;
+
+  return (
+    <Part label={t("panel.where")} first>
+      {element ? (
+        <>
+          <p className="font-mono text-[12.5px] break-words text-ink">{element.label}</p>
+          {element.context && (
+            <p className="text-[12px] break-words text-muted">{element.context}</p>
+          )}
+        </>
+      ) : (
+        <p className="text-[13px] text-body">{t("unit.element", { count: finding.elements })}</p>
+      )}
+
+      {element && finding.elements > 1 && (
+        <p className="mt-1.5 text-[12.5px] text-muted">
+          {t("unit.element", { count: finding.elements })} ·{" "}
+          {t("capture.shownOnScreenshot", { count: located })}
+        </p>
+      )}
+
+      {others.length > 0 && (
+        <ul className="mt-2 flex flex-wrap gap-1.5">
+          {others.map((s) => (
+            <li
+              key={s}
+              className="border border-hairline bg-code px-1.5 py-0.5 font-mono text-[11px] break-words text-body"
+            >
+              {describeElement(s, finding.identities[s], t).label}
+            </li>
+          ))}
+          {extra > 0 && (
+            <li className="px-1 py-0.5 text-[11px] text-muted">
+              {t("detail.moreSelectors", { count: extra })}
+            </li>
+          )}
+        </ul>
+      )}
+
+      {located > 0 && onOpenEvidence ? (
+        <div className="mt-2.5 flex flex-wrap items-center gap-2">
+          <span aria-hidden className="flex gap-1">
+            {marks.map((n) => (
+              <span
+                key={n}
+                className="inline-flex size-5 items-center justify-center bg-ink font-cond text-[11px] font-semibold text-surface"
+              >
+                {n}
+              </span>
+            ))}
+          </span>
+          <Button variant="secondary" size="sm" onClick={onOpenEvidence}>
+            {t("results.showOnScreenshot")}
+          </Button>
+        </div>
+      ) : located === 0 ? (
+        <p className="mt-2 flex items-start gap-2 text-[12px] text-muted">
+          <span
+            aria-hidden
+            className="mt-0.5 inline-block size-3 shrink-0 border border-dashed border-border"
+          />
+          {finding.noMarkerReason}
+        </p>
+      ) : null}
+    </Part>
+  );
+}
+
+function WhatToChange({ finding, host, t }: { finding: FindingView; host: string; t: Translate }) {
+  const tone = verdictTone(finding.verdict);
+
+  return (
+    <Part label={t("panel.whatToChange")}>
+      {finding.preview ? (
+        <ContrastFixPreview t={t} preview={finding.preview} />
+      ) : finding.guidance ? (
+        <>
+          <p className="text-[13.5px] leading-normal text-body">{finding.guidance.action}</p>
+          {finding.guidance.example && (
+            <div className="mt-2.5">
+              <CodeBlock lines={exampleLines(finding.guidance.example.code)} />
+            </div>
+          )}
+          {finding.guidance.caution && (
+            <p className="mt-2 text-[12px] text-moderate-text">{finding.guidance.caution}</p>
+          )}
+          {finding.guidance.humanDecision && (
+            <p className="mt-2 text-[12px] text-muted">{t("detail.humanDecision")}</p>
+          )}
+        </>
+      ) : (
+        <>
+          <p className="text-[13.5px] leading-normal text-body">{finding.fixText}</p>
+          {finding.fixCode && (
+            <div className="mt-2.5">
+              <CodeBlock
+                lines={[{ text: finding.fixCode, tone: tone === "verified" ? "added" : "default" }]}
+              />
+            </div>
+          )}
+        </>
+      )}
+
+      {tone === "quiet" ? (
+        <p className="mt-2.5 text-[12px] leading-normal text-muted">
+          {verdictMessage(finding.verdict, t, finding.measurement)}
+        </p>
+      ) : (
+        <div className="mt-3">
+          <VerdictSeal verdict={finding.verdict} t={t} />
+          <p className="mt-2 text-[12.5px] leading-normal text-body">
+            {verdictMessage(finding.verdict, t, finding.measurement)}
+          </p>
+          <p className="mt-1.5 text-[11.5px] text-muted">{t("detail.sandboxNote", { host })}</p>
+        </div>
+      )}
+    </Part>
+  );
+}
+
+function HowToCheck({ ruleId, t }: { ruleId: string; t: Translate }) {
+  const guide = reviewGuidance(ruleId, t);
+  return (
+    <Part label={t("panel.howToCheck")}>
+      <p className="text-[13.5px] leading-normal text-body">{guide.how}</p>
+      <ol className="mt-2 list-decimal space-y-1 pl-4 text-[12.5px] leading-normal text-body">
+        {guide.steps.map((step) => (
+          <li key={step}>{step}</li>
+        ))}
+      </ol>
+    </Part>
+  );
+}
+
+function Why({ finding, t }: { finding: FindingView; t: Translate }) {
+  return (
+    <Part label={t("panel.why")}>
+      <p className="text-[13.5px] leading-normal text-ink-2">{finding.impact}</p>
+      {finding.evidence === "heuristic" && finding.kind !== "manual-review" && (
+        <div className="mt-2.5 border border-dashed border-border bg-band px-2.5 py-2">
+          <SectionKicker as="div">{t("evidence.heuristic.title")}</SectionKicker>
+          <p className="mt-1 text-[12.5px] leading-normal text-body">
+            {t("evidence.heuristic.body")}
+          </p>
+        </div>
+      )}
+      {finding.contexts.length > 0 && (
+        <p className="mt-2 text-[12px] text-muted">
+          {t("panel.alsoFailsIn", { contexts: finding.contexts.join(", ") })}
+        </p>
+      )}
+    </Part>
+  );
+}
+
+function Details({ finding, t }: { finding: FindingView; t: Translate }) {
+  const primary = finding.affectedSelectors[0];
+  const element = primary ? describeElement(primary, finding.identities[primary], t) : null;
+  const locator = element && element.label !== element.locator ? element.locator : null;
+  const criterion = [finding.criterionSc, finding.criterionName].filter(Boolean).join(" ");
+  const measured = finding.occurrences
+    .map((o) => [o.reason, o.measured].filter(Boolean).join(" "))
+    .filter(Boolean);
+
+  return (
+    <details className="border-t border-hairline px-3.5 py-3">
+      <summary className="flex cursor-pointer list-none items-center gap-2">
+        <span aria-hidden className="ac-chev font-cond text-muted transition-transform">
+          ▸
+        </span>
+        <SectionKicker as="h4">{t("panel.details")}</SectionKicker>
+      </summary>
+      <dl className="mt-2.5 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1.5 text-[12px]">
+        {locator && (
+          <>
+            <dt className="text-muted">{t("panel.selector")}</dt>
+            <dd className="font-mono break-all text-steel">{locator}</dd>
+          </>
+        )}
+        <dt className="text-muted">{t("detail.rule")}</dt>
+        <dd className="text-body">
+          <code className="font-mono text-steel">{finding.ruleId}</code>
+          {criterion && ` · ${criterion}`}
+        </dd>
+        {measured.length > 0 && (
+          <>
+            <dt className="text-muted">{t("panel.measured")}</dt>
+            <dd>
+              <ul className="space-y-1">
+                {measured.map((line, i) => (
+                  <li key={i} className="leading-normal break-words text-body">
+                    {line}
+                  </li>
+                ))}
+              </ul>
+            </dd>
+          </>
+        )}
+      </dl>
+    </details>
+  );
+}
+
 export function FindingDetail({
   finding,
   host,
@@ -171,11 +407,6 @@ export function FindingDetail({
   t: Translate;
   onOpenEvidence?: () => void;
 }) {
-  const located = locatedMarkers(finding);
-  const affectedShown = finding.affectedSelectors.slice(0, 6);
-  const affectedExtra = finding.affectedSelectors.length - affectedShown.length;
-  const primary = finding.affectedSelectors[0];
-  const element = primary ? describeElement(primary, finding.identities[primary], t) : null;
   const railColor = finding.severity ? severityColorVar[finding.severity] : "var(--color-steel)";
 
   return (
@@ -183,194 +414,15 @@ export function FindingDetail({
       className="-mt-px border border-t-0 border-ink bg-surface"
       style={{ borderLeft: `4px solid ${railColor}` }}
     >
-      {finding.evidence === "heuristic" && finding.kind !== "manual-review" && (
-        <section className="border-b border-hairline bg-band p-3.5">
-          <SectionKicker>{t("evidence.heuristic.title")}</SectionKicker>
-          <p className="mt-2 text-[13.5px] leading-normal text-ink-2">
-            {t("evidence.heuristic.body")}
-          </p>
-          {finding.occurrences.length > 0 && (
-            <ul className="mt-2.5 space-y-1.5">
-              {finding.occurrences.map((o) => (
-                <li
-                  key={`${o.from ?? o.stop}-${o.selector}`}
-                  className="text-[12.5px] leading-normal break-words text-muted"
-                >
-                  {[o.reason, o.measured].filter(Boolean).join(" ")}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      )}
-
-      <section className="p-3.5">
-        <SectionKicker>{t("detail.impactOnUsers")}</SectionKicker>
-        <p className="mt-2 text-[14px] leading-normal text-ink-2">{finding.impact}</p>
-      </section>
-
-      <section className="border-t border-hairline p-3.5">
-        <SectionKicker>{t("detail.affectedElement")}</SectionKicker>
-        {finding.affectedSelectors.length > 0 ? (
-          <>
-            {located > 0 && onOpenEvidence ? (
-              <button
-                type="button"
-                onClick={onOpenEvidence}
-                className="mt-2 flex w-full cursor-pointer items-center gap-2 border border-hairline bg-code px-2 py-1.5 text-left text-[13px] transition-colors hover:border-ink hover:bg-band"
-              >
-                <span
-                  aria-hidden
-                  className="inline-flex size-4.5 shrink-0 items-center justify-center bg-ink font-cond text-[11px] font-semibold text-surface"
-                >
-                  {finding.markers[0]?.n ?? 1}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate font-mono text-[12.5px] text-ink">
-                    {element?.label}
-                  </span>
-                  {element?.context && (
-                    <span className="block truncate text-[11.5px] text-muted">
-                      {element.context}
-                    </span>
-                  )}
-                </span>
-                <span className="shrink-0 text-[11.5px] font-medium text-ink underline">
-                  {t("capture.openEvidence")}
-                </span>
-              </button>
-            ) : (
-              <div className="mt-2">
-                <p className="font-mono text-[12.5px] break-words text-ink">{element?.label}</p>
-                {element?.context && (
-                  <p className="text-[11.5px] break-words text-muted">{element.context}</p>
-                )}
-              </div>
-            )}
-            <p className="mt-1.5 text-[12.5px] text-muted">
-              <span className="font-medium text-ink tabular-nums">{finding.elements}</span>{" "}
-              {t("detail.elementsAffected", { count: finding.elements })} ·{" "}
-              {t("capture.shownOnScreenshot", { count: located })}
-            </p>
-            {finding.affectedSelectors.length > 1 && (
-              <ul className="mt-2 flex flex-wrap gap-1.5">
-                {affectedShown.slice(1).map((s) => (
-                  <li
-                    key={s}
-                    className="border border-hairline bg-code px-1.5 py-0.5 font-mono text-[11px] break-words text-body"
-                  >
-                    {describeElement(s, finding.identities[s], t).label}
-                  </li>
-                ))}
-                {affectedExtra > 0 && (
-                  <li className="px-1 py-0.5 text-[11px] text-muted">
-                    {t("detail.moreSelectors", { count: affectedExtra })}
-                  </li>
-                )}
-              </ul>
-            )}
-            {element && element.label !== element.locator && (
-              <p className="mt-2 flex items-baseline gap-1.5 text-[11px] text-muted">
-                <span className="shrink-0">{t("detail.technicalSelector")}</span>
-                <code className="min-w-0 truncate font-mono text-steel" title={element.locator}>
-                  {element.locator}
-                </code>
-              </p>
-            )}
-          </>
-        ) : (
-          <p className="mt-2 text-[13px] text-body">
-            {t("detail.elementsAffected", { count: finding.elements })}
-          </p>
-        )}
-        {located === 0 && (
-          <p className="mt-2 flex items-start gap-2 text-[12px] text-muted">
-            <span
-              aria-hidden
-              className="mt-0.5 inline-block size-3 shrink-0 border border-dashed border-border"
-            />
-            {finding.noMarkerReason}
-          </p>
-        )}
-      </section>
-
+      <Where finding={finding} t={t} onOpenEvidence={onOpenEvidence} />
       {finding.kind === "manual-review" ? (
         <HowToCheck ruleId={finding.ruleId} t={t} />
       ) : (
-        <section className="border-t border-hairline p-3.5">
-          <SectionKicker>{t("detail.howToFix")}</SectionKicker>
-          {finding.preview ? (
-            <ContrastFixPreview t={t} preview={finding.preview} />
-          ) : finding.guidance ? (
-            <>
-              <p className="mt-2 text-[13.5px] leading-normal text-body">
-                {finding.guidance.action}
-              </p>
-              {finding.guidance.example && (
-                <div className="mt-2.5">
-                  <CodeBlock lines={exampleLines(finding.guidance.example.code)} />
-                </div>
-              )}
-              {finding.guidance.caution && (
-                <p className="mt-2 text-[12px] text-moderate-text">{finding.guidance.caution}</p>
-              )}
-              {finding.guidance.humanDecision && (
-                <p className="mt-2 text-[12px] text-muted">{t("detail.humanDecision")}</p>
-              )}
-            </>
-          ) : (
-            <>
-              <p className="mt-2 text-[13.5px] leading-normal text-body">{finding.fixText}</p>
-              {finding.fixCode && (
-                <div className="mt-2.5">
-                  <CodeBlock
-                    lines={[
-                      {
-                        text: finding.fixCode,
-                        tone: verdictTone(finding.verdict) === "verified" ? "added" : "default",
-                      },
-                    ]}
-                  />
-                </div>
-              )}
-            </>
-          )}
-          {verdictTone(finding.verdict) === "quiet" && (
-            <p className="mt-2.5 text-[12px] leading-normal text-muted">
-              {verdictMessage(finding.verdict, t, finding.measurement)}
-            </p>
-          )}
-        </section>
+        <WhatToChange finding={finding} host={host} t={t} />
       )}
-
-      {verdictTone(finding.verdict) !== "quiet" && (
-        <section className="border-t border-hairline p-3.5">
-          <SectionKicker>{t("detail.verificationResult")}</SectionKicker>
-          <div className="mt-2">
-            <VerdictSeal verdict={finding.verdict} t={t} />
-          </div>
-          <p className="mt-2 text-[12.5px] leading-normal text-body">
-            {verdictMessage(finding.verdict, t, finding.measurement)}
-          </p>
-          <p className="mt-1.5 text-[11.5px] text-muted">{t("detail.sandboxNote", { host })}</p>
-        </section>
-      )}
+      <Why finding={finding} t={t} />
+      <Details finding={finding} t={t} />
     </div>
-  );
-}
-
-function HowToCheck({ ruleId, t }: { ruleId: string; t: Translate }) {
-  const guide = reviewGuidance(ruleId, t);
-  return (
-    <section className="border-t border-hairline p-3.5">
-      <SectionKicker>{t("panel.howToCheck")}</SectionKicker>
-      <p className="mt-2 text-[13.5px] leading-normal text-body">{guide.how}</p>
-      <ol className="mt-2 list-decimal space-y-1 pl-4 text-[12.5px] leading-normal text-body">
-        {guide.steps.map((step) => (
-          <li key={step}>{step}</li>
-        ))}
-      </ol>
-    </section>
   );
 }
 

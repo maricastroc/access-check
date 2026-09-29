@@ -220,23 +220,15 @@ export function MobileReport({
                   finding={f}
                   selected={f.id === selectedId}
                   onSelect={() => onSelect(f.id)}
+                  markerNote={f.id !== selectedId}
                 />
                 {f.id === selectedId && (
-                  <>
-                    <FindingDetail
-                      t={t}
-                      finding={f}
-                      host={host}
-                      onOpenEvidence={() => onOpenEvidence(f.id)}
-                    />
-                    {locatedMarkers(f) > 0 && (
-                      <div className="mt-2">
-                        <Button variant="secondary" size="md" onClick={() => setTab("capture")}>
-                          {t("results.showOnScreenshot")}
-                        </Button>
-                      </div>
-                    )}
-                  </>
+                  <FindingDetail
+                    t={t}
+                    finding={f}
+                    host={host}
+                    onOpenEvidence={() => onOpenEvidence(f.id)}
+                  />
                 )}
               </div>
             )}

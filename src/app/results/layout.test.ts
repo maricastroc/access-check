@@ -103,6 +103,48 @@ describe("the findings read as one work queue", () => {
   });
 });
 
+describe("an opened finding reads where, what to change, why, then the details", () => {
+  const body = detail.slice(detail.indexOf("export function FindingDetail"));
+
+  it("keeps that order on the desktop and on a phone", () => {
+    const order = ["<Where", "<WhatToChange", "<Why", "<Details"].map((part) => body.indexOf(part));
+    expect(order.every((at) => at > 0)).toBe(true);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+    expect(body.indexOf("<HowToCheck")).toBeLessThan(body.indexOf("<Why"));
+  });
+
+  it("keeps the fix's own test inside what to change", () => {
+    const change = detail.slice(
+      detail.indexOf("function WhatToChange"),
+      detail.indexOf("function HowToCheck"),
+    );
+    expect(change).toContain("<VerdictSeal");
+    expect(detail).not.toContain("detail.verificationResult");
+  });
+
+  it("ties where to the screenshot and folds the measurements into the details", () => {
+    const where = detail.slice(
+      detail.indexOf("function Where"),
+      detail.indexOf("function WhatToChange"),
+    );
+    expect(where).toContain('t("results.showOnScreenshot")');
+    expect(where).toContain("finding.noMarkerReason");
+    const details = detail.slice(detail.indexOf("function Details"));
+    expect(details).toContain("<details");
+    expect(details).not.toMatch(/<details[^>]*\sopen/);
+    expect(details).toContain("finding.occurrences");
+    const why = detail.slice(detail.indexOf("function Why"), detail.indexOf("function Details"));
+    expect(why).not.toContain("finding.occurrences");
+  });
+
+  it("leaves the screenshot without a second copy of the element and its code", () => {
+    expect(frame).not.toContain("elementAndCode");
+    expect(frame).not.toContain("CodeBlock");
+    expect(frame).not.toContain("ElementIdentityLine");
+    expect(mobile).not.toContain('t("results.showOnScreenshot")');
+  });
+});
+
 describe("the results screens write no words of their own", () => {
   it.each([
     ["summary-band.tsx", band],
@@ -112,6 +154,7 @@ describe("the results screens write no words of their own", () => {
     ["evidence-frame.tsx", frame],
     ["work-queue.tsx", queue],
     ["finding-row.tsx", row],
+    ["finding-detail.tsx", detail],
   ])("%s takes its text from the catalog", (_, source) => {
     expect(source.match(FIXED_WORDS) ?? []).toEqual([]);
   });

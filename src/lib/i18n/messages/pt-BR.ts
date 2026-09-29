@@ -9,7 +9,6 @@ export const ptBR: Catalog = {
   "unit.styleSheet": { one: "{count} folha de estilo", other: "{count} folhas de estilo" },
   "unit.mediaFile": { one: "{count} arquivo de mídia", other: "{count} arquivos de mídia" },
   "unit.element": { one: "{count} elemento", other: "{count} elementos" },
-  "unit.elementNoun": { one: "elemento", other: "elementos" },
   "unit.and": "e",
 
   "privacy.metaTitle": "Privacidade · extensão AccessCheck",
@@ -527,7 +526,6 @@ export const ptBR: Catalog = {
   "focusPath.previousStop": "Parada anterior",
   "focusPath.nextStop": "Próxima parada",
   "focusPath.selectedStop": "Parada {stop} de {total}",
-  "capture.openEvidence": "Ver a evidência",
   "capture.markerHint": "Selecione um marcador para abrir o problema a que ele pertence.",
   "detail.sharedColorPair": {
     one: "{count} ocorrência tem o mesmo par de cores detectado.",
@@ -536,10 +534,6 @@ export const ptBR: Catalog = {
   "detail.moreSelectors": "+{count} outros",
   "capture.frameLabel": "Captura \u00b7 {width} \u00d7 {height}",
   "capture.shownOnScreenshot": "{count} marcados em alguma captura",
-  "detail.elementsAffected": {
-    one: "elemento afetado",
-    other: "elementos afetados",
-  },
   "provenance.engine": "Chromium headless \u00b7 axe-core com as regras WCAG A e AA",
   "provenance.viewportNote": " \u00b7 captura feita em {viewport}",
   "provenance.finishedIn": " em {seconds}s",
@@ -568,7 +562,6 @@ export const ptBR: Catalog = {
   "capture.screenshot": "Captura de tela",
   "capture.show": "Mostrar a captura",
   "capture.collapse": "Recolher a captura",
-  "capture.elementAndCode": "Elemento e código",
 
   "results.auditedMinutesAgo": "Auditada há {minutes} min",
   "results.auditedAt": "Auditada em {when}",
@@ -706,9 +699,6 @@ export const ptBR: Catalog = {
   "results.tapMarker": "Toque em um marcador para abrir o problema correspondente.",
   "results.showOnScreenshot": "Mostrar na captura",
   "results.takingScreenshot": "Tirando a captura de tela da página.",
-  "results.fullImpactNote":
-    "O impacto completo, a prévia da correção e a verificação ficam no painel lateral.",
-  "results.selectFinding": "Selecione um problema para inspecionar seu elemento e código.",
 
   "site.tryAnotherAddress": "Tentar outro endereço",
   "site.auditJustThisPage": "Auditar só esta página",
@@ -1133,14 +1123,12 @@ export const ptBR: Catalog = {
   "detail.property": "Propriedade",
   "detail.detected": "Detectado",
   "detail.suggested": "Sugerido",
+  "detail.viewCurrent": "Atual",
+  "detail.rule": "Regra",
   "detail.result": "Resultado",
-  "detail.impactOnUsers": "Impacto nas pessoas",
-  "detail.affectedElement": "Elemento afetado",
   "detail.technicalSelector": "Seletor",
-  "detail.howToFix": "Como corrigir",
   "detail.humanDecision":
     "A mudança certa depende da estrutura da página, então confirme no contexto.",
-  "detail.verificationResult": "Resultado da verificação",
   "detail.sandboxNote":
     "As correções são aplicadas e revertidas em uma cópia da página. {host} não foi alterado.",
 
