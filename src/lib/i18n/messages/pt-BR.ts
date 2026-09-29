@@ -1379,7 +1379,7 @@ export const ptBR: Catalog = {
   "panel.mark.stop": "parada",
 
   "panel.focusPath": "Caminho do foco",
-  "panel.showFocusPath": "Mostrar o caminho do foco",
+  "panel.showFocusPath": "Inspecionar ordem de tabulação",
   "panel.previousStop": "Parada anterior",
   "panel.previous": "Anterior",
   "panel.nextStop": "Próxima parada",
@@ -1387,8 +1387,7 @@ export const ptBR: Catalog = {
   "panel.stopOf": "Parada {at} de {total}",
   "panel.showNearbyOnly": "Mostrar só as paradas próximas",
   "panel.showComplete": "Mostrar o caminho completo",
-  "panel.clearOverlay": "Limpar a sobreposição",
-  "panel.backToWhereYouWere": "Voltar para onde você estava",
+  "panel.exitInspection": "Sair",
   "panel.drawingAll":
     "Todas as paradas estão desenhadas. A atual fica destacada; as outras, esmaecidas.",
   "panel.drawingWindow":

@@ -51,4 +51,4 @@ const engine: DomEngine = {
   AXE_TAGS,
 };
 
-window.__accessCheckDom = engine;
+if (window.__accessCheckDom?.version !== engine.version) window.__accessCheckDom = engine;

@@ -210,6 +210,32 @@ describe("the two environments load one artifact", () => {
   it("loads under a strict CSP", async () => {
     expect(await page.evaluate(() => typeof window.__accessCheckDom?.cssPath)).toBe("function");
   });
+
+  it("keeps the engine already in the page, and where the page was, when injected again", async () => {
+    const scrolled = await page.evaluate(() => {
+      const spacer = document.createElement("div");
+      spacer.id = "spacer";
+      spacer.style.height = "3000px";
+      document.body.append(spacer);
+      window.scrollTo(0, 0);
+      window.__accessCheckDom!.overlayShow([{ n: 1, selector: "h1", kind: "stop" }], 1, {
+        scroll: false,
+      });
+      window.scrollTo(0, 400);
+      return window.scrollY;
+    });
+    await page.addScriptTag({ path: HOSTED_ENGINE });
+    const after = await page.evaluate(() => {
+      const moved = window.__accessCheckDom!.overlayRestoreScroll();
+      const y = window.scrollY;
+      window.__accessCheckDom!.overlayClear();
+      document.getElementById("spacer")?.remove();
+      return { moved, y };
+    });
+
+    expect(scrolled).toBe(400);
+    expect(after).toEqual({ moved: true, y: 0 });
+  });
 });
 
 describe("the engine reads the page the same way from either caller", () => {

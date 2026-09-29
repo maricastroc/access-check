@@ -1347,7 +1347,7 @@ export const en = {
   "panel.mark.stop": "stop",
 
   "panel.focusPath": "Focus path",
-  "panel.showFocusPath": "Show focus path",
+  "panel.showFocusPath": "Inspect tab order",
   "panel.previousStop": "Previous stop",
   "panel.previous": "Previous",
   "panel.nextStop": "Next stop",
@@ -1355,8 +1355,7 @@ export const en = {
   "panel.stopOf": "Stop {at} of {total}",
   "panel.showNearbyOnly": "Show nearby stops only",
   "panel.showComplete": "Show complete path",
-  "panel.clearOverlay": "Clear overlay",
-  "panel.backToWhereYouWere": "Back to where you were",
+  "panel.exitInspection": "Exit",
   "panel.drawingAll": "Every stop is drawn. The current one is highlighted; the rest are dimmed.",
   "panel.drawingWindow":
     "Drawing the current stop and {neighbours} either side, so the page stays readable.",

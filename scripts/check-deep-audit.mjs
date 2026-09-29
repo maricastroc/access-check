@@ -891,7 +891,7 @@ try {
     window.scrollTo(0, 0);
     return window.scrollY;
   });
-  await clickByText("Show focus path");
+  await clickByText("Inspect tab order");
   const nearby = await readOverlay();
   const nav = await panel.evaluate(() => ({
     indicator: [...document.querySelectorAll("span")]
@@ -902,20 +902,22 @@ try {
     complete: [...document.querySelectorAll("button")].some(
       (b) => b.textContent.trim() === "Show complete path",
     ),
-    clear: [...document.querySelectorAll("button")].some(
-      (b) => b.textContent.trim() === "Clear overlay",
+    exit: [...document.querySelectorAll("button")].some((b) => b.textContent.trim() === "Exit"),
+    retired: [...document.querySelectorAll("button")].some((b) =>
+      /^(Clear overlay|Back to where you were)$/.test(b.textContent.trim()),
     ),
   }));
   console.log("focus path drawn:", JSON.stringify({ ...nearby, nav }));
 
-  check(nearby.present, "Show focus path drew nothing");
+  check(nearby.present, "Inspect tab order drew nothing");
   check(nearby.parent === "HTML", "the overlay was not attached at the document root");
   check(nearby.ariaHidden === "true", "the overlay is exposed to assistive technology");
   check(nearby.pointerEvents === "none", "the overlay can take events from the page");
   check(nav.indicator === "Stop 1 of 3", `the focus-path indicator reads ${nav.indicator}`);
   check(nav.hasPrev && nav.hasNext, "the focus path has no Previous/Next controls");
   check(nav.complete, "there is no way to draw the complete path");
-  check(nav.clear, "there is no Clear overlay action");
+  check(nav.exit, "there is no way to exit the inspection");
+  check(!nav.retired, "the inspection still offers Clear overlay or Back to where you were");
 
   const current = nearby.boxes.find((b) => /^1 · /.test(b.badge));
   const others = nearby.boxes.filter((b) => !/^1 · /.test(b.badge));
@@ -933,22 +935,30 @@ try {
   );
 
   const stepPath = await panel.evaluate(async () => {
+    const reading = () => ({
+      open: [...document.querySelectorAll("button[aria-expanded='true'] h3")].map((h) =>
+        h.textContent.trim(),
+      ),
+      occurrence: [...document.querySelectorAll("span")]
+        .map((s) => s.textContent.trim())
+        .find((t) => /^Occurrence \d+ of \d+$/.test(t)),
+    });
+    const before = reading();
     document.querySelector('button[aria-label="Next stop"]').click();
     await new Promise((r) => setTimeout(r, 500));
     return {
       indicator: [...document.querySelectorAll("span")]
         .map((s) => s.textContent.trim())
         .find((t) => /^Stop \d+ of \d+$/.test(t)),
-      occurrence: [...document.querySelectorAll("span")]
-        .map((s) => s.textContent.trim())
-        .find((t) => /^Occurrence \d+ of \d+$/.test(t)),
+      before,
+      after: reading(),
     };
   });
   console.log("stepping the path:", JSON.stringify(stepPath));
   check(stepPath.indicator === "Stop 2 of 3", `Next stop went to ${stepPath.indicator}`);
   check(
-    stepPath.occurrence === "Occurrence 2 of 3",
-    `the panel did not follow the page to ${stepPath.occurrence}`,
+    JSON.stringify(stepPath.before) === JSON.stringify(stepPath.after),
+    `stepping the tab order changed the open finding: ${JSON.stringify(stepPath)}`,
   );
 
   const travelled = await panel.evaluate(async () => {
@@ -958,28 +968,13 @@ try {
       indicator: [...document.querySelectorAll("span")]
         .map((s) => s.textContent.trim())
         .find((t) => /^Stop \d+ of \d+$/.test(t)),
-      back: [...document.querySelectorAll("button")].some(
-        (b) => b.textContent.trim() === "Back to where you were",
-      ),
     };
   });
   const scrolledAway = await page.evaluate(() => window.scrollY);
-  await clickByText("Back to where you were");
-  const scrollRestored = await page.evaluate(() => window.scrollY);
-  console.log(
-    "inspecting moved the page:",
-    JSON.stringify({ ...travelled, scrollBeforeInspecting, scrolledAway, scrollRestored }),
-  );
-
   check(travelled.indicator === "Stop 3 of 3", `Next stop went to ${travelled.indicator}`);
   check(
     scrolledAway !== scrollBeforeInspecting,
     "stepping to a stop below the fold did not move the page",
-  );
-  check(travelled.back, "there is no way back to where the reader was");
-  check(
-    scrollRestored === scrollBeforeInspecting,
-    `going back landed at ${scrollRestored} instead of ${scrollBeforeInspecting}`,
   );
 
   await clickByText("Show complete path");
@@ -993,10 +988,40 @@ try {
     "Show complete path drew fewer stops than the default view",
   );
 
-  await clickByText("Clear overlay");
+  await clickByText("Exit");
   const cleared = await readOverlay();
-  console.log("after Clear overlay:", JSON.stringify(cleared));
-  check(!cleared.present, "Clear overlay left the overlay on the page");
+  const scrollRestored = await page.evaluate(() => window.scrollY);
+  const leftMode = await panel.evaluate(() => ({
+    entry: [...document.querySelectorAll("button")].some(
+      (b) => b.textContent.trim() === "Inspect tab order",
+    ),
+    stepper: !!document.querySelector('button[aria-label="Next stop"]'),
+  }));
+  console.log(
+    "after Exit:",
+    JSON.stringify({ ...cleared, scrollBeforeInspecting, scrolledAway, scrollRestored, leftMode }),
+  );
+  check(!cleared.present, "Exit left the overlay on the page");
+  check(
+    scrollRestored === scrollBeforeInspecting,
+    `Exit left the page at ${scrollRestored} instead of ${scrollBeforeInspecting}`,
+  );
+  check(leftMode.entry && !leftMode.stepper, "Exit did not leave the inspection");
+
+  await clickByText("Inspect tab order");
+  await clickByText("Locate on page");
+  const locatedOut = await panel.evaluate(() => ({
+    stepper: !!document.querySelector('button[aria-label="Next stop"]'),
+    entry: [...document.querySelectorAll("button")].some(
+      (b) => b.textContent.trim() === "Inspect tab order",
+    ),
+  }));
+  console.log("locating while inspecting:", JSON.stringify(locatedOut));
+  check(
+    !locatedOut.stepper && locatedOut.entry,
+    "Locate on page left the inspection controls on screen",
+  );
+  await panel.evaluate(() => chrome.runtime.sendMessage({ type: "panel:clear-highlight" }));
 
   const byKeyboard = await panel.evaluate(async () => {
     const focusable = [...document.querySelectorAll("button, summary, [tabindex]")].filter(
@@ -1163,7 +1188,7 @@ try {
       return true;
     }, label);
 
-  await pressMixed("Show focus path");
+  await pressMixed("Inspect tab order");
   await mixedPanel.evaluate(async () => {
     document.querySelector('button[aria-label="Next stop"]').click();
     await new Promise((r) => setTimeout(r, 450));
@@ -1204,7 +1229,7 @@ try {
     `the boxes carry no two-tone ring: ${JSON.stringify(mixedBoxes.map((b) => b.outline))}`,
   );
 
-  await pressMixed("Clear overlay");
+  await pressMixed("Exit");
   await mixedPanel.close();
 
   await page.goto(`${origin}/ordinary`, { waitUntil: "domcontentloaded" });
@@ -1336,7 +1361,7 @@ try {
       return true;
     }, label);
 
-  await pressIn("Show focus path");
+  await pressIn("Inspect tab order");
   const defaultView = await drawnCount();
   await pressIn("Show complete path");
   const completeView = await drawnCount();
@@ -1344,7 +1369,7 @@ try {
     const root = document.getElementById("accesscheck-overlay");
     return [...new Set([...(root?.children ?? [])].map((b) => getComputedStyle(b).borderTopColor))];
   });
-  await pressIn("Clear overlay");
+  await pressIn("Exit");
   const clearedView = await drawnCount();
   await manyPanel.close();
   console.log(
@@ -1361,7 +1386,7 @@ try {
     completeView > defaultView,
     `Show complete path drew ${completeView}, no more than the default ${defaultView}`,
   );
-  check(clearedView === 0, "Clear overlay left stops on the page");
+  check(clearedView === 0, "Exit left stops on the page");
   check(
     palette.includes("rgb(26, 86, 196)"),
     `no ordinary stop was drawn in the neutral colour: ${JSON.stringify(palette)}`,
