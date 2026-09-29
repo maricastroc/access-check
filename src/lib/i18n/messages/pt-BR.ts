@@ -1398,6 +1398,16 @@ export const ptBR: Catalog = {
   "panel.walkDebuggerNote":
     "Percorrer a ordem de tabulação precisa do depurador do Chrome, então o Chrome vai mostrar o próprio aviso e o DevTools não consegue se conectar a esta aba enquanto isso. Ele é liberado assim que a caminhada termina.",
   "panel.walkNow": "Verificar teclado",
+  "panel.roundChecked": {
+    one: "Esta rodada verificou {count} parada.",
+    other: "Esta rodada verificou {count} paradas.",
+  },
+  "panel.roundProblems": {
+    one: "{count} problema de teclado está na fila.",
+    other: "{count} problemas de teclado estão na fila.",
+  },
+  "panel.roundNoProblems": "Nenhum problema de teclado encontrado até agora.",
+  "panel.showKeyboardProblems": "Mostrar problemas de teclado",
   "panel.continueWalk": "Continuar de onde parou",
   "panel.continueWalkNote": "Retoma na parada {stops} e segue adiante, sem recomeçar.",
 
