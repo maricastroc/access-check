@@ -214,6 +214,16 @@ try {
       await new Promise((r) => setTimeout(r, 200));
     }, needle);
 
+  const scrollToOpenFinding = () =>
+    panel.evaluate(async () => {
+      const open = [...document.querySelectorAll("button[aria-expanded='true']")].find((b) =>
+        b.querySelector("h3"),
+      );
+      open?.scrollIntoView({ block: "start", behavior: "instant" });
+      window.scrollBy(0, -56);
+      await new Promise((r) => setTimeout(r, 200));
+    });
+
   const clickPanel = (label) =>
     panel.evaluate(async (text) => {
       const button = [...document.querySelectorAll("button")].find(
@@ -223,7 +233,7 @@ try {
       await new Promise((r) => setTimeout(r, 500));
     }, label);
 
-  await compose("1-verdict-and-findings", "the verdict, what was covered, and the findings list");
+  await compose("1-verdict-and-findings", "the verdict, the work left, and the queue");
 
   const openFinding = (pattern) =>
     panel.evaluate(async (source) => {
@@ -242,15 +252,14 @@ try {
     }, pattern.source ?? pattern);
 
   console.log("  identity shot:", await openFinding("button-name|image-alt|target-size|label"));
-  await scrollPanelTo("Element");
-  await compose(
-    "2-element-identity",
-    "a finding named by its element, with the selector kept beside it",
-  );
+  await scrollToOpenFinding();
+  await compose("2-element-identity", "a problem opened on where it is, named by its element");
 
   console.log("  verified shot:", await openFinding("color-contrast"));
-  await scrollPanelTo("Verification result");
-  await compose("3-verified-fix", "a fix applied and re-audited on the page, then reverted");
+  await scrollToOpenFinding();
+  const tested = await panel.evaluate(() => document.body.textContent.includes("Fix tested"));
+  if (!tested) throw new Error("3-verified-fix: the contrast fix is not marked as tested");
+  await compose("3-verified-fix", "a fix tested on the page, then undone");
 
   await walkFocusPath();
   await panel.reload();
@@ -276,11 +285,11 @@ try {
     return document.querySelector('[aria-live="polite"].min-w-24')?.textContent ?? null;
   });
   console.log("  focus stop:", stop);
-  await compose("4-focus-path", "the real tab order, walked with genuine keystrokes");
+  await compose("4-focus-path", "the tab order inspected stop by stop");
 
   await clickPanel("Locate on page");
   await scrollPanelTo("Occurrence");
-  await compose("5-located-on-page", "the element found again and drawn on the live page");
+  await compose("5-located-on-page", "an element found and drawn on the live page");
 } finally {
   await ctx.close();
 }

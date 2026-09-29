@@ -1,25 +1,37 @@
-O AccessCheck audita a aba em que você está e mostra a evidência, não só uma lista.
+O AccessCheck audita a aba em que você está e transforma o resultado numa lista de trabalho: o que corrigir, onde fica na página e o que mudar.
 
-Abra qualquer problema e ele nomeia o elemento que o gerou — a tag, um atributo estável, o nome acessível e a parte da página onde ele está — com o seletor CSS ao lado desse nome, mais o HTML do próprio elemento, uma correção sugerida e — nos problemas de teclado — o que de fato aconteceu quando o foco chegou nele. Seletor e HTML vão para a área de transferência em um clique, e "Localizar na página" desenha uma caixa em volta do elemento na página ao vivo.
+COMO FUNCIONA
+
+• Clique no ícone da barra e o painel lateral abre com o veredito e uma linha com o que falta fazer, por exemplo "7 para corrigir · 3 para conferir à mão".
+• A fila é dividida em A corrigir, Conferir à mão e Recomendações, com os problemas mais graves primeiro.
+• Abra um problema e ele começa por onde está: o elemento, com o nome que uma pessoa reconheceria, e "Localizar na página", que rola até ele e desenha uma caixa em volta. Passe pelos elementos com as setas e a página acompanha.
+• Em seguida vem o que mudar, com código para copiar, e por que isso importa. O seletor, o HTML e as medições ficam em Detalhes.
+• Quando dá para calcular a correção, como uma cor de contraste, o AccessCheck aplica a mudança na página por um instante, roda a regra de novo e devolve a página ao que era. Se a regra passar, a correção aparece como "Correção testada".
+• Corrija no seu código e clique em "Auditar de novo", de qualquer ponto do painel.
+
+TECLADO
+
+"Verificar teclado" pressiona Tab de verdade pela página e registra cada parada. Os problemas encontrados, como foco invisível ou controles que o Tab nunca alcança, entram na mesma fila. Cada rodada cobre até 200 paradas e diz o que encontrou, e "Inspecionar ordem de tabulação" deixa você passar pelas paradas na página. O Chrome mostra o aviso de depuração durante a verificação, porque pressionar Tab de verdade exige o depurador, e ele é liberado assim que a verificação termina.
 
 O QUE ELE VERIFICA
 
-• Regras do axe-core para WCAG 2.0, 2.1 e 2.2, níveis A e AA
-• O caminho real do foco do teclado — a ordem de tabulação percorrida parada a parada, apontando as que não têm indicador de foco visível
+• Regras do axe-core para WCAG 2.0, 2.1 e 2.2, níveis A e AA, além de boas práticas
+• A ordem real do foco do teclado
 • Tamanho de alvo e regiões dinâmicas
-• Uma captura da parte visível da página com os elementos que falharam marcados nela
+• Itens que o axe não consegue decidir sozinho, com passos para conferir à mão
+• Uma captura da parte visível da página, guardada em "Sobre esta auditoria"
 
 O QUE ELE NÃO FAZ
 
-Não é um selo de conformidade. O teste automático prova uma minoria da WCAG, e o AccessCheck diz isso: o veredito cobre o que as verificações conseguiram provar, e tudo que depende de uma pessoa fica listado à parte como revisão manual, em vez de virar número. Quando uma verificação não pôde rodar, o painel diz qual foi, em vez de aprovar em silêncio.
+Não é um selo de conformidade. O teste automático cobre só parte da WCAG, e o AccessCheck deixa isso claro: o que depende de uma pessoa fica listado à parte, e quando uma verificação não pôde rodar, o painel mostra isso em "Sobre esta auditoria", em vez de aprovar em silêncio. A visualização em celular, a preferência por menos movimento, iframes de outras origens e shadow roots não são cobertos pela extensão.
 
 COMO ELE TRATA O SEU NAVEGADOR
 
 • Sem conta, sem login, sem telemetria
 • Só lê uma aba depois que você clica no ícone da barra naquela aba
-• A página auditada fica exatamente como estava. Para provar uma correção de contraste, o AccessCheck a aplica, reexecuta aquela regra e desfaz no mesmo instante — uma verificação automatizada compara a página antes e depois, byte a byte. A única coisa que ele desenha é uma caixa de destaque temporária, quando você pede para localizar um elemento, e ele apaga esse destaque e devolve a sua posição de rolagem ao terminar
-• Nada é enviado para lugar nenhum. A extensão não embarca nenhum código de rede, e a auditoria roda inteira no seu navegador
+• A página auditada continua como estava. Qualquer mudança feita para testar uma correção é desfeita na hora, os destaques que ele desenha somem sozinhos, e todos são apagados quando você sai da inspeção ou fecha o painel
+• Nada é enviado para lugar nenhum. A extensão não tem código de rede, e a auditoria roda inteira no seu navegador
 
 IDIOMAS
 
-English e Português (Brasil). O painel segue o idioma do navegador por padrão, e você pode trocar no rodapé do painel. O relatório acompanha a mesma escolha, títulos de regra inclusive, e se refaz sozinho para não sobrar nada meio traduzido.
+English e Português (Brasil). O painel segue o idioma do navegador por padrão, e você pode trocar no rodapé do painel.

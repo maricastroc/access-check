@@ -1,6 +1,6 @@
-# AccessCheck extension — privacy policy
+# AccessCheck extension: privacy policy
 
-**Effective 21 September 2026.** This policy covers the AccessCheck browser
+**Effective 29 September 2026.** This policy covers the AccessCheck browser
 extension. The hosted scanner at the AccessCheck website is a separate product
 with its own accounts and storage; this policy is only about the extension.
 
@@ -15,15 +15,15 @@ analytics and no tracking.
 When you click the AccessCheck icon on a tab, and only then, it reads that one
 tab:
 
-- **The page's DOM** — elements, attributes, computed styles and positions, so
+- **The page's DOM**: elements, attributes, computed styles and positions, so
   the rules can decide what passes and what fails.
-- **A screenshot of the visible viewport** — one JPEG, used to draw the markers
-  in the report's Evidence section.
+- **A screenshot of the visible viewport**: one JPEG, shown with its markers
+  under "About this audit" in the panel.
 - **CSS selectors** for the elements a finding refers to, so you can locate them.
 - **A short, abbreviated HTML snippet** for each occurrence. It is rebuilt from a
   fixed list of attributes (id, class, type, role, name, alt, title, placeholder,
   aria-\*, tabindex, disabled, href). The `value` attribute is deliberately left
-  out, because it holds what you typed, and `href` keeps only its path — the
+  out, because it holds what you typed, and `href` keeps only its path. The
   query string, where tokens usually live, is removed.
 
 ## What the extension writes
@@ -31,17 +31,19 @@ tab:
 It writes nothing to your page except in two moments, both of them yours to
 trigger and both undone immediately:
 
-- **Proving a fix.** Where a fix can be computed from measured values — in
-  practice a contrast colour — the extension sets that one CSS property on the
-  element, re-runs that one rule, and puts the attribute back exactly as it
-  found it. An automated check in the project compares the page's markup before
+- **Testing a fix.** Where a fix can be computed from measured values, which in
+  practice means a contrast colour, the extension sets that one CSS property on
+  the element, runs that one rule again, and puts the attribute back exactly as
+  it found it. An automated check in the project compares the page's markup before
   and after, byte for byte, and fails the build on any difference. Suggestions
   that depend on what the page means are never applied.
-- **Locating an element.** When you press "Locate on page" it draws a highlight
-  box in its own container at the document root. The box is `aria-hidden`, takes
-  no events, never touches the audited elements, and is removed when you clear
-  it, when you pick another occurrence, when the panel closes and at the start
-  of any audit.
+- **Showing an element.** When you press "Locate on page", or step to another
+  element with the arrows, it draws a highlight box in its own container at the
+  document root. Inspecting the tab order draws numbered markers the same way.
+  The container is `aria-hidden`, takes no events and never touches the audited
+  elements. A located box fades after a few seconds, the tab order markers are
+  removed when you press Exit, and everything it drew is removed when the panel
+  closes and at the start of any audit.
 
 Nothing you typed is written, read back or stored.
 
@@ -52,10 +54,10 @@ which Chrome keeps in memory and clears when you close the browser. That is what
 lets the report survive Chrome putting the extension to sleep while you read it.
 
 The one thing kept after the browser closes is the report language you picked in
-the panel — `auto`, `en` or `pt-BR` — in `chrome.storage.local`. Nothing about the
+the panel (`auto`, `en` or `pt-BR`) in `chrome.storage.local`. Nothing about the
 pages you audit is kept.
 
-The extension sends nothing to us or to anyone else — no telemetry, no error
+The extension sends nothing to us or to anyone else: no telemetry, no error
 reports, no uploads. The only requests it can cause are axe-core re-reading a
 stylesheet the page has already loaded, from that page's own origin, because a
 few of its rules need the stylesheet text. When a page's stylesheets come from
@@ -71,10 +73,10 @@ profiling or tracking.
 ## The debugger permission
 
 Clicking the toolbar icon never attaches the debugger. It is attached only when
-you ask the extension to walk the page's real keyboard focus order, which needs
-genuine Tab keystrokes that only Chrome's debugger can produce, so the extension
-attaches `chrome.debugger` to the tab **for the length of that walk and nothing
-else**. Chrome shows its own banner on the tab while it is attached.
+you press "Check keyboard" to follow the page's real keyboard focus order, which
+needs genuine Tab keystrokes that only Chrome's debugger can produce, so the
+extension attaches `chrome.debugger` to the tab **for the length of that check
+and nothing else**. Chrome shows its own banner on the tab while it is attached.
 
 The debugger is used for one thing: sending Tab and Shift+Tab. The page is read
 through the same code the rest of the audit uses. The debugger is released
@@ -83,14 +85,14 @@ fails the build if the report is ever published while it is still attached.
 
 ## Permissions, and why each one exists
 
-- **activeTab** — grants access to the one tab you clicked on, and only after
+- **activeTab**: grants access to the one tab you clicked on, and only after
   that click. The extension asks for no standing access to any site.
-- **scripting** — injects the audit into that tab and draws the temporary
-  highlight when you ask to locate an element.
-- **sidePanel** — shows the report beside the page.
-- **storage** — `chrome.storage.session` for the single report described above,
+- **scripting**: injects the audit into that tab and draws the temporary
+  highlights and markers you ask for.
+- **sidePanel**: shows the report beside the page.
+- **storage**: `chrome.storage.session` for the single report described above,
   and `chrome.storage.local` for the report language you picked. Nothing else.
-- **debugger** — the keyboard focus walk, as described above.
+- **debugger**: the keyboard check, as described above.
 
 The extension requests no host permissions.
 
