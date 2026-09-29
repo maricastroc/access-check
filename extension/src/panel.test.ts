@@ -679,8 +679,28 @@ describe("the panel is an inspector, not a squeezed report", () => {
     expect(panel).toContain('aria-label={t("panel.nextStop")}');
     expect(panel).toContain('t("panel.stopOf", { at, total: stops })');
     expect(panel).toContain('t("panel.showComplete")');
-    expect(panel).toContain('t("panel.clearOverlay")');
-    expect(panel).toContain('t("panel.backToWhereYouWere")');
+    expect(panel).toContain('t("panel.exitInspection")');
+  });
+
+  it("inspects the tab order as a mode with one way out", () => {
+    const focus = between(panel, "function FocusPath(", "function Running(");
+    expect(focus).toMatch(/!showing \?[\s\S]{0,200}t\("panel\.showFocusPath"\)/);
+    expect(focus).toContain("onClick={onExit}");
+    expect(focus).not.toContain("panel.clearOverlay");
+    expect(focus).not.toContain("panel.backToWhereYouWere");
+    expect(t("panel.showFocusPath")).toBe("Inspect tab order");
+    expect(pt("panel.exitInspection")).toBe("Sair");
+  });
+
+  it("puts the page back where it was before clearing the drawing", () => {
+    const report = between(panel, "function Report(", "function Message(");
+    expect(report).toContain("void restoreScroll().then(clear);");
+    expect(panel).toContain('restoreScroll={() => send({ type: "panel:restore-scroll" })}');
+  });
+
+  it("never opens or moves a finding while the tab order is inspected", () => {
+    expect(panel).not.toContain("syncStop");
+    expect(panel).not.toContain("setLastSync");
   });
 
   it("draws a small neighbourhood by default", () => {

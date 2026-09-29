@@ -259,7 +259,7 @@ try {
   });
 
   console.log("  keyboard shot:", await openFinding("focus|keyboard|reach"));
-  await clickPanel("Show focus path");
+  await clickPanel("Inspect tab order");
   const stop = await panel.evaluate(async () => {
     const next = [...document.querySelectorAll("button")].find(
       (b) => b.getAttribute("aria-label") === "Next stop",

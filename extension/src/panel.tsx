@@ -372,13 +372,11 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function FindingDetail({
   finding,
-  syncStop,
   onLocate,
   previous,
   next,
 }: {
   finding: FindingView;
-  syncStop: number | null;
   onLocate: (location: Location, n: number) => Promise<string | null>;
   previous: (() => void) | null;
   next: (() => void) | null;
@@ -387,13 +385,7 @@ function FindingDetail({
   const [index, setIndex] = useState(0);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [lastSync, setLastSync] = useState(syncStop);
   const total = locations.length;
-  if (syncStop !== lastSync) {
-    setLastSync(syncStop);
-    const found = locations.findIndex((l) => l.stop === syncStop);
-    if (found >= 0) setIndex(found);
-  }
 
   const at = Math.min(index, Math.max(total - 1, 0));
   const location = locations[at] ?? null;
@@ -684,24 +676,13 @@ const GROUP_TITLE: Record<QueueGroup, MessageKey> = {
 function Findings({
   groups,
   locale,
-  syncStop,
   onLocate,
 }: {
   groups: { group: QueueGroup; findings: FindingView[] }[];
   locale: ReportLocale | undefined;
-  syncStop: number | null;
   onLocate: (location: Location, n: number) => Promise<string | null>;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
-  const [lastSync, setLastSync] = useState(syncStop);
-
-  if (syncStop !== lastSync) {
-    setLastSync(syncStop);
-    const owner = groups
-      .flatMap((g) => g.findings)
-      .find((f) => f.occurrences.some((o) => o.stop === syncStop));
-    if (owner) setSelected(owner.id);
-  }
 
   const open = (id: string) => {
     setSelected(id);
@@ -731,7 +712,6 @@ function Findings({
           <div className="border-x border-b border-hairline bg-surface px-3 pt-1 pb-3">
             <FindingDetail
               finding={f}
-              syncStop={syncStop}
               onLocate={onLocate}
               previous={i > 0 ? () => open(findings[i - 1].id) : null}
               next={i < findings.length - 1 ? () => open(findings[i + 1].id) : null}
@@ -845,24 +825,20 @@ function FocusPath({
   showing,
   at,
   complete,
-  moved,
   onShow,
   onStep,
   onToggleComplete,
-  onClear,
-  onRestoreScroll,
+  onExit,
 }: {
   result: ScanResult;
   notice: string | null;
   showing: boolean;
   at: number;
   complete: boolean;
-  moved: boolean;
   onShow: () => void;
   onStep: (delta: number) => void;
   onToggleComplete: () => void;
-  onClear: () => void;
-  onRestoreScroll: () => void;
+  onExit: () => void;
 }) {
   const walked = result.keyboard;
   if (!walked) return null;
@@ -883,62 +859,54 @@ function FocusPath({
         </p>
       ))}
 
-      {stops > 0 && (
-        <>
-          {!showing ? (
-            <button type="button" onClick={onShow} className={`${SECONDARY_BUTTON} mt-3`}>
-              {t("panel.showFocusPath")}
-            </button>
-          ) : (
-            <>
-              <div className="mt-2.5 flex items-center gap-1.5">
-                <button
-                  type="button"
-                  aria-label={t("panel.previousStop")}
-                  className={`${SMALL_BUTTON} flex-1`}
-                  onClick={() => onStep(-1)}
-                >
-                  {t("panel.previous")}
-                </button>
-                <span
-                  aria-live="polite"
-                  className="min-w-24 text-center font-cond text-[13px] font-semibold text-ink tabular-nums"
-                >
-                  {t("panel.stopOf", { at, total: stops })}
-                </span>
-                <button
-                  type="button"
-                  aria-label={t("panel.nextStop")}
-                  className={`${SMALL_BUTTON} flex-1`}
-                  onClick={() => onStep(1)}
-                >
-                  {t("panel.next")}
-                </button>
-              </div>
+      {stops > 0 &&
+        (!showing ? (
+          <button type="button" onClick={onShow} className={`${SMALL_BUTTON} mt-2.5`}>
+            {t("panel.showFocusPath")}
+          </button>
+        ) : (
+          <div className="mt-2.5 border border-border bg-canvas p-2.5">
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                aria-label={t("panel.previousStop")}
+                className={`${SMALL_BUTTON} flex-1`}
+                onClick={() => onStep(-1)}
+              >
+                {t("panel.previous")}
+              </button>
+              <span
+                aria-live="polite"
+                className="min-w-24 text-center font-cond text-[13px] font-semibold text-ink tabular-nums"
+              >
+                {t("panel.stopOf", { at, total: stops })}
+              </span>
+              <button
+                type="button"
+                aria-label={t("panel.nextStop")}
+                className={`${SMALL_BUTTON} flex-1`}
+                onClick={() => onStep(1)}
+              >
+                {t("panel.next")}
+              </button>
+            </div>
 
-              <div className="mt-1.5 flex flex-wrap gap-1.5">
-                <button type="button" className={SMALL_BUTTON} onClick={onToggleComplete}>
-                  {complete ? t("panel.showNearbyOnly") : t("panel.showComplete")}
-                </button>
-                <button type="button" className={SMALL_BUTTON} onClick={onClear}>
-                  {t("panel.clearOverlay")}
-                </button>
-                {moved && (
-                  <button type="button" className={SMALL_BUTTON} onClick={onRestoreScroll}>
-                    {t("panel.backToWhereYouWere")}
-                  </button>
-                )}
-              </div>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              <button type="button" className={SMALL_BUTTON} onClick={onToggleComplete}>
+                {complete ? t("panel.showNearbyOnly") : t("panel.showComplete")}
+              </button>
+              <button type="button" className={`${SMALL_BUTTON} ml-auto`} onClick={onExit}>
+                {t("panel.exitInspection")}
+              </button>
+            </div>
 
-              <p className="mt-1.5 text-[11.5px] leading-normal text-muted">
-                {complete
-                  ? t("panel.drawingAll")
-                  : t("panel.drawingWindow", { neighbours: NEIGHBOURS })}
-              </p>
-            </>
-          )}
-        </>
-      )}
+            <p className="mt-1.5 text-[11.5px] leading-normal text-muted">
+              {complete
+                ? t("panel.drawingAll")
+                : t("panel.drawingWindow", { neighbours: NEIGHBOURS })}
+            </p>
+          </div>
+        ))}
 
       {notice && <p className="mt-2 text-[12px] leading-normal text-moderate-text">{notice}</p>}
     </section>
@@ -986,16 +954,14 @@ function Report({
     marks: OverlayMark[],
     focus: number | null,
     timeoutMs: number,
-  ) => Promise<{ notice: string | null; moved: boolean }>;
+  ) => Promise<{ notice: string | null }>;
   clear: () => void;
-  restoreScroll: () => void;
+  restoreScroll: () => Promise<unknown>;
 }) {
   const [notice, setNotice] = useState<string | null>(null);
   const [showing, setShowing] = useState(false);
   const [complete, setComplete] = useState(false);
-  const [moved, setMoved] = useState(false);
   const [at, setAt] = useState(1);
-  const [syncStop, setSyncStop] = useState<number | null>(null);
   const marks = marksFor(result);
   const scope = auditScope(result, t);
   const groups = workQueue(result);
@@ -1010,7 +976,6 @@ function Report({
       label: location.label || undefined,
     };
     const done = await draw([mark], mark.n, 6000);
-    setMoved(done.moved);
     return done.notice;
   };
 
@@ -1018,9 +983,7 @@ function Report({
     const next = Math.min(Math.max(focus, 1), marks.length);
     setAt(next);
     setShowing(true);
-    setSyncStop(next);
     const done = await draw(everything ? marks : windowAround(marks, next), next, 0);
-    setMoved(done.moved);
     setNotice(done.notice);
   };
 
@@ -1042,14 +1005,13 @@ function Report({
           onWalk={onWalk}
           onContinue={onContinue}
         />
-        <Findings groups={groups} locale={result.locale} syncStop={syncStop} onLocate={locate} />
+        <Findings groups={groups} locale={result.locale} onLocate={locate} />
         <FocusPath
           result={result}
           notice={notice}
           showing={showing}
           at={at}
           complete={complete}
-          moved={moved}
           onShow={() => void showPath(at)}
           onStep={(delta) => void showPath(((at - 1 + delta + marks.length) % marks.length) + 1)}
           onToggleComplete={() => {
@@ -1057,16 +1019,10 @@ function Report({
             setComplete(next);
             void showPath(at, next);
           }}
-          onClear={() => {
+          onExit={() => {
             setShowing(false);
             setNotice(null);
-            setSyncStop(null);
-            setMoved(false);
-            clear();
-          }}
-          onRestoreScroll={() => {
-            restoreScroll();
-            setMoved(false);
+            void restoreScroll().then(clear);
           }}
         />
       </div>
@@ -1166,7 +1122,7 @@ function Panel({
     marks: OverlayMark[],
     focus: number | null,
     timeoutMs: number,
-  ): Promise<{ notice: string | null; moved: boolean }> => {
+  ): Promise<{ notice: string | null }> => {
     keepPort();
     const reply = (await send({
       type: "panel:highlight",
@@ -1176,10 +1132,10 @@ function Panel({
       timeoutMs,
     })) as HighlightReply | undefined;
 
-    if (!reply) return { notice: t("panel.pageUnreachable"), moved: false };
-    if (!reply.ok) return { notice: reply.message, moved: false };
+    if (!reply) return { notice: t("panel.pageUnreachable") };
+    if (!reply.ok) return { notice: reply.message };
 
-    const { missing, offScreen, focused, movedScroll } = reply.report;
+    const { missing, offScreen, focused } = reply.report;
     const notice = !focused
       ? null
       : !focused.found
@@ -1196,7 +1152,7 @@ function Panel({
               })
             : null;
 
-    return { notice, moved: movedScroll };
+    return { notice };
   };
 
   const running = state.kind === "running";
@@ -1256,7 +1212,7 @@ function Panel({
           onContinue={() => void send({ type: "panel:continue-walk" })}
           draw={draw}
           clear={() => void send({ type: "panel:clear-highlight" })}
-          restoreScroll={() => void send({ type: "panel:restore-scroll" })}
+          restoreScroll={() => send({ type: "panel:restore-scroll" })}
         />
       )}
     </Shell>
