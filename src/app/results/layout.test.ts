@@ -13,6 +13,9 @@ const frame = read("./evidence-frame.tsx");
 const states = read("./states.tsx");
 const pdf = read("../report/summary-page.tsx");
 const markdown = read("../../lib/report/markdown.ts");
+const queue = read("./work-queue.tsx");
+const detail = read("../../components/ui/finding-detail.tsx");
+const row = read("../../components/ui/finding-row.tsx");
 
 const FIXED_WORDS = /(>|\})\s*[A-Za-z][a-z]+( [a-z]+)*\s*(<|\{)/g;
 
@@ -75,6 +78,31 @@ describe("the share of what is left is gone from every report", () => {
   });
 });
 
+describe("the findings read as one work queue", () => {
+  it("is grouped the same way on the desktop and on a phone", () => {
+    expect(margin).toContain("<WorkQueue");
+    expect(mobile).toContain("<WorkQueue");
+    expect(view).toContain("groups={view.groups}");
+  });
+
+  it("keeps To fix open and folds the other groups until they are needed", () => {
+    expect(queue).toContain('new Set(["fix"])');
+    expect(queue).toContain("<details");
+    expect(queue).toContain("setOpened(new Set([...opened, holding]))");
+  });
+
+  it("no longer keeps the manual reviews in a list of their own", () => {
+    expect(margin).not.toContain("result.incomplete");
+    expect(margin).not.toContain("reviewGuidance");
+  });
+
+  it("tells a manual review how to check it instead of calling it a guess", () => {
+    expect(detail).toContain('finding.kind === "manual-review" ? (');
+    expect(detail).toContain('finding.kind !== "manual-review"');
+    expect(detail).toContain("guide.steps.map");
+  });
+});
+
 describe("the results screens write no words of their own", () => {
   it.each([
     ["summary-band.tsx", band],
@@ -82,6 +110,8 @@ describe("the results screens write no words of their own", () => {
     ["about-audit.tsx", about],
     ["findings-margin.tsx", margin],
     ["evidence-frame.tsx", frame],
+    ["work-queue.tsx", queue],
+    ["finding-row.tsx", row],
   ])("%s takes its text from the catalog", (_, source) => {
     expect(source.match(FIXED_WORDS) ?? []).toEqual([]);
   });

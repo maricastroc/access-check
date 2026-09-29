@@ -28,11 +28,11 @@ export function AboutAudit({
 
   return (
     <details className="border-t border-border bg-canvas">
-      <summary className="mx-auto flex w-full max-w-[1560px] cursor-pointer list-none items-baseline gap-2 px-4 py-3.5 sm:px-6">
+      <summary className="mx-auto flex w-full max-w-[1560px] cursor-pointer list-none flex-wrap items-baseline gap-x-2 gap-y-0.5 px-4 py-3.5 sm:px-6">
         <span aria-hidden className="ac-chev font-cond text-muted transition-transform">
           ▸
         </span>
-        <h2 className="text-[14px] font-semibold text-ink">{t("panel.aboutAudit")}</h2>
+        <h2 className="shrink-0 text-[14px] font-semibold text-ink">{t("panel.aboutAudit")}</h2>
         <span className="text-[13px] text-muted">{state}</span>
       </summary>
 

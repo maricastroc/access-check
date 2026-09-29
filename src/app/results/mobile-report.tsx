@@ -18,6 +18,7 @@ import { FocusPathList } from "./focus-path-list";
 import { PendingStanding } from "./summary-band";
 import { workLine } from "./report-model";
 import { AboutAudit } from "./about-audit";
+import { WorkQueue, type QueueGroups } from "./work-queue";
 import {
   scoringIsCurrent,
   standingOf,
@@ -35,7 +36,7 @@ export function MobileReport({
   host,
   wcag,
   layer,
-  findings,
+  groups,
   selectedFinding,
   selectedId,
   onSelect,
@@ -62,7 +63,7 @@ export function MobileReport({
   host: string;
   wcag: WcagReadingModel;
   layer: Layer;
-  findings: FindingView[];
+  groups: QueueGroups;
   selectedFinding: FindingView | null;
   selectedId: string | null;
   onSelect: (id: string) => void;
@@ -87,11 +88,12 @@ export function MobileReport({
 }) {
   const t = useT();
   const work = workLine(result, t);
+  const total = groups.reduce((sum, g) => sum + g.findings.length, 0);
   const focusStops = result.keyboard?.focusPath ?? [];
   const coverage = result.keyboard ? focusPathLines(result.keyboard, t) : { line: "", notes: [] };
   return (
     <div className="pb-20">
-      <div className="sticky top-15.5 z-20 border-b border-border bg-surface px-4 py-3">
+      <div className="border-b border-border bg-surface px-4 py-3">
         <div className="flex items-center justify-between gap-2">
           <span className="truncate font-mono text-[12.5px] text-muted">{host}</span>
           <span className="shrink-0 text-[12px] text-muted tabular-nums">
@@ -150,7 +152,7 @@ export function MobileReport({
           >
             {pane === "capture"
               ? t("capture.screenshot")
-              : t("results.findingsCount", { count: findings.length })}
+              : t("results.findingsCount", { count: total })}
           </button>
         ))}
       </div>
@@ -206,12 +208,13 @@ export function MobileReport({
           )}
         </div>
       ) : (
-        <div className="flex flex-col gap-2 p-4">
-          {findings.length === 0 ? (
-            <p className="text-[13.5px] text-muted">{t("results.noFailuresMobile")}</p>
-          ) : (
-            findings.map((f) => (
-              <div key={f.id} {...langAttrs(result.locale)}>
+        <div className="flex flex-col gap-2 px-4 pt-1.5 pb-4">
+          <WorkQueue
+            t={t}
+            groups={groups}
+            selectedId={selectedId}
+            renderRow={(f) => (
+              <div key={f.id} id={`finding-${f.id}`} {...langAttrs(result.locale)}>
                 <FindingRow
                   t={t}
                   finding={f}
@@ -236,8 +239,8 @@ export function MobileReport({
                   </>
                 )}
               </div>
-            ))
-          )}
+            )}
+          />
           {focusStops.length > 0 && (
             <div className="mt-2 border-t border-hairline pt-3">
               <SectionKicker tone="steel">{t("results.focusPathStops")}</SectionKicker>

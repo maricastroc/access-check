@@ -7,6 +7,7 @@ import { verdictMessage, verdictTone } from "@/lib/report/verdict";
 import { ratioPosition } from "@/lib/report/contrast";
 import type { ContrastPreview } from "@/lib/report/preview";
 import { severityColorVar } from "@/lib/report/severity";
+import { reviewGuidance } from "@/lib/scan/review";
 import { SectionKicker } from "./section-kicker";
 import { VerdictSeal } from "./verdict-seal";
 import { CodeBlock } from "./code-block";
@@ -182,7 +183,7 @@ export function FindingDetail({
       className="-mt-px border border-t-0 border-ink bg-surface"
       style={{ borderLeft: `4px solid ${railColor}` }}
     >
-      {finding.evidence === "heuristic" && (
+      {finding.evidence === "heuristic" && finding.kind !== "manual-review" && (
         <section className="border-b border-hairline bg-band p-3.5">
           <SectionKicker>{t("evidence.heuristic.title")}</SectionKicker>
           <p className="mt-2 text-[13.5px] leading-normal text-ink-2">
@@ -293,48 +294,54 @@ export function FindingDetail({
         )}
       </section>
 
-      <section className="border-t border-hairline p-3.5">
-        <SectionKicker>{t("detail.howToFix")}</SectionKicker>
-        {finding.preview ? (
-          <ContrastFixPreview t={t} preview={finding.preview} />
-        ) : finding.guidance ? (
-          <>
-            <p className="mt-2 text-[13.5px] leading-normal text-body">{finding.guidance.action}</p>
-            {finding.guidance.example && (
-              <div className="mt-2.5">
-                <CodeBlock lines={exampleLines(finding.guidance.example.code)} />
-              </div>
-            )}
-            {finding.guidance.caution && (
-              <p className="mt-2 text-[12px] text-moderate-text">{finding.guidance.caution}</p>
-            )}
-            {finding.guidance.humanDecision && (
-              <p className="mt-2 text-[12px] text-muted">{t("detail.humanDecision")}</p>
-            )}
-          </>
-        ) : (
-          <>
-            <p className="mt-2 text-[13.5px] leading-normal text-body">{finding.fixText}</p>
-            {finding.fixCode && (
-              <div className="mt-2.5">
-                <CodeBlock
-                  lines={[
-                    {
-                      text: finding.fixCode,
-                      tone: verdictTone(finding.verdict) === "verified" ? "added" : "default",
-                    },
-                  ]}
-                />
-              </div>
-            )}
-          </>
-        )}
-        {verdictTone(finding.verdict) === "quiet" && (
-          <p className="mt-2.5 text-[12px] leading-normal text-muted">
-            {verdictMessage(finding.verdict, t, finding.measurement)}
-          </p>
-        )}
-      </section>
+      {finding.kind === "manual-review" ? (
+        <HowToCheck ruleId={finding.ruleId} t={t} />
+      ) : (
+        <section className="border-t border-hairline p-3.5">
+          <SectionKicker>{t("detail.howToFix")}</SectionKicker>
+          {finding.preview ? (
+            <ContrastFixPreview t={t} preview={finding.preview} />
+          ) : finding.guidance ? (
+            <>
+              <p className="mt-2 text-[13.5px] leading-normal text-body">
+                {finding.guidance.action}
+              </p>
+              {finding.guidance.example && (
+                <div className="mt-2.5">
+                  <CodeBlock lines={exampleLines(finding.guidance.example.code)} />
+                </div>
+              )}
+              {finding.guidance.caution && (
+                <p className="mt-2 text-[12px] text-moderate-text">{finding.guidance.caution}</p>
+              )}
+              {finding.guidance.humanDecision && (
+                <p className="mt-2 text-[12px] text-muted">{t("detail.humanDecision")}</p>
+              )}
+            </>
+          ) : (
+            <>
+              <p className="mt-2 text-[13.5px] leading-normal text-body">{finding.fixText}</p>
+              {finding.fixCode && (
+                <div className="mt-2.5">
+                  <CodeBlock
+                    lines={[
+                      {
+                        text: finding.fixCode,
+                        tone: verdictTone(finding.verdict) === "verified" ? "added" : "default",
+                      },
+                    ]}
+                  />
+                </div>
+              )}
+            </>
+          )}
+          {verdictTone(finding.verdict) === "quiet" && (
+            <p className="mt-2.5 text-[12px] leading-normal text-muted">
+              {verdictMessage(finding.verdict, t, finding.measurement)}
+            </p>
+          )}
+        </section>
+      )}
 
       {verdictTone(finding.verdict) !== "quiet" && (
         <section className="border-t border-hairline p-3.5">
@@ -349,6 +356,21 @@ export function FindingDetail({
         </section>
       )}
     </div>
+  );
+}
+
+function HowToCheck({ ruleId, t }: { ruleId: string; t: Translate }) {
+  const guide = reviewGuidance(ruleId, t);
+  return (
+    <section className="border-t border-hairline p-3.5">
+      <SectionKicker>{t("panel.howToCheck")}</SectionKicker>
+      <p className="mt-2 text-[13.5px] leading-normal text-body">{guide.how}</p>
+      <ol className="mt-2 list-decimal space-y-1 pl-4 text-[12.5px] leading-normal text-body">
+        {guide.steps.map((step) => (
+          <li key={step}>{step}</li>
+        ))}
+      </ol>
+    </section>
   );
 }
 

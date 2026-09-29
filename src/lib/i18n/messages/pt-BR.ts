@@ -8,8 +8,6 @@ export const ptBR: Catalog = {
   },
   "unit.styleSheet": { one: "{count} folha de estilo", other: "{count} folhas de estilo" },
   "unit.mediaFile": { one: "{count} arquivo de mídia", other: "{count} arquivos de mídia" },
-  "results.findingsAndElements": "{findings} \u00b7 {elements}",
-  "unit.finding": { one: "{count} problema", other: "{count} problemas" },
   "unit.element": { one: "{count} elemento", other: "{count} elementos" },
   "unit.elementNoun": { one: "elemento", other: "elementos" },
   "unit.and": "e",
@@ -638,8 +636,8 @@ export const ptBR: Catalog = {
   "results.exportPdf": "Exportar PDF",
   "results.newAudit": "Nova auditoria",
   "results.viewFinding": "Ver o problema",
-  "results.findingsByPriority": "Problemas \u00b7 por prioridade",
   "results.findingsCount": "Problemas \u00b7 {count}",
+  "results.nothingToFix": "Nenhuma verificação automática encontrou falha nesta página.",
   "chip.fails": "reprova em {sc}",
   "chip.noFailures": "sem falhas",
   "chip.notEvaluated": "não avaliado",
@@ -706,8 +704,6 @@ export const ptBR: Catalog = {
   "results.runAgainMoreTime": "Rodar de novo com mais tempo",
   "results.quickFromSite": "Resultado rápido da auditoria do site.",
   "results.tapMarker": "Toque em um marcador para abrir o problema correspondente.",
-  "results.noFailuresMobile":
-    "Nenhuma falha detectada automaticamente nesta página. Algumas coisas ainda precisam de conferência humana, listadas abaixo como itens de revisão manual.",
   "results.showOnScreenshot": "Mostrar na captura",
   "results.takingScreenshot": "Tirando a captura de tela da página.",
   "results.fullImpactNote":
@@ -814,14 +810,6 @@ export const ptBR: Catalog = {
   "home.complementary.countLine2": "além do DOM estático",
 
   "results.checksPassedLabel": "verificações automáticas aprovadas",
-  "results.manualReviewLabel": "itens de revisão manual, com o passo a passo",
-  "results.noAutomatedFailures": "Nenhuma falha detectada automaticamente nesta página.",
-  "results.checksPassedNote":
-    "{passed} verificações passaram. Isso não é o mesmo que conformidade com a WCAG:",
-  "results.manualReviewPending": {
-    one: "{count} item ainda precisa da conferência de uma pessoa, listado abaixo.",
-    other: "{count} itens ainda precisam da conferência de uma pessoa, listados abaixo.",
-  },
   "results.noVisibleFocus": "sem foco visível",
   "results.stillChecking": "ainda verificando…",
   "results.focusOnContainer": "conferir foco",

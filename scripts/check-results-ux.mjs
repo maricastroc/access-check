@@ -71,9 +71,13 @@ const open = async (width, locale = "en") => {
     waitUntil: "domcontentloaded",
     timeout: 60_000,
   });
-  await page.waitForFunction(() => /Findings/i.test(document.body.textContent ?? ""), null, {
-    timeout: 60_000,
-  });
+  await page.waitForFunction(
+    () => /To fix|A corrigir|Findings|Problemas/.test(document.body.textContent ?? ""),
+    null,
+    {
+      timeout: 60_000,
+    },
+  );
   return { page, context };
 };
 
@@ -210,6 +214,91 @@ try {
       "About this audit lost the provenance or the passed checks",
     );
     check(!top.provenanceOutside, "the provenance still sits beside the screenshot");
+    await context.close();
+  }
+
+  const queueOf = (page) =>
+    page.evaluate(() =>
+      [...document.querySelectorAll("[data-group]")].map((g) => ({
+        group: g.dataset.group,
+        heading: g.querySelector("h2")?.textContent.trim() ?? "",
+        open: g.tagName === "DETAILS" ? g.open : true,
+        rows: g.querySelectorAll("button h3").length,
+      })),
+    );
+
+  {
+    const { page, context } = await open(1440);
+    const queue = await queueOf(page);
+    const leftovers = await page.evaluate(() =>
+      [...document.querySelectorAll("summary")].some((s) =>
+        /manual-review items/i.test(s.textContent ?? ""),
+      ),
+    );
+    await page.evaluate(() => {
+      const check = document.querySelector('details[data-group="check"]');
+      if (check) check.open = true;
+    });
+    await page.waitForTimeout(200);
+    const review = await page.evaluate(async () => {
+      const row = document.querySelector('details[data-group="check"] button');
+      row?.click();
+      await new Promise((r) => setTimeout(r, 400));
+      const detail = row?.parentElement;
+      return {
+        howToCheck: /How to check/.test(detail?.textContent ?? ""),
+        steps: detail?.querySelectorAll("ol li").length ?? 0,
+        guessNote: /not counted as a failure/.test(detail?.textContent ?? ""),
+      };
+    });
+    console.log("the work queue:", JSON.stringify({ queue, leftovers, review }));
+    check(
+      queue.map((g) => g.group).join() === "fix,check,recommend",
+      `the queue groups are ${queue.map((g) => g.group).join()}`,
+    );
+    check(queue[0]?.heading === "To fix · 3", `the fix group reads ${queue[0]?.heading}`);
+    check(
+      queue[1]?.heading === "To check by hand · 1",
+      `the check group reads ${queue[1]?.heading}`,
+    );
+    check(
+      queue[2]?.heading === "Recommendations · 1",
+      `the recommendations read ${queue[2]?.heading}`,
+    );
+    check(queue[0]?.open && queue[0]?.rows === 3, "the fix group is not open with its three rows");
+    check(!queue[1]?.open && !queue[2]?.open, "a secondary group starts open");
+    check(!leftovers, "the manual-review list still sits apart from the queue");
+    check(review.howToCheck && review.steps > 0, "a manual review lost its steps to check");
+    check(!review.guessNote, "a manual review is explained as a guess");
+    await context.close();
+  }
+
+  {
+    const { page, context } = await open(420);
+    await page.evaluate(() =>
+      [...document.querySelectorAll('[role="tab"]')]
+        .find((b) => /Findings/.test(b.textContent ?? ""))
+        ?.click(),
+    );
+    await page.waitForTimeout(300);
+    const queue = await queueOf(page);
+    console.log("the work queue on a phone:", JSON.stringify(queue));
+    check(
+      queue.map((g) => g.group).join() === "fix,check,recommend",
+      `the phone queue groups are ${queue.map((g) => g.group).join()}`,
+    );
+    await context.close();
+  }
+
+  {
+    const { page, context } = await open(1440, "pt-BR");
+    const queue = await queueOf(page);
+    console.log("the work queue in pt-BR:", JSON.stringify(queue.map((g) => g.heading)));
+    check(
+      queue.map((g) => g.heading).join(" | ") ===
+        "A corrigir · 3 | Conferir à mão · 1 | Recomendações · 1",
+      "the pt-BR queue headings are off",
+    );
     await context.close();
   }
 
