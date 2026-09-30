@@ -1110,14 +1110,14 @@ export const ptBR: Catalog = {
   "detail.currentView": "atual",
   "detail.largeText": " (texto grande)",
   "detail.sampleText": "Texto de exemplo",
-  "detail.verifiedOnElement": "Verificado neste elemento",
+  "detail.verifiedOnElement": "Correção testada neste elemento",
   "detail.verifiedOnElementNote":
-    "Passa no WCAG AA, confirmado por reauditoria do elemento localizado",
+    "Passa no WCAG AA: aplicada a este elemento por um instante e verificada novamente",
   "detail.uncertain": "Resultado incerto",
   "detail.uncertainNote": "Não dá para confirmar que atinge o mínimo no fundo real",
   "detail.calculated": "Calculado",
   "detail.calculatedNote":
-    "Chegaria a {ratio}:1, calculado a partir das cores detectadas, não verificado ao vivo",
+    "Chegaria a {ratio}:1, calculado a partir das cores detectadas, sem teste na página",
   "detail.previewNote":
     "A prévia usa as cores de primeiro plano e de fundo detectadas. Tipografia e contexto da página não são reproduzidos.",
   "detail.contrastPreview": "Prévia de contraste",
