@@ -6,9 +6,9 @@ import { translator, type MessageKey } from "@/lib/i18n/t";
 import type { ReportLocale } from "@/lib/i18n/locale";
 
 const NAV: { href: string; label: MessageKey }[] = [
-  { href: "#how", label: "nav.howItWorks" },
-  { href: "#checks", label: "nav.checks" },
-  { href: "#evidence", label: "nav.evidenceLens" },
+  { href: "/#how", label: "nav.howItWorks" },
+  { href: "/#checks", label: "nav.checks" },
+  { href: "/#evidence", label: "nav.evidenceLens" },
   { href: "/history", label: "nav.history" },
 ];
 

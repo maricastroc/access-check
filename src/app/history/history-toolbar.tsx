@@ -26,7 +26,7 @@ export function HistoryToolbar({
         <label htmlFor="history-search" className="sr-only">
           {t("history.searchByDomain")}
         </label>
-        <div className="border-line-strong bg-card focus-within:border-brand-400 flex h-9 w-full items-center gap-2.5 rounded-[10px] border px-3">
+        <div className="flex h-9 w-full items-center gap-2.5 border border-border bg-surface px-3 focus-within:border-ink">
           <FontAwesomeIcon icon={faMagnifyingGlass} aria-hidden className="text-xs text-muted" />
           <input
             id="history-search"
@@ -41,7 +41,7 @@ export function HistoryToolbar({
               type="button"
               aria-label={t("history.clearSearch")}
               onClick={() => onQuery("")}
-              className="flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted transition-colors hover:bg-canvas hover:text-ink"
+              className="flex size-5 shrink-0 cursor-pointer items-center justify-center text-muted transition-colors hover:bg-canvas hover:text-ink"
             >
               <FontAwesomeIcon icon={faXmark} aria-hidden className="text-xs" />
             </button>
@@ -53,7 +53,7 @@ export function HistoryToolbar({
         <div
           role="group"
           aria-label={t("history.filterByScore")}
-          className="border-line-strong bg-card flex h-9 items-center gap-0.5 rounded-[10px] border p-0.5"
+          className="flex h-9 items-center gap-0.5 border border-border bg-surface p-0.5"
         >
           {BANDS.map((b) => (
             <button
@@ -61,8 +61,8 @@ export function HistoryToolbar({
               type="button"
               aria-pressed={b.key === scoreBand}
               onClick={() => onBand(b.key)}
-              className={`h-full cursor-pointer rounded-[8px] px-3 text-[12.5px] font-medium transition-colors ${
-                b.key === scoreBand ? "bg-ink text-white" : "text-ink-soft hover:text-ink"
+              className={`h-full cursor-pointer px-3 text-[12.5px] font-medium transition-colors ${
+                b.key === scoreBand ? "bg-ink text-white" : "text-body hover:text-ink"
               }`}
             >
               {b.label}
@@ -77,7 +77,7 @@ export function HistoryToolbar({
           id="history-sort"
           value={sort}
           onChange={(e) => onSort(e.target.value as SortKey)}
-          className="border-line-strong bg-card text-ink-soft hover:border-line-hover focus:border-brand-400 h-9 cursor-pointer rounded-[10px] border px-2.5 text-[12.5px] font-medium transition-colors focus:outline-none"
+          className="h-9 cursor-pointer border border-border bg-surface px-2.5 text-[12.5px] font-medium text-body transition-colors hover:border-ink focus:border-ink focus:outline-none"
         >
           {SORTS.map((s) => (
             <option key={s.key} value={s.key}>
