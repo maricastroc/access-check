@@ -1,4 +1,5 @@
 import { cssPath } from "./selector";
+import { showsOnScreen } from "./visibility";
 
 const SCROLLABLE = /auto|scroll|overlay/;
 
@@ -10,6 +11,7 @@ export type DomRect = {
   docX: number;
   docY: number;
   scrolled: boolean;
+  seen?: boolean;
 };
 
 export function collectRects(selectors: string[]): (DomRect | null)[] {
@@ -27,6 +29,7 @@ export function collectRects(selectors: string[]): (DomRect | null)[] {
         docX: r.left + window.scrollX,
         docY: r.top + window.scrollY,
         scrolled: flow.scrolled,
+        seen: showsOnScreen(el),
       };
     } catch {
       return null;

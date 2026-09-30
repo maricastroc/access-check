@@ -23,6 +23,16 @@ const rect = (over: Partial<DomRect> = {}): DomRect => ({
 });
 
 describe("markers on the screenshot", () => {
+  it("leaves out an element the screenshot does not show", () => {
+    const markers = buildMarkers(
+      [target(1), target(2)],
+      [rect({ seen: false }), rect({ y: 400 })],
+      VIEWPORT,
+    );
+
+    expect(markers.map((m) => m.label)).toEqual(["finding 2"]);
+  });
+
   it("places a rectangle as a percentage of the viewport", () => {
     const [marker] = buildMarkers([target(1)], [rect()], VIEWPORT);
 
