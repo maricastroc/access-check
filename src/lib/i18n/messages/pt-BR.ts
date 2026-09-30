@@ -123,11 +123,12 @@ export const ptBR: Catalog = {
     "O navegador que usamos para abrir a página parou de responder antes de a auditoria rodar.",
   "scanFail.browserSlow":
     "O navegador que usamos para abrir a página demorou demais para iniciar. Tente de novo.",
-  "scanFail.unreachable": "Não foi possível alcançar a página.",
+  "scanFail.unreachable": "Não conseguimos nos conectar a este site.",
   "scanFail.timeout": "A auditoria de acessibilidade não conseguiu terminar nesta página a tempo.",
   "scanFail.generic": "A varredura falhou.",
   "scanFail.httpError":
     "A página devolveu um erro (HTTP {status}), então não conseguimos auditá-la. Confira o endereço e tente de novo.",
+  "scanFail.siteBlocked": "Este site recusou a nossa visita (HTTP {status}).",
   "scanFail.navigationTimeout": "A página levou mais de {seconds}s para responder.",
   "scanFail.engineMissing":
     "Não foi possível carregar o motor de auditoria na página ({path}). Compile com `npm run build:engine`. {detail}",
@@ -208,8 +209,11 @@ export const ptBR: Catalog = {
   "scanError.hint.rateLimited": "Espere um momento antes de começar outra auditoria.",
   "scanError.hint.navigationTimeout":
     "O site pode estar lento, ou pode estar bloqueando navegadores automatizados.",
-  "scanError.hint.navigationFailed": "Confira o endereço, ou o site pode estar fora do ar.",
+  "scanError.hint.navigationFailed":
+    "Se o endereço estiver certo, o site pode estar fora do ar ou recusando visitas automáticas agora. Tente de novo em alguns minutos.",
   "scanError.hint.httpError": "O endereço pode estar errado, removido, ou atrás de um login.",
+  "scanError.hint.siteBlocked":
+    "Muitos sites bloqueiam navegadores automáticos como o que a auditoria do site usa. A extensão do AccessCheck audita a página pelo seu próprio navegador.",
   "scanError.hint.auditFailed":
     "Esta página é excepcionalmente pesada. Tente uma página específica em vez da home.",
   "scanError.hint.browserUnavailable": "Dê um instante e tente de novo.",
@@ -222,9 +226,10 @@ export const ptBR: Catalog = {
   "scanError.message.blockedUrl": "Esse endereço não pode ser auditado.",
   "scanError.message.rateLimited": "Auditorias demais em pouco tempo. Tente de novo em um minuto.",
   "scanError.message.navigationTimeout": "A página demorou demais para responder.",
-  "scanError.message.navigationFailed": "Não conseguimos alcançar a página.",
+  "scanError.message.navigationFailed": "Não conseguimos nos conectar a este site.",
   "scanError.message.httpError":
     "A página devolveu um erro, então não conseguimos auditá-la. Confira o endereço e tente de novo.",
+  "scanError.message.siteBlocked": "Este site recusou a nossa visita.",
   "scanError.message.auditFailed": "Não conseguimos terminar a auditoria nesta página.",
   "scanError.message.browserUnavailable":
     "Não conseguimos iniciar o navegador usado para abrir a página. Tente de novo.",
@@ -693,6 +698,7 @@ export const ptBR: Catalog = {
 
   "results.couldNotOpen": "Não foi possível abrir a página",
   "results.tryAnotherUrl": "Tentar outro endereço",
+  "results.getExtension": "Instalar a extensão",
   "results.seeWhatWeAudit": "Veja o que conseguimos auditar",
   "results.runAgainMoreTime": "Rodar de novo com mais tempo",
   "results.quickFromSite": "Resultado rápido da auditoria do site.",

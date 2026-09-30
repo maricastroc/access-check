@@ -61,7 +61,7 @@ export function ResultsView({
     incremental: true,
     fallbackError: t("scanError.message.internal"),
   });
-  const { status, streaming, result, phase, url, error, errorHint, scan } = audit;
+  const { status, streaming, result, phase, url, error, errorHint, errorCode, scan } = audit;
 
   const [input, setInput] = useState(initialUrl);
 
@@ -202,6 +202,7 @@ export function ResultsView({
             url={input}
             message={error}
             hint={errorHint}
+            code={errorCode}
             onChange={setInput}
             onRetry={() => scan(input)}
           />

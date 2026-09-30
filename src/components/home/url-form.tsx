@@ -40,7 +40,7 @@ export function UrlField({
         <span className="shrink-0 font-mono text-[14.5px] text-muted">https://</span>
         <span aria-hidden className="h-6 w-px bg-hairline" />
         <input
-          value={value}
+          value={value.replace(/^https:\/\//i, "")}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter" && onSubmit) {

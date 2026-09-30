@@ -118,11 +118,12 @@ export const en = {
     "The browser we use to open the page stopped responding before the audit could run.",
   "scanFail.browserSlow":
     "The browser we use to open the page took too long to start. Please try again.",
-  "scanFail.unreachable": "The page could not be reached.",
+  "scanFail.unreachable": "We couldn't connect to this site.",
   "scanFail.timeout": "The accessibility audit could not finish on this page in time.",
   "scanFail.generic": "Scan failed.",
   "scanFail.httpError":
     "The page returned an error (HTTP {status}), so we couldn't audit it. Check the address and try again.",
+  "scanFail.siteBlocked": "This site turned our visit away (HTTP {status}).",
   "scanFail.navigationTimeout": "The page took longer than {seconds}s to respond.",
   "scanFail.engineMissing":
     "The audit engine could not be loaded into the page ({path}). Build it with `npm run build:engine`. {detail}",
@@ -200,8 +201,11 @@ export const en = {
   "scanError.hint.blockedUrl": "Only public web pages can be audited.",
   "scanError.hint.rateLimited": "Wait a moment before starting another audit.",
   "scanError.hint.navigationTimeout": "The site may be slow, or it may block automated browsers.",
-  "scanError.hint.navigationFailed": "Check the address, or the site may be offline.",
+  "scanError.hint.navigationFailed":
+    "If the address is right, the site may be offline or turning away automated visits right now. Try again in a few minutes.",
   "scanError.hint.httpError": "The address may be wrong, removed, or behind a login.",
+  "scanError.hint.siteBlocked":
+    "Many sites block automated browsers like the one the site audit uses. The AccessCheck extension audits the page from your own browser instead.",
   "scanError.hint.auditFailed":
     "This page is unusually heavy. Try one specific page instead of the home page.",
   "scanError.hint.browserUnavailable": "Give it a moment and try again.",
@@ -214,9 +218,10 @@ export const en = {
   "scanError.message.blockedUrl": "That address can't be audited.",
   "scanError.message.rateLimited": "Too many audits in a short time. Try again in a minute.",
   "scanError.message.navigationTimeout": "The page took too long to respond.",
-  "scanError.message.navigationFailed": "We couldn't reach the page.",
+  "scanError.message.navigationFailed": "We couldn't connect to this site.",
   "scanError.message.httpError":
     "The page returned an error, so we couldn't audit it. Check the address and try again.",
+  "scanError.message.siteBlocked": "This site turned our visit away.",
   "scanError.message.auditFailed": "We couldn't finish the audit on this page.",
   "scanError.message.browserUnavailable":
     "We couldn't start the browser used to open the page. Please try again.",
@@ -670,6 +675,7 @@ export const en = {
 
   "results.couldNotOpen": "Couldn't open the page",
   "results.tryAnotherUrl": "Try another URL",
+  "results.getExtension": "Get the extension",
   "results.seeWhatWeAudit": "See what we can audit",
   "results.runAgainMoreTime": "Run again with more time",
   "results.quickFromSite": "Quick result from the site audit.",

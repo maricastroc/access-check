@@ -59,6 +59,7 @@ import type {
 import { axeLocaleFor } from "../i18n/axe-locale";
 import { DEFAULT_REPORT_LOCALE, type ReportLocale } from "../i18n/locale";
 import { translator, type Translate } from "../i18n/t";
+import { refusedByTheSite } from "./refusal";
 
 const VIEWPORT = SCAN_VIEWPORT;
 
@@ -115,6 +116,7 @@ export class ScanFailure extends Error {
   constructor(
     message: string,
     readonly code: ScanErrorCode,
+    readonly detail?: string,
   ) {
     super(message);
     this.name = "ScanFailure";
@@ -507,11 +509,22 @@ async function runScanAttempt(
           );
         }
         if (await sessionIsGone(page)) throw new BrowserGoneError(err);
-        throw new ScanFailure(translator(locale)("scanFail.unreachable"), "navigation-failed");
+        throw new ScanFailure(
+          translator(locale)("scanFail.unreachable"),
+          "navigation-failed",
+          message,
+        );
       }),
     );
 
     const httpStatus = response?.status() ?? 0;
+    if (response && refusedByTheSite(httpStatus, response.headers(), page.url())) {
+      throw new ScanFailure(
+        translator(locale)("scanFail.siteBlocked", { status: httpStatus }),
+        "site-blocked",
+        `HTTP ${httpStatus} ${response.headers()["server"] ?? ""}`.trim(),
+      );
+    }
     if (httpStatus >= 400) {
       throw new ScanFailure(
         translator(locale)("scanFail.httpError", { status: httpStatus }),

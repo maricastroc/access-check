@@ -33,6 +33,7 @@ export type ScanErrorCode =
   | "navigation-timeout"
   | "navigation-failed"
   | "http-error"
+  | "site-blocked"
   | "audit-failed"
   | "browser-unavailable"
   | "timeout"

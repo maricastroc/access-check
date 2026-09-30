@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { streamScan, ScanStreamError, type ScanStreamEvent } from "./stream";
+import { streamScan, ScanStreamError, scanErrorHint, type ScanStreamEvent } from "./stream";
+import { translator } from "../i18n/t";
 import type { ScanPhase, ScanResult } from "./types";
 
 const result = (score: number, extra: Partial<ScanResult> = {}): ScanResult =>
@@ -259,5 +260,25 @@ describe("streamScan", () => {
 
     const final = await streamScan("https://example.com");
     expect(final.score).toBe(33);
+  });
+});
+
+describe("a site that turns the visit away", () => {
+  it("keeps its own code and points to the extension", async () => {
+    mockStream([
+      { type: "error", error: "This site turned our visit away (HTTP 403).", code: "site-blocked" },
+    ]);
+
+    const failure = await streamScan("https://www.aesop.com/").catch((e: unknown) => e);
+
+    expect(failure).toBeInstanceOf(ScanStreamError);
+    expect((failure as ScanStreamError).code).toBe("site-blocked");
+    expect(scanErrorHint("site-blocked", translator())).toMatch(/extension/);
+    expect(scanErrorHint("site-blocked", translator("pt-BR"))).toMatch(/extensão/);
+  });
+
+  it("no longer tells a reader to check an address that is right", () => {
+    const hint = scanErrorHint("site-blocked", translator());
+    expect(hint).not.toMatch(/address/i);
   });
 });

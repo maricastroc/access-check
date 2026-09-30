@@ -2,9 +2,10 @@
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
-import type { ScanPhase } from "@/lib/scan/types";
+import type { ScanErrorCode, ScanPhase } from "@/lib/scan/types";
 import { Button, ProgressCard, ScanStages, useElapsed } from "@/components/ui";
 import { UrlField } from "@/components/home/url-form";
+import { CHROME_WEB_STORE_URL } from "@/components/home/content";
 import { TYPICAL_SCAN_MS } from "@/lib/scan/policy";
 import { useT } from "@/lib/i18n/provider";
 import type { MessageKey } from "@/lib/i18n/t";
@@ -40,12 +41,14 @@ export function ErrorState({
   url,
   message,
   hint,
+  code = null,
   onChange,
   onRetry,
 }: {
   url: string;
   message: string;
   hint?: string;
+  code?: ScanErrorCode | null;
   onChange: (v: string) => void;
   onRetry: () => void;
 }) {
@@ -76,9 +79,15 @@ export function ErrorState({
             <Button type="submit" variant="primary" size="md">
               {t("results.tryAnotherUrl")}
             </Button>
-            <Button href="/" variant="tertiary">
-              {t("results.seeWhatWeAudit")}
-            </Button>
+            {code === "site-blocked" ? (
+              <Button href={CHROME_WEB_STORE_URL} variant="secondary" size="md">
+                {t("results.getExtension")}
+              </Button>
+            ) : (
+              <Button href="/" variant="tertiary">
+                {t("results.seeWhatWeAudit")}
+              </Button>
+            )}
           </div>
         </form>
       </div>
