@@ -28,7 +28,6 @@ body:
     id: suggested
     attributes:
       label: Suggested text
-      render: text
 
   - type: checkboxes
     id: languages
