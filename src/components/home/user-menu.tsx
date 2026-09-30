@@ -14,7 +14,7 @@ import {
 type UserData = { name?: string | null; email?: string | null; image?: string | null };
 
 const itemClasses =
-  "flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium text-body outline-none transition-colors hover:bg-band hover:text-ink data-[highlighted]:bg-band data-[highlighted]:text-ink";
+  "flex cursor-pointer items-center gap-2.5 px-2.5 py-2 text-sm font-medium text-body outline-none transition-colors hover:bg-band hover:text-ink data-[highlighted]:bg-band data-[highlighted]:text-ink";
 
 export function UserMenu({
   user,
@@ -32,7 +32,7 @@ export function UserMenu({
       <DropdownMenu.Trigger asChild>
         <button
           type="button"
-          className="group flex cursor-pointer items-center gap-2.5 rounded-full border border-hairline bg-surface py-2 pr-4 pl-1.5 text-sm font-medium text-ink transition-all outline-none hover:bg-canvas"
+          className="group flex cursor-pointer items-center gap-2.5 border border-hairline bg-surface py-2 pr-4 pl-1.5 text-sm font-medium text-ink transition-all outline-none hover:bg-canvas"
         >
           <Avatar user={user} />
           <span className="hidden sm:block">{firstName}</span>
@@ -47,7 +47,7 @@ export function UserMenu({
         <DropdownMenu.Content
           align="end"
           sideOffset={8}
-          className="z-50 w-56 overflow-hidden rounded-xl border border-hairline bg-surface shadow-selected"
+          className="z-50 w-56 overflow-hidden border border-hairline bg-surface shadow-selected"
         >
           <div className="border-b border-hairline px-4 py-3">
             <div className="truncate text-sm font-semibold text-ink">

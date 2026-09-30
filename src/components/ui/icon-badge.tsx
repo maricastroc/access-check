@@ -12,7 +12,7 @@ export function IconBadge({ icon, className, iconClassName }: IconBadgeProps) {
   return (
     <span
       className={cn(
-        "inline-flex items-center justify-center rounded-xl",
+        "inline-flex items-center justify-center",
         "size-11 bg-band text-steel",
         className,
       )}

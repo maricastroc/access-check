@@ -22,7 +22,7 @@ export function ScanCard({ scan, delta }: { scan: ScanListItem; delta: number | 
       <DeleteScanButton id={scan.id} />
       <Link
         href={`/report/${scan.id}`}
-        className="flex flex-col overflow-hidden rounded-2xl border border-hairline bg-surface transition-shadow"
+        className="flex flex-col overflow-hidden border border-hairline bg-surface transition-shadow"
       >
         <div className="relative aspect-video overflow-hidden border-b border-hairline bg-canvas">
           {!loaded && <div aria-hidden className="ac-skeleton absolute inset-0" />}
@@ -38,7 +38,7 @@ export function ScanCard({ scan, delta }: { scan: ScanListItem; delta: number | 
             }`}
           />
           <span
-            className="absolute top-3 right-3 flex size-11 items-center justify-center rounded-full text-sm font-bold text-white shadow-selected"
+            className="absolute top-3 right-3 flex size-11 items-center justify-center text-sm font-bold text-white shadow-selected"
             style={{ background: scoreColor(scan.score) }}
           >
             <span className="sr-only">{t("history.scoreLabel")} </span>

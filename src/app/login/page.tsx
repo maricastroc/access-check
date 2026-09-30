@@ -64,7 +64,7 @@ function ProviderButton({
     >
       <button
         type="submit"
-        className={`flex w-full cursor-pointer items-center justify-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${providerButtonClasses[provider]}`}
+        className={`flex w-full cursor-pointer items-center justify-center gap-3 px-4 py-3 text-sm font-semibold transition-colors ${providerButtonClasses[provider]}`}
       >
         <FontAwesomeIcon icon={icon} className="text-base" />
         {label}

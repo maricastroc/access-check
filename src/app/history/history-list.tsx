@@ -81,7 +81,7 @@ export function HistoryList({ scans }: { scans: ScanListItem[] }) {
                   <span
                     role="status"
                     aria-live="polite"
-                    className="rounded-full bg-band px-2 py-0.5 text-[12px] font-semibold text-body"
+                    className="bg-band px-2 py-0.5 text-[12px] font-semibold text-body"
                   >
                     {resultLabel}
                   </span>
@@ -118,7 +118,7 @@ export function HistoryList({ scans }: { scans: ScanListItem[] }) {
         {!hasScans ? (
           <NoScans />
         ) : visible.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-surface px-6 py-16 text-center">
+          <div className="flex flex-col items-center justify-center border border-dashed border-border bg-surface px-6 py-16 text-center">
             <p className="text-base font-semibold text-ink">{t("history.noMatches")}</p>
             <p className="mt-1.5 max-w-sm text-sm text-muted">{t("history.tryDifferentDomain")}</p>
           </div>
@@ -137,12 +137,12 @@ export function HistoryList({ scans }: { scans: ScanListItem[] }) {
 function NoScans() {
   const t = useT();
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-surface px-6 py-16 text-center">
+    <div className="flex flex-col items-center justify-center border border-dashed border-border bg-surface px-6 py-16 text-center">
       <p className="text-base font-semibold text-ink">{t("history.empty")}</p>
       <p className="mt-1.5 max-w-sm text-sm text-muted">{t("history.emptyBody")}</p>
       <Link
         href="/"
-        className="mt-5 rounded-[10px] bg-ink px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-ink-2"
+        className="mt-5 bg-ink px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-ink-2"
       >
         {t("history.runAudit")}
       </Link>

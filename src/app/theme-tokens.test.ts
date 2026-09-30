@@ -40,3 +40,13 @@ describe("every color and shadow class names a token the theme defines", () => {
     expect([...new Set(unknown)]).toEqual([]);
   });
 });
+
+const ROUNDED =
+  /(?<![\w-])(?:[a-z-]+:)*rounded(?:-(?!full\b|none\b)[a-z0-9]+|-\[[^\]]+\])?(?![\w-])/g;
+
+describe("corners stay square across the site", () => {
+  it.each(sources(root).map((path) => [path.slice(root.length), path]))("%s", (_, path) => {
+    const source = readFileSync(path, "utf8");
+    expect(source.match(ROUNDED) ?? []).toEqual([]);
+  });
+});

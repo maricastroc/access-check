@@ -53,7 +53,7 @@ export function ComparisonCard({
   const deltaColor = up ? "#16764f" : down ? "#c62a2f" : "#63676f";
 
   return (
-    <section className="w-full max-w-204 rounded-2xl border border-hairline bg-surface p-6 shadow-selected print:hidden">
+    <section className="w-full max-w-204 border border-hairline bg-surface p-6 shadow-selected print:hidden">
       <div className="flex items-start justify-between gap-4">
         <div>
           <span className="text-[10px] font-semibold tracking-[0.2em] text-steel uppercase">
@@ -72,7 +72,7 @@ export function ComparisonCard({
           </span>
           {diff.comparable ? (
             <span
-              className="flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-bold"
+              className="flex items-center gap-1 px-2.5 py-1 text-sm font-bold"
               style={{ color: deltaColor, background: `${deltaColor}1a` }}
             >
               <FontAwesomeIcon
@@ -82,7 +82,7 @@ export function ComparisonCard({
               {t("report.rulesMoved", { count: diff.fixed.length + diff.regressed.length })}
             </span>
           ) : (
-            <span className="rounded-full bg-canvas px-2.5 py-1 text-sm font-semibold text-muted">
+            <span className="bg-canvas px-2.5 py-1 text-sm font-semibold text-muted">
               {t("report.scoringModelUpdated")}
             </span>
           )}
@@ -93,7 +93,7 @@ export function ComparisonCard({
         {(["critical", "serious", "moderate", "minor"] as Severity[]).map((s) => {
           const c = diff.counts[s];
           return (
-            <div key={s} className="rounded-xl border border-hairline bg-canvas px-3 py-2.5">
+            <div key={s} className="border border-hairline bg-canvas px-3 py-2.5">
               <div className="flex items-center gap-1.5">
                 <span className="size-2 rounded-full" style={{ background: sevHex[s] }} />
                 <span className="text-[11px] font-semibold text-ink">{t(sevLabelKey[s])}</span>
@@ -160,10 +160,10 @@ function DiffList({
   t: Translate;
 }) {
   return (
-    <div className="rounded-xl border border-hairline p-4">
+    <div className="border border-hairline p-4">
       <div className="flex items-center gap-2">
         <span
-          className="flex size-5 items-center justify-center rounded-full text-[10px] text-white"
+          className="flex size-5 items-center justify-center text-[10px] text-white"
           style={{ background: tone }}
         >
           <FontAwesomeIcon icon={icon} />
