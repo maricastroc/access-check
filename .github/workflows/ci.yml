@@ -33,6 +33,9 @@ jobs:
       - name: ESLint
         run: npm run lint
 
+      - name: Formatting
+        run: npm run format:check
+
       - name: Typecheck
         run: npm run typecheck
 
@@ -49,3 +52,40 @@ jobs:
       # so DATABASE_URL is not required here.
       - name: Production build
         run: npm run build
+
+  browser-gates:
+    name: Browser gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Build the extension
+        run: npm run build:extension
+
+      - name: Results page
+        run: npm run check:results
+
+      - name: Extension audit
+        run: npm run check:extension
+
+      - name: Side panel
+        run: npm run check:panel
+
+      - name: Keyboard walk
+        run: npm run check:deep
+
+      - name: Manifest as Chrome loads it
+        run: npm run check:manifest
+
+      - name: Packaged extension
+        run: npm run smoke:package
