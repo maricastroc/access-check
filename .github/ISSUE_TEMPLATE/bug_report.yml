@@ -1,0 +1,80 @@
+name: 🐞 Bug report
+description: Something in the site or the extension did not work as it should.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this. The clearer the steps, the faster it gets fixed.
+
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where it happened
+      options:
+        - Website (access-check.marianacastro.dev)
+        - Chrome extension
+        - Both
+    validations:
+      required: true
+
+  - type: input
+    id: page
+    attributes:
+      label: Page you audited
+      description: The address of the page, if the bug depends on it.
+      placeholder: https://example.com/
+
+  - type: textarea
+    id: happened
+    attributes:
+      label: What happened
+      description: What you saw, in your own words.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open ...
+        2. Press ...
+        3. See ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should happen
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots
+      description: Drag images here. A screenshot with the overlay on and one with it off helps a lot with marker issues.
+
+  - type: textarea
+    id: cause
+    attributes:
+      label: Likely cause
+      description: Optional. What you suspect, and where in the code to look.
+
+  - type: dropdown
+    id: language
+    attributes:
+      label: Report language
+      options:
+        - English
+        - Português (Brasil)
+        - Both
+
+  - type: input
+    id: version
+    attributes:
+      label: Extension version
+      description: Only for the extension. It is on chrome://extensions.
+      placeholder: "1.3.1"

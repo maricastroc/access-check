@@ -1,0 +1,34 @@
+name: 💡 Idea
+description: Something AccessCheck could check, show or explain better.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What you are trying to do
+      description: The situation, not the solution. What gets in your way today?
+    validations:
+      required: true
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would help
+    validations:
+      required: true
+
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where it would live
+      options:
+        - Website
+        - Chrome extension
+        - Both
+        - Not sure
+
+  - type: textarea
+    id: more
+    attributes:
+      label: Anything else
+      description: Links, examples from other tools, WCAG criteria involved.
