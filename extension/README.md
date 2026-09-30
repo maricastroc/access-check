@@ -2,7 +2,11 @@
 
 Audits the page you are already on — including pages behind a login, on localhost
 or on staging, which the hosted scanner cannot reach. Nothing leaves the browser:
-no network calls, no storage, no account.
+no network calls, no account. The only things kept are the last report, in
+`chrome.storage.session`, and the report language you picked, in
+`chrome.storage.local` (see [PRIVACY.md](PRIVACY.md)).
+
+**Install it from the [Chrome Web Store](https://chromewebstore.google.com/detail/accesscheck/odhbdcnojfgjbkbfajidablhibhhckgf).**
 
 It runs the same engine as the hosted scanner: `dom-engine.js` here is the same
 file `npm run build:engine` produces for the server to inject, byte for byte.

@@ -32,7 +32,7 @@
 </p>
 
 <p align="center">
-  🔗 <strong>Live demo:</strong> <a href="https://access-check.marianacastro.dev">access-check.marianacastro.dev</a>
+  🔗 <strong>Live demo:</strong> <a href="https://access-check.marianacastro.dev">access-check.marianacastro.dev</a> · 🧩 <strong>Chrome extension:</strong> <a href="https://chromewebstore.google.com/detail/accesscheck/odhbdcnojfgjbkbfajidablhibhhckgf">Chrome Web Store</a>
 </p>
 
 <br/>
@@ -189,6 +189,8 @@ Everything else — an alt text, an `aria-label`, a structural change — is a s
 
 The web app audits a URL. The extension audits **the tab you are already looking at** — behind a login, mid-checkout, three clicks into a flow no crawler can reach. It is a Manifest V3 side panel that reuses the same engine as the server-side scan.
 
+**Install it from the [Chrome Web Store](https://chromewebstore.google.com/detail/accesscheck/odhbdcnojfgjbkbfajidablhibhhckgf).**
+
 - **The debugger is opt-in, not the price of admission.** Clicking the icon runs the rules, the own-rule audits and the fix verification without ever attaching `chrome.debugger`. Walking the keyboard focus path is a separate action that states its cost before you press it, and **Continue the walk** resumes a walk that was cut short instead of starting over.
 - **A real focus path, not a simulated one.** The walk attaches `chrome.debugger` and dispatches genuine `Tab` / `Shift+Tab` through CDP, so the order it reports is the order Chrome actually produces — including what the browser skips. The debugger is attached for that step only and released before the report appears; a walk that is cut short still releases it.
 - **It names the element, not just its CSS path.** axe points at `.bg-gradient-left.dark\:bg-gradient-left-dark…` — 501 characters of compiled Tailwind on react.dev. The report reads `span.text-gray-30 “example.com/”  ·  in <article>`, built from the tag, one stable attribute, the accessible name and the enclosing landmark, with generated ids and hashed classes deliberately left out. Repeated elements that would read the same way are numbered (`1 of 3`) rather than invented. The selector is kept beside the name for **Locate on page** and **Copy selector** — identity is for people, the locator is for `querySelector`.
@@ -240,7 +242,7 @@ npm run test
 
 ### 🧩 The Chrome extension
 
-> Build it:
+> To just use it, install the published version from the [Chrome Web Store](https://chromewebstore.google.com/detail/accesscheck/odhbdcnojfgjbkbfajidablhibhhckgf). To run it from source, build it:
 
 ```bash
 npm run build:extension
@@ -268,7 +270,7 @@ npm run check:results
 
 Released under the [MIT License](LICENSE). You're free to use, study, fork and build on this code — **as long as the original copyright and license notice are kept**. Reuse it and learn from it; don't strip the attribution and present it as your own.
 
-© 2025–2026 [**Mariana Castro**](https://marianacastro.dev) · [Live demo](https://access-check.marianacastro.dev)
+© 2025–2026 [**Mariana Castro**](https://marianacastro.dev) · [Live demo](https://access-check.marianacastro.dev) · [Chrome extension](https://chromewebstore.google.com/detail/accesscheck/odhbdcnojfgjbkbfajidablhibhhckgf)
 
 <br/>
 
