@@ -1,0 +1,47 @@
+name: ✏️ Text or translation
+description: A sentence that reads wrong, is outdated, or is missing in one of the languages.
+labels: ["ui"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        AccessCheck keeps its texts short and natural in English and Portuguese, without em dashes. Measurements belong in Details, not in the sentence.
+
+  - type: input
+    id: where
+    attributes:
+      label: Where the text appears
+      placeholder: Results page, opened finding, contrast preview
+    validations:
+      required: true
+
+  - type: textarea
+    id: current
+    attributes:
+      label: Current text
+      description: Paste it as it appears. Include the catalog key if you know it.
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggested
+    attributes:
+      label: Suggested text
+      render: text
+
+  - type: checkboxes
+    id: languages
+    attributes:
+      label: Languages affected
+      options:
+        - label: English
+        - label: Português (Brasil)
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it should change
+      description: Outdated wording, a clash with another part of the product, a typo, a missing translation...
+    validations:
+      required: true

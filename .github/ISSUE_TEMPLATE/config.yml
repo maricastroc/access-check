@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 🌐 Try the site
+    url: https://access-check.marianacastro.dev
+    about: Audit a page by its address.
+  - name: 🧩 Install the extension
+    url: https://chromewebstore.google.com/detail/accesscheck/odhbdcnojfgjbkbfajidablhibhhckgf
+    about: Audit the page you are on, from your own browser.
