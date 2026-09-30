@@ -40,7 +40,7 @@ export function placeMarkers(
   targets.forEach((target, i) => {
     if (markers.length >= MAX_MARKERS) return;
     const r = rects[i];
-    if (!r || r.w === 0 || r.h === 0) return;
+    if (!r || r.w === 0 || r.h === 0 || r.seen === false) return;
     if (r.y < 0 || r.y > viewport.height || r.x > viewport.width) return;
     if (r.w >= viewport.width * 0.9 && r.h >= viewport.height * 0.9) return;
 
