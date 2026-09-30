@@ -158,3 +158,33 @@ describe("the web finding detail speaks through the catalog", () => {
     expect(ptBR["detail.humanDecision"]).not.toBe(en["detail.humanDecision"]);
   });
 });
+
+describe("the contrast preview says what the rest of the report says", () => {
+  const preview = [
+    "detail.verifiedOnElement",
+    "detail.verifiedOnElementNote",
+    "detail.calculatedNote",
+    "detail.sharedColorPair",
+  ] as const;
+
+  it("calls a passing fix tested, the way the queue and the seal do", () => {
+    expect(en["detail.verifiedOnElement"]).toContain(en["verdict.label.verified"]);
+    expect(ptBR["detail.verifiedOnElement"]).toContain(ptBR["verdict.label.verified"]);
+  });
+
+  it("drops the old verification wording", () => {
+    for (const key of preview) {
+      for (const text of variants(en[key])) {
+        expect(text, key).not.toMatch(/\bverified\b|re-audit/i);
+      }
+      for (const text of variants(ptBR[key])) {
+        expect(text, key).not.toMatch(/reauditoria|verificado ao vivo/i);
+      }
+    }
+  });
+
+  it("spells color the American way everywhere in English", () => {
+    const british = keys.filter((key) => variants(en[key]).some((text) => /colour/i.test(text)));
+    expect(british).toEqual([]);
+  });
+});

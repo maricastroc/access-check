@@ -508,8 +508,8 @@ export const en = {
   "focusPath.selectedStop": "Stop {stop} of {total}",
   "capture.markerHint": "Select a marker to open the finding it belongs to.",
   "detail.sharedColorPair": {
-    one: "{count} occurrence shares this detected colour pair.",
-    other: "{count} occurrences share this detected colour pair.",
+    one: "{count} occurrence shares this detected color pair.",
+    other: "{count} occurrences share this detected color pair.",
   },
   "detail.moreSelectors": "+{count} more",
   "capture.frameLabel": "Screenshot \u00b7 {width} \u00d7 {height}",
@@ -1084,13 +1084,14 @@ export const en = {
   "detail.sampleText": "Sample text",
   "detail.currentView": "current",
   "detail.largeText": " (large text)",
-  "detail.verifiedOnElement": "Verified on this element",
-  "detail.verifiedOnElementNote": "Passes WCAG AA, confirmed by re-audit of the located element",
+  "detail.verifiedOnElement": "Fix tested on this element",
+  "detail.verifiedOnElementNote":
+    "Passes WCAG AA: applied to this element for a moment and checked again",
   "detail.uncertain": "Result uncertain",
   "detail.uncertainNote": "Can't confirm this reaches the minimum on the real background",
   "detail.calculated": "Calculated",
   "detail.calculatedNote":
-    "Would reach {ratio}:1, calculated from the detected colors, not verified live",
+    "Would reach {ratio}:1, calculated from the detected colors, not tested on the page",
   "detail.previewNote":
     "Preview uses the detected foreground and background colors. Typography and page context are not reproduced.",
   "detail.contrastPreview": "Contrast preview",
