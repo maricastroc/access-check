@@ -29,10 +29,10 @@ export default async function LoginPage() {
           <ProviderButton provider="google" icon={faGoogle} label={t("login.google")} />
         </div>
 
-        <p className="text-faint mt-6 text-center text-xs leading-relaxed">{t("login.note")}</p>
+        <p className="mt-6 text-center text-xs leading-relaxed text-muted">{t("login.note")}</p>
 
         <p className="mt-6 text-center text-sm">
-          <Link href="/" className="text-ink-soft font-medium transition-colors hover:text-ink">
+          <Link href="/" className="font-medium text-body transition-colors hover:text-ink">
             ← Back to home
           </Link>
         </p>
@@ -42,9 +42,8 @@ export default async function LoginPage() {
 }
 
 const providerButtonClasses: Record<"github" | "google", string> = {
-  github: "border border-transparent bg-ink text-white hover:bg-ink-soft",
-  google:
-    "border border-line-strong bg-card text-ink shadow-soft hover:border-[#d6d9df] hover:bg-canvas",
+  github: "border border-transparent bg-ink text-white hover:bg-ink-2",
+  google: "border border-border bg-surface text-ink  hover:border-[#d6d9df] hover:bg-canvas",
 };
 
 function ProviderButton({

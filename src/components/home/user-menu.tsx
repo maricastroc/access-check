@@ -14,7 +14,7 @@ import {
 type UserData = { name?: string | null; email?: string | null; image?: string | null };
 
 const itemClasses =
-  "flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium text-ink-soft outline-none transition-colors hover:bg-canvas hover:text-ink data-[highlighted]:bg-canvas data-[highlighted]:text-ink";
+  "flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium text-body outline-none transition-colors hover:bg-band hover:text-ink data-[highlighted]:bg-band data-[highlighted]:text-ink";
 
 export function UserMenu({
   user,
@@ -32,7 +32,7 @@ export function UserMenu({
       <DropdownMenu.Trigger asChild>
         <button
           type="button"
-          className="group border-line bg-card shadow-soft hover:shadow-card flex cursor-pointer items-center gap-2.5 rounded-full border py-2 pr-4 pl-1.5 text-sm font-medium text-ink transition-all outline-none hover:bg-canvas"
+          className="group flex cursor-pointer items-center gap-2.5 rounded-full border border-hairline bg-surface py-2 pr-4 pl-1.5 text-sm font-medium text-ink transition-all outline-none hover:bg-canvas"
         >
           <Avatar user={user} />
           <span className="hidden sm:block">{firstName}</span>
@@ -47,9 +47,9 @@ export function UserMenu({
         <DropdownMenu.Content
           align="end"
           sideOffset={8}
-          className="border-line bg-card shadow-card data-[side=bottom]:slide-in-from-top-2 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 z-50 w-56 overflow-hidden rounded-xl border duration-150"
+          className="z-50 w-56 overflow-hidden rounded-xl border border-hairline bg-surface shadow-selected"
         >
-          <div className="border-line border-b px-4 py-3">
+          <div className="border-b border-hairline px-4 py-3">
             <div className="truncate text-sm font-semibold text-ink">
               {user.name ?? t("nav.account")}
             </div>
@@ -85,13 +85,13 @@ function Avatar({ user }: { user: UserData }) {
       <img
         src={user.image}
         alt=""
-        className="border-line size-8 rounded-full border object-cover"
+        className="size-8 rounded-full border border-hairline object-cover"
       />
     );
   }
   const initial = (user.name ?? user.email ?? "?").charAt(0).toUpperCase();
   return (
-    <span className="bg-brand-100 text-brand-700 flex size-8 items-center justify-center rounded-full text-xs font-bold">
+    <span className="flex size-8 items-center justify-center rounded-full bg-band text-xs font-bold text-steel">
       {initial}
     </span>
   );

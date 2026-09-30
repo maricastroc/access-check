@@ -68,7 +68,7 @@ export function HistoryList({ scans }: { scans: ScanListItem[] }) {
 
   return (
     <>
-      <div className="border-line bg-card border-b">
+      <div className="border-b border-hairline bg-surface">
         <div className="mx-auto w-full max-w-7xl px-6 py-5">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -81,7 +81,7 @@ export function HistoryList({ scans }: { scans: ScanListItem[] }) {
                   <span
                     role="status"
                     aria-live="polite"
-                    className="bg-chip text-ink-soft rounded-full px-2 py-0.5 text-[12px] font-semibold"
+                    className="rounded-full bg-band px-2 py-0.5 text-[12px] font-semibold text-body"
                   >
                     {resultLabel}
                   </span>
@@ -118,7 +118,7 @@ export function HistoryList({ scans }: { scans: ScanListItem[] }) {
         {!hasScans ? (
           <NoScans />
         ) : visible.length === 0 ? (
-          <div className="border-line-strong bg-card flex flex-col items-center justify-center rounded-2xl border border-dashed px-6 py-16 text-center">
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-surface px-6 py-16 text-center">
             <p className="text-base font-semibold text-ink">{t("history.noMatches")}</p>
             <p className="mt-1.5 max-w-sm text-sm text-muted">{t("history.tryDifferentDomain")}</p>
           </div>
@@ -137,12 +137,12 @@ export function HistoryList({ scans }: { scans: ScanListItem[] }) {
 function NoScans() {
   const t = useT();
   return (
-    <div className="border-line-strong bg-card flex flex-col items-center justify-center rounded-2xl border border-dashed px-6 py-16 text-center">
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-surface px-6 py-16 text-center">
       <p className="text-base font-semibold text-ink">{t("history.empty")}</p>
       <p className="mt-1.5 max-w-sm text-sm text-muted">{t("history.emptyBody")}</p>
       <Link
         href="/"
-        className="bg-brand-600 hover:bg-brand-700 mt-5 rounded-[10px] px-4 py-2 text-sm font-semibold text-white transition-colors"
+        className="mt-5 rounded-[10px] bg-ink px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-ink-2"
       >
         {t("history.runAudit")}
       </Link>

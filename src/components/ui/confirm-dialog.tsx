@@ -24,8 +24,8 @@ export function ConfirmDialog({
     <AlertDialog.Root>
       <AlertDialog.Trigger asChild>{trigger}</AlertDialog.Trigger>
       <AlertDialog.Portal>
-        <AlertDialog.Overlay className="data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/40 backdrop-blur-sm duration-200" />
-        <AlertDialog.Content className="border-line bg-card shadow-card data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] fixed top-1/2 left-1/2 z-50 w-[90vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border p-6 duration-200 focus:outline-none">
+        <AlertDialog.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm duration-200" />
+        <AlertDialog.Content className="data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] fixed top-1/2 left-1/2 z-50 w-[90vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-hairline bg-surface p-6 shadow-selected duration-200 focus:outline-none">
           <AlertDialog.Title className="text-lg font-bold tracking-tight text-ink">
             {title}
           </AlertDialog.Title>
@@ -37,7 +37,7 @@ export function ConfirmDialog({
             <AlertDialog.Cancel asChild>
               <button
                 type="button"
-                className="border-line-strong bg-card flex h-9 cursor-pointer items-center rounded-[10px] border px-4 text-sm font-medium text-ink transition-colors hover:bg-canvas"
+                className="flex h-9 cursor-pointer items-center rounded-[10px] border border-border bg-surface px-4 text-sm font-medium text-ink transition-colors hover:bg-canvas"
               >
                 {cancelLabel}
               </button>
@@ -47,9 +47,7 @@ export function ConfirmDialog({
                 type="button"
                 onClick={onConfirm}
                 className={`flex h-9 cursor-pointer items-center rounded-[10px] px-4 text-sm font-semibold text-white transition-colors ${
-                  destructive
-                    ? "bg-[#c62a2f] hover:bg-[#a82428]"
-                    : "bg-brand-600 hover:bg-brand-700"
+                  destructive ? "bg-[#c62a2f] hover:bg-[#a82428]" : "bg-ink hover:bg-ink-2"
                 }`}
               >
                 {confirmLabel}
