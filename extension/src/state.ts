@@ -1,5 +1,5 @@
 import type { ScanResult } from "../../src/lib/scan/types";
-import type { OverlayMark, OverlayReport } from "../../src/lib/scan/dom/overlay";
+import type { OVERLAY_PICK, OverlayMark, OverlayReport } from "../../src/lib/scan/dom/overlay";
 import type { MessageKey } from "../../src/lib/i18n/t";
 
 export type AuditStage = "structure" | "rules" | "focus" | "report";
@@ -18,6 +18,7 @@ export type HighlightRequest = {
   marks: OverlayMark[];
   focus: number | null;
   scroll: boolean;
+  path: boolean;
   timeoutMs: number;
 };
 
@@ -31,7 +32,8 @@ export type PanelMessage =
   | { type: "panel:continue-walk" }
   | { type: "panel:clear-highlight" }
   | { type: "panel:restore-scroll" }
-  | { type: "panel:state"; state: PanelState };
+  | { type: "panel:state"; state: PanelState }
+  | { type: typeof OVERLAY_PICK; key: string };
 
 const BLOCKED: { test: (url: string) => boolean; reason: MessageKey }[] = [
   {

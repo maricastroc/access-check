@@ -101,3 +101,19 @@ export function stepOccurrence(index: number, total: number, delta: 1 | -1): num
 export function unlistedOccurrences(finding: FindingView, listed: number): number {
   return Math.max(0, finding.elements - listed);
 }
+
+export type StopFinding = { stop: number; findingId: string; index: number; tag: string };
+
+export function findingsAtStops(findings: FindingView[]): StopFinding[] {
+  return findings.flatMap((f) => {
+    const all = occurrencesOf(f);
+    return all
+      .filter((o) => o.stop !== null)
+      .map((o) => ({
+        stop: o.stop!,
+        findingId: f.id,
+        index: o.index,
+        tag: occurrenceTag(f.n, o.index, all.length),
+      }));
+  });
+}

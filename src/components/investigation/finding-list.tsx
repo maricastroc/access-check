@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import type { FindingView, QueueGroup } from "@/lib/report/findings";
 import { categoryOf } from "@/lib/report/guidance";
+import { severityLabel } from "@/lib/report/severity";
 import { threadEnd, contrastReading, type ThreadEnd } from "@/lib/report/chain";
 import { occurrencesOf } from "@/lib/report/occurrences";
 import type { MessageKey, Translate } from "@/lib/i18n/t";
@@ -42,6 +43,15 @@ export function gapOf(f: FindingView, t: Translate): string {
   return t("unit.element", { count: f.elements });
 }
 
+export function labelOf(f: FindingView, t: Translate): string {
+  if (f.kind === "manual-review" || f.kind === "best-practice") {
+    return f.passLabel ?? t("finding.kind.bestPractice");
+  }
+  return [f.severity ? severityLabel(f.severity, t) : null, f.passLabel]
+    .filter(Boolean)
+    .join(" · ");
+}
+
 export function chipOf(f: FindingView, index: number, t: Translate): string | null {
   const category = categoryOf(f.ruleId, f.kind);
   if (category === "contrast" && f.kind !== "manual-review") {
@@ -59,7 +69,7 @@ function Status({ f, t }: { f: FindingView; t: Translate }) {
   const key = end ? STATUS[end] : undefined;
   if (!end || !key) return null;
   return (
-    <span className="flex items-center gap-1.5 text-[13px] whitespace-nowrap text-ink-2">
+    <span className="inline-flex min-w-0 items-center gap-1.5 text-[13px] text-ink-2">
       <NodeGlyph kind="end" sev={sevOf(f)} end={end} />
       {t(key)}
     </span>
@@ -74,7 +84,6 @@ export function FindingList({
   t,
   hoveredId = null,
   onHover,
-  flash = null,
   aside,
   compact = false,
   rowAttrs,
@@ -87,7 +96,6 @@ export function FindingList({
   t: Translate;
   hoveredId?: string | null;
   onHover?: (id: string | null) => void;
-  flash?: { id: string; k: number } | null;
   aside?: (f: FindingView) => ReactNode;
   compact?: boolean;
   rowAttrs?: Record<string, string>;
@@ -113,13 +121,13 @@ export function FindingList({
     };
     return (
       <li
-        key={open ? `${f.id}:open` : `${f.id}:${flash?.id === f.id ? flash.k : 0}`}
+        key={f.id}
         id={`finding-${f.id}`}
         data-finding={f.n}
+        data-kind={f.kind}
         className={cn(
           "scroll-mt-24",
-          open && "my-2 bg-surface",
-          !open && flash?.id === f.id && "ac-flash",
+          open && "bg-surface",
           !open && hoveredId === f.id && "bg-surface/70",
         )}
         {...rowAttrs}
@@ -132,9 +140,10 @@ export function FindingList({
             onClick={() => onToggle(f.id)}
             {...hover}
             className={cn(
-              "grid w-full cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-x-3.5 text-left",
+              "ac-focus-inset grid w-full cursor-pointer items-start gap-x-3.5 text-left",
+              compact ? "grid-cols-[auto_minmax(0,1fr)]" : "grid-cols-[auto_minmax(0,1fr)_auto]",
               pad,
-              open ? "pt-5 pb-3" : compact ? "py-3" : "py-3.5",
+              compact ? (open ? "pt-3 pb-3" : "py-3") : open ? "pt-3.5 pb-3" : "py-3.5",
               !open && "hover:bg-surface/70",
             )}
           >
@@ -164,16 +173,23 @@ export function FindingList({
                 {f.title}
               </span>
               {open ? (
-                <span
-                  className={cn(
-                    "mt-1.5 block leading-normal font-normal break-words text-ink-2",
-                    compact ? "text-[14px]" : "text-[15px]",
-                  )}
-                >
-                  {f.impact}
-                </span>
+                <>
+                  <span className="mt-1 block text-[13.5px] font-semibold text-ink-2">
+                    {labelOf(f, t)}
+                  </span>
+                  <span
+                    className={cn(
+                      "mt-1.5 block leading-normal font-normal break-words text-ink-2",
+                      compact ? "text-[14px]" : "text-[15px]",
+                    )}
+                  >
+                    {f.impact}
+                  </span>
+                </>
               ) : (
                 <span className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[13.5px] font-normal text-muted">
+                  <span className="font-semibold text-ink-2">{labelOf(f, t)}</span>
+                  <span aria-hidden>·</span>
                   <span>{gapOf(f, t)}</span>
                   {f.elements > 1 &&
                     f.ruleId !== "focus-not-visible" &&
@@ -184,10 +200,16 @@ export function FindingList({
                       </>
                     )}
                   {aside?.(f)}
+                  {compact && threadEnd(f) && STATUS[threadEnd(f)!] && (
+                    <>
+                      <span aria-hidden>·</span>
+                      <Status f={f} t={t} />
+                    </>
+                  )}
                 </span>
               )}
             </span>
-            {!open && (
+            {!open && !compact && (
               <span className="pt-1">
                 <Status f={f} t={t} />
               </span>
@@ -247,12 +269,7 @@ export function FindingList({
             }}
           >
             <summary className={cn("flex cursor-pointer items-center gap-1.5 py-2", pad)}>
-              <span
-                aria-hidden
-                className="ac-chev inline-block text-[11px] text-ink-2 transition-transform"
-              >
-                ▸
-              </span>
+              <span aria-hidden className="ac-chev text-ink-2" />
               <h2 id={`group-${group}`} className="inline">
                 {heading}
               </h2>

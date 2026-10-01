@@ -12,6 +12,7 @@ import { REPORT_LOCALES } from "@/lib/i18n/locale";
 import { cn } from "@/lib/cn";
 import { CodeChange, Heard, NodeGlyph, RatioGauge, TextSample, sevOf, type Sev } from "./notation";
 import { OccurrenceNav } from "./occurrence-nav";
+import { ElementDetails } from "./element-details";
 
 const ROLE_KEY: Record<string, MessageKey> = {
   button: "chain.role.button",
@@ -109,9 +110,12 @@ function Located({
         .filter(Boolean)
         .join(" ")
     : view.label;
-  const code = [occ.stop !== null ? t("panel.stopN", { n: occ.stop }) : null, element, view.context]
-    .filter(Boolean)
-    .join(" · ");
+  const stop = occ.keyboard
+    ? occ.stop !== null
+      ? t("panel.stopN", { n: occ.stop })
+      : t("panel.neverReached")
+    : null;
+  const code = [stop, element, view.context].filter(Boolean).join(" · ");
   const unlisted = unlistedOccurrences(finding, occurrences.length);
 
   return (
@@ -171,6 +175,7 @@ function Contrast({
         </span>
         <span className="text-[15px] text-ink-2">
           {reading.required}:1 {t("chain.needed")}
+          {reading.required <= 3 && t("detail.largeText")}
         </span>
       </p>
       <div className="mt-3">
@@ -430,9 +435,7 @@ function Verdict({
         </p>
         <details className="mt-2.5">
           <summary className="flex w-fit cursor-pointer items-center gap-1.5 text-[13.5px] font-semibold text-ink-2">
-            <span aria-hidden className="ac-chev inline-block text-[11px] transition-transform">
-              ▸
-            </span>
+            <span aria-hidden className="ac-chev" />
             {t("chain.howVerified")}
           </summary>
           <p className="mt-2 text-[14px] leading-normal text-ink-2">{message}</p>
@@ -465,7 +468,6 @@ export function EvidenceChain({
   compact = false,
   located,
   figure,
-  details,
   footer,
 }: {
   finding: FindingView;
@@ -477,7 +479,6 @@ export function EvidenceChain({
   compact?: boolean;
   located?: ReactNode;
   figure?: ReactNode;
-  details?: ReactNode;
   footer?: ReactNode;
 }) {
   const occ = occurrences[index] ?? null;
@@ -557,7 +558,7 @@ export function EvidenceChain({
           </Station>
         ))}
       </ol>
-      {details}
+      <ElementDetails finding={finding} occ={occ} t={t} />
       {footer}
     </section>
   );

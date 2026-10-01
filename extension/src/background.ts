@@ -1,5 +1,5 @@
 import type { ScanResult } from "../../src/lib/scan/types";
-import type { OverlayMark, OverlayReport } from "../../src/lib/scan/dom/overlay";
+import type { OverlayMark, OverlayOptions, OverlayReport } from "../../src/lib/scan/dom/overlay";
 import { withScoring } from "../../src/lib/scan/scored";
 import type { AuditContext } from "./audit";
 import { walkChangedPage, warningsAfterDeepAudit } from "./coverage";
@@ -232,12 +232,12 @@ async function inAuditedTab<T>(run: (tabId: number) => Promise<T>): Promise<T> {
 async function showOverlay(
   marks: OverlayMark[],
   focus: number | null,
-  opts: { scroll: boolean; timeoutMs: number },
+  opts: OverlayOptions,
 ): Promise<OverlayReport> {
   return inAuditedTab(async (tabId) => {
     const [{ result }] = await chrome.scripting.executeScript({
       target: { tabId },
-      func: (m: OverlayMark[], f: number | null, o: { scroll: boolean; timeoutMs: number }) =>
+      func: (m: OverlayMark[], f: number | null, o: OverlayOptions) =>
         window.__accessCheckDom!.overlayShow(m, f, o),
       args: [marks, focus, opts],
     });
@@ -300,6 +300,7 @@ chrome.runtime.onMessage.addListener((message: PanelMessage, _sender, sendRespon
       .then(() =>
         showOverlay(message.marks, message.focus, {
           scroll: message.scroll,
+          path: message.path,
           timeoutMs: message.timeoutMs,
         }),
       )

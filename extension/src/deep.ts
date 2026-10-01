@@ -85,6 +85,7 @@ export async function runDeepAudit(
   };
 
   try {
+    await inPage(tabId, () => window.__accessCheckDom!.overlayClear());
     const viewport = await inPage(tabId, () => window.__accessCheckDom!.readViewport());
 
     const raw = await collectFocusPath(

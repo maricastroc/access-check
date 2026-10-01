@@ -6,6 +6,9 @@ import { Tag } from "./notation";
 
 export type RelatedFinding = { stop: number; tag: string; onOpen: () => void };
 
+const LONG = 24;
+const AROUND = 6;
+
 export function FocusSequence({
   stops,
   current,
@@ -32,16 +35,29 @@ export function FocusSequence({
   const at = stops.findIndex((s) => s.n === current);
   const here = at >= 0 ? stops[at] : null;
   const links = here ? related.filter((r) => r.stop === here.n) : [];
+  const centre = Math.max(at, 0);
+  const listed =
+    whole || stops.length <= LONG
+      ? stops.map((s, i) => ({ s, i }))
+      : stops
+          .map((s, i) => ({ s, i }))
+          .filter(({ i }) => i === 0 || i === stops.length - 1 || Math.abs(i - centre) <= AROUND);
 
   return (
     <div className="ac-rise">
       <p className="text-[13.5px] text-muted">{t("focusPath.sequence", { count: stops.length })}</p>
       <ol className="mt-2.5 flex flex-wrap items-center gap-y-2.5">
-        {stops.map((s, i) => {
+        {listed.map(({ s, i }, k) => {
           const now = s.n === current;
+          const gap = k > 0 && i - listed[k - 1].i > 1;
           return (
             <li key={s.n} className="flex items-center">
-              {i > 0 && <span aria-hidden className="h-0.5 w-2.5 bg-path" />}
+              {gap && (
+                <span aria-hidden className="px-1.5 text-[13px] text-muted">
+                  …
+                </span>
+              )}
+              {k > 0 && !gap && <span aria-hidden className="h-0.5 w-2.5 bg-path" />}
               <button
                 type="button"
                 aria-current={now ? "step" : undefined}

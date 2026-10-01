@@ -14,6 +14,20 @@ const STANDING_SEV: Record<Standing, "critical" | "serious" | "moderate" | "none
   clean: "none",
 };
 
+export function StandingMark({ standing, size = 16 }: { standing: Standing; size?: number }) {
+  return (
+    <span
+      aria-hidden
+      data-sev={STANDING_SEV[standing]}
+      style={{ width: size, height: size }}
+      className={cn(
+        "block shrink-0 border-2 border-(--sev)",
+        standing === "clean" ? "bg-verified" : "ac-hatch",
+      )}
+    />
+  );
+}
+
 export function Summary({
   standing,
   groups,
@@ -90,15 +104,7 @@ export function Summary({
           compact ? "text-[24px]" : "text-[32px]",
         )}
       >
-        <span
-          aria-hidden
-          data-sev={STANDING_SEV[standing]}
-          className={cn(
-            "block shrink-0 border-2 border-(--sev)",
-            standing === "clean" ? "bg-verified" : "ac-hatch",
-            compact ? "size-4" : "size-5",
-          )}
-        />
+        <StandingMark standing={standing} size={compact ? 16 : 20} />
         <span>
           <span className="sr-only">{host}: </span>
           {t(STANDING_LABEL[standing])}

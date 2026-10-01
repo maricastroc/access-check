@@ -29,8 +29,10 @@ export function useInvestigation(findings: FindingView[]): Investigation {
   const [prevFindings, setPrevFindings] = useState(findings);
   if (findings !== prevFindings) {
     setPrevFindings(findings);
-    setSelectedId(null);
-    setOccIndex(0);
+    if (selectedId !== null && !findings.some((f) => f.id === selectedId)) {
+      setSelectedId(null);
+      setOccIndex(0);
+    }
   }
 
   const selected = useMemo(
@@ -38,6 +40,7 @@ export function useInvestigation(findings: FindingView[]): Investigation {
     [findings, selectedId],
   );
   const occurrences = useMemo(() => (selected ? occurrencesOf(selected) : []), [selected]);
+  const at = Math.min(occIndex, Math.max(occurrences.length - 1, 0));
 
   const select = useCallback((id: string, occ = 0, from: Origin = "row") => {
     setSelectedId(id);
@@ -90,5 +93,16 @@ export function useInvestigation(findings: FindingView[]): Investigation {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  return { selectedId, selected, occIndex, occurrences, origin, select, toggle, pick, step, clear };
+  return {
+    selectedId: selected ? selectedId : null,
+    selected,
+    occIndex: at,
+    occurrences,
+    origin,
+    select,
+    toggle,
+    pick,
+    step,
+    clear,
+  };
 }

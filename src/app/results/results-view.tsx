@@ -4,11 +4,18 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ScanResult } from "@/lib/scan/types";
 import { VIEWPORT_CAPTURE } from "@/lib/scan/types";
 import type { FindingView } from "@/lib/report/findings";
-import { occurrencesOf, occurrenceTag } from "@/lib/report/occurrences";
+import { findingsAtStops, occurrenceTag } from "@/lib/report/occurrences";
 import { chainOf } from "@/lib/report/chain";
 import { buildReportMarkdown, reportMarkdownFilename } from "@/lib/report/markdown";
 import { usePageAudit } from "@/hooks/use-page-audit";
-import { Connector, Tag, chipOf, sevOf, type RelatedFinding } from "@/components/investigation";
+import {
+  Connector,
+  Tag,
+  chipOf,
+  sevOf,
+  useInvestigation,
+  type RelatedFinding,
+} from "@/components/investigation";
 import { useT } from "@/lib/i18n/provider";
 import { safeHost } from "./shared";
 import { evidenceFigure } from "./evidence-figure";
@@ -23,7 +30,6 @@ import {
   type Layer,
 } from "./report-ui";
 import { buildReportView } from "./report-model";
-import { useInvestigation } from "./use-investigation";
 import { TopBar } from "./top-bar";
 import { InvestigationSurface } from "./investigation-surface";
 import { CaseFile } from "./case-file";
@@ -144,15 +150,11 @@ export function ResultsView({
   );
   const related: RelatedFinding[] = useMemo(
     () =>
-      (view?.findings ?? []).flatMap((f) =>
-        occurrencesOf(f)
-          .filter((o) => o.stop !== null)
-          .map((o, _, all) => ({
-            stop: o.stop!,
-            tag: occurrenceTag(f.n, o.index, all.length),
-            onOpen: () => inv.select(f.id, o.index, "stop"),
-          })),
-      ),
+      findingsAtStops(view?.findings ?? []).map((r) => ({
+        stop: r.stop,
+        tag: r.tag,
+        onOpen: () => inv.select(r.findingId, r.index, "stop"),
+      })),
     [view, inv],
   );
 

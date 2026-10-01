@@ -10,7 +10,7 @@ import type { FixVerification } from "../types";
 import type { OverlayMark, OverlayReport } from "./overlay";
 import type { PaintCalm, PrimeReport } from "./prime";
 
-export const DOM_ENGINE_VERSION = 19;
+export const DOM_ENGINE_VERSION = 20;
 
 export type DomEngine = {
   version: number;

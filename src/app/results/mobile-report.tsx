@@ -4,14 +4,19 @@ import type { ReactNode } from "react";
 import { SCAN_VIEWPORT, type ScanResult } from "@/lib/scan/types";
 import type { WcagReadingModel } from "@/lib/report/wcag";
 import { Button } from "@/components/ui";
-import { Crop, Locus, type FindingGroups, type RelatedFinding } from "@/components/investigation";
+import {
+  Crop,
+  Locus,
+  type FindingGroups,
+  type Investigation,
+  type RelatedFinding,
+} from "@/components/investigation";
 import { cn } from "@/lib/cn";
 import type { Translate } from "@/lib/i18n/t";
 import { CaseFile } from "./case-file";
 import { AboutAudit } from "./about-audit";
 import { captureById, occurrencePlaces } from "./report-ui";
 import { evidenceFigure } from "./evidence-figure";
-import type { Investigation } from "./use-investigation";
 
 export function MobileReport({
   result,

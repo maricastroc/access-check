@@ -145,8 +145,8 @@ describe("the catalog carries nothing the product no longer says", () => {
   });
 });
 
-describe("the web finding detail speaks through the catalog", () => {
-  const detail = readFileSync(fromRepo("src/components/ui/finding-detail.tsx"), "utf8");
+describe("the chain of evidence speaks through the catalog", () => {
+  const detail = readFileSync(fromRepo("src/components/investigation/evidence-chain.tsx"), "utf8");
 
   it("writes no sentence of its own between tags", () => {
     const fixed = detail.match(/>\s*[A-Z][a-z]+ [a-z]+[^<{]*</g) ?? [];

@@ -134,6 +134,36 @@ const ctx = await chromium.launchPersistentContext(mkdtempSync(join(tmpdir(), "a
   args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`],
 });
 
+const OVERLAY_READER = () => {
+  const root = document.getElementById("accesscheck-overlay");
+  if (!root) return { present: false, marks: [] };
+  const shadow = root.shadowRoot;
+  const marks = [...shadow.querySelectorAll("[data-mark]")].map((locus) => {
+    const n = locus.dataset.mark;
+    const tag = shadow.querySelector(`.tag[data-for="${n}"]`);
+    const ring = shadow.querySelector(`.ring[data-for="${n}"]`);
+    const style = getComputedStyle(locus);
+    return {
+      tag: locus.dataset.tag,
+      current: locus.dataset.current === "true",
+      tone: locus.dataset.tone,
+      shape: tag?.classList.contains("circle") ? "circle" : "square",
+      tagClass: tag?.className ?? "",
+      ring: Boolean(ring),
+      ringColor: ring ? getComputedStyle(ring.querySelector(".ring-line")).borderTopColor : null,
+      bracketsShown: style.visibility !== "hidden" && style.display !== "none",
+      halo: (tag ? getComputedStyle(tag).boxShadow : "").includes("rgba(255, 255, 255"),
+    };
+  });
+  return {
+    present: true,
+    parent: root.parentElement?.tagName ?? null,
+    ariaHidden: root.getAttribute("aria-hidden"),
+    pointerEvents: getComputedStyle(root).pointerEvents,
+    marks,
+  };
+};
+
 const failures = [];
 const check = (ok, what) => {
   if (!ok) failures.push(what);
@@ -685,34 +715,16 @@ try {
   const panel = await ctx.newPage();
   await panel.setViewportSize({ width: 400, height: 800 });
   await panel.goto(`chrome-extension://${extId}/panel.html`);
-  await panel.waitForFunction(() => document.body.textContent.includes("To fix ·"), null, {
+  await panel.waitForFunction(() => document.getElementById("group-fix") !== null, null, {
     timeout: 20000,
   });
 
-  const readOverlay = () =>
-    page.evaluate(() => {
-      const root = document.getElementById("accesscheck-overlay");
-      if (!root) return { present: false };
-      const boxes = [...root.children].map((box) => ({
-        badge: box.textContent,
-        color: getComputedStyle(box).borderTopColor,
-        width: getComputedStyle(box).borderTopWidth,
-        opacity: getComputedStyle(box).opacity,
-        shown: getComputedStyle(box).display !== "none",
-      }));
-      return {
-        present: true,
-        parent: root.parentElement?.tagName ?? null,
-        ariaHidden: root.getAttribute("aria-hidden"),
-        pointerEvents: getComputedStyle(root).pointerEvents,
-        boxes,
-      };
-    });
+  const readOverlay = () => page.evaluate(OVERLAY_READER);
 
   const clickByText = (text) =>
     panel.evaluate(async (label) => {
-      const button = [...document.querySelectorAll("button")].find(
-        (b) => b.textContent.trim() === label,
+      const button = [...document.querySelectorAll("button, label")].find(
+        (b) => b.textContent.replace(/[←→]/g, "").trim() === label,
       );
       if (!button) return false;
       button.click();
@@ -722,9 +734,17 @@ try {
 
   const layout = await panel.evaluate(() => {
     const text = document.body.textContent;
-    const names = ["This tab", "Quick audit", "To fix", "Focus path", "About this audit"];
+    const named = {
+      "verdict-heading": "This tab",
+      "group-fix": "To fix",
+      "focus-heading": "Focus path",
+    };
     const order = [...document.querySelectorAll("h1, h2")]
-      .map((el) => names.find((n) => el.textContent.trim().startsWith(n)))
+      .map(
+        (el) =>
+          named[el.id] ??
+          (el.textContent.trim().startsWith("About this audit") ? "About this audit" : null),
+      )
       .filter(Boolean);
     const details = [...document.querySelectorAll("details")].map((d) => ({
       title: d.querySelector("summary")?.textContent?.trim() ?? "",
@@ -770,8 +790,8 @@ try {
   check(layout.overflow <= 0, `the panel overflows 400px by ${layout.overflow}px`);
 
   const opened = await panel.evaluate(async () => {
-    const row = [...document.querySelectorAll("button")].find(
-      (b) => b.querySelector("h3") && /focus/i.test(b.textContent),
+    const row = [...document.querySelectorAll("li[data-finding] h3 > button")].find((b) =>
+      /focus/i.test(b.textContent),
     );
     row.focus();
     const focused = document.activeElement === row;
@@ -779,13 +799,16 @@ try {
     await new Promise((r) => setTimeout(r, 80));
     const text = document.body.textContent;
     const doc = document.documentElement;
-    const body = [...document.querySelectorAll("span, h4")]
-      .map((s) => s.textContent.trim())
-      .filter((t) => /^(Where|Occurrence \d+ of \d+|What to change|Why|Details)$/.test(t));
+    const section = row.closest("li").querySelector("section");
+    const body = [...section.querySelectorAll("h4")].map((h) =>
+      h.textContent.trim().replace(/WCAG.*$/, ""),
+    );
+    const chips = [...section.querySelectorAll('[role="group"] button[aria-pressed]')];
+    const at = chips.findIndex((c) => c.getAttribute("aria-pressed") === "true");
     return {
       focused,
       body,
-      counter: body.find((t) => /^Occurrence \d+ of \d+$/.test(t)),
+      counter: chips.length > 0 ? `Occurrence ${at + 1} of ${chips.length}` : null,
       reason: text.includes("Focus reached this element and nothing on screen changed."),
       locate: [...document.querySelectorAll("button")].some(
         (b) => b.textContent.trim() === "Locate on page",
@@ -800,52 +823,61 @@ try {
   check(opened.reason, "an occurrence does not say what visual change was missing");
   check(opened.locate, "there is no Locate on page action");
   check(
-    opened.body.indexOf("Where") === 0 &&
-      opened.body.indexOf(opened.counter) < opened.body.indexOf("What to change") &&
-      opened.body.indexOf("What to change") < opened.body.indexOf("Why") &&
-      opened.body.indexOf("Why") < opened.body.indexOf("Details"),
+    opened.body[0] === "Located" &&
+      ["Measured", "Evidence"].includes(opened.body[1]) &&
+      opened.body.at(-1) === "Details",
     `the expanded finding is out of order: ${JSON.stringify(opened.body)}`,
   );
   check(opened.overflow <= 0, `the panel overflows 400px by ${opened.overflow}px`);
 
   const stepped = await panel.evaluate(async () => {
-    const counter = () =>
-      [...document.querySelectorAll("span")]
-        .map((s) => s.textContent.trim())
-        .find((t) => /^Occurrence \d+ of \d+$/.test(t));
-    const press = async (label) => {
-      document.querySelector(`button[aria-label="${label}"]`).focus();
+    const chips = () => [
+      ...document.querySelectorAll('section[id^="investigation-"] [role="group"] button'),
+    ];
+    const counter = () => {
+      const all = chips();
+      const at = all.findIndex((c) => c.getAttribute("aria-pressed") === "true");
+      return `Occurrence ${at + 1} of ${all.length}`;
+    };
+    const press = async (i) => {
+      chips()[i].focus();
       document.activeElement.click();
       await new Promise((r) => setTimeout(r, 60));
       return counter();
     };
     const start = counter();
-    const next = await press("Next occurrence");
-    const back = await press("Previous occurrence");
-    const wrapped = await press("Previous occurrence");
-    return { start, next, back, wrapped };
+    const next = await press(1);
+    const back = await press(0);
+    const last = await press(2);
+    return { start, next, back, last };
   });
   console.log("stepping through occurrences:", JSON.stringify(stepped));
 
-  check(stepped.next === "Occurrence 2 of 3", `Next went to ${stepped.next}`);
-  check(stepped.back === "Occurrence 1 of 3", `Previous went to ${stepped.back}`);
-  check(stepped.wrapped === "Occurrence 3 of 3", `Previous from the first should wrap`);
+  check(stepped.next === "Occurrence 2 of 3", `the second occurrence went to ${stepped.next}`);
+  check(stepped.back === "Occurrence 1 of 3", `the first occurrence went to ${stepped.back}`);
+  check(stepped.last === "Occurrence 3 of 3", `the last occurrence went to ${stepped.last}`);
 
   await new Promise((r) => setTimeout(r, 600));
-  const followed = await panel.evaluate(
-    () =>
-      document.querySelector("section[aria-label='Where']")?.textContent.match(/Stop (\d+)/)?.[1] ??
-      null,
-  );
+  const followed = await panel.evaluate(() => {
+    const pressed = document.querySelector(
+      'section[id^="investigation-"] [role="group"] button[aria-pressed="true"]',
+    );
+    return pressed?.getAttribute("aria-label").match(/^Occurrence (\S+):/)?.[1] ?? null;
+  });
   const drawnForStep = await readOverlay();
+  const currentForStep = drawnForStep.marks?.filter((m) => m.current) ?? [];
   console.log(
     "the page follows the stepper:",
-    JSON.stringify({ stop: followed, boxes: drawnForStep.boxes?.map((b) => b.badge) }),
+    JSON.stringify({ occurrence: followed, marks: drawnForStep.marks }),
   );
   check(drawnForStep.present, "stepping to an occurrence drew nothing on the page");
   check(
-    drawnForStep.boxes?.length === 1 && drawnForStep.boxes[0].badge.startsWith(`${followed} `),
-    `the page shows ${JSON.stringify(drawnForStep.boxes?.map((b) => b.badge))}, not stop ${followed}`,
+    currentForStep.length === 1 && currentForStep[0].tag === followed,
+    `the page marks ${JSON.stringify(currentForStep)}, not occurrence ${followed}`,
+  );
+  check(
+    drawnForStep.marks.filter((m) => !m.current).every((m) => m.tagClass.includes("quiet")),
+    "the other occurrences are as loud as the one being read",
   );
   await panel.evaluate(() => chrome.runtime.sendMessage({ type: "panel:clear-highlight" }));
 
@@ -893,7 +925,10 @@ try {
   });
   const located = await readOverlay();
   console.log("locate on page:", JSON.stringify(located));
-  check(located.present && located.boxes.length === 1, "Locate on page drew nothing");
+  check(
+    located.present && located.marks.filter((m) => m.current).length === 1,
+    "Locate on page drew nothing",
+  );
 
   await panel.evaluate(() => chrome.runtime.sendMessage({ type: "panel:clear-highlight" }));
   await new Promise((r) => setTimeout(r, 300));
@@ -909,8 +944,8 @@ try {
       .find((t) => /^Stop \d+ of \d+$/.test(t)),
     hasPrev: !!document.querySelector('button[aria-label="Previous stop"]'),
     hasNext: !!document.querySelector('button[aria-label="Next stop"]'),
-    complete: [...document.querySelectorAll("button")].some(
-      (b) => b.textContent.trim() === "Show complete path",
+    complete: [...document.querySelectorAll("label")].some(
+      (l) => l.textContent.trim() === "Show complete path" && l.querySelector("input"),
     ),
     exit: [...document.querySelectorAll("button")].some((b) => b.textContent.trim() === "Exit"),
     retired: [...document.querySelectorAll("button")].some((b) =>
@@ -929,29 +964,34 @@ try {
   check(nav.exit, "there is no way to exit the inspection");
   check(!nav.retired, "the inspection still offers Clear overlay or Back to where you were");
 
-  const current = nearby.boxes.find((b) => /^1 · /.test(b.badge));
-  const others = nearby.boxes.filter((b) => !/^1 · /.test(b.badge));
+  const current = nearby.marks.find((m) => m.current);
+  const others = nearby.marks.filter((m) => !m.current);
   console.log("overlay semantics:", JSON.stringify({ current, others }));
-  check(!!current, `the current stop is not labelled: ${JSON.stringify(nearby.boxes)}`);
-  check(current.opacity === "1", "the current stop is not at full strength");
-  check(parseFloat(current.width) > 2, "the current stop is not drawn more strongly");
+  check(current?.tag === "1", `the current stop is not labelled: ${JSON.stringify(nearby.marks)}`);
+  check(current.tagClass.includes("current"), "the current stop is not drawn more strongly");
+  check(current.bracketsShown, "the current stop is not bracketed");
   check(
-    others.every((b) => parseFloat(b.opacity) < 1),
+    others.every((m) => !m.tagClass.includes("current") && !m.bracketsShown),
     "every stop is drawn at the same strength",
   );
   check(
-    others.every((b) => /^\d+$/.test(b.badge)),
+    others.every((m) => /^\d+$/.test(m.tag)),
     "a stop that is not current carries the current stop's label",
+  );
+  check(
+    nearby.marks.every((m) => m.halo),
+    "a mark on the page carries no halo to stand out on any background",
   );
 
   const stepPath = await panel.evaluate(async () => {
     const reading = () => ({
-      open: [...document.querySelectorAll("button[aria-expanded='true'] h3")].map((h) =>
-        h.textContent.trim(),
+      open: [...document.querySelectorAll("h3 > button[aria-expanded='true']")].map((b) =>
+        b.textContent.trim(),
       ),
-      occurrence: [...document.querySelectorAll("span")]
-        .map((s) => s.textContent.trim())
-        .find((t) => /^Occurrence \d+ of \d+$/.test(t)),
+      occurrence:
+        document
+          .querySelector('section[id^="investigation-"] [aria-pressed="true"]')
+          ?.getAttribute("aria-label") ?? null,
     });
     const before = reading();
     document.querySelector('button[aria-label="Next stop"]').click();
@@ -991,10 +1031,10 @@ try {
   const everything = await readOverlay();
   console.log(
     "complete path:",
-    JSON.stringify({ boxes: everything.boxes.length, nearby: nearby.boxes.length }),
+    JSON.stringify({ marks: everything.marks.length, nearby: nearby.marks.length }),
   );
   check(
-    everything.boxes.length >= nearby.boxes.length,
+    everything.marks.length >= nearby.marks.length,
     "Show complete path drew fewer stops than the default view",
   );
 
@@ -1011,7 +1051,10 @@ try {
     "after Exit:",
     JSON.stringify({ ...cleared, scrollBeforeInspecting, scrolledAway, scrollRestored, leftMode }),
   );
-  check(!cleared.present, "Exit left the overlay on the page");
+  check(
+    !cleared.present || cleared.marks.every((m) => m.shape !== "circle"),
+    "Exit left the focus path on the page",
+  );
   check(
     scrollRestored === scrollBeforeInspecting,
     `Exit left the page at ${scrollRestored} instead of ${scrollBeforeInspecting}`,
@@ -1033,6 +1076,8 @@ try {
   );
   await panel.evaluate(() => chrome.runtime.sendMessage({ type: "panel:clear-highlight" }));
 
+  await panel.bringToFront();
+  await panel.keyboard.press("Tab");
   const byKeyboard = await panel.evaluate(async () => {
     const focusable = [...document.querySelectorAll("button, summary, [tabindex]")].filter(
       (el) => !el.disabled && el.checkVisibility(),
@@ -1040,7 +1085,10 @@ try {
     const ringless = focusable.filter((el) => {
       el.focus();
       const s = getComputedStyle(el);
-      return s.outlineStyle === "none" && s.boxShadow === "none";
+      const brackets = getComputedStyle(el, "::after").backgroundImage;
+      return (
+        s.outlineStyle === "none" && s.boxShadow === "none" && (!brackets || brackets === "none")
+      );
     }).length;
     const details = document.querySelector("details");
     details.querySelector("summary").focus();
@@ -1058,15 +1106,13 @@ try {
     return document.documentElement.outerHTML;
   });
   const gone = await panel.evaluate(async () => {
-    const counter = () =>
-      [...document.querySelectorAll("span")]
-        .map((s) => s.textContent.trim())
-        .find((t) => /^Occurrence \d+ of \d+$/.test(t));
-    for (let i = 0; i < 4 && counter() !== "Occurrence 3 of 3"; i++) {
-      document.querySelector('button[aria-label="Next occurrence"]').click();
-      await new Promise((r) => setTimeout(r, 60));
-    }
-    const at = counter();
+    const chips = [
+      ...document.querySelectorAll('section[id^="investigation-"] [role="group"] button'),
+    ];
+    chips[2]?.click();
+    await new Promise((r) => setTimeout(r, 60));
+    const pressed = chips.findIndex((c) => c.getAttribute("aria-pressed") === "true");
+    const at = `Occurrence ${pressed + 1} of ${chips.length}`;
     const button = [...document.querySelectorAll("button")].find(
       (b) => b.textContent.trim() === "Locate on page",
     );
@@ -1203,40 +1249,40 @@ try {
     document.querySelector('button[aria-label="Next stop"]').click();
     await new Promise((r) => setTimeout(r, 450));
   });
-  const mixedBoxes = await page.evaluate(() => {
-    const root = document.getElementById("accesscheck-overlay");
-    return [...(root?.children ?? [])].map((box) => {
-      const style = getComputedStyle(box);
-      return {
-        badge: box.textContent,
-        color: style.borderTopColor,
-        opacity: style.opacity,
-        outline: style.outlineColor,
-        shadow: style.boxShadow.includes("rgba(23, 24, 26"),
-      };
-    });
+  const mixedDrawn = await page.evaluate(OVERLAY_READER);
+  const mixedVisible = await sw.evaluate(async () => {
+    const { panelState } = await chrome.storage.session.get("panelState");
+    return Object.fromEntries(
+      (panelState?.state?.result?.keyboard?.focusPath ?? []).map((s) => [
+        String(s.n),
+        s.focusVisible,
+      ]),
+    );
   });
-  console.log("mixed page, stop 2 current:", JSON.stringify(mixedBoxes));
+  const mixedMarks = mixedDrawn.marks ?? [];
+  console.log("mixed page, stop 2 current:", JSON.stringify({ mixedMarks, mixedVisible }));
 
-  const currentBox = mixedBoxes.find((b) => /^2 · /.test(b.badge));
-  const neighbours = mixedBoxes.filter((b) => !/^2 · /.test(b.badge));
-  check(!!currentBox, `the current stop is not labelled: ${JSON.stringify(mixedBoxes)}`);
+  const currentMark = mixedMarks.find((m) => m.current);
+  const neighbours = mixedMarks.filter((m) => !m.current);
   check(
-    currentBox.color === "rgb(179, 38, 30)",
-    `a failing current stop should be red, got ${currentBox.color}`,
+    currentMark?.tag === "2",
+    `the current stop is not labelled: ${JSON.stringify(mixedMarks)}`,
   );
   check(
-    neighbours.every((b) => b.color === "rgb(26, 86, 196)"),
-    `a neighbour inherited a failure colour: ${JSON.stringify(neighbours.map((b) => b.color))}`,
+    currentMark?.ring === true && currentMark.ringColor === "rgb(156, 68, 0)",
+    `a current stop with no focus ring is not drawn as missing one: ${JSON.stringify(currentMark)}`,
   );
   check(
-    neighbours.every((b) => parseFloat(b.opacity) < 1),
+    mixedMarks.every((m) => m.ring === !mixedVisible[m.tag]),
+    `a stop's missing ring does not match the walk: ${JSON.stringify(mixedMarks)}`,
+  );
+  check(
+    neighbours.every((m) => m.tone === "path" && !m.tagClass.includes("current")),
     "the neighbours are as loud as the stop being inspected",
   );
-
   check(
-    mixedBoxes.every((b) => b.outline.startsWith("rgba(255, 255, 255") && b.shadow),
-    `the boxes carry no two-tone ring: ${JSON.stringify(mixedBoxes.map((b) => b.outline))}`,
+    mixedMarks.every((m) => m.halo),
+    `the marks carry no halo: ${JSON.stringify(mixedMarks.map((m) => m.tag))}`,
   );
 
   await pressMixed("Exit");
@@ -1359,10 +1405,14 @@ try {
     timeout: 20000,
   });
   const drawnCount = () =>
-    page.evaluate(() => document.getElementById("accesscheck-overlay")?.children.length ?? 0);
+    page.evaluate(
+      () =>
+        document.getElementById("accesscheck-overlay")?.shadowRoot?.querySelectorAll("[data-mark]")
+          .length ?? 0,
+    );
   const pressIn = (label) =>
     manyPanel.evaluate(async (text) => {
-      const button = [...document.querySelectorAll("button")].find(
+      const button = [...document.querySelectorAll("button, label")].find(
         (b) => b.textContent.trim() === text,
       );
       if (!button) return false;
@@ -1376,8 +1426,13 @@ try {
   await pressIn("Show complete path");
   const completeView = await drawnCount();
   const palette = await page.evaluate(() => {
-    const root = document.getElementById("accesscheck-overlay");
-    return [...new Set([...(root?.children ?? [])].map((b) => getComputedStyle(b).borderTopColor))];
+    const root = document.getElementById("accesscheck-overlay")?.shadowRoot;
+    const marks = [...(root?.querySelectorAll("[data-mark]") ?? [])];
+    return {
+      tones: [...new Set(marks.map((m) => m.dataset.tone))],
+      rings: marks.filter((m) => m.dataset.ring === "true").length,
+      marks: marks.length,
+    };
   });
   await pressIn("Exit");
   const clearedView = await drawnCount();
@@ -1398,13 +1453,10 @@ try {
   );
   check(clearedView === 0, "Exit left stops on the page");
   check(
-    palette.includes("rgb(26, 86, 196)"),
-    `no ordinary stop was drawn in the neutral colour: ${JSON.stringify(palette)}`,
+    palette.tones.length === 1 && palette.tones[0] === "path",
+    `a stop was drawn in a finding's colour: ${JSON.stringify(palette)}`,
   );
-  check(
-    !palette.includes("rgb(179, 38, 30)") || palette.length > 1,
-    "every stop on this page was painted as a failure",
-  );
+  check(palette.rings < palette.marks, "every stop on this page was painted as a failure");
 
   await page.goto(`${origin}/lazy`, { waitUntil: "domcontentloaded" });
   await page.bringToFront();
@@ -1602,13 +1654,19 @@ try {
   const stillThere = await sw.evaluate(async () => {
     const stored = await chrome.storage.session.get("panelState");
     const path = stored.panelState?.state?.result?.keyboard?.focusPath ?? [];
-    return path.slice(0, 1).map((s) => ({ n: s.n, selector: s.selector, kind: "stop" }));
+    return path.slice(0, 1).map((s) => ({
+      n: s.n,
+      selector: s.selector,
+      tag: String(s.n),
+      tone: "path",
+      shape: "circle",
+    }));
   });
 
   const asleep = await ctx.newPage();
   await asleep.setViewportSize({ width: 400, height: 800 });
   await asleep.goto(`chrome-extension://${extId}/panel.html`);
-  await asleep.waitForFunction(() => document.body.textContent.includes("To fix ·"), null, {
+  await asleep.waitForFunction(() => document.getElementById("group-fix") !== null, null, {
     timeout: 20000,
   });
 

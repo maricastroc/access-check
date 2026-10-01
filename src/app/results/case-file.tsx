@@ -14,13 +14,14 @@ import {
   EvidenceChain,
   FindingList,
   FocusSequence,
+  ProblemNav,
   Summary,
   type FindingGroups,
+  type Investigation,
   type RelatedFinding,
 } from "@/components/investigation";
 import { cn } from "@/lib/cn";
 import { PendingStanding } from "./summary-band";
-import type { Investigation } from "./use-investigation";
 
 export function CaseFile({
   result,
@@ -58,42 +59,9 @@ export function CaseFile({
   pending?: boolean;
   t: Translate;
 }) {
-  const findings = groups.flatMap((g) => g.findings);
   const stops = result.keyboard?.focusPath ?? [];
   const coverage = result.keyboard ? focusPathLines(result.keyboard, t) : null;
   const pad = compact ? "px-4" : "px-6";
-
-  const nav = (f: FindingView) => {
-    const at = findings.findIndex((x) => x.id === f.id);
-    const previous = findings[at - 1] ?? null;
-    const next = findings[at + 1] ?? null;
-    if (!previous && !next) return null;
-    return (
-      <nav
-        aria-label={t("panel.problemNavigation")}
-        className="mt-5 flex flex-wrap items-center justify-between gap-3 pl-11 text-[13.5px]"
-      >
-        <button
-          type="button"
-          disabled={!previous}
-          onClick={() => previous && inv.select(previous.id, 0, "nav")}
-          className="flex min-h-8 cursor-pointer items-center gap-2 text-ink disabled:cursor-default disabled:text-disabled"
-        >
-          <span aria-hidden>←</span>
-          {t("panel.previousProblem")}
-        </button>
-        <button
-          type="button"
-          disabled={!next}
-          onClick={() => next && inv.select(next.id, 0, "nav")}
-          className="flex min-h-8 cursor-pointer items-center gap-2 font-semibold text-ink disabled:cursor-default disabled:font-normal disabled:text-disabled"
-        >
-          {t("panel.nextProblem")}
-          <span aria-hidden>→</span>
-        </button>
-      </nav>
-    );
-  };
 
   return (
     <div>
@@ -133,7 +101,7 @@ export function CaseFile({
         empty={t("results.nothingToFix")}
         rowAttrs={langAttrs(result.locale)}
         t={t}
-        renderOpen={(f) => {
+        renderOpen={(f, siblings, i) => {
           const occ = inv.occurrences[inv.occIndex] ?? null;
           return (
             <EvidenceChain
@@ -145,7 +113,14 @@ export function CaseFile({
               compact={compact}
               located={located?.(f, occ)}
               figure={figure?.(f, occ)}
-              footer={nav(f)}
+              footer={
+                <ProblemNav
+                  siblings={siblings}
+                  at={i}
+                  onGo={(id) => inv.select(id, 0, "nav")}
+                  t={t}
+                />
+              }
               t={t}
             />
           );
