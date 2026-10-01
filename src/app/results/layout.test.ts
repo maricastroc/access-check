@@ -5,38 +5,57 @@ import { describe, expect, it } from "vitest";
 const read = (rel: string) => readFileSync(fileURLToPath(new URL(rel, import.meta.url)), "utf8");
 
 const view = read("./results-view.tsx");
-const band = read("./summary-band.tsx");
+const caseFile = read("./case-file.tsx");
+const surface = read("./investigation-surface.tsx");
 const mobile = read("./mobile-report.tsx");
 const about = read("./about-audit.tsx");
-const margin = read("./findings-margin.tsx");
-const frame = read("./evidence-frame.tsx");
+const figure = read("./evidence-figure.tsx");
 const states = read("./states.tsx");
 const pdf = read("../report/summary-page.tsx");
 const markdown = read("../../lib/report/markdown.ts");
-const queue = read("./work-queue.tsx");
-const detail = read("../../components/ui/finding-detail.tsx");
-const row = read("../../components/ui/finding-row.tsx");
+const summary = read("../../components/investigation/summary.tsx");
+const list = read("../../components/investigation/finding-list.tsx");
+const chain = read("../../components/investigation/evidence-chain.tsx");
+const marks = read("../../components/investigation/capture-marks.tsx");
+const nav = read("../../components/investigation/occurrence-nav.tsx");
+const sequence = read("../../components/investigation/focus-sequence.tsx");
 
 const FIXED_WORDS = /(>|\})\s*[A-Za-z][a-z]+( [a-z]+)*\s*(<|\{)/g;
+const CODE_WORDS = /^[>}]\s*(else|return|const|let|if|for|while|case|default|try|catch|finally)\b/;
 
-describe("the top of the results says only what the reader needs first", () => {
-  it("keeps the verdict, its note, the work left and the WCAG chips", () => {
-    expect(band).toContain("{t(STANDING_LABEL[standing])}");
-    expect(band).toContain("{t(STANDING_NOTE[standing])}");
-    expect(band).toContain("const work = workLine(result, t);");
-    expect(band).toContain("<WcagChips");
+const fixedWords = (source: string) =>
+  (source.match(FIXED_WORDS) ?? []).filter((match) => !CODE_WORDS.test(match));
+
+describe("the top of the case file says only what the reader needs first", () => {
+  it("leads with where the page stands, then the work left, by number", () => {
+    const order = [
+      "STANDING_LABEL[standing]",
+      "STANDING_NOTE[standing]",
+      't("panel.toFix"',
+      't("panel.toCheck"',
+      't("summary.passed"',
+    ].map((token) => summary.indexOf(token));
+    expect(order.every((at) => at > -1)).toBe(true);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+    expect(caseFile).toContain("<WcagChips");
   });
 
-  it("drops the counts row, the summary paragraph and the share of what is left", () => {
-    expect(band).not.toContain("result.summary");
-    expect(band).not.toContain("countedSeverities");
-    expect(band).not.toContain("PriorityList");
-    expect(band).not.toContain("counts.passed");
+  it("drops the score, the summary paragraph and the share of what is left", () => {
+    for (const source of [summary, caseFile]) {
+      expect(source).not.toContain("result.score");
+      expect(source).not.toContain("result.summary");
+      expect(source).not.toContain("PriorityList");
+    }
   });
 
   it("no longer opens the page with the partial report", () => {
     expect(view).not.toContain("PartialNotice");
     expect(states).not.toContain("PartialNotice");
+  });
+
+  it("says when the reading came from an older scoring model", () => {
+    expect(caseFile).toContain("scoringIsCurrent(result)");
+    expect(caseFile).toContain('t("standing.staleTitle")');
   });
 });
 
@@ -53,18 +72,17 @@ describe("what describes the audit lives in About this audit", () => {
     expect(about).toContain("<details");
     expect(about).not.toMatch(/<details[^>]*\sopen/);
     expect(about).toContain('partial ? t("results.partialReport")');
-    expect(about).toContain('stale ? t("standing.staleTitle")');
     expect(about).toContain("<StaleScoringNotice");
   });
 
-  it("comes after the screenshot and the queue, on the desktop and on a phone", () => {
-    expect(view.indexOf("<AboutAudit")).toBeGreaterThan(view.indexOf("<FindingsMargin"));
+  it("comes after the investigation, on the desktop and on a phone", () => {
+    expect(view.indexOf("<AboutAudit")).toBeGreaterThan(view.indexOf("<CaseFile"));
     expect(mobile).toContain("<AboutAudit");
   });
 
-  it("left the screenshot and the queue to the finding", () => {
-    expect(frame).not.toContain("ProvenancePanel");
-    expect(margin).not.toContain("checksPassedLabel");
+  it("leaves the capture to the investigation", () => {
+    expect(surface).not.toContain("ProvenancePanel");
+    expect(caseFile).not.toContain("checksPassedLabel");
   });
 });
 
@@ -72,90 +90,91 @@ describe("the share of what is left is gone from every report", () => {
   it("is not in the phone layout, the PDF or the Markdown export", () => {
     expect(mobile).not.toContain("PriorityList");
     expect(pdf).not.toContain("PriorityList");
-    expect(pdf).not.toContain("priority.kicker");
     expect(markdown).not.toContain("priority.kicker");
     expect(markdown).not.toContain("priority.share");
   });
 });
 
-describe("the findings read as one work queue", () => {
-  it("is grouped the same way on the desktop and on a phone", () => {
-    expect(margin).toContain("<WorkQueue");
-    expect(mobile).toContain("<WorkQueue");
+describe("the findings read as one queue, on every screen", () => {
+  it("is the same list on the desktop and on a phone", () => {
+    expect(view).toContain("<CaseFile");
+    expect(mobile).toContain("<CaseFile");
+    expect(caseFile).toContain("<FindingList");
     expect(view).toContain("groups={view.groups}");
   });
 
   it("keeps To fix open and folds the other groups until they are needed", () => {
-    expect(queue).toContain('new Set(["fix"])');
-    expect(queue).toContain("<details");
-    expect(queue).toContain("setOpened(new Set([...opened, holding]))");
+    expect(list).toContain('new Set(["fix"])');
+    expect(list).toContain("<details");
+    expect(list).toContain("setOpened(new Set([...opened, holding]))");
   });
 
-  it("no longer keeps the manual reviews in a list of their own", () => {
-    expect(margin).not.toContain("result.incomplete");
-    expect(margin).not.toContain("reviewGuidance");
-  });
-
-  it("tells a manual review how to check it instead of calling it a guess", () => {
-    expect(detail).toContain('finding.kind === "manual-review" ? (');
-    expect(detail).toContain('finding.kind !== "manual-review"');
-    expect(detail).toContain("guide.steps.map");
+  it("titles each row as a heading that holds its toggle, not a heading inside a button", () => {
+    expect(list).toMatch(/<h3[^>]*>\s*<button/);
+    expect(list).toContain("aria-expanded={open}");
   });
 });
 
-describe("an opened finding reads where, what to change, why, then the details", () => {
-  const body = detail.slice(detail.indexOf("export function FindingDetail"));
-
-  it("keeps that order on the desktop and on a phone", () => {
-    const order = ["<Where", "<WhatToChange", "<Why", "<Details"].map((part) => body.indexOf(part));
-    expect(order.every((at) => at > 0)).toBe(true);
-    expect([...order].sort((a, b) => a - b)).toEqual(order);
-    expect(body.indexOf("<HowToCheck")).toBeLessThan(body.indexOf("<Why"));
+describe("an opened finding reads as a chain of evidence", () => {
+  it("draws its stations from what the engine knows, not a fixed form", () => {
+    expect(chain).toContain("chainOf(finding, occ)");
+    expect(chain).toContain("chain.stations.map");
+    expect(chain).not.toContain('t("panel.whatToChange")');
   });
 
-  it("keeps the fix's own test inside what to change", () => {
-    const change = detail.slice(
-      detail.indexOf("function WhatToChange"),
-      detail.indexOf("function HowToCheck"),
-    );
-    expect(change).toContain("<VerdictSeal");
-    expect(detail).not.toContain("detail.verificationResult");
+  it("keeps a manual review human, with steps to check it", () => {
+    expect(chain).toContain('t("chain.decide")');
+    expect(chain).toContain("reviewGuidance(f.ruleId, t)");
+    expect(chain).toContain("guide.steps.map");
   });
 
-  it("ties where to the screenshot and folds the measurements into the details", () => {
-    const where = detail.slice(
-      detail.indexOf("function Where"),
-      detail.indexOf("function WhatToChange"),
-    );
-    expect(where).toContain('t("results.showOnScreenshot")');
-    expect(where).toContain("finding.noMarkerReason");
-    const details = detail.slice(detail.indexOf("function Details"));
-    expect(details).toContain("<details");
-    expect(details).not.toMatch(/<details[^>]*\sopen/);
-    expect(details).toContain("finding.occurrences");
-    const why = detail.slice(detail.indexOf("function Why"), detail.indexOf("function Details"));
-    expect(why).not.toContain("finding.occurrences");
+  it("keeps how a fix was tested inside the verdict, folded", () => {
+    const verdict = chain.slice(chain.indexOf("function Verdict("), chain.indexOf("const END_KEY"));
+    expect(verdict).toContain('t("chain.howVerified")');
+    expect(verdict).toContain("<details");
+    expect(verdict).not.toMatch(/<details[^>]*\sopen/);
+    expect(verdict).toContain('t("detail.sandboxNote", { host })');
   });
 
-  it("leaves the screenshot without a second copy of the element and its code", () => {
-    expect(frame).not.toContain("elementAndCode");
-    expect(frame).not.toContain("CodeBlock");
-    expect(frame).not.toContain("ElementIdentityLine");
-    expect(mobile).not.toContain('t("results.showOnScreenshot")');
+  it("names the same occurrence the same way on the page and in the chain", () => {
+    expect(marks).toContain("occurrenceTag(mark.n, mark.index, mark.total)");
+    expect(nav).toContain("occurrenceTag(n, i, total)");
+    expect(view).toContain("occurrenceTag(inv.selected.n, inv.occIndex, inv.occurrences.length)");
+  });
+
+  it("explains a guess instead of presenting it as a settled failure", () => {
+    expect(chain).toContain('f.evidence === "heuristic"');
+    expect(chain).toContain('t("evidence.heuristic.title")');
+  });
+});
+
+describe("the focus path is a sequence, drawn near the current stop", () => {
+  it("draws only the neighbourhood unless the whole path is asked for", () => {
+    expect(marks).toContain("const NEIGHBOURS = 2;");
+    expect(marks).toContain("wholePath &&");
+    expect(sequence).toContain('t("panel.showComplete")');
+  });
+
+  it("names the stepping controls and says which stop is current", () => {
+    expect(sequence).toContain('aria-label={t("panel.previousStop")}');
+    expect(sequence).toContain('aria-label={t("panel.nextStop")}');
+    expect(sequence).toContain('aria-current={now ? "step" : undefined}');
   });
 });
 
 describe("the results screens write no words of their own", () => {
   it.each([
-    ["summary-band.tsx", band],
+    ["case-file.tsx", caseFile],
+    ["investigation-surface.tsx", surface],
     ["mobile-report.tsx", mobile],
     ["about-audit.tsx", about],
-    ["findings-margin.tsx", margin],
-    ["evidence-frame.tsx", frame],
-    ["work-queue.tsx", queue],
-    ["finding-row.tsx", row],
-    ["finding-detail.tsx", detail],
+    ["evidence-figure.tsx", figure],
+    ["summary.tsx", summary],
+    ["finding-list.tsx", list],
+    ["evidence-chain.tsx", chain],
+    ["capture-marks.tsx", marks],
+    ["focus-sequence.tsx", sequence],
   ])("%s takes its text from the catalog", (_, source) => {
-    expect(source.match(FIXED_WORDS) ?? []).toEqual([]);
+    expect(fixedWords(source)).toEqual([]);
   });
 });

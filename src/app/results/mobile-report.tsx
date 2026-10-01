@@ -1,143 +1,68 @@
 "use client";
 
-import { VIEWPORT_CAPTURE, type ScanResult } from "@/lib/scan/types";
-import { locatedMarkers, type FindingView } from "@/lib/report/findings";
+import type { ReactNode } from "react";
+import { SCAN_VIEWPORT, type ScanResult } from "@/lib/scan/types";
 import type { WcagReadingModel } from "@/lib/report/wcag";
-import {
-  Button,
-  ElementIdentityLine,
-  FindingDetail,
-  FindingRow,
-  SectionKicker,
-  WcagChips,
-} from "@/components/ui";
+import { Button } from "@/components/ui";
+import { Crop, Locus, type FindingGroups, type RelatedFinding } from "@/components/investigation";
 import { cn } from "@/lib/cn";
-import { langAttrs } from "@/lib/i18n/locale";
-import { CaptureStage } from "./evidence-frame";
-import { FocusPathList } from "./focus-path-list";
-import { PendingStanding } from "./summary-band";
-import { workLine } from "./report-model";
+import type { Translate } from "@/lib/i18n/t";
+import { CaseFile } from "./case-file";
 import { AboutAudit } from "./about-audit";
-import { WorkQueue, type QueueGroups } from "./work-queue";
-import {
-  scoringIsCurrent,
-  standingOf,
-  STANDING_LABEL,
-  STANDING_NOTE,
-  STANDING_TONE,
-} from "@/lib/report/standing";
-import { focusPathLines } from "@/lib/report/focus-coverage";
-import type { StopPlacement } from "@/lib/scan/placement";
-import { type ActiveCapture, type Layer, type MarkerView, type StopView } from "./report-ui";
-import { useT } from "@/lib/i18n/provider";
+import { captureById, occurrencePlaces } from "./report-ui";
+import { evidenceFigure } from "./evidence-figure";
+import type { Investigation } from "./use-investigation";
 
 export function MobileReport({
   result,
-  host,
-  wcag,
-  layer,
   groups,
-  selectedFinding,
-  selectedId,
-  onSelect,
-  onOpenEvidence,
-  markerViews,
-  selectedStop,
-  onSelectStop,
-  stopViews,
-  stopPlacement,
+  wcag,
+  inv,
+  host,
   capture,
-  onBackToFirst,
-  onStepStop,
-  onSelectMarker,
   tab,
   setTab,
+  focus,
   onMarkdown,
-  quickFromSite = false,
-  onRunFull,
   onRerun,
+  quickFromSite = false,
   viewport,
   pending = false,
+  t,
 }: {
   result: ScanResult;
-  host: string;
+  groups: FindingGroups;
   wcag: WcagReadingModel;
-  layer: Layer;
-  groups: QueueGroups;
-  selectedFinding: FindingView | null;
-  selectedId: string | null;
-  onSelect: (id: string) => void;
-  onOpenEvidence: (id: string) => void;
-  markerViews: MarkerView[];
-  selectedStop: number | null;
-  onSelectStop: (n: number) => void;
-  stopViews: StopView[];
-  stopPlacement: StopPlacement | null;
-  capture: ActiveCapture;
-  onBackToFirst: () => void;
-  onStepStop: (delta: 1 | -1) => void;
-  onSelectMarker: (markerN: number) => void;
+  inv: Investigation;
+  host: string;
+  capture: ReactNode;
   tab: "capture" | "findings";
-  setTab: (t: "capture" | "findings") => void;
+  setTab: (tab: "capture" | "findings") => void;
+  focus: {
+    current: number | null;
+    onPick: (n: number) => void;
+    onStep: (delta: 1 | -1) => void;
+    whole: boolean;
+    onWhole: (on: boolean) => void;
+    related: RelatedFinding[];
+  };
   onMarkdown: () => void;
-  quickFromSite?: boolean;
-  onRunFull?: () => void;
   onRerun: () => void;
+  quickFromSite?: boolean;
   viewport?: string;
   pending?: boolean;
+  t: Translate;
 }) {
-  const t = useT();
-  const work = workLine(result, t);
   const total = groups.reduce((sum, g) => sum + g.findings.length, 0);
-  const focusStops = result.keyboard?.focusPath ?? [];
-  const coverage = result.keyboard ? focusPathLines(result.keyboard, t) : { line: "", notes: [] };
+  const stops = result.keyboard?.focusPath ?? [];
+  const regions = result.regions ?? [];
+
   return (
     <div className="pb-20">
-      <div className="border-b border-border bg-surface px-4 py-3">
-        <div className="flex items-center justify-between gap-2">
-          <span className="truncate font-mono text-[12.5px] text-muted">{host}</span>
-          <span className="shrink-0 text-[12px] text-muted tabular-nums">
-            {pending ? t("results.stillChecking") : `${(result.durationMs / 1000).toFixed(1)}s`}
-          </span>
-        </div>
-        <div className="mt-2" aria-live="polite">
-          {pending ? (
-            <PendingStanding t={t} size="sm" />
-          ) : (
-            <>
-              <p
-                className="font-cond text-[30px] leading-[1.05]"
-                style={{ color: STANDING_TONE[standingOf(result.counts)] }}
-              >
-                {t(STANDING_LABEL[standingOf(result.counts)])}
-              </p>
-              <p className="mt-0.5 text-[12.5px] leading-normal text-body">
-                {t(STANDING_NOTE[standingOf(result.counts)])}
-              </p>
-            </>
-          )}
-        </div>
-        {!pending && (
-          <>
-            {work && (
-              <p className="mt-2 text-[13.5px] font-semibold text-ink tabular-nums">{work}</p>
-            )}
-            {!scoringIsCurrent(result) && (
-              <p className="mt-1.5 text-[12px] font-semibold text-moderate-text">
-                {t("standing.staleTitle")}
-              </p>
-            )}
-            <div className="mt-2.5">
-              <WcagChips model={wcag} t={t} />
-            </div>
-          </>
-        )}
-      </div>
-
       <div
         role="tablist"
         aria-label={t("results.reportView")}
-        className="grid grid-cols-2 border-b border-ink"
+        className="sticky top-14 z-20 grid grid-cols-2 border-b border-ink bg-canvas"
       >
         {(["capture", "findings"] as const).map((pane) => (
           <button
@@ -147,7 +72,7 @@ export function MobileReport({
             onClick={() => setTab(pane)}
             className={cn(
               "flex h-12.5 cursor-pointer items-center justify-center text-[15px] font-semibold",
-              tab === pane ? "bg-ink text-surface" : "bg-surface text-ink",
+              tab === pane ? "bg-ink text-surface" : "bg-canvas text-ink",
             )}
           >
             {pane === "capture"
@@ -158,100 +83,70 @@ export function MobileReport({
       </div>
 
       {tab === "capture" ? (
-        <div className="p-4">
-          <div className="border border-ink">
-            {capture.id !== VIEWPORT_CAPTURE && (
-              <div className="flex justify-end border-b border-ink px-3 py-2">
-                <Button variant="tertiary" size="sm" onClick={onBackToFirst}>
-                  {t("capture.backToFirst")}
-                </Button>
-              </div>
-            )}
-            <CaptureStage
-              host={host}
-              layer={layer}
-              markerViews={markerViews}
-              selectedFinding={selectedFinding}
-              onSelectMarker={onSelectMarker}
-              stopViews={stopViews}
-              selectedStop={selectedStop}
-              stopPlacement={stopPlacement}
-              onSelectStop={onSelectStop}
-              capture={capture}
-              height={300}
-              quickFromSite={quickFromSite}
-              onRunFull={onRunFull}
-              pending={pending}
-            />
-          </div>
-
-          {selectedFinding ? (
-            <div className="mt-4">
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-[12.5px] text-muted">
-                  {t("unit.element", { count: selectedFinding.elements })} ·{" "}
-                  {t("capture.shownOnScreenshot", { count: locatedMarkers(selectedFinding) })}
-                </span>
+        <div>
+          {capture}
+          <div className="px-4 py-4">
+            {inv.selected ? (
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="min-w-0 text-[15px] font-semibold text-ink">{inv.selected.title}</p>
                 <Button variant="primary" size="md" onClick={() => setTab("findings")}>
                   {t("results.viewFinding")}
                 </Button>
               </div>
-              <div className="mt-3 border border-border bg-surface p-3">
-                <p className="text-[15px] font-semibold text-ink">{selectedFinding.title}</p>
-                <div className="mt-1">
-                  <ElementIdentityLine finding={selectedFinding} t={t} />
-                </div>
-              </div>
-            </div>
-          ) : (
-            <p className="mt-4 text-[13.5px] text-muted">{t("results.tapMarker")}</p>
-          )}
+            ) : (
+              <p className="text-[14px] text-ink-2">{t("results.tapMarker")}</p>
+            )}
+          </div>
         </div>
       ) : (
-        <div className="flex flex-col gap-2 px-4 pt-1.5 pb-4">
-          <WorkQueue
-            t={t}
-            groups={groups}
-            selectedId={selectedId}
-            renderRow={(f) => (
-              <div key={f.id} id={`finding-${f.id}`} {...langAttrs(result.locale)}>
-                <FindingRow
-                  t={t}
-                  finding={f}
-                  selected={f.id === selectedId}
-                  onSelect={() => onSelect(f.id)}
-                  markerNote={f.id !== selectedId}
-                />
-                {f.id === selectedId && (
-                  <FindingDetail
-                    t={t}
-                    finding={f}
-                    host={host}
-                    onOpenEvidence={() => onOpenEvidence(f.id)}
-                  />
+        <CaseFile
+          result={result}
+          groups={groups}
+          wcag={wcag}
+          inv={inv}
+          host={host}
+          hoveredId={null}
+          onHover={() => {}}
+          compact
+          pending={pending}
+          focus={{
+            ...focus,
+            onPick: (n) => {
+              focus.onPick(n);
+              setTab("capture");
+            },
+          }}
+          figure={(f, occ) => evidenceFigure(f, occ, result, t)}
+          located={(f, occ) => {
+            const place = occ ? occurrencePlaces(occ, stops, regions)[0] : undefined;
+            if (!occ || !place) {
+              return occ ? (
+                <p className="mt-2 text-[13.5px] text-muted">{t("chain.notOnCapture")}</p>
+              ) : null;
+            }
+            const image = captureById(place.captureId, result.screenshot, regions).image;
+            return (
+              <div className="mt-3 flex flex-wrap items-end gap-3">
+                {image && (
+                  <Crop
+                    src={image}
+                    page={SCAN_VIEWPORT}
+                    box={place.box}
+                    maxW={300}
+                    maxH={120}
+                    label={t("chain.closeUp", { label: occ.identity?.name ?? occ.selector })}
+                  >
+                    {(inner) => <Locus box={inner} weight="current" />}
+                  </Crop>
                 )}
+                <Button variant="secondary" size="sm" onClick={() => setTab("capture")}>
+                  {t("results.showOnScreenshot")}
+                </Button>
               </div>
-            )}
-          />
-          {focusStops.length > 0 && (
-            <div className="mt-2 border-t border-hairline pt-3">
-              <SectionKicker tone="steel">{t("results.focusPathStops")}</SectionKicker>
-              <div className="mt-2">
-                <FocusPathList
-                  t={t}
-                  stops={focusStops}
-                  coverage={coverage}
-                  selected={selectedStop}
-                  onSelect={(n) => {
-                    onSelectStop(n);
-                    setTab("capture");
-                  }}
-                  onStep={onStepStop}
-                />
-              </div>
-            </div>
-          )}
-        </div>
+            );
+          }}
+          t={t}
+        />
       )}
 
       <AboutAudit
@@ -261,7 +156,7 @@ export function MobileReport({
         onRerun={onRerun}
       />
 
-      <div className="fixed inset-x-0 bottom-0 z-30 flex gap-2 border-t border-border bg-surface px-4 py-2.5">
+      <div className="fixed inset-x-0 bottom-0 z-30 flex gap-2 border-t border-hairline bg-surface px-4 py-2.5">
         <Button variant="secondary" size="md" onClick={onMarkdown} className="flex-1">
           {t("results.exportMarkdown")}
         </Button>

@@ -85,12 +85,12 @@ export function TopBar({
   const t = useT();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-surface">
-      <div className="mx-auto flex h-15.5 w-full max-w-[1560px] items-center gap-4 px-4 sm:px-6">
+    <header id="top-bar" className="sticky top-0 z-30 border-b border-hairline bg-canvas">
+      <div className="flex h-14 w-full items-center gap-4 px-4 sm:px-5">
         <div className="flex min-w-0 items-baseline gap-4">
           <Link href="/" className="flex shrink-0 items-baseline gap-2.5 text-ink">
             <BrandMark size={23} className="self-center" />
-            <span className="text-[19px] font-semibold tracking-[-0.01em]">AccessCheck</span>
+            <span className="text-[18px] font-bold tracking-[-0.01em]">AccessCheck</span>
           </Link>
           {siteId && (
             <Button
@@ -106,20 +106,15 @@ export function TopBar({
           )}
           {result && (
             <div className="hidden min-w-0 items-baseline gap-3 text-[13px] text-muted lg:flex">
-              <span className="truncate font-mono text-ink">{result.finalUrl}</span>
+              <span className="truncate font-mono text-[14px] font-semibold text-ink">
+                {result.finalUrl}
+              </span>
               {pending ? (
                 <span className="whitespace-nowrap">{t("results.stillChecking")}</span>
               ) : (
-                <>
-                  {result.scannedAt && <AuditTime iso={result.scannedAt} />}
-                  <Dot />
-                  <span className="whitespace-nowrap tabular-nums">
-                    {(result.durationMs / 1000).toFixed(1)}s
-                  </span>
-                </>
+                result.scannedAt && <AuditTime iso={result.scannedAt} />
               )}
-              <Dot />
-              <span className="whitespace-nowrap tabular-nums">{viewport}</span>
+              <span className="sr-only">{viewport}</span>
             </div>
           )}
         </div>

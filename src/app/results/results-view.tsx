@@ -2,47 +2,49 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ScanResult } from "@/lib/scan/types";
+import { VIEWPORT_CAPTURE } from "@/lib/scan/types";
 import type { FindingView } from "@/lib/report/findings";
-import { orderedMarkers } from "@/lib/report/findings";
+import { occurrencesOf, occurrenceTag } from "@/lib/report/occurrences";
+import { chainOf } from "@/lib/report/chain";
 import { buildReportMarkdown, reportMarkdownFilename } from "@/lib/report/markdown";
 import { usePageAudit } from "@/hooks/use-page-audit";
+import { Connector, Tag, chipOf, sevOf, type RelatedFinding } from "@/components/investigation";
+import { useT } from "@/lib/i18n/provider";
 import { safeHost } from "./shared";
+import { evidenceFigure } from "./evidence-figure";
 import {
-  buildMarkerViews,
   buildStopViews,
   captureById,
-  captureForFinding,
-  markersOfCapture,
+  captureOfOccurrence,
+  marksOnCapture,
+  occurrencePlaces,
   selectedStopPlacement,
   stepFocusStop,
   type Layer,
 } from "./report-ui";
-import { VIEWPORT_CAPTURE } from "@/lib/scan/types";
 import { buildReportView } from "./report-model";
-import { useFindingSelection } from "./use-finding-selection";
+import { useInvestigation } from "./use-investigation";
 import { TopBar } from "./top-bar";
-import { SummaryBand } from "./summary-band";
-import { EvidenceFrame } from "./evidence-frame";
-import { FindingsMargin } from "./findings-margin";
+import { InvestigationSurface } from "./investigation-surface";
+import { CaseFile } from "./case-file";
 import { MobileReport } from "./mobile-report";
 import { ScanningState, ErrorState } from "./states";
 import { AboutAudit } from "./about-audit";
-import { useT } from "@/lib/i18n/provider";
-import { scrollBehavior } from "@/lib/motion";
 
 const VIEWPORT_LABEL = "1200 × 800";
 const NO_FINDINGS: FindingView[] = [];
+const WIDE = 1280;
 
-function useIsDesktop() {
-  const [desktop, setDesktop] = useState(true);
+function useMedia(query: string, initial: boolean) {
+  const [matches, setMatches] = useState(initial);
   useEffect(() => {
-    const mq = window.matchMedia("(min-width: 1024px)");
-    const update = () => setDesktop(mq.matches);
+    const mq = window.matchMedia(query);
+    const update = () => setMatches(mq.matches);
     update();
     mq.addEventListener("change", update);
     return () => mq.removeEventListener("change", update);
-  }, []);
-  return desktop;
+  }, [query]);
+  return matches;
 }
 
 export function ResultsView({
@@ -64,112 +66,111 @@ export function ResultsView({
   const { status, streaming, result, phase, url, error, errorHint, scan } = audit;
 
   const [input, setInput] = useState(initialUrl);
-
-  const [layer, setLayer] = useState<"markers" | "focus">("markers");
-  const [overlay, setOverlay] = useState(true);
-  const [collapsed, setCollapsed] = useState(false);
   const [mobileTab, setMobileTab] = useState<"capture" | "findings">("capture");
-
-  const desktop = useIsDesktop();
+  const [hovered, setHovered] = useState<string | null>(null);
+  const [layer, setLayer] = useState<Layer>("findings");
+  const [wholePath, setWholePath] = useState(false);
+  const desktop = useMedia("(min-width: 1024px)", true);
+  const wide = useMedia(`(min-width: ${WIDE}px)`, true);
 
   const view = useMemo(() => (result ? buildReportView(result) : null), [result]);
-  const selection = useFindingSelection(view?.findings ?? NO_FINDINGS);
-
-  const findingId = selection.selectedFinding?.id ?? null;
-  const [layerFrom, setLayerFrom] = useState(findingId);
-  if (layerFrom !== findingId) {
-    setLayerFrom(findingId);
-    if (findingId) setLayer("markers");
-  }
-
-  const effectiveLayer: Layer = result?.screenshot && overlay ? layer : "none";
-  const allMarkerViews = useMemo(
-    () => (result ? buildMarkerViews(orderedMarkers(result), selection.selectedFinding, t) : []),
-    [result, selection.selectedFinding, t],
-  );
+  const inv = useInvestigation(view?.findings ?? NO_FINDINGS);
+  const regions = useMemo(() => result?.regions ?? [], [result]);
+  const focusStops = useMemo(() => result?.keyboard?.focusPath ?? [], [result]);
+  const current = inv.occurrences[inv.occIndex] ?? null;
 
   const [selectedStop, setSelectedStop] = useState<number | null>(null);
-  const [stopsFrom, setStopsFrom] = useState(result);
-
-  if (stopsFrom !== result) {
-    setStopsFrom(result);
-    setSelectedStop(null);
-  }
-
-  const focusStops = useMemo(() => result?.keyboard?.focusPath ?? [], [result]);
-
-  const regions = useMemo(() => result?.regions ?? [], [result]);
   const [captureId, setCaptureId] = useState<string>(VIEWPORT_CAPTURE);
-
-  const [captureFrom, setCaptureFrom] = useState(result);
-  if (captureFrom !== result) {
-    setCaptureFrom(result);
+  const [resetFor, setResetFor] = useState(result);
+  if (resetFor !== result) {
+    setResetFor(result);
+    setSelectedStop(null);
     setCaptureId(VIEWPORT_CAPTURE);
   }
 
-  const stopWhere = useMemo(
-    () => selectedStopPlacement(focusStops, selectedStop, regions),
-    [focusStops, selectedStop, regions],
-  );
-
-  const selectStop = useCallback(
-    (n: number) => {
-      setSelectedStop(n);
-      setLayer("focus");
-      const where = selectedStopPlacement(focusStops, n, regions);
-      if (where?.kind === "placed" || where?.kind === "region-missed") {
-        setCaptureId(where.captureId);
+  const followKey = `${inv.selectedId}:${inv.occIndex}`;
+  const [followed, setFollowed] = useState(followKey);
+  if (followed !== followKey) {
+    setFollowed(followKey);
+    if (inv.selected) {
+      const stop = current?.keyboard ? current.stop : null;
+      if (stop !== null) {
+        setSelectedStop(stop);
+        if (layer !== "none") setLayer("path");
+      } else if (layer === "path") {
+        setLayer("findings");
       }
-    },
-    [focusStops, regions],
-  );
-
-  const wantedCapture = captureForFinding(selection.selectedFinding);
-  const [markerFrom, setMarkerFrom] = useState(wantedCapture);
-  if (markerFrom !== wantedCapture) {
-    setMarkerFrom(wantedCapture);
-    if (wantedCapture) setCaptureId(wantedCapture);
+      const wanted = captureOfOccurrence(current, focusStops, regions);
+      if (wanted) setCaptureId(wanted);
+    }
   }
 
-  const capture = useMemo(
-    () => captureById(captureId, result?.screenshot ?? null, regions),
-    [captureId, result, regions],
-  );
-
-  const stopViews = useMemo(
-    () => buildStopViews(focusStops, selectedStop, captureId, regions),
-    [focusStops, selectedStop, captureId, regions],
-  );
-
-  const markerViews = useMemo(
-    () => markersOfCapture(allMarkerViews, captureId),
-    [allMarkerViews, captureId],
+  const pickStop = useCallback(
+    (n: number) => {
+      setSelectedStop(n);
+      setLayer("path");
+      const where = selectedStopPlacement(focusStops, n, regions);
+      if (where?.kind === "placed" || where?.kind === "region-missed")
+        setCaptureId(where.captureId);
+      const at = inv.selected?.occurrences.findIndex((o) => o.stop === n) ?? -1;
+      if (at >= 0) inv.pick(at);
+    },
+    [focusStops, regions, inv],
   );
 
   const stepStop = useCallback(
     (delta: 1 | -1) => {
       const next = stepFocusStop(focusStops, selectedStop, delta);
-      if (next !== null) setSelectedStop(next);
+      if (next !== null) pickStop(next);
     },
-    [focusStops, selectedStop],
+    [focusStops, selectedStop, pickStop],
   );
 
-  const openEvidence = useCallback(
-    (id: string) => {
-      selection.selectFinding(id);
-      setMobileTab("capture");
-      if (desktop) {
-        document
-          .getElementById("evidence")
-          ?.scrollIntoView({ block: "start", behavior: scrollBehavior() });
-      }
+  const capture = useMemo(
+    () => captureById(captureId, result?.screenshot ?? null, regions),
+    [captureId, result, regions],
+  );
+  const marks = useMemo(
+    () => (view ? marksOnCapture(view.findings, captureId, focusStops, regions, t) : []),
+    [view, captureId, focusStops, regions, t],
+  );
+  const stopViews = useMemo(
+    () => buildStopViews(focusStops, selectedStop, captureId, regions),
+    [focusStops, selectedStop, captureId, regions],
+  );
+  const stopWhere = useMemo(
+    () => selectedStopPlacement(focusStops, selectedStop, regions),
+    [focusStops, selectedStop, regions],
+  );
+  const related: RelatedFinding[] = useMemo(
+    () =>
+      (view?.findings ?? []).flatMap((f) =>
+        occurrencesOf(f)
+          .filter((o) => o.stop !== null)
+          .map((o, _, all) => ({
+            stop: o.stop!,
+            tag: occurrenceTag(f.n, o.index, all.length),
+            onOpen: () => inv.select(f.id, o.index, "stop"),
+          })),
+      ),
+    [view, inv],
+  );
+
+  const selectMark = useCallback(
+    (findingId: string, index: number) => {
+      inv.select(findingId, index, "mark");
     },
-    [selection, desktop],
+    [inv],
   );
 
   const host = view?.host ?? safeHost(url);
-
   const quickFromSite = Boolean(siteId) && result !== null && result === initialResult;
+  const anchorStop = current?.keyboard ? current.stop : null;
+  const ring = inv.selected?.ruleId === "focus-not-visible";
+  const shownLayer: Layer = result?.screenshot ? layer : "none";
+  const currentOnCapture =
+    current !== null &&
+    occurrencePlaces(current, focusStops, regions).some((p) => p.captureId === captureId);
 
   const exportMarkdown = useCallback(() => {
     if (!result) return;
@@ -182,8 +183,51 @@ export function ResultsView({
     URL.revokeObjectURL(href);
   }, [result]);
 
+  const surface = (compact: boolean) =>
+    result && (
+      <InvestigationSurface
+        result={result}
+        host={host}
+        capture={capture}
+        onBackToFirst={() => setCaptureId(VIEWPORT_CAPTURE)}
+        layer={shownLayer}
+        onLayer={setLayer}
+        marks={marks}
+        selectedId={inv.selectedId}
+        occIndex={inv.occIndex}
+        hoveredId={hovered}
+        ring={ring}
+        stops={stopViews}
+        sequence={focusStops.map((s) => s.n)}
+        currentStop={selectedStop}
+        anchorStop={anchorStop}
+        stopWhere={stopWhere}
+        wholePath={wholePath}
+        onSelectMark={(id, index) => {
+          selectMark(id, index);
+          if (compact) setMobileTab("findings");
+        }}
+        onSelectStop={pickStop}
+        onHover={setHovered}
+        quickFromSite={quickFromSite}
+        onRunFull={() => scan(url, { force: true })}
+        pending={streaming}
+        compact={compact}
+        t={t}
+      />
+    );
+
+  const focus = {
+    current: selectedStop,
+    onPick: pickStop,
+    onStep: stepStop,
+    whole: wholePath,
+    onWhole: setWholePath,
+    related,
+  };
+
   return (
-    <div className="min-h-screen bg-canvas font-sans text-ink">
+    <div className="ac-instrument min-h-screen bg-canvas font-sans text-ink">
       <TopBar
         result={status === "done" ? result : null}
         viewport={VIEWPORT_LABEL}
@@ -210,62 +254,42 @@ export function ResultsView({
         {status === "done" && result && view && (
           <>
             {quickFromSite && (
-              <div className="mx-auto w-full max-w-[1560px] px-4 pt-4 sm:px-6">
-                <div className="flex flex-col items-start gap-2 border border-border bg-surface px-4 py-3 text-[13px] sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-body">
-                    <span className="font-semibold text-ink">{t("results.quickFromSite")}</span>{" "}
-                    {t("results.runFullAuditNote")}
-                  </p>
-                  <button
-                    onClick={() => scan(url, { force: true })}
-                    className="shrink-0 cursor-pointer bg-ink px-3.5 py-1.5 text-[13px] font-semibold text-surface hover:bg-ink-2"
-                  >
-                    {t("capture.runFull")}
-                  </button>
-                </div>
+              <div className="flex flex-col items-start gap-2 border-b border-hairline bg-surface px-5 py-3 text-[14px] sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-ink-2">
+                  <span className="font-semibold text-ink">{t("results.quickFromSite")}</span>{" "}
+                  {t("results.runFullAuditNote")}
+                </p>
+                <button
+                  onClick={() => scan(url, { force: true })}
+                  className="shrink-0 cursor-pointer bg-ink px-3.5 py-1.5 text-[14px] font-semibold text-surface hover:bg-ink-2"
+                >
+                  {t("capture.runFull")}
+                </button>
               </div>
             )}
 
             {desktop ? (
               <>
-                <SummaryBand t={t} result={result} wcag={view.wcag} pending={streaming} />
-                <div className="mx-auto grid w-full max-w-[1560px] grid-cols-[minmax(0,1fr)_420px] items-start">
-                  <div className="p-4">
-                    <EvidenceFrame
+                <div className="grid grid-cols-[minmax(0,1fr)_400px] items-start xl:grid-cols-[minmax(0,1fr)_clamp(420px,32vw,520px)]">
+                  {surface(false)}
+                  <div id="case-file" className="min-w-0 border-l border-hairline bg-canvas">
+                    <CaseFile
                       result={result}
-                      host={host}
-                      capture={capture}
-                      onBackToFirst={() => setCaptureId(VIEWPORT_CAPTURE)}
-                      layer={effectiveLayer}
-                      overlay={overlay}
-                      overlayDisabled={!result.screenshot}
-                      onToggleOverlay={() => setOverlay((on) => !on)}
-                      collapsed={collapsed}
-                      onToggleCollapse={() => setCollapsed((c) => !c)}
-                      markerViews={markerViews}
-                      selectedFinding={selection.selectedFinding}
-                      onSelectMarker={selection.selectMarker}
-                      stopViews={stopViews}
-                      selectedStop={selectedStop}
-                      stopPlacement={stopWhere}
-                      onSelectStop={selectStop}
-                      quickFromSite={quickFromSite}
-                      onRunFull={() => scan(url, { force: true })}
-                      pending={streaming}
-                    />
-                  </div>
-                  <div className="scroll-slim sticky top-15.5 max-h-[calc(100vh-62px)] self-start overflow-y-auto">
-                    <FindingsMargin
-                      t={t}
                       groups={view.groups}
-                      result={result}
+                      wcag={view.wcag}
+                      inv={inv}
                       host={host}
-                      selectedId={selection.selectedId}
-                      onSelect={selection.toggleFinding}
-                      onOpenEvidence={openEvidence}
-                      selectedStop={selectedStop}
-                      onSelectStop={selectStop}
-                      onStepStop={stepStop}
+                      hoveredId={hovered}
+                      onHover={setHovered}
+                      figure={(f, occ) => evidenceFigure(f, occ, result, t)}
+                      located={(f, occ) =>
+                        occ && occurrencePlaces(occ, focusStops, regions).length === 0 ? (
+                          <p className="mt-2 text-[13.5px] text-muted">{t("chain.notOnCapture")}</p>
+                        ) : null
+                      }
+                      focus={focus}
+                      pending={streaming}
+                      t={t}
                     />
                   </div>
                 </div>
@@ -279,36 +303,52 @@ export function ResultsView({
             ) : (
               <MobileReport
                 result={result}
-                host={host}
-                wcag={view.wcag}
-                layer={effectiveLayer}
-                capture={capture}
-                onBackToFirst={() => setCaptureId(VIEWPORT_CAPTURE)}
                 groups={view.groups}
-                selectedFinding={selection.selectedFinding}
-                selectedId={selection.selectedId}
-                onSelect={selection.toggleFinding}
-                onOpenEvidence={openEvidence}
-                markerViews={markerViews}
-                selectedStop={selectedStop}
-                onSelectStop={selectStop}
-                onStepStop={stepStop}
-                stopViews={stopViews}
-                stopPlacement={stopWhere}
-                onSelectMarker={selection.selectMarker}
+                wcag={view.wcag}
+                inv={inv}
+                host={host}
+                capture={surface(true)}
                 tab={mobileTab}
                 setTab={setMobileTab}
+                focus={focus}
                 onMarkdown={exportMarkdown}
-                quickFromSite={quickFromSite}
-                onRunFull={() => scan(url, { force: true })}
                 onRerun={() => scan(url, { force: true })}
+                quickFromSite={quickFromSite}
                 viewport={result.screenshot ? VIEWPORT_LABEL : undefined}
                 pending={streaming}
+                t={t}
               />
             )}
           </>
         )}
       </main>
+
+      {desktop && wide && inv.selected && currentOnCapture && shownLayer !== "none" && (
+        <Connector
+          from='[data-anchor="locus-current"]'
+          to='[data-anchor="station-located"]'
+          fromBounds="#capture-scroll"
+          belowOf="#top-bar"
+          gutter="#case-file"
+          gutterOffset={-16}
+          minWidth={WIDE}
+          redrawKey={`${inv.selectedId}:${inv.occIndex}:${shownLayer}:${captureId}`}
+          dashed={!chainOf(inv.selected, current).measured}
+          labelAfter="#capture-figure"
+          label={
+            <Tag
+              n={occurrenceTag(inv.selected.n, inv.occIndex, inv.occurrences.length)}
+              sev={sevOf(inv.selected)}
+              size={24}
+              onPage
+            >
+              {chipOf(inv.selected, inv.occIndex, t) && (
+                <span className="font-medium">{chipOf(inv.selected, inv.occIndex, t)}</span>
+              )}
+            </Tag>
+          }
+        />
+      )}
     </div>
   );
 }
