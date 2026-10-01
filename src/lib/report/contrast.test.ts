@@ -41,6 +41,39 @@ describe("parseContrastFix", () => {
     expect(m?.fromHex).toBe("#8fb8a8");
   });
 
+  it("reads the same fix written in Portuguese", () => {
+    const fix =
+      "Troque a cor do texto #a09a8a por #7a7569 → 4.51:1 contra #fffdf7 " +
+      "(era 2.76:1, precisa de 4.5:1). A matiz continua a mesma; só a luminosidade muda.";
+    expect(parseContrastFix(fix, "color: #7a7569;")).toMatchObject({
+      measured: 2.76,
+      required: 4.5,
+      fixed: 4.51,
+      fromHex: "#a09a8a",
+      toHex: "#7a7569",
+      bgHex: "#fffdf7",
+      prop: "color",
+    });
+  });
+
+  it("reads a Portuguese background fix and the no-fix variant", () => {
+    const background =
+      "A cor de texto #8fb8a8 não alcança 4.5:1 sobre #ffffff mudando só o texto. " +
+      "Defina o fundo como #2f6b57 → 4.62:1 (era 2.10:1, precisa de 4.5:1).";
+    expect(parseContrastFix(background)).toMatchObject({
+      measured: 2.1,
+      fixed: 4.62,
+      fromHex: "#8fb8a8",
+      toHex: "#2f6b57",
+      bgHex: "#ffffff",
+      prop: "background",
+    });
+    const neither =
+      "A cor de texto #777777 sobre #888888 alcança apenas 1.20:1 (precisa de 4.5:1). " +
+      "Nem o texto nem o fundo resolvem só pela luminosidade nestas matizes.";
+    expect(parseContrastFix(neither)).toMatchObject({ measured: 1.2, required: 4.5, toHex: null });
+  });
+
   it("returns null for a non-contrast fix", () => {
     expect(parseContrastFix("This image has no alt text.", 'alt="Logo"')).toBeNull();
     expect(parseContrastFix("")).toBeNull();

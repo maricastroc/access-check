@@ -2,9 +2,16 @@ import { VIEWPORT_CAPTURE, type ScanMarker, type Severity } from "./types";
 import type { DomRect } from "./dom/rects";
 import { firstTarget, type AxeRule } from "./violations";
 
-export const MAX_MARKERS = 6;
+export const MAX_MARKERS = 48;
 
-export type MarkerTarget = { selector: string; severity: Severity; label: string };
+export const MAX_OCCURRENCE_MARKERS = 8;
+
+export type MarkerTarget = {
+  selector: string;
+  severity: Severity;
+  label: string;
+  primary?: boolean;
+};
 
 function place(
   target: MarkerTarget,
@@ -17,6 +24,7 @@ function place(
   return {
     n,
     captureId: VIEWPORT_CAPTURE,
+    selector: target.selector,
     severity: target.severity,
     label: target.label,
     left: (r.x / viewport.width) * 100,
@@ -67,9 +75,15 @@ export function buildMarkers(
 export function markerTargets(violations: AxeRule[]): MarkerTarget[] {
   const targets: MarkerTarget[] = [];
   for (const v of violations) {
-    const sel = firstTarget(v.nodes[0]?.target);
-    if (sel)
-      targets.push({ selector: sel, severity: (v.impact ?? "minor") as Severity, label: v.help });
+    const severity = (v.impact ?? "minor") as Severity;
+    const selectors = [
+      ...new Set(
+        v.nodes.map((node) => firstTarget(node.target)).filter((s): s is string => Boolean(s)),
+      ),
+    ].slice(0, MAX_OCCURRENCE_MARKERS);
+    selectors.forEach((selector, i) =>
+      targets.push({ selector, severity, label: v.help, primary: i === 0 }),
+    );
   }
   return targets;
 }

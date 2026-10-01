@@ -1,0 +1,162 @@
+import { describe, expect, it } from "vitest";
+import {
+  locatable,
+  occurrencesOf,
+  occurrenceTag,
+  stepOccurrence,
+  unlistedOccurrences,
+} from "./occurrences";
+import type { FindingView } from "./findings";
+import type { KeyboardOccurrence } from "@/lib/scan/keyboard";
+import type { ScanMarker } from "@/lib/scan/types";
+
+function finding(over: Partial<FindingView>): FindingView {
+  return {
+    affectedSelectors: [],
+    identities: {},
+    occurrences: [],
+    markers: [],
+    elements: 0,
+    ...over,
+  } as FindingView;
+}
+
+const button = {
+  tag: "button",
+  ref: null,
+  name: "Order now",
+  region: "footer",
+  regionName: null,
+  nth: null,
+  of: null,
+} as unknown as NonNullable<KeyboardOccurrence["identity"]>;
+
+const marker = (n: number, over: Partial<ScanMarker> = {}): ScanMarker => ({
+  n,
+  captureId: "viewport",
+  severity: "serious",
+  label: "Contrast",
+  left: 1,
+  top: 1,
+  width: 1,
+  height: 1,
+  ...over,
+});
+
+describe("every finding that names an element can be found on the page", () => {
+  it("offers an axe finding's elements, once each, with their names", () => {
+    const places = occurrencesOf(
+      finding({
+        affectedSelectors: [".cta", ".cta", "#promo a"],
+        identities: { ".cta": button },
+      }),
+    );
+
+    expect(places.map((p) => p.selector)).toEqual([".cta", "#promo a"]);
+    expect(places.map((p) => p.index)).toEqual([0, 1]);
+    expect(places[0].identity).toBe(button);
+    expect(places[0].name).toBe("Order now");
+    expect(places.every((p) => !p.keyboard && p.stop === null)).toBe(true);
+    expect(places.every((p) => p.certainty === "conclusive")).toBe(true);
+  });
+
+  it("keeps a keyboard finding's own stops, reasons and certainty", () => {
+    const occurrence: KeyboardOccurrence = {
+      stop: 4,
+      selector: "nav a",
+      tag: "a",
+      label: "Pricing",
+      identity: null,
+      html: "<a>Pricing</a>",
+      rect: { x: 1, y: 2, w: 3, h: 4 },
+      onScreen: true,
+      reason: "Nothing changed when focus arrived.",
+      certainty: "needs-review",
+    };
+    const [place] = occurrencesOf(
+      finding({ occurrences: [occurrence], affectedSelectors: ["ignored"] }),
+    );
+
+    expect(place).toMatchObject({
+      selector: "nav a",
+      stop: 4,
+      keyboard: true,
+      reason: "Nothing changed when focus arrived.",
+      html: "<a>Pricing</a>",
+      certainty: "needs-review",
+    });
+  });
+
+  it("has nothing to point at when the finding is about the document itself", () => {
+    const places = occurrencesOf(
+      finding({ affectedSelectors: ["html", 'meta[name="viewport"]', "head > title"] }),
+    );
+    expect(places).toEqual([]);
+  });
+
+  it("tells a document-level target from an element", () => {
+    expect(locatable("html")).toBe(false);
+    expect(locatable("  ")).toBe(false);
+    expect(locatable('meta[name="viewport"]')).toBe(false);
+    expect(locatable("html > head > title")).toBe(false);
+    expect(locatable("html > body > main > div")).toBe(true);
+    expect(locatable("header > a")).toBe(true);
+    expect(locatable("div.metadata")).toBe(true);
+    expect(locatable("#main .title")).toBe(true);
+  });
+});
+
+describe("each occurrence knows where the capture drew it", () => {
+  it("ties a marker to the element it was measured on", () => {
+    const places = occurrencesOf(
+      finding({
+        affectedSelectors: [".a", ".b", ".c"],
+        markers: [marker(1, { selector: ".a" }), marker(4, { selector: ".c" })],
+      }),
+    );
+
+    expect(places.map((p) => p.markers.map((m) => m.n))).toEqual([[1], [], [4]]);
+  });
+
+  it("puts the first screenshot ahead of a contextual capture", () => {
+    const [place] = occurrencesOf(
+      finding({
+        affectedSelectors: [".a"],
+        markers: [
+          marker(7, { selector: ".a", captureId: "r1" }),
+          marker(2, { selector: ".a", captureId: "viewport" }),
+        ],
+      }),
+    );
+
+    expect(place.markers.map((m) => m.captureId)).toEqual(["viewport", "r1"]);
+  });
+
+  it("gives an older reading's untied markers to the first occurrence only", () => {
+    const places = occurrencesOf(
+      finding({ affectedSelectors: [".a", ".b"], markers: [marker(1), marker(2)] }),
+    );
+
+    expect(places[0].markers).toHaveLength(2);
+    expect(places[1].markers).toEqual([]);
+  });
+});
+
+describe("naming and stepping through occurrences", () => {
+  it("writes a finding's number alone, and an occurrence as number·index", () => {
+    expect(occurrenceTag(3, 0, 1)).toBe("3");
+    expect(occurrenceTag(3, 0, 5)).toBe("3·1");
+    expect(occurrenceTag(3, 4, 5)).toBe("3·5");
+  });
+
+  it("wraps around at either end", () => {
+    expect(stepOccurrence(4, 5, 1)).toBe(0);
+    expect(stepOccurrence(0, 5, -1)).toBe(4);
+    expect(stepOccurrence(0, 0, 1)).toBe(0);
+  });
+
+  it("says how many affected elements the reading could not list one by one", () => {
+    expect(unlistedOccurrences(finding({ elements: 40 }), 8)).toBe(32);
+    expect(unlistedOccurrences(finding({ elements: 3 }), 3)).toBe(0);
+  });
+});

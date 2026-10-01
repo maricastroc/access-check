@@ -120,6 +120,7 @@ export function findingAnchors(
   const unanchorable: (AnchorRef & { reason: UnanchorableReason })[] = [];
 
   targets.forEach((target, i) => {
+    if (target.primary === false) return;
     const rect = rects[i];
     const ref: AnchorRef = { kind: "finding", ref: i + 1 };
 

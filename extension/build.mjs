@@ -50,6 +50,22 @@ for (const size of [16, 32, 48, 128]) {
 }
 copyFileSync(join(root, "src/panel.html"), join(dist, "panel.html"));
 
+mkdirSync(join(dist, "fonts"), { recursive: true });
+for (const [family, file] of [
+  ["atkinson-hyperlegible-next", "atkinson-next"],
+  ["atkinson-hyperlegible-mono", "atkinson-mono"],
+]) {
+  for (const subset of ["latin", "latin-ext"]) {
+    copyFileSync(
+      join(
+        repo,
+        `node_modules/@fontsource-variable/${family}/files/${family}-${subset}-wght-normal.woff2`,
+      ),
+      join(dist, `fonts/${file}-${subset}.woff2`),
+    );
+  }
+}
+
 const cssEntry = join(root, "src/panel.css");
 const css = await postcss([tailwind]).process(readFileSync(cssEntry, "utf8"), {
   from: cssEntry,

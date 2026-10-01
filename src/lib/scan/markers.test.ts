@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { buildMarkers, markerTargets, MAX_MARKERS, type MarkerTarget } from "./markers";
+import {
+  buildMarkers,
+  markerTargets,
+  MAX_MARKERS,
+  MAX_OCCURRENCE_MARKERS,
+  type MarkerTarget,
+} from "./markers";
 import type { DomRect } from "./dom/rects";
 import { VIEWPORT_CAPTURE } from "./types";
 
@@ -79,14 +85,16 @@ describe("markers on the screenshot", () => {
 
   it("stops at the marker cap so the capture stays readable", () => {
     const targets = Array.from({ length: MAX_MARKERS + 4 }, (_, i) => target(i));
-    const rects = targets.map((_, i) => rect({ y: 100 + i * 20 }));
+    const rects = targets.map((_, i) =>
+      rect({ x: 10 + (i % 10) * 100, y: 50 + Math.floor(i / 10) * 60 }),
+    );
 
     expect(buildMarkers(targets, rects, VIEWPORT)).toHaveLength(MAX_MARKERS);
   });
 });
 
 describe("which elements get a marker", () => {
-  it("takes the first node of each violation", () => {
+  it("anchors each violation on its first node and keeps the others as occurrences", () => {
     const targets = markerTargets([
       {
         id: "color-contrast",
@@ -94,11 +102,37 @@ describe("which elements get a marker", () => {
         help: "Contrast",
         description: "d",
         tags: [],
-        nodes: [{ target: [".a"] }, { target: [".b"] }],
+        nodes: [{ target: [".a"] }, { target: [".b"] }, { target: [".a"] }],
       },
     ]);
 
-    expect(targets).toEqual([{ selector: ".a", severity: "serious", label: "Contrast" }]);
+    expect(targets).toEqual([
+      { selector: ".a", severity: "serious", label: "Contrast", primary: true },
+      { selector: ".b", severity: "serious", label: "Contrast", primary: false },
+    ]);
+  });
+
+  it("caps the occurrences a single violation can place", () => {
+    const targets = markerTargets([
+      {
+        id: "color-contrast",
+        impact: "serious",
+        help: "Contrast",
+        description: "d",
+        tags: [],
+        nodes: Array.from({ length: MAX_OCCURRENCE_MARKERS + 5 }, (_, i) => ({
+          target: [`.n${i}`],
+        })),
+      },
+    ]);
+
+    expect(targets).toHaveLength(MAX_OCCURRENCE_MARKERS);
+    expect(targets.filter((t) => t.primary)).toHaveLength(1);
+  });
+
+  it("remembers which element each marker stands for", () => {
+    const [marker] = buildMarkers([target(1)], [rect()], VIEWPORT);
+    expect(marker.selector).toBe("#el-1");
   });
 
   it("falls back to minor when axe states no impact", () => {
