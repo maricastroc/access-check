@@ -658,7 +658,6 @@ export const en = {
   "results.seeWhatWeAudit": "See what we can audit",
   "results.runAgainMoreTime": "Run again with more time",
   "results.quickFromSite": "Quick result from the site audit.",
-  "results.tapMarker": "Tap a marker to open the finding it belongs to.",
   "results.showOnScreenshot": "Show on screenshot",
   "results.takingScreenshot": "Taking the screenshot of the page.",
 

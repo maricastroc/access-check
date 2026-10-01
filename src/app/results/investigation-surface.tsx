@@ -251,7 +251,6 @@ export function InvestigationSurface({
           anchorStop={anchorStop}
           wholePath={wholePath}
           travel
-          quiet={compact}
           interactive
           onSelect={onSelectMark}
           onSelectStop={onSelectStop}

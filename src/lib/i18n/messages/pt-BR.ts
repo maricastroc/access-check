@@ -681,7 +681,6 @@ export const ptBR: Catalog = {
   "results.seeWhatWeAudit": "Veja o que conseguimos auditar",
   "results.runAgainMoreTime": "Rodar de novo com mais tempo",
   "results.quickFromSite": "Resultado rápido da auditoria do site.",
-  "results.tapMarker": "Toque em um marcador para abrir o problema correspondente.",
   "results.showOnScreenshot": "Mostrar na captura",
   "results.takingScreenshot": "Tirando a captura de tela da página.",
 

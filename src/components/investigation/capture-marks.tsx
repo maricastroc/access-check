@@ -45,7 +45,6 @@ export function CaptureMarks({
   anchorStop = null,
   wholePath = false,
   travel = false,
-  quiet = false,
   interactive,
   onSelect,
   onSelectStop,
@@ -64,7 +63,6 @@ export function CaptureMarks({
   anchorStop?: number | null;
   wholePath?: boolean;
   travel?: boolean;
-  quiet?: boolean;
   interactive: boolean;
   onSelect?: (findingId: string, index: number) => void;
   onSelectStop?: (n: number) => void;
@@ -93,7 +91,7 @@ export function CaptureMarks({
   const order: Focusable[] = [];
   if (layer === "findings") {
     for (const m of firstOf.values()) {
-      if (m.findingId === selectedId || quiet) continue;
+      if (m.findingId === selectedId) continue;
       order.push({
         key: `${m.findingId}:${m.index}`,
         findingId: m.findingId,

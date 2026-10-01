@@ -23,6 +23,58 @@ import {
 import { cn } from "@/lib/cn";
 import { PendingStanding } from "./summary-band";
 
+export function CaseSummary({
+  result,
+  groups,
+  wcag,
+  selectedId,
+  onSelect,
+  onHover,
+  host,
+  compact = false,
+  pending = false,
+  t,
+}: {
+  result: ScanResult;
+  groups: FindingGroups;
+  wcag: WcagReadingModel;
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+  onHover?: (id: string | null) => void;
+  host: string;
+  compact?: boolean;
+  pending?: boolean;
+  t: Translate;
+}) {
+  return (
+    <div className={cn("pt-8 pb-4", compact ? "px-4" : "px-6")} aria-live="polite">
+      {pending ? (
+        <PendingStanding t={t} size={compact ? "sm" : "lg"} />
+      ) : (
+        <Summary
+          standing={standingOf(result.counts)}
+          groups={groups}
+          passed={result.counts.passed}
+          selectedId={selectedId}
+          onSelect={onSelect}
+          onHover={onHover}
+          headingId="standing-heading"
+          host={host}
+          compact={compact}
+          t={t}
+        >
+          <WcagChips t={t} model={wcag} className="mt-4" />
+          {!scoringIsCurrent(result) && (
+            <p className="mt-3 text-[13px] font-semibold text-moderate-text">
+              {t("standing.staleTitle")}
+            </p>
+          )}
+        </Summary>
+      )}
+    </div>
+  );
+}
+
 export function CaseFile({
   result,
   groups,
@@ -36,6 +88,7 @@ export function CaseFile({
   focus,
   compact = false,
   pending = false,
+  summary = true,
   t,
 }: {
   result: ScanResult;
@@ -57,6 +110,7 @@ export function CaseFile({
   };
   compact?: boolean;
   pending?: boolean;
+  summary?: boolean;
   t: Translate;
 }) {
   const stops = result.keyboard?.focusPath ?? [];
@@ -65,31 +119,20 @@ export function CaseFile({
 
   return (
     <div>
-      <div className={cn("pt-8 pb-4", pad)} aria-live="polite">
-        {pending ? (
-          <PendingStanding t={t} size={compact ? "sm" : "lg"} />
-        ) : (
-          <Summary
-            standing={standingOf(result.counts)}
-            groups={groups}
-            passed={result.counts.passed}
-            selectedId={inv.selectedId}
-            onSelect={(id) => inv.select(id, 0, "index")}
-            onHover={onHover}
-            headingId="standing-heading"
-            host={host}
-            compact={compact}
-            t={t}
-          >
-            <WcagChips t={t} model={wcag} className="mt-4" />
-            {!scoringIsCurrent(result) && (
-              <p className="mt-3 text-[13px] font-semibold text-moderate-text">
-                {t("standing.staleTitle")}
-              </p>
-            )}
-          </Summary>
-        )}
-      </div>
+      {summary && (
+        <CaseSummary
+          result={result}
+          groups={groups}
+          wcag={wcag}
+          selectedId={inv.selectedId}
+          onSelect={(id) => inv.select(id, 0, "index")}
+          onHover={onHover}
+          host={host}
+          compact={compact}
+          pending={pending}
+          t={t}
+        />
+      )}
 
       <FindingList
         groups={groups}
