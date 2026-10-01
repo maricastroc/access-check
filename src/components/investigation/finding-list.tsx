@@ -225,9 +225,9 @@ export function FindingList({
     <div className="flex flex-col pb-6">
       {groups.map(({ group, findings }) => {
         const heading = (
-          <span className="flex items-baseline gap-2 text-[14px] font-semibold text-ink-2">
-            {t(GROUP_TITLE[group])}
-            <span className="font-normal text-muted tabular-nums">{findings.length}</span>
+          <span className="text-[14px] font-semibold text-ink-2">
+            {t(GROUP_TITLE[group])}{" "}
+            <span className="ml-1 font-normal text-muted tabular-nums">{findings.length}</span>
           </span>
         );
         const list = <ul>{findings.map((f, i) => row(f, findings, i))}</ul>;

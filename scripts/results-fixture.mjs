@@ -83,7 +83,7 @@ export const FIXTURE = {
       evidence: "deterministic",
       fixGroups: [
         {
-          text: "Set the text color to #595959",
+          text: "Replace text color #a09a8a with #595959 → 7.00:1 against #ffffff (was 2.80:1, needs 4.5:1).",
           code: "color: #595959;",
           count: 4,
           selectors: ["footer > p"],

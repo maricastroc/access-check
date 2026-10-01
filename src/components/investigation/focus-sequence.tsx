@@ -60,6 +60,7 @@ export function FocusSequence({
               {k > 0 && !gap && <span aria-hidden className="h-0.5 w-2.5 bg-path" />}
               <button
                 type="button"
+                data-stop={s.n}
                 aria-current={now ? "step" : undefined}
                 aria-label={
                   s.focusVisible
