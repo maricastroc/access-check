@@ -8,15 +8,9 @@ import { findingsAtStops, occurrenceTag } from "@/lib/report/occurrences";
 import { chainOf } from "@/lib/report/chain";
 import { buildReportMarkdown, reportMarkdownFilename } from "@/lib/report/markdown";
 import { usePageAudit } from "@/hooks/use-page-audit";
-import {
-  Connector,
-  Tag,
-  chipOf,
-  sevOf,
-  useInvestigation,
-  type RelatedFinding,
-} from "@/components/investigation";
+import { Connector, useInvestigation, type RelatedFinding } from "@/components/investigation";
 import { useT } from "@/lib/i18n/provider";
+import { scrollBehavior } from "@/lib/motion";
 import { safeHost } from "./shared";
 import { evidenceFigure } from "./evidence-figure";
 import {
@@ -148,6 +142,20 @@ export function ResultsView({
     () => selectedStopPlacement(focusStops, selectedStop, regions),
     [focusStops, selectedStop, regions],
   );
+  useEffect(() => {
+    if (!desktop || !inv.selectedId || inv.origin !== "row") return;
+    const id = window.setTimeout(() => {
+      const located = document.querySelector('[data-anchor="station-located"]');
+      const row = document.getElementById(`finding-${inv.selectedId}`);
+      if (!located || !row) return;
+      const short = located.getBoundingClientRect().bottom + 140 - window.innerHeight;
+      const room = row.getBoundingClientRect().top - 72;
+      const delta = Math.min(short, room);
+      if (delta > 0) window.scrollBy({ top: delta, behavior: scrollBehavior() });
+    }, 60);
+    return () => window.clearTimeout(id);
+  }, [desktop, inv.selectedId, inv.origin]);
+
   const related: RelatedFinding[] = useMemo(
     () =>
       findingsAtStops(view?.findings ?? []).map((r) => ({
@@ -196,6 +204,9 @@ export function ResultsView({
         onLayer={setLayer}
         marks={marks}
         selectedId={inv.selectedId}
+        selectedTag={
+          inv.selected ? occurrenceTag(inv.selected.n, inv.occIndex, inv.occurrences.length) : null
+        }
         occIndex={inv.occIndex}
         hoveredId={hovered}
         ring={ring}
@@ -272,7 +283,7 @@ export function ResultsView({
 
             {desktop ? (
               <>
-                <div className="grid grid-cols-[minmax(0,1fr)_400px] items-start xl:grid-cols-[minmax(0,1fr)_clamp(420px,32vw,520px)]">
+                <div className="grid grid-cols-[minmax(0,1fr)_400px] items-start xl:grid-cols-[minmax(0,1fr)_clamp(420px,30vw,500px)]">
                   {surface(false)}
                   <div id="case-file" className="min-w-0 border-l border-hairline bg-canvas">
                     <CaseFile
@@ -280,6 +291,7 @@ export function ResultsView({
                       groups={view.groups}
                       wcag={view.wcag}
                       inv={inv}
+                      compact={!wide}
                       host={host}
                       hoveredId={hovered}
                       onHover={setHovered}
@@ -336,19 +348,7 @@ export function ResultsView({
           minWidth={WIDE}
           redrawKey={`${inv.selectedId}:${inv.occIndex}:${shownLayer}:${captureId}`}
           dashed={!chainOf(inv.selected, current).measured}
-          labelAfter="#capture-figure"
-          label={
-            <Tag
-              n={occurrenceTag(inv.selected.n, inv.occIndex, inv.occurrences.length)}
-              sev={sevOf(inv.selected)}
-              size={24}
-              onPage
-            >
-              {chipOf(inv.selected, inv.occIndex, t) && (
-                <span className="font-medium">{chipOf(inv.selected, inv.occIndex, t)}</span>
-              )}
-            </Tag>
-          }
+          pageEdge="#capture-figure"
         />
       )}
     </div>

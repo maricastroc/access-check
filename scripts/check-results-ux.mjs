@@ -182,13 +182,23 @@ const marksOn = (page) =>
 
 const layer = (page, name) =>
   page.evaluate(async (label) => {
-    const button = [...document.querySelectorAll("#evidence [aria-pressed]")].find(
-      (b) => b.textContent.trim() === label,
+    const option = [...document.querySelectorAll("#evidence fieldset label")].find(
+      (l) => l.textContent.trim() === label,
     );
-    button?.click();
+    option?.click();
     await new Promise((r) => setTimeout(r, 300));
-    return Boolean(button);
+    return Boolean(option);
   }, name);
+
+const layerControl = (page) =>
+  page.evaluate(() => {
+    const set = document.querySelector("#evidence fieldset");
+    return {
+      legend: set?.querySelector("legend")?.textContent.trim() ?? null,
+      radios: set?.querySelectorAll('input[type="radio"]').length ?? 0,
+      checked: set?.querySelector("input:checked")?.parentElement.textContent.trim() ?? null,
+    };
+  });
 
 try {
   for (const width of [1280, 1440]) {
@@ -458,14 +468,20 @@ try {
   console.log("capture at 1560px:", shot);
   check(shot / 1200 >= 0.7, `the screenshot renders at ${Math.round((shot / 1200) * 100)}%`);
 
+  const control = await layerControl(wide.page);
+  console.log("the choice of marks:", JSON.stringify(control));
+  check(control.legend === "Marks", `the choice of marks is labelled ${control.legend}`);
+  check(control.radios === 3, `the choice of marks offers ${control.radios} options`);
+  check(control.checked === "Findings", `the capture opens on ${control.checked}`);
+
   const shown = await marksOn(wide.page);
-  await layer(wide.page, "No marks");
+  await layer(wide.page, "None");
   const hidden = await marksOn(wide.page);
   await layer(wide.page, "Findings");
   const restored = await marksOn(wide.page);
   console.log("layers:", JSON.stringify({ shown, hidden, restored }));
   check(shown.findings > 0, "nothing is marked before the layers are touched");
-  check(hidden.findings === 0 && hidden.stops === 0, "No marks left marks on the screenshot");
+  check(hidden.findings === 0 && hidden.stops === 0, "None left marks on the screenshot");
   check(restored.findings === shown.findings, "showing the findings again lost marks");
 
   await pickStop(wide.page, 3);

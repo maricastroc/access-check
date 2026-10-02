@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import type { Translate } from "@/lib/i18n/t";
 import { occurrenceTag } from "@/lib/report/occurrences";
 import { cn } from "@/lib/cn";
@@ -29,8 +29,82 @@ type Focusable = {
 };
 
 const NEIGHBOURS = 2;
+const GAP = 3;
+const SIBLING_TAGS = 4;
+const MARGIN = 18;
 
-const cornerTag: CSSProperties = { transform: "translate(calc(-50% - 5px), calc(-50% - 5px))" };
+type Rect = { x: number; y: number; w: number; h: number };
+
+type TagItem = {
+  key: string;
+  focus: Focusable | null;
+  node: ReactNode;
+  size: number;
+  text: string;
+  shape: "square" | "circle";
+  anchor: Rect;
+  inset: number;
+  yields: boolean;
+  own?: Rect;
+  z: number;
+};
+
+function tagSize(text: string, size: number, shape: "square" | "circle") {
+  const font = size <= 18 ? 11.5 : size >= 26 ? 14 : 12.5;
+  const w = Math.max(size, Math.ceil(text.length * font * 0.62 + (shape === "circle" ? 8 : 10)));
+  return { w, h: size };
+}
+
+function clash(a: Rect, b: Rect): boolean {
+  return (
+    a.x < b.x + b.w + GAP && b.x < a.x + a.w + GAP && a.y < b.y + b.h + GAP && b.y < a.y + a.h + GAP
+  );
+}
+
+function placeTags(items: TagItem[], bounds: { w: number; h: number }) {
+  const taken: Rect[] = [];
+  const placed = new Map<string, Rect>();
+  for (const item of items) {
+    const { w, h } = tagSize(item.text, item.size, item.shape);
+    const a = item.anchor;
+    const i = item.inset;
+    const candidates: Rect[] =
+      item.shape === "circle"
+        ? [
+            { x: a.x - i - w, y: a.y - i - h, w, h },
+            { x: a.x - i, y: a.y - i - h - 2, w, h },
+            { x: a.x - i - w - 2, y: a.y - i, w, h },
+            { x: a.x - i - w, y: a.y + a.h + i, w, h },
+            { x: a.x - w / 2, y: a.y - h / 2, w, h },
+          ]
+        : [
+            { x: a.x - i, y: a.y - i - h - 2, w, h },
+            { x: a.x - i, y: a.y + a.h + i + 2, w, h },
+            { x: a.x - i - w - 2, y: a.y - i, w, h },
+            ...(item.yields
+              ? []
+              : [1, -1, 2, -2, 3].map((k) => ({
+                  x: a.x - i + k * (w + GAP),
+                  y: a.y - i - h - 2,
+                  w,
+                  h,
+                }))),
+          ];
+    const fits = (r: Rect) =>
+      r.y >= -MARGIN &&
+      r.y + r.h <= bounds.h + MARGIN &&
+      r.x >= -MARGIN &&
+      r.x + r.w <= bounds.w + i;
+    const free = candidates.find((r) => fits(r) && !taken.some((o) => clash(r, o)));
+    const chosen = free ?? (item.yields ? null : (candidates.find(fits) ?? candidates[0]));
+    if (!chosen) continue;
+    const r = { ...chosen, x: Math.min(Math.max(chosen.x, -MARGIN), bounds.w + i - chosen.w) };
+    taken.push(r);
+    if (item.own) taken.push(item.own);
+    placed.set(item.key, r);
+  }
+  return placed;
+}
 
 export function CaptureMarks({
   marks,
@@ -88,44 +162,184 @@ export function CaptureMarks({
   const current = selected.find((m) => m.index === occIndex) ?? null;
   const overview = selectedId === null;
 
-  const order: Focusable[] = [];
+  const position = new Map(sequence.map((n, i) => [n, i]));
+  const at = currentStop === null ? -1 : (position.get(currentStop) ?? -1);
+  const near = (n: number) => at >= 0 && Math.abs((position.get(n) ?? -99) - at) <= NEIGHBOURS;
+  const point = (b: Box) => ({ x: (b.left / 100) * size.w, y: (b.top / 100) * size.h });
+  const stopBox = new Map(stops.map((s) => [s.n, s]));
+
+  const focusedStop = currentStop !== null ? stopBox.get(currentStop) : undefined;
+  const hovered =
+    !overview && hoveredId !== selectedId ? marks.filter((m) => m.findingId === hoveredId) : [];
+
+  const px = (box: Box): Rect => ({
+    x: (box.left / 100) * size.w,
+    y: (box.top / 100) * size.h,
+    w: (box.width / 100) * size.w,
+    h: (box.height / 100) * size.h,
+  });
+  const ringGap = ring ? 6 : 0;
+  const items: TagItem[] = [];
+
   if (layer === "findings") {
-    for (const m of firstOf.values()) {
-      if (m.findingId === selectedId) continue;
-      order.push({
-        key: `${m.findingId}:${m.index}`,
-        findingId: m.findingId,
-        index: m.index,
-        stop: null,
-        box: m.box,
-        label: t("marks.finding", { n: m.n, kind: m.kind, title: m.title }),
+    if (current) {
+      const r = px(current.box);
+      const inset = 5 + ringGap;
+      const text = occurrenceTag(current.n, current.index, current.total);
+      items.push({
+        key: `current:${current.findingId}`,
+        focus: null,
+        node: <Tag n={text} sev={current.sev} size={20} onPage selected />,
+        size: 20,
+        text,
+        shape: "square",
+        anchor: r,
+        inset,
+        yields: false,
+        own: { x: r.x - inset, y: r.y - inset, w: r.w + inset * 2, h: r.h + inset * 2 },
+        z: 4,
       });
     }
-    for (const m of selected) {
-      if (m.index === occIndex) continue;
-      order.push({
+    const siblings = selected
+      .filter((m) => m.index !== occIndex)
+      .sort((x, y) => Math.abs(x.index - occIndex) - Math.abs(y.index - occIndex));
+    const total = current?.total ?? selected[0]?.total ?? 0;
+    const beside = new Set([
+      (occIndex + 1) % Math.max(total, 1),
+      (occIndex - 1 + total) % Math.max(total, 1),
+    ]);
+    for (const m of siblings) {
+      if (siblings.length > SIBLING_TAGS && !beside.has(m.index)) continue;
+      const text = occurrenceTag(m.n, m.index, m.total);
+      items.push({
         key: `${m.findingId}:${m.index}`,
-        findingId: m.findingId,
-        index: m.index,
-        stop: null,
-        box: m.box,
-        label: t("marks.occurrence", { n: m.n, i: m.index + 1, total: m.total, title: m.title }),
+        focus: {
+          key: `${m.findingId}:${m.index}`,
+          findingId: m.findingId,
+          index: m.index,
+          stop: null,
+          box: m.box,
+          label: t("marks.occurrence", { n: m.n, i: m.index + 1, total: m.total, title: m.title }),
+        },
+        node: <Tag n={text} sev={m.sev} size={17} quiet onPage />,
+        size: 17,
+        text,
+        shape: "square",
+        anchor: px(m.box),
+        inset: 4 + ringGap,
+        yields: true,
+        z: 3,
+      });
+    }
+    for (const m of [...firstOf.values()].sort((x, y) => x.n - y.n)) {
+      if (m.findingId === selectedId) continue;
+      const lit = overview || m.findingId === hoveredId;
+      items.push({
+        key: `${m.findingId}:${m.index}`,
+        focus: {
+          key: `${m.findingId}:${m.index}`,
+          findingId: m.findingId,
+          index: m.index,
+          stop: null,
+          box: m.box,
+          label: t("marks.finding", { n: m.n, kind: m.kind, title: m.title }),
+        },
+        node: (
+          <Tag
+            n={m.n}
+            sev={m.sev}
+            size={lit ? 20 : 17}
+            quiet={!lit}
+            onPage
+            selected={m.findingId === hoveredId && !overview}
+          />
+        ),
+        size: lit ? 20 : 17,
+        text: String(m.n),
+        shape: "square",
+        anchor: px(m.box),
+        inset: 4,
+        yields: !overview,
+        z: lit ? 2 : 1,
       });
     }
   } else if (layer === "path") {
-    for (const s of stops) {
-      order.push({
+    const shown = stops
+      .filter((s) => wholePath || near(s.n) || s.n === currentStop)
+      .sort(
+        (x, y) =>
+          Number(y.n === currentStop) - Number(x.n === currentStop) ||
+          Math.abs((position.get(x.n) ?? 0) - at) - Math.abs((position.get(y.n) ?? 0) - at),
+      );
+    for (const s of shown) {
+      const isNow = s.n === currentStop;
+      const close = near(s.n) || isNow;
+      const p = px(s.box);
+      items.push({
         key: `stop:${s.n}`,
-        findingId: null,
-        index: 0,
-        stop: s.n,
-        box: s.box,
-        label: s.visible
-          ? t("marks.stopLabel", { n: s.n, label: s.label })
-          : t("marks.stopNoFocus", { n: s.n, label: s.label }),
+        focus: {
+          key: `stop:${s.n}`,
+          findingId: null,
+          index: 0,
+          stop: s.n,
+          box: s.box,
+          label: s.visible
+            ? t("marks.stopLabel", { n: s.n, label: s.label })
+            : t("marks.stopNoFocus", { n: s.n, label: s.label }),
+        },
+        node: close ? (
+          <Tag n={s.n} sev="none" shape="circle" size={isNow ? 26 : 20} onPage selected={isNow} />
+        ) : (
+          <span
+            aria-hidden
+            className="block size-2.5 rounded-full border-2 border-path bg-surface"
+            style={{ boxShadow: "0 0 0 1.5px var(--color-halo)" }}
+          />
+        ),
+        size: close ? (isNow ? 26 : 20) : 10,
+        text: close ? String(s.n) : "",
+        shape: "circle",
+        anchor: close ? p : { x: p.x, y: p.y, w: 0, h: 0 },
+        inset: close ? (isNow ? 5 : 2) + (s.visible ? 0 : 6) : 0,
+        yields: !close,
+        own: isNow
+          ? {
+              x: p.x - 5 - (s.visible ? 0 : 6),
+              y: p.y - 5 - (s.visible ? 0 : 6),
+              w: p.w + 10 + (s.visible ? 0 : 12),
+              h: p.h + 10 + (s.visible ? 0 : 12),
+            }
+          : undefined,
+        z: isNow ? 4 : close ? 3 : 1,
       });
     }
   }
+
+  const spots = size.w > 0 ? placeTags(items, size) : new Map<string, Rect>();
+  const visible = items.filter((item) => spots.has(item.key));
+  const centre = (n: number, box: Box) => {
+    const spot = spots.get(`stop:${n}`);
+    return spot ? { x: spot.x + spot.w / 2, y: spot.y + spot.h / 2 } : point(box);
+  };
+  const whole = sequence
+    .map((n) => stopBox.get(n))
+    .filter((s): s is PlacedStop => Boolean(s))
+    .map((s) => {
+      const p = centre(s.n, s.box);
+      return `${p.x},${p.y}`;
+    })
+    .join(" ");
+  const segments: { a: { x: number; y: number }; b: { x: number; y: number }; key: string }[] = [];
+  for (let i = 1; i < sequence.length; i++) {
+    const a = stopBox.get(sequence[i - 1]);
+    const b = stopBox.get(sequence[i]);
+    if (!a || !b || !near(a.n) || !near(b.n)) continue;
+    segments.push({ a: centre(a.n, a.box), b: centre(b.n, b.box), key: `${a.n}-${b.n}` });
+  }
+
+  const order = visible
+    .filter((item): item is TagItem & { focus: Focusable } => item.focus !== null)
+    .map((item) => item.focus);
 
   const [active, setActive] = useState(0);
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -154,30 +368,6 @@ export function CaptureMarks({
     }
   };
 
-  const position = new Map(sequence.map((n, i) => [n, i]));
-  const at = currentStop === null ? -1 : (position.get(currentStop) ?? -1);
-  const near = (n: number) => at >= 0 && Math.abs((position.get(n) ?? -99) - at) <= NEIGHBOURS;
-  const point = (b: Box) => ({ x: (b.left / 100) * size.w, y: (b.top / 100) * size.h });
-  const stopBox = new Map(stops.map((s) => [s.n, s]));
-  const segments: { a: { x: number; y: number }; b: { x: number; y: number }; key: string }[] = [];
-  for (let i = 1; i < sequence.length; i++) {
-    const a = stopBox.get(sequence[i - 1]);
-    const b = stopBox.get(sequence[i]);
-    if (!a || !b || !near(a.n) || !near(b.n)) continue;
-    segments.push({ a: point(a.box), b: point(b.box), key: `${a.n}-${b.n}` });
-  }
-  const whole = sequence
-    .map((n) => stopBox.get(n))
-    .filter((s): s is PlacedStop => Boolean(s))
-    .map((s) => {
-      const p = point(s.box);
-      return `${p.x},${p.y}`;
-    })
-    .join(" ");
-  const focusedStop = currentStop !== null ? stopBox.get(currentStop) : undefined;
-  const hovered =
-    !overview && hoveredId !== selectedId ? marks.filter((m) => m.findingId === hoveredId) : [];
-
   return (
     <div ref={root} className="pointer-events-none absolute inset-0">
       {layer === "findings" &&
@@ -189,7 +379,7 @@ export function CaptureMarks({
       {layer === "findings" &&
         selected.map((m) =>
           m.index === occIndex ? null : (
-            <Locus key={`sib-${m.index}`} box={m.box} weight="sibling" extra={ring ? 8 : 0} />
+            <Locus key={`sib-${m.index}`} box={m.box} weight="sibling" extra={ringGap} />
           ),
         )}
       {layer === "findings" && current && (
@@ -198,7 +388,7 @@ export function CaptureMarks({
           box={current.box}
           weight="current"
           anchor="locus-current"
-          extra={ring ? 8 : 0}
+          extra={ringGap}
           className={cn("ac-acquire", travel && "ac-travel")}
         />
       )}
@@ -259,7 +449,7 @@ export function CaptureMarks({
               key={`stop-${focusedStop.n}`}
               box={focusedStop.box}
               weight="current"
-              extra={focusedStop.visible ? 0 : 8}
+              extra={focusedStop.visible ? 0 : 6}
               anchor={focusedStop.n === anchorStop ? "locus-current" : undefined}
               className="ac-acquire"
             />
@@ -273,66 +463,26 @@ export function CaptureMarks({
         aria-hidden={interactive ? undefined : true}
         onKeyDown={interactive ? onKey : undefined}
       >
-        {order.map((m, i) => {
-          let tag;
-          let style: CSSProperties;
-          if (m.stop !== null) {
-            const isNow = m.stop === currentStop;
-            const p = point(m.box);
-            tag = near(m.stop) ? (
-              <Tag
-                n={m.stop}
-                sev="none"
-                shape="circle"
-                size={isNow ? 26 : 20}
-                onPage
-                selected={isNow}
-              />
-            ) : (
-              <span
-                aria-hidden
-                className="block size-2.5 rounded-full border-2 border-path bg-surface"
-                style={{ boxShadow: "0 0 0 1.5px var(--color-halo)" }}
-              />
-            );
-            style = {
-              left: p.x,
-              top: p.y,
-              transform: "translate(-50%, -50%)",
-              zIndex: isNow ? 3 : 2,
-            };
-          } else {
-            const mark = marks.find((x) => x.findingId === m.findingId && x.index === m.index)!;
-            const mine = m.findingId === selectedId;
-            const lit = overview || mine || m.findingId === hoveredId;
-            tag = (
-              <Tag
-                n={mine ? occurrenceTag(mark.n, mark.index, mark.total) : mark.n}
-                sev={mark.sev}
-                size={lit ? 20 : 17}
-                quiet={!lit}
-                onPage
-                selected={m.findingId === hoveredId && !mine}
-              />
-            );
-            style = {
-              left: `${m.box.left}%`,
-              top: `${m.box.top}%`,
-              ...cornerTag,
-              zIndex: mine ? 3 : lit ? 2 : 1,
-            };
-          }
-
-          if (!interactive) {
+        {visible.map((item) => {
+          const r = spots.get(item.key)!;
+          const style = {
+            left: r.x + r.w / 2,
+            top: r.y + r.h / 2,
+            transform: "translate(-50%, -50%)",
+            zIndex: item.z,
+          };
+          const m = item.focus;
+          if (!interactive || !m) {
             return (
-              <span key={m.key} className="absolute" style={style}>
-                {tag}
+              <span key={item.key} aria-hidden className="absolute flex" style={style}>
+                {item.node}
               </span>
             );
           }
+          const i = order.indexOf(m);
           return (
             <button
-              key={m.key}
+              key={item.key}
               ref={(el) => {
                 refs.current[i] = el;
               }}
@@ -354,7 +504,7 @@ export function CaptureMarks({
               className="pointer-events-auto absolute flex min-h-6 min-w-6 cursor-pointer items-center justify-center"
               style={style}
             >
-              {tag}
+              {item.node}
             </button>
           );
         })}

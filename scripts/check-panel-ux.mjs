@@ -433,7 +433,8 @@ try {
     const counter = () =>
       [...document.querySelectorAll("span")]
         .map((h) => h.textContent.trim())
-        .find((t) => /^Occurrence \d+ of \d+$/.test(t));
+        .map((t) => t.match(/^Occurrence \d+ of \d+/)?.[0])
+        .find(Boolean);
     const first = counter();
     document.querySelector('button[aria-label="Next occurrence"]')?.click();
     await new Promise((r) => setTimeout(r, 80));

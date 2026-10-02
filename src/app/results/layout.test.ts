@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { en } from "@/lib/i18n/messages/en";
 
 const read = (rel: string) => readFileSync(fileURLToPath(new URL(rel, import.meta.url)), "utf8");
 
@@ -19,6 +20,7 @@ const chain = read("../../components/investigation/evidence-chain.tsx");
 const marks = read("../../components/investigation/capture-marks.tsx");
 const nav = read("../../components/investigation/occurrence-nav.tsx");
 const sequence = read("../../components/investigation/focus-sequence.tsx");
+const connector = read("../../components/investigation/connector.tsx");
 
 const FIXED_WORDS = /(>|\})\s*[A-Za-z][a-z]+( [a-z]+)*\s*(<|\{)/g;
 const CODE_WORDS = /^[>}]\s*(else|return|const|let|if|for|while|case|default|try|catch|finally)\b/;
@@ -137,9 +139,15 @@ describe("an opened finding reads as a chain of evidence", () => {
   });
 
   it("names the same occurrence the same way on the page and in the chain", () => {
-    expect(marks).toContain("occurrenceTag(mark.n, mark.index, mark.total)");
+    expect(marks).toContain("occurrenceTag(current.n, current.index, current.total)");
+    expect(marks).toContain("occurrenceTag(m.n, m.index, m.total)");
     expect(nav).toContain("occurrenceTag(n, i, total)");
     expect(view).toContain("occurrenceTag(inv.selected.n, inv.occIndex, inv.occurrences.length)");
+  });
+
+  it("says a mark is missing without saying the element is", () => {
+    expect(surface).toContain('t("chain.notOnCaptureHere", { tag: selectedTag ?? "" })');
+    expect(en["chain.notOnCapture"]).not.toMatch(/not on any capture|outside/i);
   });
 
   it("explains a guess instead of presenting it as a settled failure", () => {
@@ -148,10 +156,34 @@ describe("an opened finding reads as a chain of evidence", () => {
   });
 });
 
+describe("the capture stays readable when the page is crowded", () => {
+  it("names the choice of marks as one labelled choice, not a row of links", () => {
+    const layers = surface.slice(surface.indexOf("export function LayerSwitch("));
+    expect(layers).toContain("<fieldset");
+    expect(layers).toContain("<legend className=");
+    expect(layers).toContain('type="radio"');
+    expect(en["layers.label"]).toBe("Marks");
+    expect(en["layers.none"]).toBe("None");
+  });
+
+  it("keeps tags beside the element and lets the other occurrences give way", () => {
+    expect(marks).toContain("{ x: a.x - i, y: a.y - i - h - 2, w, h }");
+    expect(marks).toContain("const SIBLING_TAGS = 4;");
+    expect(marks).toContain("siblings.length > SIBLING_TAGS && !beside.has(m.index)");
+  });
+
+  it("draws one leader from the bracket and no second label beside it", () => {
+    expect(connector).toContain("const sy = ar.top - 4;");
+    expect(connector).not.toContain("label");
+    expect(view).not.toContain("chipOf");
+  });
+});
+
 describe("the focus path is a sequence, drawn near the current stop", () => {
   it("draws only the neighbourhood unless the whole path is asked for", () => {
     expect(marks).toContain("const NEIGHBOURS = 2;");
     expect(marks).toContain("wholePath &&");
+    expect(marks).toContain(".filter((s) => wholePath || near(s.n) || s.n === currentStop)");
     expect(sequence).toContain('t("panel.showComplete")');
   });
 

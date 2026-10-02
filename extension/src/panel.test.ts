@@ -819,9 +819,29 @@ describe("the panel is an inspector, not a squeezed report", () => {
   it("keeps the current mark loud and the rest quiet, and never by colour alone", () => {
     expect(overlay).toContain(".tag.current {");
     expect(overlay).toContain(".tag.quiet {");
-    expect(overlay).toContain('current: { inset: 5, arm: "min(13px, 42%)", bar: 2.5 }');
+    expect(overlay).toMatch(/current: \{ inset: 5, arm: "min\(13px, 42%\)", bar: 2\.5/);
+    expect(overlay).toMatch(/sibling: \{ inset: 4, arm: "min\(8px, 40%\)", bar: 1\.5/);
     expect(overlay).toContain("el.textContent = mark.tag;");
     expect(panel).toContain("tag: occurrenceTag(f.n, o.index, total)");
+  });
+
+  it("puts a mark's tag beside the element instead of over what is being read", () => {
+    const tags = between(overlay, "function placeTags(", "function place(");
+    expect(tags).toContain("{ x: r.left - inset, y: r.top - inset - h - 2, w, h }");
+    expect(tags).toContain("{ x: r.left - inset, y: r.bottom + inset + 2, w, h }");
+  });
+
+  it("lets the other occurrences give way when the page is crowded", () => {
+    const tags = between(overlay, "function placeTags(", "function place(");
+    expect(overlay).toContain("const SIBLING_TAGS = 4;");
+    expect(tags).toContain("siblings.length > SIBLING_TAGS && !beside.has(p.mark.n)");
+    expect(tags).toContain("const chosen = free ?? (sibling ? null :");
+  });
+
+  it("runs the focus path through the numbered circles", () => {
+    expect(overlay).toContain(
+      "if (p.spot) return { x: p.spot.x + p.spot.w / 2, y: p.spot.y + p.spot.h / 2 };",
+    );
   });
 
   it("travels only when the element cannot already be seen", () => {

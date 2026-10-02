@@ -72,13 +72,13 @@ const STYLE = `
 }
 .ring { position: fixed; pointer-events: none; }
 .ring-hatch {
-  position: absolute; inset: -6px; padding: 6px;
-  background: repeating-linear-gradient(135deg, rgba(156,68,0,.28) 0 1.5px, transparent 1.5px 5px);
+  position: absolute; inset: -4px; padding: 4px;
+  background: repeating-linear-gradient(135deg, rgba(156,68,0,.34) 0 1px, transparent 1px 4px);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
 }
-.ring-line { position: absolute; inset: -6px; border: 1.5px dashed ${TONE.serious}; outline: 1px solid ${HALO}; }
+.ring-line { position: absolute; inset: -4px; border: 1.5px dashed ${TONE.serious}; outline: 1px solid ${HALO}; }
 .tag {
   position: fixed; display: inline-flex; align-items: center; justify-content: center;
   height: 20px; min-width: 20px; padding: 0 5px; margin: 0; border: 0;
@@ -86,16 +86,15 @@ const STYLE = `
   font-variant-numeric: tabular-nums; letter-spacing: 0; white-space: nowrap;
   color: #fff; background: var(--tone);
   box-shadow: 0 0 0 1.5px ${HALO}, 0 0 0 2.5px rgba(18,18,17,.42);
-  transform: translate(calc(-50% - 5px), calc(-50% - 5px));
   pointer-events: none; user-select: none; -webkit-user-select: none;
 }
-.tag.circle { border-radius: 999px; padding: 0 4px; transform: translate(-50%, -50%); }
+.tag.circle { border-radius: 999px; padding: 0 4px; }
 .tag.outline { background: #fff; color: ${INK}; border: 1.5px solid ${INK_2}; }
 .tag.review { background: #fff; color: var(--tone); border: 1.5px dashed var(--tone); }
 .tag.quiet { background: #fff; color: ${INK_2}; border: 1px solid ${INK_2}; height: 18px; min-width: 18px; font-size: 11.5px; }
 .tag.circle.quiet { color: var(--tone); border: 1.5px solid var(--tone); }
 .tag.current {
-  height: 26px; min-width: 26px; font-size: 14px;
+  height: 22px; min-width: 22px; font-size: 13px;
   box-shadow: 0 0 0 1.5px ${HALO}, 0 0 0 2.5px rgba(18,18,17,.42), 0 0 0 4px #fff, 0 0 0 6px ${INK};
 }
 .tag[data-pick] { pointer-events: auto; cursor: pointer; }
@@ -120,9 +119,14 @@ const STYLE = `
 `;
 
 const LOCUS = {
-  current: { inset: 5, arm: "min(13px, 42%)", bar: 2.5 },
-  sibling: { inset: 4, arm: "min(8px, 40%)", bar: 1.5 },
+  current: { inset: 5, arm: "min(13px, 42%)", bar: 2.5, halo: 3 },
+  sibling: { inset: 4, arm: "min(8px, 40%)", bar: 1.5, halo: 2 },
 } as const;
+
+const RING = 6;
+const SIBLING_TAGS = 4;
+
+type Rect = { x: number; y: number; w: number; h: number };
 
 type Painted = {
   mark: OverlayMark;
@@ -133,6 +137,7 @@ type Painted = {
   ring: HTMLElement | null;
   visible: boolean;
   rect: DOMRect;
+  spot: Rect | null;
 };
 
 let painted: Painted[] = [];
@@ -181,11 +186,11 @@ function swallow(el: HTMLElement, act: () => void): void {
 function corners(cfg: (typeof LOCUS)[keyof typeof LOCUS], halo: boolean): HTMLElement {
   const el = document.createElement("span");
   el.className = "corners";
-  const inset = halo ? cfg.inset + 1.5 : cfg.inset;
+  const inset = halo ? cfg.inset + cfg.halo / 2 : cfg.inset;
   css(el, {
     "--ink": halo ? HALO : INK,
-    "--arm": halo ? `calc(${cfg.arm} + 3px)` : cfg.arm,
-    "--bar": `${halo ? cfg.bar + 3 : cfg.bar}px`,
+    "--arm": halo ? `calc(${cfg.arm} + ${cfg.halo}px)` : cfg.arm,
+    "--bar": `${halo ? cfg.bar + cfg.halo : cfg.bar}px`,
     inset: `${-inset}px`,
   });
   return el;
@@ -200,15 +205,15 @@ function locusFor(mark: OverlayMark, current: boolean): HTMLElement {
   el.dataset.tone = mark.tone;
   el.dataset.current = String(current);
   if (mark.ring) el.dataset.ring = "true";
-  const extra = mark.ring ? 8 : 0;
+  const extra = mark.ring ? RING : 0;
   const halo = corners(cfg, true);
   const ink = corners(cfg, false);
   if (extra) {
-    css(halo, { inset: `${-(cfg.inset + 1.5 + extra)}px` });
+    css(halo, { inset: `${-(cfg.inset + cfg.halo / 2 + extra)}px` });
     css(ink, { inset: `${-(cfg.inset + extra)}px` });
   }
   el.append(halo, ink);
-  if (!current) css(el, { opacity: mark.quiet ? "0.85" : "1" });
+  if (!current) css(el, { opacity: mark.quiet ? "0.8" : "1" });
   return el;
 }
 
@@ -275,6 +280,7 @@ function svg<K extends keyof SVGElementTagNameMap>(
 }
 
 function anchorOf(p: Painted): { x: number; y: number } {
+  if (p.spot) return { x: p.spot.x + p.spot.w / 2, y: p.spot.y + p.spot.h / 2 };
   return { x: p.rect.left, y: p.rect.top };
 }
 
@@ -337,6 +343,78 @@ function placeEdge(current: Painted | null): void {
   hide();
 }
 
+function clash(a: Rect, b: Rect): boolean {
+  return a.x < b.x + b.w + 3 && b.x < a.x + a.w + 3 && a.y < b.y + b.h + 3 && b.y < a.y + a.h + 3;
+}
+
+function placeTags(): void {
+  for (const p of painted) p.spot = null;
+  const current = painted.find((p) => p.current && p.visible) ?? null;
+  const taken: Rect[] = [];
+  const siblings = painted.filter((p) => p.visible && !p.current && p.mark.quiet);
+  const last = Math.max(0, ...painted.map((p) => p.mark.n));
+  const beside = current
+    ? new Set([current.mark.n - 1 || last, current.mark.n === last ? 1 : current.mark.n + 1])
+    : new Set<number>();
+  const order = painted
+    .filter((p) => p.visible)
+    .sort(
+      (a, b) =>
+        Number(b.current) - Number(a.current) ||
+        Number(Boolean(a.mark.quiet)) - Number(Boolean(b.mark.quiet)) ||
+        Math.abs(a.mark.n - (current?.mark.n ?? 0)) - Math.abs(b.mark.n - (current?.mark.n ?? 0)),
+    );
+  for (const p of order) {
+    const circle = p.mark.shape === "circle";
+    const sibling = !p.current && !circle && Boolean(p.mark.quiet);
+    if (sibling && siblings.length > SIBLING_TAGS && !beside.has(p.mark.n)) {
+      p.tag.style.setProperty("display", "none");
+      continue;
+    }
+    const w = p.tag.offsetWidth || 22;
+    const h = p.tag.offsetHeight || 20;
+    const r = p.rect;
+    const inset =
+      (circle && !p.current ? 2 : p.current ? LOCUS.current.inset : LOCUS.sibling.inset) +
+      (p.mark.ring ? RING : 0);
+    const candidates: Rect[] = circle
+      ? [
+          { x: r.left - inset - w, y: r.top - inset - h, w, h },
+          { x: r.left - inset, y: r.top - inset - h - 2, w, h },
+          { x: r.left - inset - w - 2, y: r.top - inset, w, h },
+          { x: r.left - inset - w, y: r.bottom + inset, w, h },
+          { x: r.left - w / 2, y: r.top - h / 2, w, h },
+        ]
+      : [
+          { x: r.left - inset, y: r.top - inset - h - 2, w, h },
+          { x: r.left - inset, y: r.bottom + inset + 2, w, h },
+          { x: r.left - inset - w - 2, y: r.top - inset, w, h },
+        ];
+    const fits = (c: Rect) =>
+      c.y >= 0 && c.y + c.h <= innerHeight && c.x + c.w > 0 && c.x < innerWidth;
+    const free = candidates.find((c) => fits(c) && !taken.some((o) => clash(c, o)));
+    const chosen = free ?? (sibling ? null : (candidates.find(fits) ?? candidates[0]));
+    if (!chosen) {
+      p.tag.style.setProperty("display", "none");
+      continue;
+    }
+    const x = Math.min(Math.max(chosen.x, 2), innerWidth - w - 2);
+    const y = Math.min(Math.max(chosen.y, 2), innerHeight - h - 2);
+    p.spot = { x, y, w, h };
+    taken.push({ x, y, w, h });
+    if (p.current) {
+      const box = circle ? (p.mark.ring ? RING : 0) + LOCUS.current.inset : inset;
+      taken.push({
+        x: r.left - box,
+        y: r.top - box,
+        w: r.width + box * 2,
+        h: r.height + box * 2,
+      });
+    }
+    css(p.tag, { left: `${x}px`, top: `${y}px` });
+  }
+}
+
 function place(): void {
   frame = 0;
   for (const p of painted) {
@@ -356,16 +434,8 @@ function place(): void {
     };
     css(p.locus, box);
     if (p.ring) css(p.ring, box);
-    const lift = p.mark.ring ? 8 : 0;
-    const circle = p.mark.shape === "circle";
-    const half = (p.tag.offsetWidth || 24) / 2 + (circle ? 2 : 7);
-    const tall = (p.tag.offsetHeight || 20) / 2 + (circle ? 2 : 7);
-    const low = r.top - lift < tall;
-    css(p.tag, {
-      left: `${Math.min(Math.max(r.left - lift, half), innerWidth - half)}px`,
-      top: `${circle ? Math.max(r.top - lift, tall) : low ? Math.max(r.top, 0) + tall : r.top - lift}px`,
-    });
   }
+  placeTags();
   if (!lines) return;
   lines.replaceChildren();
   const current = painted.find((p) => p.current) ?? null;
@@ -490,6 +560,7 @@ export function overlayShow(
       ring,
       visible: false,
       rect: el.getBoundingClientRect(),
+      spot: null,
     });
   }
 

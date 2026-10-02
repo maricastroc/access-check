@@ -182,7 +182,6 @@ function Contrast({
         <RatioGauge
           measured={reading.measured}
           required={reading.required}
-          mode="measured"
           sev={sev}
           neededLabel={t("chain.needed")}
         />
@@ -196,6 +195,7 @@ function Contrast({
             caption={t("chain.onThePage")}
             ratio={reading.measured}
             tone="measured"
+            showRatio={false}
           />
         </div>
       )}
@@ -405,26 +405,14 @@ function Verdict({
     return (
       <div>
         {chain.end === "tested" && reading?.fixed != null && (
-          <>
-            <p className="flex flex-wrap items-baseline gap-x-3">
-              <span className="font-mono text-[22px] leading-none font-semibold text-verified">
-                {reading.fixed.toFixed(2)}:1
-              </span>
-              <span className="text-[15px] text-ink-2">
-                {t("chain.passes", { required: reading.required })}
-              </span>
-            </p>
-            <div className="mt-2">
-              <RatioGauge
-                measured={reading.measured}
-                fixed={reading.fixed}
-                required={reading.required}
-                mode="verified"
-                sev={sevOf(f)}
-                neededLabel={t("chain.needed")}
-              />
-            </div>
-          </>
+          <p className="flex flex-wrap items-baseline gap-x-3">
+            <span className="font-mono text-[22px] leading-none font-semibold text-verified">
+              {reading.fixed.toFixed(2)}:1
+            </span>
+            <span className="text-[15px] text-ink-2">
+              {t("chain.passes", { required: reading.required })}
+            </span>
+          </p>
         )}
         <p className="mt-1 text-[14.5px] leading-normal text-ink-2">
           {chain.end === "tested" && reading && reading.verification !== "verified"
@@ -529,7 +517,13 @@ export function EvidenceChain({
       content: <Decide finding={finding} t={t} />,
     },
     verdict: {
-      label: chain.end ? t(END_KEY[chain.end]) : "",
+      label: chain.end
+        ? t(
+            chain.end === "person" && finding.kind !== "manual-review"
+              ? "chain.end.fixPerson"
+              : END_KEY[chain.end],
+          )
+        : "",
       glyph: <NodeGlyph kind="end" sev={sev} end={chain.end} />,
       content: <Verdict finding={finding} chain={chain} host={host} t={t} />,
     },

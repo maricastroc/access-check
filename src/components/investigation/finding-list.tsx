@@ -52,21 +52,16 @@ export function labelOf(f: FindingView, t: Translate): string {
     .join(" · ");
 }
 
-export function chipOf(f: FindingView, index: number, t: Translate): string | null {
-  const category = categoryOf(f.ruleId, f.kind);
-  if (category === "contrast" && f.kind !== "manual-review") {
-    const reading = contrastReading(f, occurrencesOf(f)[index] ?? null);
-    return reading ? `${reading.measured.toFixed(2)}:1` : null;
-  }
-  if (category === "name") return t("chain.chip.name");
-  if (category === "alt") return t("chain.chip.alt");
-  if (f.ruleId === "focus-not-visible") return t("chain.chip.ring");
-  return null;
+function statusKey(f: FindingView): MessageKey | null {
+  const end = threadEnd(f);
+  if (!end) return null;
+  if (end === "person" && f.kind !== "manual-review") return "chain.status.fixPerson";
+  return STATUS[end] ?? null;
 }
 
 function Status({ f, t }: { f: FindingView; t: Translate }) {
   const end = threadEnd(f);
-  const key = end ? STATUS[end] : undefined;
+  const key = statusKey(f);
   if (!end || !key) return null;
   return (
     <span className="inline-flex min-w-0 items-center gap-1.5 text-[13px] text-ink-2">
@@ -200,11 +195,10 @@ export function FindingList({
                       </>
                     )}
                   {aside?.(f)}
-                  {compact && threadEnd(f) && STATUS[threadEnd(f)!] && (
-                    <>
-                      <span aria-hidden>·</span>
+                  {compact && statusKey(f) && (
+                    <span className="ml-auto pl-3">
                       <Status f={f} t={t} />
-                    </>
+                    </span>
                   )}
                 </span>
               )}

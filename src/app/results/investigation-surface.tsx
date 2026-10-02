@@ -46,28 +46,30 @@ export function LayerSwitch({
     ["none", t("layers.none")],
   ];
   return (
-    <div role="group" aria-label={t("layers.label")} className="flex flex-wrap items-center gap-1">
-      <span aria-hidden className="mr-1 text-[13.5px] text-muted">
-        {t("layers.label")}
+    <fieldset disabled={disabled} className="flex items-center gap-2.5">
+      <legend className="float-left text-[13.5px] text-ink-2">{t("layers.label")}</legend>
+      <span className="flex border border-border bg-surface/60 p-0.5">
+        {options.map(([layer, label]) => (
+          <label
+            key={layer}
+            className={cn(
+              "flex h-7 cursor-pointer items-center px-2.5 text-[13.5px] whitespace-nowrap has-[:disabled]:cursor-default has-[:disabled]:text-disabled has-[:focus-visible]:outline-3 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ink",
+              value === layer ? "bg-ink font-semibold text-surface" : "text-ink-2 hover:text-ink",
+            )}
+          >
+            <input
+              type="radio"
+              name="capture-layer"
+              value={layer}
+              checked={value === layer}
+              onChange={() => onChange(layer)}
+              className="sr-only"
+            />
+            {label}
+          </label>
+        ))}
       </span>
-      {options.map(([layer, label]) => (
-        <button
-          key={layer}
-          type="button"
-          aria-pressed={value === layer}
-          disabled={disabled}
-          onClick={() => onChange(layer)}
-          className={cn(
-            "h-8 cursor-pointer px-2 text-[14px] disabled:cursor-default disabled:text-disabled",
-            value === layer
-              ? "font-semibold text-ink underline decoration-2 underline-offset-[7px]"
-              : "text-ink-2 hover:text-ink",
-          )}
-        >
-          {label}
-        </button>
-      ))}
-    </div>
+    </fieldset>
   );
 }
 
@@ -123,6 +125,7 @@ export function InvestigationSurface({
   onLayer,
   marks,
   selectedId,
+  selectedTag = null,
   occIndex,
   hoveredId,
   ring,
@@ -149,6 +152,7 @@ export function InvestigationSurface({
   onLayer: (layer: Layer) => void;
   marks: PlacedMark[];
   selectedId: string | null;
+  selectedTag?: string | null;
   occIndex: number;
   hoveredId: string | null;
   ring: boolean;
@@ -193,7 +197,7 @@ export function InvestigationSurface({
           : selectedId === null
             ? t("capture.markerHint")
             : !selectedOnCapture
-              ? t("chain.notOnCapture")
+              ? t("chain.notOnCaptureHere", { tag: selectedTag ?? "" })
               : null;
 
   let stage;
@@ -291,7 +295,7 @@ export function InvestigationSurface({
         id="capture-scroll"
         className={cn(
           "scroll-slim min-h-0 flex-1 overflow-auto pt-5 pb-8",
-          compact ? "px-6" : "pr-[clamp(72px,7vw,120px)] pl-10",
+          compact ? "px-6" : "pr-6 pl-10 xl:pr-[clamp(56px,5vw,88px)]",
         )}
       >
         <figure id="capture-figure" className="relative w-full max-w-[1200px]">

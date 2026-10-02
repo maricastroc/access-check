@@ -107,8 +107,8 @@ export function Corners({
 }
 
 const LOCUS = {
-  current: { inset: 5, arm: "min(13px, 42%)", bar: 2.5, opacity: 1 },
-  sibling: { inset: 4, arm: "min(8px, 40%)", bar: 1.5, opacity: 0.9 },
+  current: { inset: 5, arm: "min(13px, 42%)", bar: 2.5, opacity: 1, halo: 3 },
+  sibling: { inset: 4, arm: "min(8px, 40%)", bar: 1.5, opacity: 0.8, halo: 2 },
 } as const;
 
 export function Locus({
@@ -140,17 +140,17 @@ export function Locus({
       }}
     >
       <Corners
-        arm={`calc(${cfg.arm} + 3px)`}
-        bar={cfg.bar + 3}
+        arm={`calc(${cfg.arm} + ${cfg.halo}px)`}
+        bar={cfg.bar + cfg.halo}
         ink="var(--color-halo)"
-        style={{ inset: -(inset + 1.5) }}
+        style={{ inset: -(inset + cfg.halo / 2) }}
       />
       <Corners arm={cfg.arm} bar={cfg.bar} style={{ inset: -inset }} />
     </span>
   );
 }
 
-export function GhostRing({ box, gap = 6 }: { box: Box; gap?: number }) {
+export function GhostRing({ box, gap = 4 }: { box: Box; gap?: number }) {
   return (
     <span
       aria-hidden
@@ -290,22 +290,17 @@ export function NodeGlyph({
 export function RatioGauge({
   measured,
   required,
-  fixed,
-  mode,
   sev,
   neededLabel,
 }: {
   measured: number;
   required: number;
-  fixed?: number | null;
-  mode: "measured" | "verified";
   sev: Sev;
   neededLabel: string;
 }) {
   const at = (r: number) => ratioPosition(r);
   const req = at(required);
   const from = at(measured);
-  const verified = mode === "verified" && fixed != null;
 
   return (
     <div data-sev={sev} className="relative h-[58px]" aria-hidden>
@@ -318,15 +313,9 @@ export function RatioGauge({
         />
       ))}
       <span
-        className={cn("ac-hatch absolute top-[20px] h-[12px]", verified && "opacity-30")}
+        className="ac-hatch absolute top-[20px] h-[12px]"
         style={{ left: `${from}%`, width: `${Math.max(0, req - from)}%` }}
       />
-      {verified && (
-        <span
-          className="ac-grow absolute top-[24px] h-[8px] bg-verified"
-          style={{ left: `${from}%`, width: `${Math.max(0, at(fixed) - from)}%` }}
-        />
-      )}
       <span
         className="absolute top-[14px] h-[26px] w-0.5 -translate-x-1/2 bg-ink"
         style={{ left: `${req}%` }}
@@ -338,32 +327,15 @@ export function RatioGauge({
         {required} {neededLabel}
       </span>
       <span
-        className={cn(
-          "absolute top-[12px] h-[21px] w-0.5 -translate-x-1/2",
-          verified ? "bg-muted" : "bg-(--sev)",
-        )}
+        className="absolute top-[12px] h-[21px] w-0.5 -translate-x-1/2 bg-(--sev)"
         style={{ left: `${from}%` }}
       />
       <span
-        className={cn(
-          "absolute top-0 font-mono text-[13px] leading-[14px] font-semibold whitespace-nowrap",
-          verified ? "text-muted" : "text-(--sev)",
-        )}
+        className="absolute top-0 font-mono text-[13px] leading-[14px] font-semibold whitespace-nowrap text-(--sev)"
         style={{ right: `calc(${100 - from}% + 5px)` }}
       >
         {measured.toFixed(2)}
       </span>
-      {verified && (
-        <span
-          className="ac-slide absolute top-0 h-[33px]"
-          style={{ left: `${at(fixed)}%`, ["--from" as string]: `${from}%` }}
-        >
-          <span className="absolute top-[12px] h-[21px] w-0.5 -translate-x-1/2 bg-verified" />
-          <span className="absolute top-0 left-[5px] font-mono text-[13px] leading-[14px] font-semibold whitespace-nowrap text-verified">
-            {fixed.toFixed(2)} ✓
-          </span>
-        </span>
-      )}
     </div>
   );
 }
@@ -427,6 +399,7 @@ export function TextSample({
   caption,
   ratio,
   tone,
+  showRatio = true,
 }: {
   fg: string;
   bg: string;
@@ -434,6 +407,7 @@ export function TextSample({
   caption: string;
   ratio: number;
   tone: "measured" | "tested";
+  showRatio?: boolean;
 }) {
   return (
     <figure className="min-w-0">
@@ -449,14 +423,16 @@ export function TextSample({
       </svg>
       <figcaption className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-muted">
         <span className="font-semibold text-ink-2">{caption}</span>
-        <span
-          className={cn(
-            "font-mono font-semibold",
-            tone === "tested" ? "text-verified" : "text-serious",
-          )}
-        >
-          {ratio.toFixed(2)}:1
-        </span>
+        {showRatio && (
+          <span
+            className={cn(
+              "font-mono font-semibold",
+              tone === "tested" ? "text-verified" : "text-serious",
+            )}
+          >
+            {ratio.toFixed(2)}:1
+          </span>
+        )}
         <span className="ml-auto flex items-center gap-1.5 font-mono">
           <Swatch hex={fg} />
           {fg}

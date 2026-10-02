@@ -166,7 +166,7 @@ function StickyBar({
           className="flex min-h-8 shrink-0 cursor-pointer items-center gap-1.5 px-1.5 text-[13px] font-semibold text-ink hover:underline"
         >
           <StandingMark standing={standing} size={12} />
-          {t(STANDING_LABEL[standing])}
+          <span className="max-[359px]:sr-only">{t(STANDING_LABEL[standing])}</span>
           <span className="sr-only">{t("panel.backToSummary")}</span>
         </button>
       )}

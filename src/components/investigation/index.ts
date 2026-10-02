@@ -11,7 +11,7 @@ export {
 } from "./notation";
 export type { Box, Sev } from "./notation";
 export { EvidenceChain } from "./evidence-chain";
-export { FindingList, gapOf, chipOf, labelOf } from "./finding-list";
+export { FindingList, gapOf, labelOf } from "./finding-list";
 export type { FindingGroups } from "./finding-list";
 export { OccurrenceNav } from "./occurrence-nav";
 export { ElementDetails, CopyButton } from "./element-details";
