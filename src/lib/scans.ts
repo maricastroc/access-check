@@ -2,6 +2,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { ScanResult } from "@/lib/scan/types";
 import { SCORING_VERSION, scoringVersionOf } from "@/lib/scan/scored";
+import { freshFor } from "@/lib/scan/cache-policy";
 
 function parseDataUrl(dataUrl: string): { mimeType: string; data: Uint8Array<ArrayBuffer> } | null {
   const m = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
@@ -117,7 +118,7 @@ export async function findRecentScan(
   if (!scan) return null;
 
   const result = hydrate(scan.id, scan.result, scan.createdAt);
-  if (result.partial) return null;
+  if (Date.now() - scan.createdAt.getTime() > freshFor(result)) return null;
   if (scoringVersionOf(result) !== SCORING_VERSION) return null;
   return result;
 }

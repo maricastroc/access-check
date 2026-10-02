@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { ScanResult } from "./types";
-import { MAX_CACHED_SCREENSHOT_CHARS, trimForCache } from "./cache-policy";
+import {
+  MAX_CACHED_SCREENSHOT_CHARS,
+  PARTIAL_FRESH_MS,
+  SCAN_FRESH_MS,
+  freshFor,
+  trimForCache,
+} from "./cache-policy";
 
 function result(over: Partial<ScanResult>): ScanResult {
   return {
@@ -88,5 +94,17 @@ describe("what the cache drops first when a scan is heavy", () => {
 
     expect(trimmed.screenshot).toBeNull();
     expect(trimmed.regions?.[0].image).toBeNull();
+  });
+});
+
+describe("how long a reading stays fresh", () => {
+  it("keeps a whole reading the full window", () => {
+    expect(freshFor({})).toBe(SCAN_FRESH_MS);
+    expect(freshFor({ partial: false })).toBe(SCAN_FRESH_MS);
+  });
+
+  it("keeps a partial reading only briefly, so a later visit tries for a whole one", () => {
+    expect(freshFor({ partial: true })).toBe(PARTIAL_FRESH_MS);
+    expect(PARTIAL_FRESH_MS).toBeLessThan(SCAN_FRESH_MS);
   });
 });

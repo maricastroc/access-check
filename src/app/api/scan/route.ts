@@ -5,7 +5,12 @@ import type { ScanStreamEvent } from "@/lib/scan/stream";
 import { auth } from "@/auth";
 import { findRecentScan, saveScan } from "@/lib/scans";
 import { cacheGet, cacheSet } from "@/lib/redis";
-import { SCAN_FRESH_MS, SCAN_FRESH_SECONDS, trimForCache } from "@/lib/scan/cache-policy";
+import {
+  PARTIAL_FRESH_SECONDS,
+  SCAN_FRESH_MS,
+  SCAN_FRESH_SECONDS,
+  trimForCache,
+} from "@/lib/scan/cache-policy";
 import { SCORING_VERSION } from "@/lib/scan/scored";
 import { clientKey, scanRateLimit } from "@/lib/rate-limit";
 import { assertPublicUrl, BlockedUrlError } from "@/lib/scan/ssrf";
@@ -174,8 +179,12 @@ export async function POST(req: Request) {
           } catch (e) {
             logError("scan.history.failed", e);
           }
-        } else if (!published.partial) {
-          await cacheSet(scanCacheKey(url, locale), trimForCache(published), SCAN_FRESH_SECONDS);
+        } else {
+          await cacheSet(
+            scanCacheKey(url, locale),
+            trimForCache(published),
+            published.partial ? PARTIAL_FRESH_SECONDS : SCAN_FRESH_SECONDS,
+          );
         }
         return;
       }

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { ScanResult } from "./types";
 import { clearScanCache, recallScan, rememberScan } from "./result-cache";
-import { SCAN_FRESH_MS } from "./cache-policy";
+import { PARTIAL_FRESH_MS, SCAN_FRESH_MS } from "./cache-policy";
 import { SCORING_VERSION } from "./scored";
 
 function result(overrides: Partial<ScanResult> = {}): ScanResult {
@@ -59,9 +59,22 @@ describe("scan result cache", () => {
     expect(recallScan("wikipedia.org", "en")).toBeNull();
   });
 
-  it("keeps no partial reading, since those are the ones worth re-running", () => {
-    rememberScan(result({ partial: true }), "stripe.com");
+  it("answers a repeat with a partial reading while it is still recent", () => {
+    const scan = result({ partial: true });
+    rememberScan(scan, "stripe.com");
+    expect(recallScan("stripe.com", "en")).toBe(scan);
+  });
+
+  it("lets a partial reading go sooner, so a later visit tries for a whole one", () => {
+    const old = new Date(Date.now() - PARTIAL_FRESH_MS - 1_000).toISOString();
+    rememberScan(result({ partial: true, scannedAt: old }), "stripe.com");
     expect(recallScan("stripe.com", "en")).toBeNull();
+  });
+
+  it("keeps a whole reading the full window even past the partial one", () => {
+    const old = new Date(Date.now() - PARTIAL_FRESH_MS - 1_000).toISOString();
+    rememberScan(result({ scannedAt: old }), "stripe.com");
+    expect(recallScan("stripe.com", "en")).not.toBeNull();
   });
 
   it("expires on the audit's own age, so revisiting can't keep a stale reading alive", () => {

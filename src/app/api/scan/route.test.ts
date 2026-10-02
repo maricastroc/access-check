@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ScanResult } from "@/lib/scan/types";
-import { SCAN_FRESH_MS, SCAN_FRESH_SECONDS } from "@/lib/scan/cache-policy";
+import { PARTIAL_FRESH_SECONDS, SCAN_FRESH_MS, SCAN_FRESH_SECONDS } from "@/lib/scan/cache-policy";
 import { SCORING_VERSION } from "@/lib/scan/scored";
 
 const auth = vi.fn();
@@ -162,12 +162,26 @@ describe("POST /api/scan", () => {
     );
   });
 
-  it("leaves a partial reading out of the cache", async () => {
+  it("keeps a partial reading for a shorter time than a whole one", async () => {
     runScan.mockResolvedValue(result({ partial: true }));
 
     await eventsOf(await post({ url: "example.com" }));
 
-    expect(cacheSet).not.toHaveBeenCalled();
+    expect(cacheSet).toHaveBeenCalledWith(
+      `scan:v${SCORING_VERSION}:en:https://example.com`,
+      expect.objectContaining({ partial: true }),
+      PARTIAL_FRESH_SECONDS,
+    );
+    expect(PARTIAL_FRESH_SECONDS).toBeLessThan(SCAN_FRESH_SECONDS);
+  });
+
+  it("answers a repeat from a cached partial reading without measuring again", async () => {
+    cacheGet.mockResolvedValue(result({ partial: true, title: "Partial from cache" }));
+
+    const events = await eventsOf(await post({ url: "example.com" }));
+
+    expect(runScan).not.toHaveBeenCalled();
+    expect(events[0].result?.title).toBe("Partial from cache");
   });
 
   it("writes a signed-in reader's audit to history, not to the shared cache", async () => {

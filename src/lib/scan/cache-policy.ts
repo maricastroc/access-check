@@ -4,6 +4,14 @@ export const SCAN_FRESH_MS = 5 * 60 * 1000;
 
 export const SCAN_FRESH_SECONDS = SCAN_FRESH_MS / 1000;
 
+export const PARTIAL_FRESH_MS = 60 * 1000;
+
+export const PARTIAL_FRESH_SECONDS = PARTIAL_FRESH_MS / 1000;
+
+export function freshFor(result: Pick<ScanResult, "partial">): number {
+  return result.partial ? PARTIAL_FRESH_MS : SCAN_FRESH_MS;
+}
+
 export const MAX_CACHED_SCREENSHOT_CHARS = 1_000_000;
 
 function weight(result: ScanResult): number {
