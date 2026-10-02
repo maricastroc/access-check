@@ -21,7 +21,7 @@ export function CapturePreview({ height = 240, t }: { height?: number; t: Transl
             <span
               aria-hidden
               className="absolute -inset-1 border border-dashed"
-              style={{ borderColor: "rgba(23,24,26,.45)" }}
+              style={{ borderColor: "color-mix(in srgb, var(--color-ink) 45%, transparent)" }}
             />
             <span
               className="relative block px-2 py-1 text-[9px] font-semibold text-white"
@@ -49,7 +49,10 @@ export function CapturePreview({ height = 240, t }: { height?: number; t: Transl
           <span
             aria-hidden
             className="absolute -inset-1 border-2"
-            style={{ borderColor: "var(--color-ink)", background: "rgba(168,90,6,.10)" }}
+            style={{
+              borderColor: "var(--color-ink)",
+              background: "color-mix(in srgb, var(--color-serious) 10%, transparent)",
+            }}
           />
           <span
             className="relative block px-4 py-2 text-[13px] font-semibold text-white"

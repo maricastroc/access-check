@@ -43,7 +43,7 @@ export default async function LoginPage() {
 
 const providerButtonClasses: Record<"github" | "google", string> = {
   github: "border border-transparent bg-ink text-white hover:bg-ink-2",
-  google: "border border-border bg-surface text-ink  hover:border-[#d6d9df] hover:bg-canvas",
+  google: "border border-border bg-surface text-ink  hover:border-hairline hover:bg-canvas",
 };
 
 function ProviderButton({

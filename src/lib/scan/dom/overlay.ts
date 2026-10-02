@@ -1,3 +1,5 @@
+import { PALETTE, withAlpha } from "../../palette";
+
 export type OverlayTone =
   | "critical"
   | "serious"
@@ -36,18 +38,19 @@ export const OVERLAY_PICK = "overlay:pick";
 const ROOT_ID = "accesscheck-overlay";
 const SVG = "http://www.w3.org/2000/svg";
 
-const INK = "#121211";
-const INK_2 = "#363633";
+const INK = PALETTE.ink;
+const INK_2 = PALETTE["ink-2"];
+const SHADE = withAlpha(PALETTE.ink, 0.42);
 const HALO = "rgba(255,255,255,.94)";
 
 const TONE: Record<OverlayTone, string> = {
-  critical: "#b42318",
-  serious: "#9c4400",
-  moderate: "#7a5d00",
+  critical: PALETTE.critical,
+  serious: PALETTE.serious,
+  moderate: PALETTE.moderate,
   minor: INK_2,
-  review: "#5e35b1",
+  review: PALETTE.review,
   none: INK_2,
-  path: "#1c4fd6",
+  path: PALETTE.path,
 };
 
 const FILLED = new Set<OverlayTone>(["critical", "serious", "moderate", "path"]);
@@ -73,7 +76,7 @@ const STYLE = `
 .ring { position: fixed; pointer-events: none; }
 .ring-hatch {
   position: absolute; inset: -4px; padding: 4px;
-  background: repeating-linear-gradient(135deg, rgba(156,68,0,.34) 0 1px, transparent 1px 4px);
+  background: repeating-linear-gradient(135deg, ${withAlpha(PALETTE.serious, 0.34)} 0 1px, transparent 1px 4px);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
@@ -85,7 +88,7 @@ const STYLE = `
   font: 600 12.5px/1 "Atkinson Hyperlegible Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-variant-numeric: tabular-nums; letter-spacing: 0; white-space: nowrap;
   color: #fff; background: var(--tone);
-  box-shadow: 0 0 0 1.5px ${HALO}, 0 0 0 2.5px rgba(18,18,17,.42);
+  box-shadow: 0 0 0 1.5px ${HALO}, 0 0 0 2.5px ${SHADE};
   pointer-events: none; user-select: none; -webkit-user-select: none;
 }
 .tag.circle { border-radius: 999px; padding: 0 4px; }
@@ -95,7 +98,7 @@ const STYLE = `
 .tag.circle.quiet { color: var(--tone); border: 1.5px solid var(--tone); }
 .tag.current {
   height: 22px; min-width: 22px; font-size: 13px;
-  box-shadow: 0 0 0 1.5px ${HALO}, 0 0 0 2.5px rgba(18,18,17,.42), 0 0 0 4px #fff, 0 0 0 6px ${INK};
+  box-shadow: 0 0 0 1.5px ${HALO}, 0 0 0 2.5px ${SHADE}, 0 0 0 4px #fff, 0 0 0 6px ${INK};
 }
 .tag[data-pick] { pointer-events: auto; cursor: pointer; }
 .tag[data-pick]:hover { box-shadow: 0 0 0 1.5px ${HALO}, 0 0 0 2px #fff, 0 0 0 4px ${INK}; }

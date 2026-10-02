@@ -68,7 +68,10 @@ function StageArtifact({ i, t }: { i: number; t: Translate }) {
             <span
               aria-hidden
               className="absolute -inset-1 border-2"
-              style={{ borderColor: "var(--color-ink)", background: "rgba(168,90,6,.10)" }}
+              style={{
+                borderColor: "var(--color-ink)",
+                background: "color-mix(in srgb, var(--color-serious) 10%, transparent)",
+              }}
             />
             <span
               className="relative block px-2.5 py-1 text-[10px] font-semibold text-white"
@@ -541,7 +544,7 @@ export function ExportSection({ t }: { t: Translate }) {
               <div className="bg-code px-3 py-2.5 font-mono text-[12px] leading-[1.7]">
                 {exampleMarkdownKeys.map((key, i) => {
                   const text = t(key);
-                  const tone = key === "home.md.line5" ? "text-muted" : "text-[#2b2b2d]";
+                  const tone = key === "home.md.line5" ? "text-muted" : "text-ink-2";
                   return (
                     <div key={i} className={key === "home.md.line6" ? "text-verified" : tone}>
                       {text}

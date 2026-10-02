@@ -31,9 +31,9 @@ export const dateFmt = new Intl.DateTimeFormat("en-US", {
 });
 
 export function scoreColor(score: number): string {
-  if (score >= 90) return "#16764f";
-  if (score >= 70) return "#8a6a00";
-  return "#c62a2f";
+  if (score >= 90) return "var(--color-verified)";
+  if (score >= 70) return "var(--color-moderate)";
+  return "var(--color-critical)";
 }
 
 export function band(score: number): BandKey {

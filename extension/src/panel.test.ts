@@ -813,7 +813,8 @@ describe("the panel is an inspector, not a squeezed report", () => {
     const stops = between(panel, "function stopMarks(", "function windowAround(");
     expect(stops).toContain('tone: "path"');
     expect(stops).toContain("ring: !s.focusVisible");
-    expect(overlay).toContain('path: "#1c4fd6"');
+    expect(overlay).toContain("path: PALETTE.path,");
+    expect(overlay).toContain('import { PALETTE, withAlpha } from "../../palette";');
   });
 
   it("keeps the current mark loud and the rest quiet, and never by colour alone", () => {
