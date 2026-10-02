@@ -1072,6 +1072,8 @@ export const en = {
   "detail.humanDecision":
     "The right change depends on the page's structure, so confirm it in context.",
   "detail.sandboxNote": "Fixes are applied and reverted in a sandbox copy. {host} was not altered.",
+  "detail.pageNote":
+    "The change was applied to this page for a moment, then put back exactly as it was.",
 
   "verdict.label.verified": "Fix tested",
   "verdict.label.needsReview": "Needs review",
@@ -1344,6 +1346,7 @@ export const en = {
   "chain.end.recheck": "Confirm with a new audit",
   "chain.end.untested": "Not verified",
   "chain.testedOnCopy": "Tested on a copy of the page.",
+  "chain.testedOnPage": "Tested on this page, then undone.",
   "chain.notRemeasured":
     "This element takes the change tested on another one, but was not measured again itself.",
   "chain.howVerified": "How this was verified",
@@ -1395,6 +1398,7 @@ export const en = {
   "marks.occurrence": "Finding {n}, occurrence {i} of {total}: {title}",
   "marks.stopNoFocus": "Focus stop {n}: {label}, nothing shows focus",
   "marks.stopLabel": "Focus stop {n}: {label}",
+  "marks.stopWithFinding": "{stop}, finding {tag}",
   "focusPath.sequence": {
     one: "1 stop, in the order Tab reaches it",
     other: "{count} stops, in the order Tab reaches them",

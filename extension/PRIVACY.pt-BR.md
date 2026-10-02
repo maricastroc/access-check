@@ -1,6 +1,6 @@
 # Extensão AccessCheck: política de privacidade
 
-**Em vigor desde 29 de setembro de 2026.** Esta política cobre a extensão de
+**Em vigor desde 2 de outubro de 2026.** Esta política cobre a extensão de
 navegador do AccessCheck. O analisador hospedado no site do AccessCheck é um
 produto separado, com contas e armazenamento próprios; esta política trata
 apenas da extensão.
@@ -41,14 +41,18 @@ disparados por você e os dois desfeitos na hora:
   compara o markup da página antes e depois, byte a byte, e quebra o build se
   houver qualquer diferença. Sugestões que dependem do que a página significa
   nunca são aplicadas.
-- **Para mostrar um elemento.** Quando você aperta "Localizar na página", ou
-  passa para outro elemento com as setas, ela desenha uma caixa de destaque num
-  contêiner próprio na raiz do documento. Inspecionar a ordem de tabulação
-  desenha marcadores numerados do mesmo jeito. O contêiner é `aria-hidden`, não
-  recebe eventos e nunca toca os elementos auditados. A caixa de um elemento
-  localizado some depois de alguns segundos, os marcadores da ordem de
-  tabulação somem quando você aperta Sair, e tudo o que ela desenhou é removido
-  quando o painel fecha e no início de qualquer auditoria.
+- **Para mostrar onde estão os problemas.** Enquanto o relatório está aberto,
+  ela desenha marcações numeradas num contêiner próprio na raiz do documento:
+  uma para cada problema a corrigir quando nenhum está aberto, ou os elementos
+  do problema que você abrir. Inspecionar a ordem de tabulação desenha
+  marcadores numerados do mesmo jeito. O contêiner é `aria-hidden`, não
+  acrescenta nada à ordem de tabulação da página e nunca toca os elementos
+  auditados. Só duas partes dele respondem a um clique: o número de uma
+  marcação, que abre aquele problema ou elemento no painel sem mover o foco da
+  página, e a seta que aparece para um elemento fora da tela, que rola a página
+  até ele. Nada é desenhado depois que a aba passa a mostrar outra página. Tudo
+  o que ela desenhou é removido quando o painel fecha e no início de qualquer
+  auditoria.
 
 Nada do que você digitou é escrito, relido ou guardado.
 

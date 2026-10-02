@@ -100,8 +100,15 @@ const storeAssets = [
   { file: "store/store-icon-128.png", width: 128, height: 128, what: "the store icon" },
   { file: "store/promo-tile-440x280.png", width: 440, height: 280, what: "the small promo tile" },
 ];
-for (let i = 1; i <= 5; i++) {
-  const [name] = readdirSync(join(repo, "store/screenshots")).filter((f) => f.startsWith(`${i}-`));
+const shots = readdirSync(join(repo, "store/screenshots"))
+  .filter((f) => /^\d+-.+\.png$/.test(f))
+  .sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+check(
+  shots.length >= 1 && shots.length <= 5,
+  `the store takes one to five screenshots, not ${shots.length}`,
+);
+for (let i = 1; i <= shots.length; i++) {
+  const name = shots.find((f) => parseInt(f, 10) === i);
   if (!name) {
     failures.push(`screenshot ${i} has not been produced`);
     continue;

@@ -391,11 +391,13 @@ function Verdict({
   finding: f,
   chain,
   host,
+  testedOn,
   t,
 }: {
   finding: FindingView;
   chain: Chain;
   host: string;
+  testedOn: "copy" | "page";
   t: Translate;
 }) {
   const reading = chain.evidence.kind === "contrast" ? chain.evidence.reading : null;
@@ -418,7 +420,7 @@ function Verdict({
           {chain.end === "tested" && reading && reading.verification !== "verified"
             ? t("chain.notRemeasured")
             : chain.end === "tested"
-              ? t("chain.testedOnCopy")
+              ? t(testedOn === "page" ? "chain.testedOnPage" : "chain.testedOnCopy")
               : message}
         </p>
         <details className="mt-2.5">
@@ -428,7 +430,7 @@ function Verdict({
           </summary>
           <p className="mt-2 text-[14px] leading-normal text-ink-2">{message}</p>
           <p className="mt-1.5 text-[13px] leading-normal text-muted">
-            {t("detail.sandboxNote", { host })}
+            {testedOn === "page" ? t("detail.pageNote") : t("detail.sandboxNote", { host })}
           </p>
         </details>
       </div>
@@ -452,6 +454,7 @@ export function EvidenceChain({
   index,
   onPick,
   host,
+  testedOn = "copy",
   t,
   compact = false,
   located,
@@ -463,6 +466,7 @@ export function EvidenceChain({
   index: number;
   onPick: (index: number) => void;
   host: string;
+  testedOn?: "copy" | "page";
   t: Translate;
   compact?: boolean;
   located?: ReactNode;
@@ -525,7 +529,7 @@ export function EvidenceChain({
           )
         : "",
       glyph: <NodeGlyph kind="end" sev={sev} end={chain.end} />,
-      content: <Verdict finding={finding} chain={chain} host={host} t={t} />,
+      content: <Verdict finding={finding} chain={chain} host={host} testedOn={testedOn} t={t} />,
     },
   };
 

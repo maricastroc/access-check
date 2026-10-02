@@ -1,6 +1,6 @@
 # AccessCheck extension: privacy policy
 
-**Effective 29 September 2026.** This policy covers the AccessCheck browser
+**Effective 2 October 2026.** This policy covers the AccessCheck browser
 extension. The hosted scanner at the AccessCheck website is a separate product
 with its own accounts and storage; this policy is only about the extension.
 
@@ -37,13 +37,17 @@ trigger and both undone immediately:
   it found it. An automated check in the project compares the page's markup before
   and after, byte for byte, and fails the build on any difference. Suggestions
   that depend on what the page means are never applied.
-- **Showing an element.** When you press "Locate on page", or step to another
-  element with the arrows, it draws a highlight box in its own container at the
-  document root. Inspecting the tab order draws numbered markers the same way.
-  The container is `aria-hidden`, takes no events and never touches the audited
-  elements. A located box fades after a few seconds, the tab order markers are
-  removed when you press Exit, and everything it drew is removed when the panel
-  closes and at the start of any audit.
+- **Showing where the problems are.** While the report is open, it draws
+  numbered marks in its own container at the document root: one for each
+  problem to fix when none is open, or the elements of the problem you open.
+  Inspecting the tab order draws numbered markers the same way. The container
+  is `aria-hidden`, adds nothing to the page's tab order and never touches the
+  audited elements. Only two parts of it answer a click: a mark's number, which
+  opens that problem or element in the panel without moving focus on the page,
+  and the arrow shown for an element off screen, which scrolls the page to it.
+  Nothing is drawn once the tab shows a different page from the one audited.
+  Everything it drew is removed when the panel closes and at the start of any
+  audit.
 
 Nothing you typed is written, read back or stored.
 

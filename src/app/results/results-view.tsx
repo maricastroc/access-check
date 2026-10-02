@@ -8,7 +8,12 @@ import { findingsAtStops, occurrenceTag } from "@/lib/report/occurrences";
 import { chainOf } from "@/lib/report/chain";
 import { buildReportMarkdown, reportMarkdownFilename } from "@/lib/report/markdown";
 import { usePageAudit } from "@/hooks/use-page-audit";
-import { Connector, useInvestigation, type RelatedFinding } from "@/components/investigation";
+import {
+  Connector,
+  sevOf,
+  useInvestigation,
+  type RelatedFinding,
+} from "@/components/investigation";
 import { useT } from "@/lib/i18n/provider";
 import { scrollBehavior } from "@/lib/motion";
 import { safeHost } from "./shared";
@@ -156,15 +161,16 @@ export function ResultsView({
     return () => window.clearTimeout(id);
   }, [desktop, inv.selectedId, inv.origin]);
 
-  const related: RelatedFinding[] = useMemo(
-    () =>
-      findingsAtStops(view?.findings ?? []).map((r) => ({
-        stop: r.stop,
-        tag: r.tag,
-        onOpen: () => inv.select(r.findingId, r.index, "stop"),
-      })),
-    [view, inv],
-  );
+  const related: RelatedFinding[] = useMemo(() => {
+    const findings = view?.findings ?? [];
+    const byId = new Map(findings.map((f) => [f.id, f]));
+    return findingsAtStops(findings, result?.keyboard?.targetStops).map((r) => ({
+      stop: r.stop,
+      tag: r.tag,
+      sev: sevOf(byId.get(r.findingId)!),
+      onOpen: () => inv.select(r.findingId, r.index, "stop"),
+    }));
+  }, [view, result, inv]);
 
   const selectMark = useCallback(
     (findingId: string, index: number) => {

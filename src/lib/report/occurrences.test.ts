@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  findingsAtStops,
+  firstAtEachStop,
   locatable,
   occurrencesOf,
   occurrenceTag,
   stepOccurrence,
+  stopCandidates,
   unlistedOccurrences,
 } from "./occurrences";
 import type { FindingView } from "./findings";
@@ -158,5 +161,67 @@ describe("naming and stepping through occurrences", () => {
   it("says how many affected elements the reading could not list one by one", () => {
     expect(unlistedOccurrences(finding({ elements: 40 }), 8)).toBe(32);
     expect(unlistedOccurrences(finding({ elements: 3 }), 3)).toBe(0);
+  });
+});
+
+const atStop = (stop: number | null, selector: string): KeyboardOccurrence => ({
+  stop,
+  selector,
+  tag: "a",
+  label: selector,
+  html: null,
+  rect: null,
+  onScreen: true,
+  reason: "",
+  certainty: "conclusive",
+});
+
+describe("a finding sits at a focus stop when its element is that stop", () => {
+  const unnamed = finding({ id: "wcag:button-name", n: 1, affectedSelectors: [".cart"] });
+  const contrast = finding({
+    id: "wcag:color-contrast",
+    n: 4,
+    affectedSelectors: [".muted", ".cart"],
+  });
+  const noFocus = finding({
+    id: "keyboard:focus-not-visible",
+    n: 7,
+    kind: "keyboard",
+    occurrences: [atStop(2, "nav > a:nth-of-type(2)"), atStop(5, "header > span > button")],
+  });
+
+  it("takes a keyboard finding's stop from the walk itself", () => {
+    expect(findingsAtStops([noFocus]).map((r) => [r.stop, r.tag])).toEqual([
+      [2, "7·1"],
+      [5, "7·2"],
+    ]);
+  });
+
+  it("places an axe finding through the stops the walk matched it to", () => {
+    const found = findingsAtStops([unnamed, contrast], { ".cart": 5 });
+
+    expect(found.map((r) => [r.stop, r.findingId, r.tag])).toEqual([
+      [5, "wcag:button-name", "1"],
+      [5, "wcag:color-contrast", "4·2"],
+    ]);
+  });
+
+  it("leaves out an element the walk never reached", () => {
+    expect(findingsAtStops([contrast], { ".cart": 5 }).map((r) => r.index)).toEqual([1]);
+    expect(findingsAtStops([unnamed])).toEqual([]);
+  });
+
+  it("orders the findings at each stop most severe first, and keeps one per stop at rest", () => {
+    const found = findingsAtStops([noFocus, contrast, unnamed], { ".cart": 5 });
+    const first = firstAtEachStop(found);
+
+    expect(found.filter((r) => r.stop === 5).map((r) => r.n)).toEqual([1, 4, 7]);
+    expect([...first.keys()]).toEqual([2, 5]);
+    expect(first.get(5)?.findingId).toBe("wcag:button-name");
+    expect(first.get(2)?.findingId).toBe("keyboard:focus-not-visible");
+  });
+
+  it("asks the page about each element once, and never about a stop it already knows", () => {
+    expect(stopCandidates([unnamed, contrast, noFocus])).toEqual([".cart", ".muted"]);
   });
 });

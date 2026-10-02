@@ -102,18 +102,52 @@ export function unlistedOccurrences(finding: FindingView, listed: number): numbe
   return Math.max(0, finding.elements - listed);
 }
 
-export type StopFinding = { stop: number; findingId: string; index: number; tag: string };
+export type StopFinding = {
+  stop: number;
+  findingId: string;
+  n: number;
+  index: number;
+  tag: string;
+};
 
-export function findingsAtStops(findings: FindingView[]): StopFinding[] {
-  return findings.flatMap((f) => {
-    const all = occurrencesOf(f);
-    return all
-      .filter((o) => o.stop !== null)
-      .map((o) => ({
-        stop: o.stop!,
-        findingId: f.id,
-        index: o.index,
-        tag: occurrenceTag(f.n, o.index, all.length),
-      }));
-  });
+export function stopCandidates(findings: FindingView[]): string[] {
+  const selectors = findings.flatMap((f) =>
+    occurrencesOf(f)
+      .filter((o) => !o.keyboard)
+      .map((o) => o.selector),
+  );
+  return [...new Set(selectors)];
+}
+
+export function findingsAtStops(
+  findings: FindingView[],
+  targetStops: Record<string, number> = {},
+): StopFinding[] {
+  return findings
+    .flatMap((f) => {
+      const all = occurrencesOf(f);
+      return all.flatMap((o) => {
+        const stop = o.stop ?? targetStops[o.selector] ?? null;
+        if (stop === null) return [];
+        return [
+          {
+            stop,
+            findingId: f.id,
+            n: f.n,
+            index: o.index,
+            tag: occurrenceTag(f.n, o.index, all.length),
+          },
+        ];
+      });
+    })
+    .sort((a, b) => a.stop - b.stop || a.n - b.n || a.index - b.index);
+}
+
+export function firstAtEachStop(found: StopFinding[]): Map<number, StopFinding> {
+  const first = new Map<number, StopFinding>();
+  for (const f of found) {
+    const seen = first.get(f.stop);
+    if (!seen || f.n < seen.n) first.set(f.stop, f);
+  }
+  return first;
 }

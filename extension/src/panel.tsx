@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { StageList } from "../../src/components/ui/scan-stages";
 import { WarningList } from "../../src/components/ui/warning-list";
@@ -21,15 +21,18 @@ import { workQueue, type FindingView } from "../../src/lib/report/findings";
 import { describeElement } from "../../src/lib/report/identity";
 import {
   findingsAtStops,
+  firstAtEachStop,
   occurrenceTag,
   occurrencesOf,
   type Occurrence,
+  type StopFinding,
 } from "../../src/lib/report/occurrences";
 import { captureOf } from "../../src/lib/scan/placement";
 import {
   OVERLAY_PICK,
   type OverlayMark,
   type OverlayOptions,
+  type OverlayTone,
 } from "../../src/lib/scan/dom/overlay";
 import { VIEWPORT_CAPTURE, type ScanResult } from "../../src/lib/scan/types";
 import { langAttrs, REPORT_LOCALES } from "../../src/lib/i18n/locale";
@@ -85,6 +88,8 @@ const NEIGHBOURS = 2;
 const NEARBY_OCCURRENCES = 24;
 const FINDING_KEY = "f:";
 const STOP_KEY = "s:";
+
+let drawing: Promise<unknown> = Promise.resolve();
 
 function send(message: PanelMessage): Promise<unknown> {
   return chrome.runtime.sendMessage(message).catch(() => undefined);
@@ -500,17 +505,62 @@ function findingMarks(f: FindingView, occurrences: Occurrence[], current: number
     }));
 }
 
-function stopMarks(result: ScanResult): OverlayMark[] {
-  return (result.keyboard?.focusPath ?? []).map((s) => ({
-    n: s.n,
-    selector: s.selector,
-    tag: String(s.n),
-    tone: "path",
-    shape: "circle",
-    ring: !s.focusVisible,
-    label: s.label || t("panel.mark.stop"),
-    pick: `${STOP_KEY}${s.n}`,
-  }));
+function overviewMarks(fix: FindingView[]): OverlayMark[] {
+  return fix.flatMap((f) => {
+    const [first, ...rest] = occurrencesOf(f);
+    if (!first) return [];
+    return [
+      {
+        n: f.n,
+        selector: first.selector,
+        tag: String(f.n),
+        tone: sevOf(f),
+        ring: f.ruleId === "focus-not-visible",
+        label: f.title,
+        pick: `${FINDING_KEY}${f.id}:${first.index}`,
+        alternates: rest.map((o) => ({
+          selector: o.selector,
+          pick: `${FINDING_KEY}${f.id}:${o.index}`,
+        })),
+      },
+    ];
+  });
+}
+
+type StopAlert = { tone: OverlayTone; tag: string; pick: string };
+
+function stopAlerts(found: StopFinding[], findings: FindingView[]): Map<number, StopAlert> {
+  const byId = new Map(findings.map((f) => [f.id, f]));
+  const alerts = new Map<number, StopAlert>();
+  for (const [stop, first] of firstAtEachStop(found)) {
+    const f = byId.get(first.findingId);
+    if (!f) continue;
+    alerts.set(stop, {
+      tone: sevOf(f),
+      tag: first.tag,
+      pick: `${FINDING_KEY}${f.id}:${first.index}`,
+    });
+  }
+  return alerts;
+}
+
+function stopMarks(result: ScanResult, alerts: Map<number, StopAlert>, at: number): OverlayMark[] {
+  return (result.keyboard?.focusPath ?? []).map((s) => {
+    const alert = alerts.get(s.n);
+    const current = s.n === at;
+    return {
+      n: s.n,
+      selector: s.selector,
+      tag: String(s.n),
+      tone: "path",
+      shape: "circle",
+      ring: current && !s.focusVisible,
+      alert: alert?.tone,
+      badge: current && alert ? { tag: alert.tag, tone: alert.tone, pick: alert.pick } : undefined,
+      label: s.label || t("panel.mark.stop"),
+      pick: `${STOP_KEY}${s.n}`,
+    };
+  });
 }
 
 function windowAround(marks: OverlayMark[], at: number): OverlayMark[] {
@@ -663,7 +713,6 @@ function Report({
   onWalk,
   onContinue,
   draw,
-  clear,
   restoreScroll,
 }: {
   result: ScanResult;
@@ -673,11 +722,23 @@ function Report({
   onWalk: () => void;
   onContinue: () => void;
   draw: Draw;
-  clear: () => void;
   restoreScroll: () => Promise<unknown>;
 }) {
   const groups = useMemo(() => workQueue(result), [result]);
   const findings = useMemo(() => groups.flatMap((g) => g.findings), [groups]);
+  const overview = useMemo(
+    () => overviewMarks(groups.find((g) => g.group === "fix")?.findings ?? []),
+    [groups],
+  );
+  const atStops = useMemo(
+    () =>
+      findingsAtStops(
+        groups.filter((g) => g.group !== "recommend").flatMap((g) => g.findings),
+        result.keyboard?.targetStops,
+      ),
+    [groups, result],
+  );
+  const alerts = useMemo(() => stopAlerts(atStops, findings), [atStops, findings]);
   const inv = useInvestigation(findings);
   const [onPage, setOnPage] = useState<{ busy: boolean; notice: string | null }>({
     busy: false,
@@ -690,8 +751,7 @@ function Report({
   const [roundFrom, setRoundFrom] = useState<number | null>(null);
   const [wasWalking, setWasWalking] = useState(walking !== null);
   const latest = useRef(0);
-  const drawn = useRef<"finding" | "path" | null>(null);
-  const marks = useMemo(() => stopMarks(result), [result]);
+  const drawn = useRef<"overview" | "finding" | "path" | null>(null);
   const scope = auditScope(result, t);
   const stops = result.keyboard?.focusPath.length ?? 0;
 
@@ -746,12 +806,19 @@ function Report({
     if (inv.selected) void showFinding(inv.selected, inv.occIndex, true);
   };
 
+  const showOverview = () => {
+    ++latest.current;
+    drawn.current = "overview";
+    void draw(overview, null, { scroll: false, path: false, timeoutMs: 0 });
+  };
+
   const showPath = async (focus: number, everything = complete) => {
-    const next = Math.min(Math.max(focus, 1), marks.length);
+    const next = Math.min(Math.max(focus, 1), stops);
     const ask = ++latest.current;
     drawn.current = "path";
     setAt(next);
     setShowing(true);
+    const marks = stopMarks(result, alerts, next);
     const shown = everything ? wholePath(marks, next) : windowAround(marks, next);
     const reply = await draw(shown, next, { scroll: true, path: true, timeoutMs: 0 });
     if (ask !== latest.current) return;
@@ -765,7 +832,7 @@ function Report({
     setNotice(null);
     const open = inv.selected;
     const index = inv.occIndex;
-    void restoreScroll().then(open ? () => showFinding(open, index, false) : clear);
+    void restoreScroll().then(open ? () => showFinding(open, index, false) : showOverview);
   };
 
   const pausedForWalk = (start: () => void) => () => {
@@ -776,11 +843,13 @@ function Report({
     start();
   };
 
-  const related: RelatedFinding[] = findingsAtStops(findings).map((r) => ({
-    stop: r.stop,
-    tag: r.tag,
-    onOpen: () => go(r.findingId, r.index, "stop"),
-  }));
+  const related: RelatedFinding[] = atStops.flatMap((r) => {
+    const f = findings.find((x) => x.id === r.findingId);
+    if (!f) return [];
+    return [
+      { stop: r.stop, tag: r.tag, sev: sevOf(f), onOpen: () => go(r.findingId, r.index, "stop") },
+    ];
+  });
 
   const fromPage = useEffectEvent((key: string) => {
     if (key.startsWith(STOP_KEY)) {
@@ -804,12 +873,18 @@ function Report({
     return () => chrome.runtime.onMessage.removeListener(listener);
   }, []);
 
+  const settle = useEffectEvent(() => {
+    if (walking !== null || drawn.current === "path") return;
+    if (inv.selected) {
+      if (drawn.current !== "finding") void showFinding(inv.selected, inv.occIndex, false);
+      return;
+    }
+    showOverview();
+  });
+
   useEffect(() => {
-    if (inv.selectedId !== null || drawn.current !== "finding") return;
-    ++latest.current;
-    drawn.current = null;
-    clear();
-  }, [inv.selectedId, clear]);
+    settle();
+  }, [inv.selectedId, walking, overview]);
 
   return (
     <>
@@ -852,6 +927,7 @@ function Report({
               index={inv.occIndex}
               onPick={pick}
               host={result.title}
+              testedOn="page"
               compact
               t={t}
               located={
@@ -873,7 +949,7 @@ function Report({
         related={related}
         onShow={() => void showPath(at)}
         onPick={(n) => void showPath(n)}
-        onStep={(delta) => void showPath(((at - 1 + delta + marks.length) % marks.length) + 1)}
+        onStep={(delta) => void showPath(((at - 1 + delta + stops) % stops) + 1)}
         onComplete={(on) => {
           setComplete(on);
           void showPath(at, on);
@@ -968,20 +1044,22 @@ function Panel({
     };
   }, [retranslate]);
 
-  const draw: Draw = async (marks, focus, opts) => {
+  const draw: Draw = (marks, focus, opts) => {
     keepPort();
-    const reply = (await send({
-      type: "panel:highlight",
-      marks,
-      focus,
-      scroll: opts.scroll ?? false,
-      path: opts.path ?? false,
-      timeoutMs: opts.timeoutMs ?? 0,
-    })) as HighlightReply | undefined;
-    return reply ?? null;
+    const reply = drawing.then(
+      () =>
+        send({
+          type: "panel:highlight",
+          marks,
+          focus,
+          scroll: opts.scroll ?? false,
+          path: opts.path ?? false,
+          timeoutMs: opts.timeoutMs ?? 0,
+        }) as Promise<HighlightReply | undefined>,
+    );
+    drawing = reply.catch(() => undefined);
+    return reply.then((r) => r ?? null);
   };
-
-  const clear = useCallback(() => void send({ type: "panel:clear-highlight" }), []);
 
   const running = state.kind === "running";
   const walking = state.kind === "running" && state.task === "focus-path" ? state.stage : null;
@@ -1040,7 +1118,6 @@ function Panel({
           onWalk={() => void send({ type: "panel:focus-path" })}
           onContinue={() => void send({ type: "panel:continue-walk" })}
           draw={draw}
-          clear={clear}
           restoreScroll={() => send({ type: "panel:restore-scroll" })}
         />
       )}

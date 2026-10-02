@@ -19,6 +19,9 @@ export type OverlayMark = {
   ring?: boolean;
   label?: string;
   pick?: string;
+  alternates?: { selector: string; pick?: string }[];
+  alert?: OverlayTone;
+  badge?: { tag: string; tone: OverlayTone; pick?: string };
 };
 
 export type OverlayOptions = { scroll?: boolean; timeoutMs?: number; path?: boolean };
@@ -97,6 +100,13 @@ const STYLE = `
   pointer-events: none; user-select: none; -webkit-user-select: none;
 }
 .tag.circle { border-radius: 999px; padding: 0 4px; }
+.tag[data-alert]::before {
+  content: ""; position: absolute; inset: -6px; padding: 3px; border-radius: inherit; pointer-events: none;
+  background: repeating-linear-gradient(-45deg, var(--alert) 0 1.5px, ${HALO} 1.5px 3.5px);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
 .tag.outline { background: #fff; color: ${INK}; border: 1.5px solid ${INK_2}; }
 .tag.review { background: #fff; color: var(--tone); border: 1.5px dashed var(--tone); }
 .tag.quiet { background: #fff; color: ${INK_2}; border: 1px solid ${INK_2}; height: 18px; min-width: 18px; font-size: 11.5px; }
@@ -136,12 +146,16 @@ const SIBLING_TAGS = 4;
 
 type Rect = { x: number; y: number; w: number; h: number };
 
+type Choice = { el: Element; pick: string | undefined };
+
 type Painted = {
   mark: OverlayMark;
   el: Element;
+  choices: Choice[];
   current: boolean;
   locus: HTMLElement;
   tag: HTMLElement;
+  badge: HTMLElement | null;
   ring: HTMLElement | null;
   visible: boolean;
   rect: DOMRect;
@@ -181,7 +195,13 @@ function tell(key: string): void {
 }
 
 function swallow(el: HTMLElement, act: () => void): void {
-  for (const type of ["pointerdown", "mousedown", "pointerup", "mouseup"]) {
+  for (const type of ["pointerdown", "mousedown"]) {
+    el.addEventListener(type, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+  }
+  for (const type of ["pointerup", "mouseup"]) {
     el.addEventListener(type, (e) => e.stopPropagation());
   }
   el.addEventListener("click", (e) => {
@@ -238,13 +258,42 @@ function tagFor(mark: OverlayMark, current: boolean): HTMLElement {
   el.className = classes.join(" ");
   el.textContent = mark.tag;
   css(el, { "--tone": TONE[mark.tone] });
+  if (mark.alert) {
+    el.dataset.alert = mark.alert;
+    css(el, { "--alert": TONE[mark.alert] });
+  }
   if (mark.label) el.title = mark.label;
   if (mark.pick) {
     el.dataset.pick = mark.pick;
-    const key = mark.pick;
-    swallow(el, () => tell(key));
+    swallow(el, () => {
+      if (el.dataset.pick) tell(el.dataset.pick);
+    });
   }
   return el;
+}
+
+function badgeFor(mark: OverlayMark): HTMLElement | null {
+  if (!mark.badge) return null;
+  const { tag, tone, pick } = mark.badge;
+  const el = tagFor({ n: mark.n, selector: mark.selector, tag, tone, pick }, false);
+  el.classList.add("badge");
+  el.dataset.for = String(mark.n);
+  return el;
+}
+
+function placeBadge(badge: HTMLElement, beside: Rect, taken: Rect[]): void {
+  badge.style.setProperty("display", "inline-flex");
+  const w = badge.offsetWidth || 28;
+  const h = badge.offsetHeight || 20;
+  const y = beside.y + (beside.h - h) / 2;
+  const sides: Rect[] = [
+    { x: beside.x + beside.w + 3, y, w, h },
+    { x: beside.x - w - 3, y, w, h },
+  ];
+  const fits = (c: Rect) => c.x >= 2 && c.x + c.w <= innerWidth - 2;
+  const spot = sides.find((c) => fits(c) && !taken.some((o) => clash(c, o))) ?? sides[0];
+  taken.push(spot);
+  css(badge, { left: `${spot.x}px`, top: `${spot.y}px` });
 }
 
 function ringFor(): HTMLElement {
@@ -425,18 +474,25 @@ function placeTags(): void {
       });
     }
     css(p.tag, { left: `${x}px`, top: `${y}px` });
+    if (p.badge) placeBadge(p.badge, p.spot, taken);
   }
 }
 
 function place(): void {
   frame = 0;
   for (const p of painted) {
+    if (p.choices.length > 1) {
+      const shown = p.choices.find((c) => seen(c.el.getBoundingClientRect())) ?? p.choices[0];
+      p.el = shown.el;
+      if (shown.pick) p.tag.dataset.pick = shown.pick;
+    }
     const r = p.el.getBoundingClientRect();
     p.rect = r;
     p.visible = seen(r);
     const show = p.visible ? "block" : "none";
     p.locus.style.setProperty("display", show);
     p.tag.style.setProperty("display", p.visible ? "inline-flex" : "none");
+    p.badge?.style.setProperty("display", "none");
     if (p.ring) p.ring.style.setProperty("display", show);
     if (!p.visible) continue;
     const box = {
@@ -549,7 +605,10 @@ export function overlayShow(
   );
 
   for (const mark of ordered) {
-    const el = find(mark.selector);
+    const choices = [{ selector: mark.selector, pick: mark.pick }, ...(mark.alternates ?? [])]
+      .map(({ selector, pick }) => ({ el: find(selector), pick }))
+      .filter((c): c is Choice => c.el !== null);
+    const el = choices[0]?.el;
     if (!el) {
       missing.push(mark.n);
       continue;
@@ -567,12 +626,16 @@ export function overlayShow(
     }
     marksLayer.append(locus);
     tagsLayer.append(tag);
+    const badge = badgeFor(mark);
+    if (badge) tagsLayer.append(badge);
     painted.push({
       mark,
       el,
+      choices,
       current,
       locus,
       tag,
+      badge,
       ring,
       visible: false,
       rect: el.getBoundingClientRect(),
@@ -581,6 +644,16 @@ export function overlayShow(
   }
 
   painted.sort((a, b) => a.mark.n - b.mark.n);
+
+  if (painted.length === 0) {
+    return {
+      drawn: 0,
+      missing,
+      offScreen: [],
+      movedScroll: false,
+      focused: focus === null ? null : { found: false, onScreen: false, side: null, hidden: false },
+    };
+  }
 
   const current = painted.find((p) => p.current) ?? null;
   if (current) {

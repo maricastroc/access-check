@@ -414,3 +414,32 @@ export function focusProbeEnd(): { x: number; y: number } | null {
   restoreScroll = null;
   return scroll;
 }
+
+export type StopRef = { n: number; selector: string };
+
+function query(selector: string): Element | null {
+  try {
+    return document.querySelector(selector);
+  } catch {
+    return null;
+  }
+}
+
+export function matchStops(stops: StopRef[], selectors: string[]): Record<string, number> {
+  const at = new Map<Element, number>();
+  for (const stop of stops) {
+    const el = query(stop.selector);
+    if (!el || el === document.body || el === document.documentElement || at.has(el)) continue;
+    at.set(el, stop.n);
+  }
+  const found: Record<string, number> = {};
+  for (const selector of new Set(selectors)) {
+    for (let el = query(selector); el; el = el.parentElement) {
+      const n = at.get(el);
+      if (n === undefined) continue;
+      found[selector] = n;
+      break;
+    }
+  }
+  return found;
+}

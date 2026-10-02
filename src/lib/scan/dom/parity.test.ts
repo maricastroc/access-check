@@ -8,6 +8,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Browser, Page } from "playwright-core";
 import { acquireBrowser, closeSharedBrowser } from "../browser";
 import { DOM_ENGINE_VERSION } from "./engine-api";
+import { PALETTE } from "../../palette";
 import type { ElementIdentity } from "./identity";
 import { elementLine, identityLabel } from "../../report/identity";
 import { translator } from "../../i18n/t";
@@ -300,6 +301,196 @@ describe("the overlay says when the element it points at cannot be seen", () => 
     });
 
     expect(shown).toEqual({ display: "block", visibility: "visible", opacity: "1", drawn: true });
+  });
+});
+
+describe("the overlay as an overview, and along the focus path", () => {
+  it("tags the first element of a finding that is on screen, and follows the scroll", async () => {
+    const picks = await page.evaluate(async () => {
+      const spacer = document.createElement("div");
+      spacer.style.height = "2400px";
+      const far = document.createElement("p");
+      far.id = "far";
+      far.textContent = "Far down";
+      document.body.append(spacer, far);
+      window.scrollTo(0, 0);
+      window.__accessCheckDom!.overlayShow(
+        [
+          {
+            n: 1,
+            selector: "#far",
+            tag: "1",
+            tone: "serious",
+            pick: "f:a:0",
+            alternates: [{ selector: "h1", pick: "f:a:1" }],
+          },
+        ],
+        null,
+        {},
+      );
+      const tag = () =>
+        document
+          .getElementById("accesscheck-overlay")!
+          .shadowRoot!.querySelector<HTMLElement>(".tag")!;
+      const atTop = tag().dataset.pick;
+      far.scrollIntoView({ block: "center", behavior: "instant" });
+      await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
+      const below = tag().dataset.pick;
+      window.__accessCheckDom!.overlayClear();
+      spacer.remove();
+      far.remove();
+      window.scrollTo(0, 0);
+      return { atTop, below };
+    });
+
+    expect(picks).toEqual({ atTop: "f:a:1", below: "f:a:0" });
+  });
+
+  it("leaves out a finding whose elements are gone, and adds nothing when none is left", async () => {
+    const result = await page.evaluate(() => {
+      const some = window.__accessCheckDom!.overlayShow(
+        [
+          { n: 1, selector: "#gone", tag: "1", tone: "critical" },
+          { n: 2, selector: "h1", tag: "2", tone: "serious" },
+        ],
+        null,
+        {},
+      );
+      const tags = [
+        ...document.getElementById("accesscheck-overlay")!.shadowRoot!.querySelectorAll(".tag"),
+      ].map((t) => t.textContent);
+      const none = window.__accessCheckDom!.overlayShow(
+        [
+          {
+            n: 1,
+            selector: "#gone",
+            tag: "1",
+            tone: "critical",
+            alternates: [{ selector: ".nope" }],
+          },
+        ],
+        null,
+        {},
+      );
+      return { some, tags, none, root: document.getElementById("accesscheck-overlay") !== null };
+    });
+
+    expect(result.some).toMatchObject({ drawn: 1, missing: [1] });
+    expect(result.tags).toEqual(["2"]);
+    expect(result.none).toMatchObject({ drawn: 0, missing: [1], focused: null });
+    expect(result.root).toBe(false);
+  });
+
+  it("rings a stop that has a finding in its severity, and opens the finding only at the current stop", async () => {
+    const drawn = await page.evaluate(() => {
+      window.__accessCheckDom!.overlayShow(
+        [
+          { n: 1, selector: "h1", tag: "1", tone: "path", shape: "circle", alert: "critical" },
+          {
+            n: 2,
+            selector: "#email",
+            tag: "2",
+            tone: "path",
+            shape: "circle",
+            alert: "serious",
+            badge: { tag: "4·1", tone: "serious", pick: "f:wcag:label:0" },
+          },
+          { n: 3, selector: '[aria-label="Search"]', tag: "3", tone: "path", shape: "circle" },
+        ],
+        2,
+        { path: true },
+      );
+      const root = document.getElementById("accesscheck-overlay")!.shadowRoot!;
+      const box = (el: Element) => {
+        const r = el.getBoundingClientRect();
+        return { left: r.left, right: r.right, top: r.top, bottom: r.bottom };
+      };
+      const stops = [...root.querySelectorAll<HTMLElement>(".tag.circle")].map((t) => ({
+        n: t.textContent,
+        alert: t.dataset.alert ?? null,
+        color: t.style.getPropertyValue("--alert") || null,
+        box: box(t),
+      }));
+      const badges = [...root.querySelectorAll<HTMLElement>(".badge")].map((b) => ({
+        text: b.textContent,
+        pick: b.dataset.pick,
+        circle: b.classList.contains("circle"),
+        box: box(b),
+      }));
+      window.__accessCheckDom!.overlayClear();
+      return { stops, badges };
+    });
+
+    const byN = Object.fromEntries(drawn.stops.map((s) => [s.n, s]));
+    expect(byN["1"]).toMatchObject({ alert: "critical", color: PALETTE.critical });
+    expect(byN["2"]).toMatchObject({ alert: "serious", color: PALETTE.serious });
+    expect(byN["3"]).toMatchObject({ alert: null, color: null });
+    expect(drawn.badges).toHaveLength(1);
+    expect(drawn.badges[0]).toMatchObject({ text: "4·1", pick: "f:wcag:label:0", circle: false });
+    const [badge, stop] = [drawn.badges[0].box, byN["2"].box];
+    const apart = badge.left >= stop.right || badge.right <= stop.left;
+    expect(apart).toBe(true);
+  });
+
+  it("never moves focus, keeps its clicks to itself, and stays out of the tab order and the tree", async () => {
+    await page.evaluate(() => {
+      (window as unknown as { clicks: number }).clicks = 0;
+      document.addEventListener("click", () => {
+        (window as unknown as { clicks: number }).clicks += 1;
+      });
+      document.getElementById("email")!.focus();
+      window.__accessCheckDom!.overlayShow(
+        [{ n: 1, selector: "h1", tag: "1", tone: "critical", pick: "f:wcag:x:0" }],
+        null,
+        {},
+      );
+    });
+    const at = await page.evaluate(() => {
+      const tag = document
+        .getElementById("accesscheck-overlay")!
+        .shadowRoot!.querySelector<HTMLElement>(".tag")!;
+      const r = tag.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    });
+    await page.mouse.click(at.x, at.y);
+    const after = await page.evaluate(() => {
+      const root = document.getElementById("accesscheck-overlay")!;
+      const focusable = root.shadowRoot!.querySelectorAll(
+        "a[href], button, input, select, textarea, [tabindex], [contenteditable]",
+      ).length;
+      const state = {
+        focused: document.activeElement?.id ?? null,
+        clicks: (window as unknown as { clicks: number }).clicks,
+        hidden: root.getAttribute("aria-hidden"),
+        focusable,
+      };
+      window.__accessCheckDom!.overlayClear();
+      return state;
+    });
+
+    expect(after).toEqual({ focused: "email", clicks: 0, hidden: "true", focusable: 0 });
+  });
+
+  it("matches each finding's element to the stop it is, or sits inside", async () => {
+    const matched = await page.evaluate(() => {
+      const box = document.createElement("div");
+      box.innerHTML =
+        '<a id="ms-link" href="/x"><img id="ms-img" src="/logo.png"></a><button id="ms-btn">Go</button><p id="ms-text">Plain</p>';
+      document.body.append(box);
+      const found = window.__accessCheckDom!.matchStops(
+        [
+          { n: 1, selector: "#ms-link" },
+          { n: 2, selector: "#ms-btn" },
+          { n: 3, selector: "body" },
+          { n: 4, selector: "#ms-btn" },
+        ],
+        ["#ms-img", "#ms-btn", "#ms-text", "#nope", "[[bad"],
+      );
+      box.remove();
+      return found;
+    });
+
+    expect(matched).toEqual({ "#ms-img": 1, "#ms-btn": 2 });
   });
 });
 

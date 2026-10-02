@@ -161,10 +161,17 @@ const OVERLAY_READER = () => {
       ringColor: ring ? getComputedStyle(ring.querySelector(".ring-line")).borderTopColor : null,
       bracketsShown: style.visibility !== "hidden" && style.display !== "none",
       halo: (tag ? getComputedStyle(tag).boxShadow : "").includes("rgba(255, 255, 255"),
+      alert: tag?.dataset.alert ?? null,
     };
   });
+  const badges = [...shadow.querySelectorAll(".badge")].map((b) => ({
+    for: b.dataset.for,
+    text: b.textContent,
+    pick: b.dataset.pick ?? null,
+  }));
   return {
     present: true,
+    badges,
     parent: root.parentElement?.tagName ?? null,
     ariaHidden: root.getAttribute("aria-hidden"),
     pointerEvents: getComputedStyle(root).pointerEvents,
@@ -991,6 +998,43 @@ try {
     "a mark on the page carries no halo to stand out on any background",
   );
 
+  const strip = await panel.evaluate(() =>
+    [...document.querySelectorAll("button[data-stop]")].map((b) => ({
+      n: b.dataset.stop,
+      sev: b.querySelector("[data-alert]")?.dataset.sev ?? null,
+      hatched: Boolean(b.querySelector(".ac-hatch")),
+      label: b.getAttribute("aria-label"),
+    })),
+  );
+  console.log("stops with findings:", JSON.stringify({ strip, badges: nearby.badges }));
+  check(
+    nearby.marks.every((m) => m.alert === "serious"),
+    `a stop whose focus does not show carries no serious ring: ${JSON.stringify(nearby.marks)}`,
+  );
+  check(
+    nearby.marks.every((m) => strip.find((s) => s.n === m.tag)?.sev === m.alert),
+    `the strip and the page disagree about which stops have findings: ${JSON.stringify(strip)}`,
+  );
+  check(
+    strip.every((s) => s.hatched === (s.sev !== null)),
+    "the strip hatches a stop without a finding, or misses one with a finding",
+  );
+  check(
+    strip.filter((s) => s.sev).every((s) => /, finding \d+(·\d+)?$/.test(s.label ?? "")),
+    "a stop with a finding does not say so to assistive technology",
+  );
+  check(
+    nearby.badges.length === 1 &&
+      nearby.badges[0].for === "1" &&
+      /^\d+·1$/.test(nearby.badges[0].text) &&
+      nearby.badges[0].pick?.startsWith("f:"),
+    `only the current stop should open its finding: ${JSON.stringify(nearby.badges)}`,
+  );
+  check(
+    JSON.stringify(nearby.marks.filter((m) => m.ring).map((m) => m.tag)) === JSON.stringify(["1"]),
+    "a stop other than the current one rings its element",
+  );
+
   const stepPath = await panel.evaluate(async () => {
     const reading = () => ({
       open: [...document.querySelectorAll("h3 > button[aria-expanded='true']")].map((b) =>
@@ -1064,6 +1108,10 @@ try {
     "Exit left the focus path on the page",
   );
   check(
+    cleared.present && cleared.marks.some((m) => m.current && m.shape === "square"),
+    "Exit did not bring back the finding that was open",
+  );
+  check(
     scrollRestored === scrollBeforeInspecting,
     `Exit left the page at ${scrollRestored} instead of ${scrollBeforeInspecting}`,
   );
@@ -1081,6 +1129,68 @@ try {
   check(
     !locatedOut.stepper && locatedOut.entry,
     "Locate on page left the inspection controls on screen",
+  );
+
+  await panel.evaluate(async () => {
+    document.querySelector('h3 > button[aria-expanded="true"]')?.click();
+    await new Promise((r) => setTimeout(r, 500));
+  });
+  const overviewAfterClose = await readOverlay();
+  await clickByText("Inspect tab order");
+  await clickByText("Exit");
+  await new Promise((r) => setTimeout(r, 300));
+  const overviewAfterExit = await readOverlay();
+  const queueNumbers = await panel.evaluate(() =>
+    [...document.querySelectorAll('section[data-group="fix"] li[id^="finding-"] h3')].map(
+      (h) =>
+        [...h.querySelectorAll("*")]
+          .find((el) => el.children.length === 0 && /^\d+$/.test(el.textContent.trim()))
+          ?.textContent.trim() ?? null,
+    ),
+  );
+  const pageTag = await page.evaluate(() => {
+    const tag = document
+      .getElementById("accesscheck-overlay")
+      ?.shadowRoot?.querySelector(".tag[data-pick]");
+    if (!tag) return null;
+    const r = tag.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2, pick: tag.dataset.pick };
+  });
+  await page.bringToFront();
+  if (pageTag) await page.mouse.click(pageTag.x, pageTag.y);
+  await new Promise((r) => setTimeout(r, 700));
+  const pickedOpen = await panel.evaluate(
+    () => document.querySelector('h3 > button[aria-expanded="true"]')?.closest("li")?.id ?? null,
+  );
+  console.log(
+    "overview:",
+    JSON.stringify({
+      afterClose: overviewAfterClose.marks.map((m) => [m.tag, m.tone, m.current]),
+      afterExit: overviewAfterExit.marks.map((m) => m.tag),
+      queueNumbers,
+      pageTag,
+      pickedOpen,
+    }),
+  );
+  check(
+    overviewAfterClose.marks.length > 0 &&
+      overviewAfterClose.marks.every(
+        (m) => !m.current && m.shape === "square" && /^\d+$/.test(m.tag),
+      ),
+    "closing the finding did not bring back the overview",
+  );
+  check(
+    overviewAfterClose.marks.every((m) => queueNumbers.includes(m.tag)),
+    `an overview mark carries a number the queue does not: ${JSON.stringify(queueNumbers)}`,
+  );
+  check(
+    JSON.stringify(overviewAfterExit.marks.map((m) => m.tag)) ===
+      JSON.stringify(overviewAfterClose.marks.map((m) => m.tag)),
+    "Exit with nothing open did not return to the overview",
+  );
+  check(
+    pageTag !== null && pickedOpen !== null && pageTag.pick.startsWith(`f:${pickedOpen.slice(8)}:`),
+    `clicking an overview mark did not open its finding: ${JSON.stringify({ pageTag, pickedOpen })}`,
   );
   await panel.evaluate(() => chrome.runtime.sendMessage({ type: "panel:clear-highlight" }));
 
@@ -1281,8 +1391,12 @@ try {
     `a current stop with no focus ring is not drawn as missing one: ${JSON.stringify(currentMark)}`,
   );
   check(
-    mixedMarks.every((m) => m.ring === !mixedVisible[m.tag]),
-    `a stop's missing ring does not match the walk: ${JSON.stringify(mixedMarks)}`,
+    mixedMarks.every((m) => m.ring === (m.current && !mixedVisible[m.tag])),
+    `only the current stop should ring its element when focus does not show: ${JSON.stringify(mixedMarks)}`,
+  );
+  check(
+    mixedMarks.every((m) => (m.alert === "serious") === !mixedVisible[m.tag]),
+    `a stop's finding ring does not match the walk: ${JSON.stringify(mixedMarks)}`,
   );
   check(
     neighbours.every((m) => m.tone === "path" && !m.tagClass.includes("current")),
@@ -1443,7 +1557,12 @@ try {
     };
   });
   await pressIn("Exit");
-  const clearedView = await drawnCount();
+  const clearedView = await page.evaluate(
+    () =>
+      document
+        .getElementById("accesscheck-overlay")
+        ?.shadowRoot?.querySelectorAll('[data-mark][data-tone="path"]').length ?? 0,
+  );
   await manyPanel.close();
   console.log(
     "fifty stops:",

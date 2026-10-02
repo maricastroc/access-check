@@ -90,14 +90,14 @@ A tool that measures contrast shouldn't have questionable contrast of its own, s
   <img src="docs/track-over-time.png" alt="AccessCheck's change-over-time section: a previous audit reading as failing and the current one as minor gaps, listing two cleared rules and one new regression" width="820" />
 </p>
 
-<p align="center"><em>The side panel: where the current tab stands, and the focus path drawn over the live page.</em></p>
+<p align="center"><em>The side panel: every problem to fix marked on the live page, and the focus path drawn across it.</em></p>
 
 <p align="center">
-  <img src="store/screenshots/1-verdict-and-findings.png" alt="AccessCheck's side panel beside a sample bookshop page: the verdict, the coverage it could not check, and the findings list for the current tab" width="820" />
+  <img src="store/screenshots/2-overview.png" alt="AccessCheck's side panel beside a sample bookshop page: six problems to fix, each marked on its element with the same number and color as in the panel's verdict" width="820" />
 </p>
 
 <p align="center">
-  <img src="store/screenshots/4-focus-path.png" alt="The side panel stepping through the keyboard focus path, with the stops numbered over the page" width="820" />
+  <img src="store/screenshots/1-focus-path.png" alt="The keyboard focus path drawn across the bookshop page as numbered blue stops, with hatched rings on the stops that have a problem and the current stop naming its problem" width="820" />
 </p>
 
 <br/>

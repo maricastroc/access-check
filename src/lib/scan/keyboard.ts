@@ -94,6 +94,7 @@ export type KeyboardReport = {
   stoppedBy: WalkEnd;
   focusPath: FocusStop[];
   findings: KeyboardFinding[];
+  targetStops?: Record<string, number>;
 };
 
 export type RawKeyboard = {
