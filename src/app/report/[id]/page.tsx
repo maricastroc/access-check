@@ -35,7 +35,7 @@ export default async function SavedReportPage({ params }: { params: Promise<{ id
       <header className="ac-toolbar sticky top-0 z-30 flex h-14.5 items-center justify-between border-b border-hairline bg-surface px-7">
         <Link
           href="/history"
-          className="flex h-8.5 items-center gap-2 px-2.5 text-[13px] font-medium text-body transition-colors hover:bg-[#f6f7f9] hover:text-ink"
+          className="flex h-8.5 items-center gap-2 px-2.5 text-[13px] font-medium text-body transition-colors hover:bg-band hover:text-ink"
         >
           <FontAwesomeIcon icon={faArrowLeft} className="text-xs" />
           {t("history.backToHistory")}

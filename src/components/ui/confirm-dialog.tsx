@@ -47,7 +47,9 @@ export function ConfirmDialog({
                 type="button"
                 onClick={onConfirm}
                 className={`flex h-9 cursor-pointer items-center px-4 text-sm font-semibold text-white transition-colors ${
-                  destructive ? "bg-[#c62a2f] hover:bg-[#a82428]" : "bg-ink hover:bg-ink-2"
+                  destructive
+                    ? "bg-critical hover:bg-[color-mix(in_srgb,var(--color-critical)_85%,var(--color-ink))]"
+                    : "bg-ink hover:bg-ink-2"
                 }`}
               >
                 {confirmLabel}

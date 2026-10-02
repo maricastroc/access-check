@@ -2,15 +2,15 @@ import type { ScanResult } from "@/lib/scan/types";
 import { wcagReadingOf } from "@/lib/report/wcag";
 import { WcagChips } from "@/components/ui";
 import { standingOf, STANDING_LABEL, STANDING_NOTE, type Standing } from "@/lib/report/standing";
-import { safeHost, sevHex, shortId } from "./shared";
+import { safeHost, sevColor, shortId } from "./shared";
 import { PageShell, SectionKicker, SectionKickerMuted } from "./primitives";
 import { translator } from "@/lib/i18n/t";
 
-const STANDING_HEX: Record<Standing, string> = {
-  blocked: sevHex.critical,
-  failing: sevHex.serious,
-  gaps: sevHex.moderate,
-  clean: "#16764f",
+const STANDING_COLOR: Record<Standing, string> = {
+  blocked: sevColor.critical,
+  failing: sevColor.serious,
+  gaps: sevColor.moderate,
+  clean: "var(--color-verified)",
 };
 
 export function SummaryPage({ result }: { result: ScanResult }) {
@@ -33,12 +33,20 @@ export function SummaryPage({ result }: { result: ScanResult }) {
   ];
 
   const counts: { label: string; value: number; color: string }[] = [
-    { label: t("severity.critical"), value: result.counts.critical, color: sevHex.critical },
-    { label: t("severity.serious"), value: result.counts.serious, color: sevHex.serious },
-    { label: t("severity.moderate"), value: result.counts.moderate, color: sevHex.moderate },
-    { label: t("report.passedLabel"), value: result.counts.passed, color: "#16764f" },
-    { label: t("finding.kind.bestPractice"), value: result.counts.bestPractice, color: "#3c5c7a" },
-    { label: t("panel.count.manualReview"), value: result.counts.manualReview, color: "#6b6c70" },
+    { label: t("severity.critical"), value: result.counts.critical, color: sevColor.critical },
+    { label: t("severity.serious"), value: result.counts.serious, color: sevColor.serious },
+    { label: t("severity.moderate"), value: result.counts.moderate, color: sevColor.moderate },
+    { label: t("report.passedLabel"), value: result.counts.passed, color: "var(--color-verified)" },
+    {
+      label: t("finding.kind.bestPractice"),
+      value: result.counts.bestPractice,
+      color: "var(--color-steel)",
+    },
+    {
+      label: t("panel.count.manualReview"),
+      value: result.counts.manualReview,
+      color: "var(--color-review)",
+    },
   ];
 
   const fixes = result.fixFirst.map((f) => {
@@ -76,7 +84,7 @@ export function SummaryPage({ result }: { result: ScanResult }) {
           <SectionKickerMuted>{t("standing.kicker")}</SectionKickerMuted>
           <p
             className="mt-1 font-cond text-[34px] leading-[1.05]"
-            style={{ color: STANDING_HEX[standing] }}
+            style={{ color: STANDING_COLOR[standing] }}
           >
             {t(STANDING_LABEL[standing])}
           </p>
@@ -147,7 +155,7 @@ export function SummaryPage({ result }: { result: ScanResult }) {
                 </div>
                 <span
                   className="justify-self-end px-2 py-1 font-cond text-[11px] font-medium tracking-[0.06em] uppercase"
-                  style={{ color: f.impact === "High" ? sevHex.critical : sevHex.serious }}
+                  style={{ color: f.impact === "High" ? sevColor.critical : sevColor.serious }}
                 >
                   {f.impact} impact
                 </span>

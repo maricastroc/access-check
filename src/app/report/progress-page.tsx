@@ -2,7 +2,7 @@ import { chargeable } from "@/lib/scan/evidence";
 import { violationsBehindScore } from "@/lib/scan/scored";
 import { standingOf, STANDING_LABEL } from "@/lib/report/standing";
 import type { ScanResult, Severity } from "@/lib/scan/types";
-import { safeHost, sevHex } from "./shared";
+import { safeHost, sevColor } from "./shared";
 import { MiniHeader, PageShell, SectionKicker, SectionKickerMuted } from "./primitives";
 import { translator } from "@/lib/i18n/t";
 
@@ -28,13 +28,13 @@ export function ProgressPage({ result }: { result: ScanResult }) {
 
   const recs = [
     {
-      color: sevHex.critical,
+      color: sevColor.critical,
       term: t("report.roadmap.immediateTerm"),
       title: t("report.roadmap.immediateTitle"),
       body: t("report.roadmap.immediateBody", { count: result.counts.critical }),
     },
     {
-      color: sevHex.serious,
+      color: sevColor.serious,
       term: t("report.roadmap.shortTerm"),
       title: t("report.roadmap.shortTitle"),
       body: t("report.roadmap.shortBody", { count: result.counts.serious }),

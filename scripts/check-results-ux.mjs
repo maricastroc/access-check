@@ -474,6 +474,13 @@ try {
   check(control.radios === 3, `the choice of marks offers ${control.radios} options`);
   check(control.checked === "Findings", `the capture opens on ${control.checked}`);
 
+  await wide.page
+    .waitForFunction(
+      () => document.querySelectorAll('#capture-figure button[aria-label^="Finding "]').length > 0,
+      null,
+      { timeout: 5000 },
+    )
+    .catch(() => {});
   const shown = await marksOn(wide.page);
   await layer(wide.page, "None");
   const hidden = await marksOn(wide.page);

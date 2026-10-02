@@ -5,7 +5,7 @@ import { describeElement } from "@/lib/report/identity";
 import { toFixStatus } from "@/lib/report/severity";
 import { certifiedVerification, fixConfidenceOf } from "@/lib/scan/confidence";
 import { ColorSwatch, StatusSeal } from "@/components/ui";
-import { sevHex, sevLabelKey } from "./shared";
+import { sevColor, sevLabelKey } from "./shared";
 import { FieldLabel } from "./primitives";
 import type { Translate } from "@/lib/i18n/t";
 
@@ -25,7 +25,7 @@ export function DetailedCard({
   return (
     <div
       className="border border-hairline bg-surface"
-      style={{ borderLeft: `3px solid ${sevHex[v.severity]}` }}
+      style={{ borderLeft: `3px solid ${sevColor[v.severity]}` }}
     >
       <div className="grid grid-cols-[1fr_1.7in]">
         <div className="border-r border-hairline p-4">
@@ -33,7 +33,7 @@ export function DetailedCard({
             <span className="text-[15px] font-semibold text-ink">{v.title}</span>
             <span
               className="px-1.5 py-0.5 font-cond text-[10px] font-medium tracking-[0.08em] uppercase"
-              style={{ color: sevHex[v.severity] }}
+              style={{ color: sevColor[v.severity] }}
             >
               {t(sevLabelKey[v.severity])}
             </span>
@@ -76,7 +76,7 @@ export function DetailedCard({
             )}
 
             {v.fixCode && (
-              <code className="mt-1.5 block border border-hairline bg-code px-2 py-1.5 font-mono text-[10.5px] leading-normal whitespace-pre-wrap text-[#2b2b2d]">
+              <code className="mt-1.5 block border border-hairline bg-code px-2 py-1.5 font-mono text-[10.5px] leading-normal whitespace-pre-wrap text-ink-2">
                 {v.fixCode}
               </code>
             )}

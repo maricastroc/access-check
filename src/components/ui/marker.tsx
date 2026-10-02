@@ -36,21 +36,22 @@ export function Marker({
     style.background = "var(--color-ink)";
     style.color = "var(--color-surface)";
     style.border = "2px solid var(--color-surface)";
-    style.boxShadow = "0 0 0 3px var(--color-ink), 0 4px 12px rgba(23,24,26,.4)";
+    style.boxShadow =
+      "0 0 0 3px var(--color-ink), 0 4px 12px color-mix(in srgb, var(--color-ink) 40%, transparent)";
     if (isChip) {
       style.paddingLeft = 8;
       style.paddingRight = 8;
       style.gap = 6;
     }
   } else if (state === "unavailable") {
-    style.background = "rgba(252,251,248,.92)";
+    style.background = "color-mix(in srgb, var(--color-surface) 92%, transparent)";
     style.color = "var(--color-muted)";
     style.border = "1px dashed var(--color-muted)";
   } else {
-    style.background = "rgba(252,251,248,.92)";
+    style.background = "color-mix(in srgb, var(--color-surface) 92%, transparent)";
     style.color = "var(--color-ink)";
     style.border = "1px dashed var(--color-ink)";
-    style.boxShadow = "0 1px 3px rgba(23,24,26,.3)";
+    style.boxShadow = "0 1px 3px color-mix(in srgb, var(--color-ink) 30%, transparent)";
   }
 
   return (

@@ -13,7 +13,8 @@ export function sevOf(f: Pick<FindingView, "kind" | "evidence" | "severity">): S
   return f.severity ?? "none";
 }
 
-const ON_PAGE = "0 0 0 1.5px var(--color-halo), 0 0 0 2.5px rgba(18,18,17,.42)";
+const ON_PAGE =
+  "0 0 0 1.5px var(--color-halo), 0 0 0 2.5px color-mix(in srgb, var(--color-ink) 42%, transparent)";
 const RING = "0 0 0 2px var(--color-canvas), 0 0 0 4px var(--color-ink)";
 
 export function Tag({

@@ -25,7 +25,7 @@ export function CopyableCode({ code, className }: { code: string; className?: st
         className,
       )}
     >
-      <code className="overflow-x-auto font-mono text-[12.5px] leading-[1.7] whitespace-pre text-[#2b2b2d]">
+      <code className="overflow-x-auto font-mono text-[12.5px] leading-[1.7] whitespace-pre text-ink-2">
         {code}
       </code>
       <button

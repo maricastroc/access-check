@@ -9,7 +9,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import type { ScanDiff, ViolationRef } from "@/lib/scan/diff";
 import type { Severity } from "@/lib/scan/types";
-import { sevHex, sevLabelKey } from "../shared";
+import { sevColor, sevLabelKey } from "../shared";
 import { standingOf, STANDING_LABEL, STANDING_TONE } from "@/lib/report/standing";
 import type { Translate } from "@/lib/i18n/t";
 import type { ReportLocale } from "@/lib/i18n/locale";
@@ -50,7 +50,11 @@ export function ComparisonCard({
   const standingTo = standingAt("to");
   const up = diff.fixed.length > diff.regressed.length;
   const down = diff.regressed.length > diff.fixed.length;
-  const deltaColor = up ? "#16764f" : down ? "#c62a2f" : "#63676f";
+  const deltaColor = up
+    ? "var(--color-verified)"
+    : down
+      ? "var(--color-critical)"
+      : "var(--color-muted)";
 
   return (
     <section className="w-full max-w-204 border border-hairline bg-surface p-6 shadow-selected print:hidden">
@@ -73,7 +77,10 @@ export function ComparisonCard({
           {diff.comparable ? (
             <span
               className="flex items-center gap-1 px-2.5 py-1 text-sm font-bold"
-              style={{ color: deltaColor, background: `${deltaColor}1a` }}
+              style={{
+                color: deltaColor,
+                background: `color-mix(in srgb, ${deltaColor} 10%, transparent)`,
+              }}
             >
               <FontAwesomeIcon
                 icon={up ? faArrowUp : down ? faArrowDown : faMinus}
@@ -95,7 +102,7 @@ export function ComparisonCard({
           return (
             <div key={s} className="border border-hairline bg-canvas px-3 py-2.5">
               <div className="flex items-center gap-1.5">
-                <span className="size-2 rounded-full" style={{ background: sevHex[s] }} />
+                <span className="size-2 rounded-full" style={{ background: sevColor[s] }} />
                 <span className="text-[11px] font-semibold text-ink">{t(sevLabelKey[s])}</span>
               </div>
               <div className="mt-1 flex items-baseline gap-1.5">
@@ -105,7 +112,9 @@ export function ComparisonCard({
                 {diff.comparable && c.delta !== 0 && (
                   <span
                     className="ml-auto text-[11px] font-bold"
-                    style={{ color: c.delta < 0 ? "#16764f" : "#c62a2f" }}
+                    style={{
+                      color: c.delta < 0 ? "var(--color-verified)" : "var(--color-critical)",
+                    }}
                   >
                     {c.delta > 0 ? `+${c.delta}` : c.delta}
                   </span>
@@ -128,7 +137,7 @@ export function ComparisonCard({
           title={t("diff.cleared")}
           items={diff.fixed}
           icon={faCheck}
-          tone="#16764f"
+          tone="var(--color-verified)"
           empty={t("diff.noneCleared")}
         />
         <DiffList
@@ -136,7 +145,7 @@ export function ComparisonCard({
           title={t("diff.newOrWorse")}
           items={diff.regressed}
           icon={faTriangleExclamation}
-          tone="#c62a2f"
+          tone="var(--color-critical)"
           empty={t("diff.noneWorse")}
         />
       </div>
@@ -180,7 +189,7 @@ function DiffList({
             <li key={v.id} className="flex items-center gap-2 text-[12.5px] text-body">
               <span
                 className="size-1.5 shrink-0 rounded-full"
-                style={{ background: sevHex[v.severity] }}
+                style={{ background: sevColor[v.severity] }}
               />
               <span className="truncate">{v.title}</span>
             </li>

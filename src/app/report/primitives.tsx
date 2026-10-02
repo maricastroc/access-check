@@ -1,6 +1,6 @@
 import type { Severity } from "@/lib/scan/types";
 import { BrandMark } from "@/components/ui";
-import { sevHex, sevLabelKey } from "./shared";
+import { sevColor, sevLabelKey } from "./shared";
 import type { Translate } from "@/lib/i18n/t";
 
 export function SectionKicker({ children }: { children: React.ReactNode }) {
@@ -76,7 +76,7 @@ export function MiniHeader({ host, t }: { host: string; t: Translate }) {
 export function LegendChip({ sev, count, t }: { sev: Severity; count: number; t: Translate }) {
   return (
     <span className="inline-flex items-center gap-1.5 border border-border bg-surface px-3 py-1.5 text-[11px] font-medium text-ink">
-      <span aria-hidden className="size-2.5" style={{ background: sevHex[sev] }} />
+      <span aria-hidden className="size-2.5" style={{ background: sevColor[sev] }} />
       {t(sevLabelKey[sev])} <b className="font-medium text-muted tabular-nums">{count}</b>
     </span>
   );
@@ -85,11 +85,11 @@ export function LegendChip({ sev, count, t }: { sev: Severity; count: number; t:
 export function GroupHeading({ sev, count, t }: { sev: Severity; count: number; t: Translate }) {
   return (
     <div className="flex items-center gap-2.5">
-      <span aria-hidden className="size-2.5" style={{ background: sevHex[sev] }} />
+      <span aria-hidden className="size-2.5" style={{ background: sevColor[sev] }} />
       <span className="text-[13px] font-semibold text-ink">{t(sevLabelKey[sev])}</span>
       <span
         className="px-2 py-0.5 font-cond text-[10px] font-medium tracking-[0.08em] uppercase"
-        style={{ color: sevHex[sev] }}
+        style={{ color: sevColor[sev] }}
       >
         {count} finding{count > 1 ? "s" : ""}
       </span>

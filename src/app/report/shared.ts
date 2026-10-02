@@ -3,17 +3,11 @@ import type { Severity } from "@/lib/scan/types";
 
 export type Status = "loading" | "done" | "error";
 
-export const sevHex: Record<Severity, string> = {
-  critical: "#b3261e",
-  serious: "#a85a06",
-  moderate: "#8a6a00",
-  minor: "#6b6c70",
-};
-export const sevTint: Record<Severity, string> = {
-  critical: "#f6e2e1",
-  serious: "#f3e7d5",
-  moderate: "#f0ecd3",
-  minor: "#ecebe4",
+export const sevColor: Record<Severity, string> = {
+  critical: "var(--color-critical)",
+  serious: "var(--color-serious)",
+  moderate: "var(--color-moderate)",
+  minor: "var(--color-muted)",
 };
 export const sevLabelKey: Record<Severity, MessageKey> = {
   critical: "severity.critical",

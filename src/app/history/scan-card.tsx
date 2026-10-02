@@ -12,9 +12,9 @@ export function ScanCard({ scan, delta }: { scan: ScanListItem; delta: number | 
   const [loaded, setLoaded] = useState(false);
 
   const sev = [
-    { label: "Critical", value: scan.counts.critical, color: "#c62a2f" },
-    { label: "Serious", value: scan.counts.serious, color: "#a85a06" },
-    { label: "Moderate", value: scan.counts.moderate, color: "#8a6a00" },
+    { label: "Critical", value: scan.counts.critical, color: "var(--color-critical)" },
+    { label: "Serious", value: scan.counts.serious, color: "var(--color-serious)" },
+    { label: "Moderate", value: scan.counts.moderate, color: "var(--color-moderate)" },
   ];
 
   return (
@@ -53,7 +53,7 @@ export function ScanCard({ scan, delta }: { scan: ScanListItem; delta: number | 
               {delta !== null && delta !== 0 && (
                 <span
                   className="shrink-0 text-[11px] font-bold"
-                  style={{ color: delta > 0 ? "#16764f" : "#c62a2f" }}
+                  style={{ color: delta > 0 ? "var(--color-verified)" : "var(--color-critical)" }}
                 >
                   <span aria-hidden>{delta > 0 ? `▲ +${delta}` : `▼ ${delta}`}</span>
                   <span className="sr-only">

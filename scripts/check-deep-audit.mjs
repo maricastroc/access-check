@@ -134,6 +134,14 @@ const ctx = await chromium.launchPersistentContext(mkdtempSync(join(tmpdir(), "a
   args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`],
 });
 
+const SERIOUS_RGB = (() => {
+  const hex = readFileSync(join(process.cwd(), "src/lib/palette.ts"), "utf8").match(
+    /serious: "#([0-9a-f]{6})"/,
+  )[1];
+  const n = parseInt(hex, 16);
+  return `rgb(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255})`;
+})();
+
 const OVERLAY_READER = () => {
   const root = document.getElementById("accesscheck-overlay");
   if (!root) return { present: false, marks: [] };
@@ -1269,7 +1277,7 @@ try {
     `the current stop is not labelled: ${JSON.stringify(mixedMarks)}`,
   );
   check(
-    currentMark?.ring === true && currentMark.ringColor === "rgb(156, 68, 0)",
+    currentMark?.ring === true && currentMark.ringColor === SERIOUS_RGB,
     `a current stop with no focus ring is not drawn as missing one: ${JSON.stringify(currentMark)}`,
   );
   check(
