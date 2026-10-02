@@ -495,6 +495,9 @@ function host(): { root: HTMLElement; shadow: ShadowRoot } {
   root.setAttribute("aria-hidden", "true");
   root.setAttribute("data-accesscheck", "overlay");
   for (const [prop, value] of [
+    ["display", "block"],
+    ["visibility", "visible"],
+    ["opacity", "1"],
     ["position", "fixed"],
     ["left", "0"],
     ["top", "0"],
