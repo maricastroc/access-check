@@ -412,16 +412,16 @@ export function TextSample({
 }) {
   return (
     <figure className="min-w-0">
-      <svg
+      <div
         role="img"
         aria-label={`${text}. ${fg} / ${bg}, ${ratio.toFixed(2)}:1`}
-        className="block h-11 w-full outline -outline-offset-1 outline-hairline"
-        style={{ background: bg }}
+        className="flex min-h-11 items-center px-3.5 py-2.5 outline -outline-offset-1 outline-hairline"
+        style={{ background: bg, color: fg }}
       >
-        <text x="14" y="27" fill={fg} fontSize="15" fontFamily="var(--font-sans)">
+        <p className="line-clamp-2 min-w-0 font-sans text-[15px] leading-snug break-words">
           {text}
-        </text>
-      </svg>
+        </p>
+      </div>
       <figcaption className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-muted">
         <span className="font-semibold text-ink-2">{caption}</span>
         {showRatio && (
