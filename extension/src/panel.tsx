@@ -852,6 +852,7 @@ function Report({
               index={inv.occIndex}
               onPick={pick}
               host={result.title}
+              testedOn="page"
               compact
               t={t}
               located={

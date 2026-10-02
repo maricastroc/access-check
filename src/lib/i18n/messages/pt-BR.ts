@@ -1099,6 +1099,8 @@ export const ptBR: Catalog = {
     "A mudança certa depende da estrutura da página, então confirme no contexto.",
   "detail.sandboxNote":
     "As correções são aplicadas e revertidas em uma cópia da página. {host} não foi alterado.",
+  "detail.pageNote":
+    "A mudança foi aplicada nesta página por um instante e depois desfeita, deixando tudo como estava.",
 
   "verdict.label.verified": "Correção testada",
   "verdict.label.needsReview": "Precisa de revisão",
@@ -1374,6 +1376,7 @@ export const ptBR: Catalog = {
   "chain.end.recheck": "Confirme com uma nova auditoria",
   "chain.end.untested": "Não verificado",
   "chain.testedOnCopy": "Testado numa cópia da página.",
+  "chain.testedOnPage": "Testado nesta página e depois desfeito.",
   "chain.notRemeasured":
     "Este elemento recebe a mudança testada em outro, mas não foi medido de novo.",
   "chain.howVerified": "Como foi verificado",

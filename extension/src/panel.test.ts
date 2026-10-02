@@ -876,6 +876,10 @@ describe("the panel is an inspector, not a squeezed report", () => {
     expect(overlay).toContain('root.setAttribute("aria-hidden", "true");');
   });
 
+  it("says a fix was tested on the page itself, since the extension has no copy", () => {
+    expect(panel).toContain('testedOn="page"');
+  });
+
   it("keeps its root shown when the page hides empty boxes", () => {
     expect(overlay).toContain('["display", "block"],');
     expect(overlay).toContain('root.style.setProperty(prop, value, "important");');
