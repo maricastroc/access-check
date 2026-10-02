@@ -28,6 +28,16 @@ const t = translator();
 const pt = translator("pt-BR");
 
 const panel = file("./panel.tsx");
+const overlay = file("../../src/lib/scan/dom/overlay.ts");
+const shared = (name: string) => file(`../../src/components/investigation/${name}`);
+const summary = shared("summary.tsx");
+const list = shared("finding-list.tsx");
+const chain = shared("evidence-chain.tsx");
+const details = shared("element-details.tsx");
+const nav = shared("problem-nav.tsx");
+const sequence = shared("focus-sequence.tsx");
+const occurrences = shared("occurrence-nav.tsx");
+const investigation = shared("use-investigation.ts");
 const audit = file("./audit.ts");
 const background = file("./background.ts");
 const preference = file("./locale-preference.ts");
@@ -43,14 +53,26 @@ describe("the panel reuses the product's own report", () => {
     expect(panel).not.toContain("buildFindings(");
   });
 
-  it("uses the shared components rather than copies", () => {
-    expect(panel).toContain('from "../../src/components/ui/finding-row"');
+  it("draws the investigation with the same components as the site", () => {
+    expect(panel).toContain('from "../../src/components/investigation"');
+    for (const shared of [
+      "<Summary",
+      "<FindingList",
+      "<EvidenceChain",
+      "<ProblemNav",
+      "<FocusSequence",
+    ]) {
+      expect(panel, shared).toContain(shared);
+    }
     expect(panel).toContain('from "../../src/components/ui/warning-list"');
-    expect(panel).toContain('from "../../src/components/ui/section-kicker"');
+    expect(panel).not.toMatch(
+      /function (FindingDetail|Where|ElementDetails|CopyButton|HowToCheck|Findings)\(/,
+    );
+    expect(panel).not.toContain("locationsOf");
   });
 
   it("has no second implementation of the counts or the summary", () => {
-    expect(panel).toContain("groups.find((g) => g.group === group)?.findings.length");
+    expect(summary).toContain("groups.find((x) => x.group === g)?.findings");
     expect(panel).not.toMatch(/violations\.filter\(/);
     expect(panel).not.toContain("computeScore");
     expect(panel).not.toContain("buildSummary");
@@ -89,7 +111,7 @@ describe("the panel reuses the product's own report", () => {
   });
 
   it("never puts page content into innerHTML", () => {
-    for (const source of [panel, audit]) {
+    for (const source of [panel, audit, overlay]) {
       expect(source).not.toContain("innerHTML");
       expect(source).not.toContain("dangerouslySetInnerHTML");
     }
@@ -104,10 +126,7 @@ describe("the panel reuses the product's own report", () => {
   });
 
   it("shows no score at all while the audit is still running", () => {
-    const running = panel.slice(
-      panel.indexOf("function Running("),
-      panel.indexOf("function Report("),
-    );
+    const running = between(panel, "function Running(", "function Report(");
     expect(running).not.toContain("result.score");
     expect(running).not.toContain("/100");
     expect(panel).toContain(
@@ -117,37 +136,46 @@ describe("the panel reuses the product's own report", () => {
   });
 
   it("names what each copy action copies, and titles the block it came from", () => {
-    expect(panel).toContain('<CopyButton label={t("panel.copySelector")}');
-    expect(panel).toContain('<CopyButton label={t("panel.copyHtml")}');
-    expect(panel).toContain("aria-label={label}");
-    expect(panel).toContain('<Field label={t("panel.selector")}>');
-    expect(panel).toContain('t("panel.abbreviated")');
+    expect(details).toContain('<CopyButton label={t("panel.copySelector")}');
+    expect(details).toContain('<CopyButton label={t("panel.copyHtml")}');
+    expect(details).toContain("aria-label={label}");
+    expect(details).toContain('t("panel.selector")');
+    expect(details).toContain('t("panel.abbreviated")');
   });
 
   it("answers a highlight where the button that asked for it is", () => {
-    const where = between(panel, "function Where(", "function ElementDetails(");
-    expect(where).toContain('t("panel.locate")');
-    expect(where).toContain('role="status"');
-    expect(panel).toContain("const answer = await onLocate(place, place.stop ?? finding.n);");
+    const onPage = between(panel, "function OnPage(", "function ReadingLanguage(");
+    expect(onPage).toContain('t("panel.locate")');
+    expect(onPage).toContain('role="status"');
+    expect(panel).toMatch(/located=\{[\s\S]{0,160}<OnPage/);
   });
 
   it("shows each element on the page as the reader steps to it", () => {
-    const detail = between(panel, "function FindingDetail(", "function HowToCheck(");
-    expect(detail).toMatch(
-      /const step = \(delta: number\) => \{[\s\S]{0,200}void show\(locations\[next\]\);/,
+    expect(panel).toMatch(
+      /const pick = \(index: number\) => \{[\s\S]{0,160}void showFinding\(inv\.selected, index, true\);/,
     );
-    expect(detail).toContain("if (location) await show(location);");
+    expect(panel).toContain("void showFinding(inv.selected, inv.occIndex, true);");
+  });
+
+  it("marks an opened finding on the page without moving it", () => {
+    expect(panel).toMatch(/const go = [\s\S]{0,240}void showFinding\(f, index, false\);/);
   });
 
   it("keeps only the answer to the latest request when the reader steps quickly", () => {
-    const detail = between(panel, "function FindingDetail(", "function HowToCheck(");
-    expect(detail).toContain("const ask = ++latest.current;");
-    expect(detail).toContain("if (ask !== latest.current) return;");
+    const report = between(panel, "function Report(", "function Message(");
+    expect(report).toContain("const ask = ++latest.current;");
+    expect(report).toContain("if (ask !== latest.current) return;");
+  });
+
+  it("clears the page when the finding closes", () => {
+    expect(panel).toMatch(
+      /if \(inv\.selectedId !== null \|\| drawn\.current !== "finding"\) return;[\s\S]{0,80}clear\(\);/,
+    );
   });
 
   it("reopens the panel's port when the reader acts, rather than holding it open", () => {
     expect(panel).toContain("keepPort()");
-    expect(panel).toMatch(/const draw = async \([\s\S]{0,200}keepPort\(\);/);
+    expect(panel).toMatch(/const draw: Draw = async \([\s\S]{0,200}keepPort\(\);/);
   });
 
   it("offers a recoverable path when the content script fails", () => {
@@ -269,7 +297,7 @@ describe("assets the audit is not allowed to fetch", () => {
   });
 
   it("marks a finding's language only when it differs from the panel around it", () => {
-    expect(panel).toContain("{...langAttrs(locale, UI_LOCALE)}");
+    expect(panel).toContain("rowAttrs={langAttrs(result.locale, UI_LOCALE)}");
   });
 
   it("hands axe the locale the background resolved, rather than picking one itself", () => {
@@ -564,16 +592,11 @@ describe("how much of the audit is behind the number", () => {
 });
 
 describe("the panel is an inspector, not a squeezed report", () => {
-  const overlay = file("../../src/lib/scan/dom/overlay.ts");
-
   it("puts the sections in inspecting order", () => {
-    const report = panel.slice(
-      panel.indexOf("function Report("),
-      panel.indexOf("function Message("),
-    );
+    const report = between(panel, "function Report(", "function Message(");
     const order = [
       "<Header",
-      "<Findings",
+      "<FindingList",
       "<FocusPath",
       '<Collapsed title={t("panel.aboutAudit")}',
       't("panel.coverageLimitations")',
@@ -581,23 +604,24 @@ describe("the panel is an inspector, not a squeezed report", () => {
       "<Capture",
       "</Collapsed>",
     ];
-    const found = order.map((token) => report.indexOf(token));
+    const found = order.map((token) => report.lastIndexOf(token));
 
     expect(found.every((i) => i > -1)).toBe(true);
     expect([...found].sort((a, b) => a - b)).toEqual(found);
   });
 
   it("leads with the verdict, what is left to do, and what is left to check", () => {
-    const header = between(panel, "function Header(", "function KeyboardCheck(");
     const order = [
-      "{t(STANDING_LABEL[standing])}",
-      "{t(STANDING_NOTE[standing])}",
-      "{work &&",
-      "<KeyboardCheck",
-    ].map((token) => header.indexOf(token));
-
+      "STANDING_LABEL[standing]",
+      "STANDING_NOTE[standing]",
+      't("panel.toFix"',
+      't("panel.toCheck"',
+    ].map((token) => summary.indexOf(token));
     expect(order.every((i) => i > -1)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
+
+    const header = between(panel, "function Header(", "function KeyboardCheck(");
+    expect(header.indexOf("<KeyboardCheck")).toBeGreaterThan(header.indexOf("<Summary"));
     expect(header).not.toContain("{scope.summary}");
     expect(header).not.toContain("{scope.note}");
     expect(header).not.toContain("result.summary");
@@ -605,9 +629,7 @@ describe("the panel is an inspector, not a squeezed report", () => {
   });
 
   it("names only the work that exists", () => {
-    const header = between(panel, "function Header(", "function KeyboardCheck(");
-    expect(header).toContain('toFix > 0 ? t("panel.toFix", { count: toFix }) : null');
-    expect(header).toContain('toCheck > 0 ? t("panel.toCheck", { count: toCheck }) : null');
+    expect(summary).toContain("list.length > 0 &&");
     expect(t("panel.toFix", { count: 3 })).toBe("3 to fix");
     expect(pt("panel.toCheck", { count: 1 })).toBe("1 para conferir à mão");
   });
@@ -630,7 +652,7 @@ describe("the panel is an inspector, not a squeezed report", () => {
     expect(report).toContain("if (walking !== null) setRoundFrom(stops);");
     expect(report).toContain('.filter((f) => f.kind === "keyboard");');
     expect(report).toMatch(
-      /keyboardProblems\.length > 0 \? \(\) => open\(keyboardProblems\[0\]\.id\) : null/,
+      /keyboardProblems\.length > 0 \? \(\) => go\(keyboardProblems\[0\]\.id, 0, "nav"\) : null/,
     );
     const keyboard = between(panel, "function KeyboardCheck(", "function Collapsed(");
     expect(keyboard).toContain('role="status"');
@@ -642,15 +664,20 @@ describe("the panel is an inspector, not a squeezed report", () => {
   });
 
   it("opens a problem inside a closed group when asked to show it", () => {
-    const report = between(panel, "function Report(", "function Message(");
-    expect(report).toContain('const group = row?.closest("details");');
-    expect(report).toContain("if (group) group.open = true;");
+    expect(list).toContain("setOpened(new Set([...opened, holding]))");
+    expect(investigation).toContain('row.querySelector<HTMLButtonElement>("h3 > button")?.focus(');
   });
 
   it("walks further in each round than the hosted scan, which has a time budget to keep", () => {
     const deep = file("./deep.ts");
     expect(deep).toContain("const ROUND_STOPS = 200;");
     expect(deep).toContain("{ maxMs: MAX_MS, maxStops: ROUND_STOPS, resumeFrom }");
+  });
+
+  it("clears the marks off the page before the keyboard walk reads it", () => {
+    const deep = file("./deep.ts");
+    expect(deep.indexOf("overlayClear()")).toBeGreaterThan(-1);
+    expect(deep.indexOf("overlayClear()")).toBeLessThan(deep.indexOf("collectFocusPath("));
   });
 
   it("keeps the reading in place while the keyboard is checked", () => {
@@ -671,14 +698,20 @@ describe("the panel is an inspector, not a squeezed report", () => {
   it("gathers coverage, the checks and the screenshot into one section about the audit", () => {
     const report = between(panel, "function Report(", "function Message(");
     expect(report.match(/<Collapsed /g)).toHaveLength(1);
-    const checks = between(panel, "function ChecksPerformed(", "function marksFor(");
-    const capture = between(panel, "function Capture(", "const PRIMARY_BUTTON");
+    const checks = between(panel, "function ChecksPerformed(", "function Capture(");
+    const capture = between(panel, "function Capture(", "function OnPage(");
     expect(checks).not.toContain("<Collapsed");
     expect(capture).not.toContain("<Collapsed");
-    expect(checks).toContain('as="h3"');
-    expect(capture).toContain('as="h3"');
+    expect(checks).toContain("<h3");
+    expect(capture).toContain("<h3");
     expect(capture).toContain('t("panel.screenshot")');
     expect(panel).not.toContain('t("panel.evidence")');
+  });
+
+  it("names each mark on the screenshot the way the list does", () => {
+    const capture = between(panel, "function Capture(", "function OnPage(");
+    expect(capture).toContain("occurrenceTag(f.n, o.index, all.length)");
+    expect(capture).toContain("<Locus");
   });
 
   it("keeps auditing again within reach from anywhere in the reading", () => {
@@ -694,41 +727,31 @@ describe("the panel is an inspector, not a squeezed report", () => {
   });
 
   it("gives locating the page its own full-width action, with the copies below", () => {
-    const detail = between(panel, "function FindingDetail(", "function Where(");
-    const where = between(panel, "function Where(", "function ElementDetails(");
-    const details = between(panel, "function ElementDetails(", "function ReadingLanguage(");
-
-    expect(where).toContain('t("panel.locate")');
-    expect(where).toContain("${PRIMARY_BUTTON}");
-    expect(details).toContain('label={t("panel.copySelector")}');
-    expect(detail.indexOf("<ElementDetails")).toBeGreaterThan(detail.indexOf("<Where"));
+    const onPage = between(panel, "function OnPage(", "function ReadingLanguage(");
+    expect(onPage).toContain('t("panel.locate")');
+    expect(onPage).toContain("className={PRIMARY_BUTTON}");
     expect(panel).toMatch(/const PRIMARY_BUTTON =\s*\n?\s*"w-full[^"]*bg-ink /);
+    expect(details).toContain('label={t("panel.copySelector")}');
+    expect(chain.indexOf("<ElementDetails")).toBeGreaterThan(chain.indexOf("chain.stations.map"));
   });
 
-  it("orders an opened finding as where, what to change, why, details", () => {
-    const detail = between(panel, "function FindingDetail(", "function Where(");
-    const order = [
-      "<Where",
-      '<Field label={t("panel.whatToChange")}>',
-      '<Field label={t("panel.why")}>',
-      "<ElementDetails",
-      't("panel.previousProblem")',
-    ].map((token) => detail.indexOf(token));
-
+  it("reads an opened finding as a chain, then the raw details, then the way on", () => {
+    const order = ["chain.stations.map", "<ElementDetails", "{footer}"].map((token) =>
+      chain.indexOf(token),
+    );
     expect(order.every((i) => i > -1)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
+    expect(panel).toContain("footer={<ProblemNav");
   });
 
   it("keeps what was measured in the details, apart from the plain reason", () => {
-    const details = between(panel, "function ElementDetails(", "function ReadingLanguage(");
-    expect(details).toContain('<Field label={t("panel.measured")}>');
-    expect(details).toContain("{location.measured}");
-    const where = between(panel, "function Where(", "function ElementDetails(");
-    expect(where).not.toContain("location.measured");
+    expect(details).toContain('t("panel.measured")');
+    expect(details).toContain("{occ.measured}");
+    const located = between(chain, "function Located(", "function Contrast(");
+    expect(located).not.toContain("occ.measured");
   });
 
-  it("starts the raw element data closed, below the action", () => {
-    const details = between(panel, "function ElementDetails(", "function ReadingLanguage(");
+  it("starts the raw element data closed", () => {
     expect(details).toContain("<details");
     expect(details).not.toMatch(/<details[^>]*\sopen/);
     expect(details).toContain('t("panel.position")');
@@ -736,26 +759,23 @@ describe("the panel is an inspector, not a squeezed report", () => {
   });
 
   it("steps between problems in list order and stops at either end", () => {
-    const findings = between(panel, "function Findings(", "function ChecksPerformed(");
-    expect(findings).toContain("previous={i > 0 ? () => open(findings[i - 1].id) : null}");
-    expect(findings).toContain(
-      "next={i < findings.length - 1 ? () => open(findings[i + 1].id) : null}",
-    );
-    const detail = between(panel, "function FindingDetail(", "function Where(");
-    expect(detail).toContain("disabled={!previous}");
-    expect(detail).toContain("disabled={!next}");
+    expect(nav).toContain("const previous = siblings[at - 1] ?? null;");
+    expect(nav).toContain("const next = siblings[at + 1] ?? null;");
+    expect(nav).toContain("disabled={!previous}");
+    expect(nav).toContain("disabled={!next}");
+    expect(panel).toContain("<ProblemNav siblings={siblings} at={i}");
   });
 
   it("no longer calls the explanation of a keyboard stop evidence", () => {
-    const detail = between(panel, "function FindingDetail(", "function ReadingLanguage(");
-    expect(detail).not.toContain('t("panel.evidence")');
+    expect(panel).not.toContain('t("panel.evidence")');
   });
 
   it("names the focus-path controls, and says which stop is current", () => {
-    expect(panel).toContain('aria-label={t("panel.previousStop")}');
-    expect(panel).toContain('aria-label={t("panel.nextStop")}');
-    expect(panel).toContain('t("panel.stopOf", { at, total: stops })');
-    expect(panel).toContain('t("panel.showComplete")');
+    expect(sequence).toContain('aria-label={t("panel.previousStop")}');
+    expect(sequence).toContain('aria-label={t("panel.nextStop")}');
+    expect(sequence).toContain('t("panel.stopOf", { at: at + 1, total: stops.length })');
+    expect(sequence).toContain('aria-current={now ? "step" : undefined}');
+    expect(sequence).toContain('t("panel.showComplete")');
     expect(panel).toContain('t("panel.exitInspection")');
   });
 
@@ -771,8 +791,11 @@ describe("the panel is an inspector, not a squeezed report", () => {
 
   it("puts the page back where it was before clearing the drawing", () => {
     const report = between(panel, "function Report(", "function Message(");
-    expect(report).toContain("void restoreScroll().then(clear);");
+    expect(report).toContain("void restoreScroll().then(");
     expect(panel).toContain('restoreScroll={() => send({ type: "panel:restore-scroll" })}');
+    expect(overlay).toContain(
+      "const carried = drawPath && opts.path === true ? sessionScroll : null;",
+    );
   });
 
   it("never opens or moves a finding while the tab order is inspected", () => {
@@ -783,24 +806,70 @@ describe("the panel is an inspector, not a squeezed report", () => {
   it("draws a small neighbourhood by default", () => {
     expect(panel).toContain("const NEIGHBOURS = 2");
     expect(panel).toContain("windowAround(marks, next)");
-    expect(panel).toMatch(/everything \? marks : windowAround/);
+    expect(panel).toMatch(/everything \? wholePath\(marks, next\) : windowAround/);
   });
 
   it("does not paint an ordinary stop like a failure", () => {
-    expect(overlay).toContain('stop: "#1a56c4"');
-    expect(overlay).toContain('attention: "#8a5a00"');
-    expect(overlay).toContain('failure: "#b3261e"');
-    expect(overlay).not.toContain("dashed");
+    const stops = between(panel, "function stopMarks(", "function windowAround(");
+    expect(stops).toContain('tone: "path"');
+    expect(stops).toContain("ring: !s.focusVisible");
+    expect(overlay).toContain('path: "#1c4fd6"');
   });
 
-  it("keeps the current stop loud and the rest quiet, and never by colour alone", () => {
-    expect(overlay).toContain('["opacity", focused ? "1" : "0.45"]');
-    expect(overlay).toContain("`${mark.n} · ${mark.label ?? WORD[mark.kind]}`");
+  it("keeps the current mark loud and the rest quiet, and never by colour alone", () => {
+    expect(overlay).toContain(".tag.current {");
+    expect(overlay).toContain(".tag.quiet {");
+    expect(overlay).toMatch(/current: \{ inset: 5, arm: "min\(13px, 42%\)", bar: 2\.5/);
+    expect(overlay).toMatch(/sibling: \{ inset: 4, arm: "min\(8px, 40%\)", bar: 1\.5/);
+    expect(overlay).toContain("el.textContent = mark.tag;");
+    expect(panel).toContain("tag: occurrenceTag(f.n, o.index, total)");
+  });
+
+  it("puts a mark's tag beside the element instead of over what is being read", () => {
+    const tags = between(overlay, "function placeTags(", "function place(");
+    expect(tags).toContain("{ x: r.left - inset, y: r.top - inset - h - 2, w, h }");
+    expect(tags).toContain("{ x: r.left - inset, y: r.bottom + inset + 2, w, h }");
+  });
+
+  it("lets the other occurrences give way when the page is crowded", () => {
+    const tags = between(overlay, "function placeTags(", "function place(");
+    expect(overlay).toContain("const SIBLING_TAGS = 4;");
+    expect(tags).toContain("siblings.length > SIBLING_TAGS && !beside.has(p.mark.n)");
+    expect(tags).toContain("const chosen = free ?? (sibling ? null :");
+  });
+
+  it("runs the focus path through the numbered circles", () => {
+    expect(overlay).toContain(
+      "if (p.spot) return { x: p.spot.x + p.spot.w / 2, y: p.spot.y + p.spot.h / 2 };",
+    );
   });
 
   it("travels only when the element cannot already be seen", () => {
     expect(overlay).toContain("if (!visible) found.scrollIntoView(");
     expect(overlay).toContain("export function overlayRestoreScroll()");
+  });
+
+  it("says which way to look when the element is off the page's screen", () => {
+    expect(overlay).toContain("const side = sideOf(current.rect);");
+    expect(panel).toContain('if (focused.side === "above") return t("chain.offAbove");');
+    expect(panel).toContain('if (focused.side === "below") return t("chain.offBelow");');
+  });
+
+  it("lets a mark on the page pick its finding in the panel, and only from a real click", () => {
+    expect(overlay).toContain("if (e.isTrusted) act();");
+    expect(overlay).toContain("{ type: OVERLAY_PICK, key }");
+    expect(panel).toContain("if (message.type === OVERLAY_PICK) fromPage(message.key);");
+    expect(panel).toMatch(/go\(rest\.slice\(0, cut\), index, "mark"\)/);
+  });
+
+  it("draws in its own shadow root, hidden from assistive technology", () => {
+    expect(overlay).toContain('root.attachShadow({ mode: "open" })');
+    expect(overlay).toContain('root.setAttribute("aria-hidden", "true");');
+  });
+
+  it("moves only when the reader allows motion", () => {
+    expect(overlay).toContain('matchMedia("(prefers-reduced-motion: reduce)")');
+    expect(overlay).toMatch(/if \(current && current\.visible && !calm\(\)\)/);
   });
 });
 
@@ -970,8 +1039,6 @@ describe("the coverage line is concrete", () => {
 });
 
 describe("the panel reads as a document, not a stack of boxes", () => {
-  const panel = readFileSync(new URL("./panel.tsx", import.meta.url), "utf8");
-
   it("gives every screen one main landmark and one h1", () => {
     expect(panel).toMatch(/function Shell\([\s\S]{0,200}<main /);
     expect(panel.match(/<main /g)).toHaveLength(1);
@@ -989,11 +1056,12 @@ describe("the panel reads as a document, not a stack of boxes", () => {
     }
   });
 
+  it("brings the shared focus brackets into the panel", () => {
+    expect(between(panel, "function Shell(", "function StickyBar(")).toContain("ac-instrument");
+  });
+
   it("keeps the audited page and where it stands in reach while the reader scrolls", () => {
-    const bar = panel.slice(
-      panel.indexOf("function StickyBar("),
-      panel.indexOf("function Header("),
-    );
+    const bar = between(panel, "function StickyBar(", "function Header(");
     expect(bar).toContain("sticky top-0");
     expect(bar).toContain("onTop");
     expect(bar).toContain("STANDING_LABEL[standing]");
@@ -1001,15 +1069,11 @@ describe("the panel reads as a document, not a stack of boxes", () => {
   });
 
   it("no longer leads the reading with a number out of a hundred", () => {
-    const header = panel.slice(
-      panel.indexOf("function Header("),
-      panel.indexOf("function Collapsed("),
-    );
-
+    const header = between(panel, "function Header(", "function KeyboardCheck(");
     expect(header).not.toContain("result.score");
     expect(header).not.toContain('t("panel.perHundred")');
     expect(header).toContain("const standing = standingOf(result.counts);");
-    expect(header).toContain("STANDING_LABEL[standing]");
+    expect(summary).toContain("STANDING_LABEL[standing]");
   });
 
   it("says when a stored reading came from an older scoring model", () => {
@@ -1018,27 +1082,25 @@ describe("the panel reads as a document, not a stack of boxes", () => {
   });
 
   it("descends h1 → h2 → h3 → h4 without skipping a level", () => {
-    expect(panel).toMatch(/as="h2" id="verdict-heading"/);
-    expect(panel).toMatch(/as="h2"\s+id=\{`group-\$\{group\}`\}/);
-    expect(panel).toMatch(/function Field\([\s\S]{0,300}as="h4"/);
-    const collapsed = panel.slice(panel.indexOf("function Collapsed("));
-    expect(collapsed.slice(0, 600)).toContain("<h2 className=");
+    expect(panel).toMatch(/heading="h2"\s+headingId="verdict-heading"/);
+    expect(panel).toContain('aria-labelledby="verdict-heading"');
+    expect(list).toMatch(/<h2 id=\{`group-\$\{group\}`\}/);
+    expect(list).toMatch(/<h3 className="m-0">\s*<button/);
+    expect(chain).toMatch(/<h4 className=/);
+    expect(details).toContain("<h4 ");
+    const collapsed = between(panel, "function Collapsed(", "function ChecksPerformed(");
+    expect(collapsed).toContain("<h2 className=");
   });
 
   it("carries exactly one filled button, and states the rest by weight", () => {
-    expect(panel).toContain("const PRIMARY_BUTTON =");
-    expect(panel).toContain("const SECONDARY_BUTTON =");
     expect(panel).toMatch(/const SECONDARY_BUTTON =\s*\n?\s*"w-full[^"]*border border-ink/);
-    const uses = panel.match(/\$\{PRIMARY_BUTTON\}/g) ?? [];
-    expect(uses.length).toBeGreaterThan(0);
-    expect(panel).toMatch(/Show focus path[\s\S]{0,120}|SECONDARY_BUTTON/);
+    expect(panel.match(/bg-ink /g)).toHaveLength(1);
+    const uses = panel.match(/PRIMARY_BUTTON\b/g) ?? [];
+    expect(uses.length).toBeGreaterThan(1);
   });
 
   it("spaces the long sections with rules instead of nesting more cards", () => {
-    const collapsed = panel.slice(
-      panel.indexOf("function Collapsed("),
-      panel.indexOf("function Capture("),
-    );
+    const collapsed = between(panel, "function Collapsed(", "function ChecksPerformed(");
     expect(collapsed).toContain("border-t border-hairline");
     expect(collapsed).not.toContain("rounded");
     expect(panel).not.toContain("rounded-lg");
@@ -1046,88 +1108,59 @@ describe("the panel reads as a document, not a stack of boxes", () => {
   });
 
   it("breaks selectors, sentences and attributes rather than widening the panel", () => {
-    const where = between(panel, "function Where(", "function ElementDetails(");
-    expect(where).toMatch(/break-words text-ink">\{named\}/);
-    expect(where).toMatch(/break-words text-body">\{location\.reason\}/);
-
-    const details = between(panel, "function ElementDetails(", "function ReadingLanguage(");
-    expect(details).toMatch(/break-all text-steel">\s*\n?\s*\{location\.selector\}/);
+    expect(details).toMatch(/break-all text-steel">\{occ\.selector\}/);
     expect(details).toMatch(/<pre[\s\S]{0,200}overflow-auto[\s\S]{0,120}break-all/);
-
-    const detail = between(panel, "function FindingDetail(", "function Where(");
-    expect(detail).toMatch(/break-words text-body">\{finding\.desc\}/);
-    expect(detail).toMatch(/break-words text-body">\{finding\.fixText\}/);
+    const located = between(chain, "function Located(", "function Contrast(");
+    expect(located).toContain("break-words");
+    expect(chain).toMatch(/break-words text-ink-2">\{f\.desc\}/);
   });
 
-  it("labels each part of a problem instead of running them together", () => {
-    const detail = between(panel, "function FindingDetail(", "function Where(");
-    for (const key of ["panel.whatToChange", "panel.why"]) {
-      expect(detail).toContain(`<Field label={t("${key}")}>`);
+  it("labels each part of the element instead of running them together", () => {
+    for (const key of ["panel.selector", "panel.html", "panel.position", "detail.rule"]) {
+      expect(details).toContain(`<dt className="text-muted">{t("${key}")}</dt>`);
     }
-    const details = between(panel, "function ElementDetails(", "function ReadingLanguage(");
-    for (const key of ["panel.selector", "panel.html", "panel.position"]) {
-      expect(details).toContain(`<Field label={t("${key}")}>`);
-    }
-    const where = between(panel, "function Where(", "function ElementDetails(");
-    expect(where).toMatch(/total > 1 &&[\s\S]{0,100}<OccurrenceStepper/);
-    expect(where).not.toContain("panel.occurrenceOf");
-    const stepper = readFileSync(
-      new URL("../../src/components/ui/occurrence-stepper.tsx", import.meta.url),
-      "utf8",
-    );
-    expect(stepper).toContain('t("stepper.position"');
-    expect(stepper).not.toMatch(/ of \$\{/);
+    expect(occurrences).toContain('t("stepper.position"');
+    expect(occurrences).not.toMatch(/ of \$\{/);
   });
 
-  it("says the severity once, in the row, and not again in the body", () => {
-    const row = readFileSync(
-      new URL("../../src/components/ui/finding-row.tsx", import.meta.url),
-      "utf8",
-    );
-
-    expect(row).toContain("severity");
+  it("says the severity in the row's mark, and not again in words", () => {
     expect(panel).not.toContain("severity");
+    expect(list).toContain("<Tag n={f.n} sev={sevOf(f)}");
   });
 });
 
 describe("the panel works through a queue, not a report", () => {
-  const findings = between(panel, "const GROUP_TITLE", "function ChecksPerformed(");
-
   it("names each group of the queue", () => {
-    expect(findings).toContain('fix: "panel.group.fix"');
-    expect(findings).toContain('check: "panel.group.check"');
-    expect(findings).toContain('recommend: "panel.group.recommend"');
+    expect(list).toContain('fix: "panel.group.fix"');
+    expect(list).toContain('check: "panel.group.check"');
+    expect(list).toContain('recommend: "panel.group.recommend"');
   });
 
   it("keeps what to fix open, and what to check or consider behind a closed section", () => {
-    expect(findings).toMatch(/group === "fix"[\s\S]{0,400}<section/);
-    expect(findings).toContain('<details key={group} className="border-t border-border">');
-    expect(findings).not.toMatch(/<details[^>]*\sopen/);
+    expect(list).toMatch(/group === "fix"[\s\S]{0,400}<section/);
+    expect(list).toContain('new Set(["fix"])');
+    expect(list).toContain("open={opened.has(group)}");
   });
 
   it("shows no empty group but the one that says nothing is left to fix", () => {
-    expect(findings).toContain("if (findings.length === 0) return null;");
-    expect(findings).toContain('t("panel.noFailures")');
+    expect(list).toContain("if (findings.length === 0) return null;");
+    expect(panel).toContain('empty={t("panel.noFailures")}');
   });
 
   it("steps from a problem only to the next one in the same group", () => {
-    expect(findings).toContain("const rows = (findings: FindingView[]) =>");
-    expect(findings).toContain(
-      "next={i < findings.length - 1 ? () => open(findings[i + 1].id) : null}",
-    );
+    expect(list).toContain("findings.map((f, i) => row(f, findings, i))");
+    expect(panel).toContain("renderOpen={(f, siblings, i) => (");
   });
 
   it("drops the screenshot's vocabulary from the rows", () => {
-    expect(findings).toContain("markerNote={false}");
+    expect(list).not.toContain("marker");
   });
 
   it("tells a reader how to check a manual review instead of what to change", () => {
-    const detail = between(panel, "function FindingDetail(", "function HowToCheck(");
-    expect(detail).toMatch(/finding\.kind === "manual-review" \? \(\s*<HowToCheck/);
-    const how = between(panel, "function HowToCheck(", "function Where(");
-    expect(how).toContain("reviewGuidance(ruleId, t)");
-    expect(how).toContain('t("panel.howToCheck")');
-    expect(how).toContain("<ol");
+    const decide = between(chain, "function Decide(", "function Verdict(");
+    expect(decide).toContain("reviewGuidance(f.ruleId, t)");
+    expect(decide).toContain('t("panel.howToCheck")');
+    expect(decide).toContain("<ol");
   });
 });
 
@@ -1159,11 +1192,12 @@ describe("choosing the report language from the panel", () => {
 
   it("translates its own section headings instead of leaving one in English", () => {
     expect(panel).not.toContain("Findings · {findings.length}");
-    expect(panel).toContain("{t(GROUP_TITLE[group])} · {findings.length}");
+    expect(list).toContain("{t(GROUP_TITLE[group])}");
+    expect(list).toContain("{findings.length}");
   });
 
   it("says so when the reading on screen was produced in another language", () => {
-    const notice = between(panel, "function ReadingLanguage(", "function Findings(");
+    const notice = between(panel, "function ReadingLanguage(", "function findingMarks(");
     expect(notice).toContain("locale === UI_LOCALE) return null");
     expect(notice).toContain('t("panel.readingLanguage"');
     expect(notice).toContain("onReaudit");
@@ -1184,20 +1218,19 @@ describe("the service worker follows the same choice", () => {
 
 describe("what the panel says about a reading-order guess", () => {
   it("shows the shared explanation instead of presenting it as a settled failure", () => {
-    expect(panel).toContain('finding.evidence === "heuristic"');
-    expect(panel).toContain("evidence.heuristic.title");
-    expect(panel).toContain("evidence.heuristic.body");
+    expect(chain).toContain('f.evidence === "heuristic"');
+    expect(chain).toContain("evidence.heuristic.title");
+    expect(chain).toContain("evidence.heuristic.body");
   });
 
   it("writes none of that wording itself", () => {
-    const block = between(panel, 'finding.evidence === "heuristic"', "panel.alsoFailsIn");
+    const block = between(chain, 'f.evidence === "heuristic"', "panel.alsoFailsIn");
     expect(block).not.toMatch(/[Gg]eometric|[Rr]eading order|[Ss]core/);
   });
 
   it("counts what needs a human apart from the failures", () => {
-    const header = between(panel, "function Header(", "function KeyboardCheck(");
-    expect(header).toContain('const toCheck = inGroup("check");');
-    expect(header).toContain('const toFix = inGroup("fix");');
+    expect(summary).toContain('const toCheck = of("check");');
+    expect(summary).toContain('const toFix = of("fix");');
   });
 });
 
@@ -1211,14 +1244,13 @@ describe("naming the element comes from the shared engine", () => {
 
   it("renders the identity through the report's own formatter", () => {
     expect(panel).toContain('from "../../src/lib/report/identity"');
-    expect(panel).toContain("describeElement(location.selector");
+    expect(chain).toContain("describeElement(occ.selector");
   });
 
   it("keeps the selector as the thing Locate and Copy act on", () => {
-    const details = between(panel, "function ElementDetails(", "function ReadingLanguage(");
-    expect(details).toContain("{location.selector}");
-    expect(details).toContain("value={location.selector}");
-    expect(panel).toContain("selector: location.selector,");
+    expect(details).toContain("{occ.selector}");
+    expect(details).toContain("value={occ.selector}");
+    expect(panel).toContain("selector: o.selector,");
   });
 
   it("carries the identities into the published result", () => {
@@ -1227,16 +1259,16 @@ describe("naming the element comes from the shared engine", () => {
 });
 
 describe("the panel speaks about verification only when it happened", () => {
-  it("renders the shared seal instead of a second one", () => {
-    expect(panel).toContain('from "../../src/components/ui/verdict-seal"');
+  it("takes the verdict from the shared chain instead of a second one", () => {
+    expect(chain).toContain("verdictMessage(f.verdict, t, f.measurement)");
     expect(panel).not.toContain("seal.verified");
     expect(panel).not.toContain("border-verified");
   });
 
-  it("keeps the fix's own test inside what to change, never under a heading of its own", () => {
-    const change = between(panel, 'label={t("panel.whatToChange")}', 'label={t("panel.why")}');
-    expect(change).toContain('verdictTone(finding.verdict) === "quiet"');
-    expect(change).toContain("<VerdictSeal");
+  it("keeps the fix's own test inside the verdict, folded", () => {
+    const verdict = between(chain, "function Verdict(", "const END_KEY");
+    expect(verdict).toContain('t("chain.howVerified")');
+    expect(verdict).toContain("<details");
     expect(panel).not.toContain('t("detail.verificationResult")');
   });
 
@@ -1249,6 +1281,7 @@ describe("the panel speaks about verification only when it happened", () => {
       "cue.sampled",
     ]) {
       expect(panel, retired).not.toContain(retired);
+      expect(chain, retired).not.toContain(retired);
     }
   });
 });

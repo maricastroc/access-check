@@ -31,6 +31,10 @@ const EXPECTED = new Set([
   "icons/icon-48.png",
   "icons/icon-128.png",
   "vendor/axe.min.js",
+  "fonts/atkinson-next-latin.woff2",
+  "fonts/atkinson-next-latin-ext.woff2",
+  "fonts/atkinson-mono-latin.woff2",
+  "fonts/atkinson-mono-latin-ext.woff2",
   ...LOCALES.map((locale) => `_locales/${locale}/messages.json`),
 ]);
 

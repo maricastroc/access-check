@@ -3,12 +3,14 @@ import type { FindingView } from "@/lib/report/findings";
 import type { FocusStop } from "@/lib/scan/keyboard";
 import type { ScanMarker } from "@/lib/scan/types";
 import {
-  buildMarkerViews,
   buildStopViews,
-  markerLabel,
+  captureOfOccurrence,
+  marksOnCapture,
+  occurrencePlaces,
   selectedStopPlacement,
   stepFocusStop,
 } from "./report-ui";
+import { occurrencesOf } from "@/lib/report/occurrences";
 import { translator } from "@/lib/i18n/t";
 
 const t = translator();
@@ -70,25 +72,60 @@ function finding(over: Partial<FindingView> = {}): FindingView {
 }
 
 describe("marking the screenshot", () => {
-  it("leaves every marker idle while nothing is selected", () => {
-    const views = buildMarkerViews([marker(1), marker(2)], null, t);
+  it("places each located occurrence of every finding on the capture that shows it", () => {
+    const f = finding({
+      affectedSelectors: [".a", ".b"],
+      markers: [
+        marker(1, { selector: ".a", captureId: "viewport" }),
+        marker(2, { selector: ".b", captureId: "r1" }),
+      ],
+    });
 
-    expect(views.map((v) => v.state)).toEqual(["idle", "idle"]);
-    expect(views.every((v) => !v.dimmed)).toBe(true);
-    expect(views.every((v) => v.findingId === null)).toBe(true);
+    expect(marksOnCapture([f], "viewport", [], [], t).map((m) => m.index)).toEqual([0]);
+    expect(marksOnCapture([f], "r1", [], [], t).map((m) => m.index)).toEqual([1]);
+    expect(marksOnCapture([f], "viewport", [], [], t)[0]).toMatchObject({
+      findingId: "wcag:color-contrast",
+      n: 1,
+      total: 2,
+      kind: "Serious",
+    });
   });
 
-  it("selects the chosen finding's markers and dims the rest", () => {
-    const views = buildMarkerViews([marker(1), marker(2)], finding(), t);
+  it("opens an occurrence on the capture that holds it", () => {
+    const f = finding({
+      affectedSelectors: [".a", ".b"],
+      markers: [marker(2, { selector: ".b", captureId: "r1" })],
+    });
+    const [first, second] = occurrencesOf(f);
 
-    expect(views[0]).toMatchObject({ state: "selected", dimmed: false });
-    expect(views[1]).toMatchObject({ state: "idle", dimmed: true });
-    expect(views[0].findingId).toBe("wcag:color-contrast");
-    expect(views[1].findingId).toBeNull();
+    expect(captureOfOccurrence(first, [], [])).toBeNull();
+    expect(captureOfOccurrence(second, [], [])).toBe("r1");
   });
 
-  it("labels a marker with its criterion when there is no measurement", () => {
-    expect(markerLabel(finding(), t)).toBe("1.4.3");
+  it("finds a keyboard occurrence through the stop that reached it", () => {
+    const f = finding({
+      kind: "keyboard",
+      ruleId: "focus-not-visible",
+      markers: [],
+      occurrences: [
+        {
+          stop: 2,
+          selector: "main > button:nth-of-type(2)",
+          tag: "button",
+          label: "Stop 2",
+          html: null,
+          rect: null,
+          onScreen: true,
+          reason: "r",
+          certainty: "conclusive",
+        },
+      ],
+    });
+    const [occ] = occurrencesOf(f);
+
+    expect(occurrencePlaces(occ, [focusStop(2)], [])).toEqual([
+      { captureId: "viewport", box: expect.objectContaining({ left: 10 }) },
+    ]);
   });
 });
 

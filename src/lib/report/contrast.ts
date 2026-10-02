@@ -8,11 +8,15 @@ export type ContrastMeasurement = {
   prop: "color" | "background" | null;
 };
 
+const HEX = "(#[0-9a-fA-F]{6})";
+
 export function parseContrastFix(fix: string, fixCode?: string): ContrastMeasurement | null {
   const text = fix ?? "";
 
-  const measuredM = text.match(/\(was\s+([\d.]+):1/i) ?? text.match(/reaches only\s+([\d.]+):1/i);
-  const requiredM = text.match(/needs\s+([\d.]+):1/i);
+  const measuredM =
+    text.match(/\((?:was|era)\s+([\d.]+):1/i) ??
+    text.match(/(?:reaches only|alcança apenas)\s+([\d.]+):1/i);
+  const requiredM = text.match(/(?:needs|precisa de)\s+([\d.]+):1/i);
   if (!measuredM || !requiredM) return null;
 
   const measured = Number(measuredM[1]);
@@ -32,8 +36,8 @@ export function parseContrastFix(fix: string, fixCode?: string): ContrastMeasure
     }
   }
   if (!toHex) {
-    const withM = text.match(/with\s+(#[0-9a-fA-F]{6})/i);
-    const bgM = text.match(/background to\s+(#[0-9a-fA-F]{6})/i);
+    const withM = text.match(new RegExp(`(?:with|por)\\s+${HEX}`, "i"));
+    const bgM = text.match(new RegExp(`(?:background to|fundo como)\\s+${HEX}`, "i"));
     if (withM) {
       toHex = withM[1].toLowerCase();
       prop = prop ?? "color";
@@ -43,11 +47,13 @@ export function parseContrastFix(fix: string, fixCode?: string): ContrastMeasure
     }
   }
 
-  const fromHex = text.match(/text color\s+(#[0-9a-fA-F]{6})/i)?.[1].toLowerCase() ?? null;
+  const fromHex =
+    text.match(new RegExp(`(?:text color|cor d[eo] texto)\\s+${HEX}`, "i"))?.[1].toLowerCase() ??
+    null;
 
   const bgHex =
-    (text.match(/against\s+(#[0-9a-fA-F]{6})/i) ??
-      text.match(/\bon\s+(#[0-9a-fA-F]{6})/i))?.[1].toLowerCase() ?? null;
+    (text.match(new RegExp(`(?:against|contra)\\s+${HEX}`, "i")) ??
+      text.match(new RegExp(`\\b(?:on|sobre)\\s+${HEX}`, "i")))?.[1].toLowerCase() ?? null;
 
   return {
     measured,

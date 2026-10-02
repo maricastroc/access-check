@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Barlow, Barlow_Condensed } from "next/font/google";
+import { Atkinson_Hyperlegible_Mono, Atkinson_Hyperlegible_Next } from "next/font/google";
 import { config } from "@fortawesome/fontawesome-svg-core";
 import "@fortawesome/fontawesome-svg-core/styles.css";
 import "./globals.css";
@@ -9,17 +9,15 @@ import { translator } from "@/lib/i18n/t";
 
 config.autoAddCss = false;
 
-const barlow = Barlow({
-  variable: "--font-barlow",
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
+const atkinson = Atkinson_Hyperlegible_Next({
+  variable: "--font-atkinson",
+  subsets: ["latin", "latin-ext"],
   display: "swap",
 });
 
-const barlowCondensed = Barlow_Condensed({
-  variable: "--font-barlow-condensed",
-  subsets: ["latin"],
-  weight: ["500", "600"],
+const atkinsonMono = Atkinson_Hyperlegible_Mono({
+  variable: "--font-atkinson-mono",
+  subsets: ["latin", "latin-ext"],
   display: "swap",
 });
 
@@ -47,7 +45,7 @@ export default async function RootLayout({
   return (
     <html
       lang={locale}
-      className={`${barlow.variable} ${barlowCondensed.variable} h-full antialiased`}
+      className={`${atkinson.variable} ${atkinsonMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-canvas font-sans text-ink">
         <a

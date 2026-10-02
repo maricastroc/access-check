@@ -218,9 +218,13 @@ describe("the two environments load one artifact", () => {
       spacer.style.height = "3000px";
       document.body.append(spacer);
       window.scrollTo(0, 0);
-      window.__accessCheckDom!.overlayShow([{ n: 1, selector: "h1", kind: "stop" }], 1, {
-        scroll: false,
-      });
+      window.__accessCheckDom!.overlayShow(
+        [{ n: 1, selector: "h1", tag: "1", tone: "path", shape: "circle" }],
+        1,
+        {
+          scroll: false,
+        },
+      );
       window.scrollTo(0, 400);
       return window.scrollY;
     });

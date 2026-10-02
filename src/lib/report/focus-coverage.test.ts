@@ -9,7 +9,7 @@ const t = translator();
 
 const source = (rel: string) => readFileSync(fileURLToPath(new URL(rel, import.meta.url)), "utf8");
 
-const list = source("../../app/results/focus-path-list.tsx");
+const list = source("../../app/results/case-file.tsx");
 const panel = source("../../../extension/src/panel.tsx");
 
 function walk(over: Partial<KeyboardReport>): KeyboardReport {
@@ -75,8 +75,8 @@ describe("a reading never shows a tab order without saying how much of it it saw
 describe("both surfaces put that statement above the stops", () => {
   it("the report's list does", () => {
     expect(list.indexOf("coverage.line")).toBeGreaterThan(-1);
-    expect(list.indexOf("coverage.line")).toBeLessThan(list.indexOf("stops.map"));
-    expect(list.indexOf("coverage.notes")).toBeLessThan(list.indexOf("stops.map"));
+    expect(list.indexOf("coverage.line")).toBeLessThan(list.indexOf("<FocusSequence"));
+    expect(list.indexOf("coverage.notes")).toBeLessThan(list.indexOf("<FocusSequence"));
   });
 
   it("the panel does", () => {

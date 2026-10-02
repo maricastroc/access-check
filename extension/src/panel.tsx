@@ -1,28 +1,45 @@
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { FindingRow } from "../../src/components/ui/finding-row";
-import { OccurrenceStepper } from "../../src/components/ui/occurrence-stepper";
-import { SectionKicker } from "../../src/components/ui/section-kicker";
-import { VerdictSeal } from "../../src/components/ui/verdict-seal";
 import { StageList } from "../../src/components/ui/scan-stages";
 import { WarningList } from "../../src/components/ui/warning-list";
-import { workQueue, type FindingView, type QueueGroup } from "../../src/lib/report/findings";
+import {
+  EvidenceChain,
+  FindingList,
+  FocusSequence,
+  Locus,
+  ProblemNav,
+  StandingMark,
+  Summary,
+  Tag,
+  sevOf,
+  useInvestigation,
+  type FindingGroups,
+  type Origin,
+  type RelatedFinding,
+} from "../../src/components/investigation";
+import { workQueue, type FindingView } from "../../src/lib/report/findings";
 import { describeElement } from "../../src/lib/report/identity";
-import { reviewGuidance } from "../../src/lib/scan/review";
-import { verdictMessage, verdictTone } from "../../src/lib/report/verdict";
-import type { OverlayMark } from "../../src/lib/scan/dom/overlay";
-import type { ScanResult } from "../../src/lib/scan/types";
+import {
+  findingsAtStops,
+  occurrenceTag,
+  occurrencesOf,
+  type Occurrence,
+} from "../../src/lib/report/occurrences";
+import { captureOf } from "../../src/lib/scan/placement";
+import {
+  OVERLAY_PICK,
+  type OverlayMark,
+  type OverlayOptions,
+} from "../../src/lib/scan/dom/overlay";
+import { VIEWPORT_CAPTURE, type ScanResult } from "../../src/lib/scan/types";
 import { langAttrs, REPORT_LOCALES } from "../../src/lib/i18n/locale";
 import type { ReportLocale } from "../../src/lib/i18n/locale";
-import { translator, type MessageKey } from "../../src/lib/i18n/t";
+import { translator } from "../../src/lib/i18n/t";
 import { auditScope, focusPathLines, type AuditScope } from "./coverage";
-import { locationsOf, type Location } from "./locations";
 import {
   scoringIsCurrent,
   standingOf,
   STANDING_LABEL,
-  STANDING_NOTE,
-  STANDING_TONE,
   type Standing,
 } from "../../src/lib/report/standing";
 import {
@@ -55,15 +72,29 @@ const STAGE_AT: Record<AuditTask, Partial<Record<AuditStage, number>>> = {
   "focus-path": { focus: 0, report: 1 },
 };
 
+const PRIMARY_BUTTON =
+  "w-full min-h-10 cursor-pointer bg-ink px-3 py-2 text-[14px] font-semibold text-surface hover:bg-ink-2 disabled:cursor-default disabled:bg-band disabled:text-muted";
+
+const SECONDARY_BUTTON =
+  "w-full min-h-10 cursor-pointer border border-ink bg-surface px-3 py-2 text-[14px] font-semibold text-ink hover:bg-band";
+
+const QUIET_BUTTON =
+  "min-h-8 cursor-pointer border border-border bg-surface px-2.5 text-[13px] font-semibold text-ink hover:border-ink disabled:cursor-default disabled:text-disabled";
+
+const NEIGHBOURS = 2;
+const NEARBY_OCCURRENCES = 24;
+const FINDING_KEY = "f:";
+const STOP_KEY = "s:";
+
 function send(message: PanelMessage): Promise<unknown> {
   return chrome.runtime.sendMessage(message).catch(() => undefined);
 }
 
 function LanguageChoice({ preference }: { preference: LocalePreference }) {
   return (
-    <div className="mt-5 flex flex-wrap items-center gap-x-2 gap-y-1.5 border-t border-hairline px-3 pt-3">
-      <label htmlFor="panel-language" className="shrink-0">
-        <SectionKicker>{t("language.label")}</SectionKicker>
+    <div className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-hairline px-3 pt-4">
+      <label htmlFor="panel-language" className="shrink-0 text-[13px] font-semibold text-ink-2">
+        {t("language.label")}
       </label>
       <select
         id="panel-language"
@@ -74,7 +105,7 @@ function LanguageChoice({ preference }: { preference: LocalePreference }) {
             .then(markLanguageChanged)
             .then(() => location.reload());
         }}
-        className="ml-auto max-w-full min-w-0 cursor-pointer border border-border bg-surface px-2 py-1 text-[12.5px] text-ink"
+        className="ml-auto min-h-8 max-w-full min-w-0 cursor-pointer border border-border bg-surface px-2 text-[13px] text-ink"
       >
         <option value={FOLLOW_BROWSER}>{t("language.followBrowser")}</option>
         {REPORT_LOCALES.map((option) => (
@@ -95,7 +126,7 @@ function Shell({
   children: React.ReactNode;
 }) {
   return (
-    <main className="min-h-screen bg-canvas pb-4 font-sans text-ink">
+    <main className="ac-instrument min-h-screen bg-canvas pb-6 font-sans text-ink">
       {children}
       <LanguageChoice preference={preference} />
     </main>
@@ -116,14 +147,14 @@ function StickyBar({
   busy?: boolean;
 }) {
   return (
-    <div className="sticky top-0 z-10 flex flex-wrap items-center gap-x-2 gap-y-1.5 border-b border-border bg-canvas px-3 py-2">
-      <h1 className="min-w-0 flex-1 truncate text-[13px] font-semibold text-ink">{title}</h1>
+    <div className="sticky top-0 z-30 flex flex-wrap items-center gap-x-2 gap-y-1.5 border-b border-hairline bg-canvas px-3 py-2">
+      <h1 className="min-w-0 flex-1 truncate text-[14px] font-semibold text-ink">{title}</h1>
       {onReaudit && (
         <button
           type="button"
           onClick={onReaudit}
           disabled={busy}
-          className={`${SMALL_BUTTON} shrink-0 bg-surface py-1 text-[12px]`}
+          className={`${QUIET_BUTTON} shrink-0`}
         >
           {t("panel.reaudit")}
         </button>
@@ -132,10 +163,10 @@ function StickyBar({
         <button
           type="button"
           onClick={onTop}
-          className="shrink-0 cursor-pointer border border-border bg-surface px-2 py-1 font-cond text-[12px] font-semibold hover:bg-band"
-          style={{ color: STANDING_TONE[standing] }}
+          className="flex min-h-8 shrink-0 cursor-pointer items-center gap-1.5 px-1.5 text-[13px] font-semibold text-ink hover:underline"
         >
-          {t(STANDING_LABEL[standing])}
+          <StandingMark standing={standing} size={12} />
+          <span className="max-[359px]:sr-only">{t(STANDING_LABEL[standing])}</span>
           <span className="sr-only">{t("panel.backToSummary")}</span>
         </button>
       )}
@@ -146,6 +177,8 @@ function StickyBar({
 function Header({
   result,
   groups,
+  selectedId,
+  onSelect,
   walking,
   deepError,
   round,
@@ -154,7 +187,9 @@ function Header({
   onShowKeyboard,
 }: {
   result: ScanResult;
-  groups: { group: QueueGroup; findings: FindingView[] }[];
+  groups: FindingGroups;
+  selectedId: string | null;
+  onSelect: (id: string) => void;
   walking: AuditStage | null;
   deepError?: string;
   round: RoundOutcome | null;
@@ -164,48 +199,44 @@ function Header({
 }) {
   const scope = auditScope(result, t);
   const standing = standingOf(result.counts);
-  const inGroup = (group: QueueGroup) =>
-    groups.find((g) => g.group === group)?.findings.length ?? 0;
-  const toFix = inGroup("fix");
-  const toCheck = inGroup("check");
-  const work = [
-    toFix > 0 ? t("panel.toFix", { count: toFix }) : null,
-    toCheck > 0 ? t("panel.toCheck", { count: toCheck }) : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
 
   return (
-    <section className="mt-3 border border-border bg-surface p-3" aria-labelledby="verdict-heading">
-      <SectionKicker as="h2" id="verdict-heading">
-        {scope.kicker}
-      </SectionKicker>
-      <p
-        className="mt-1 font-cond text-[30px] leading-[1.05]"
-        style={{ color: STANDING_TONE[standing] }}
-      >
-        {t(STANDING_LABEL[standing])}
-      </p>
-      <p className="mt-0.5 text-[12.5px] leading-normal text-body">{t(STANDING_NOTE[standing])}</p>
-      {work && <p className="mt-2 text-[13px] font-semibold text-ink tabular-nums">{work}</p>}
+    <section className="px-3 pt-4 pb-3" aria-labelledby="verdict-heading">
+      <p className="text-[12.5px] font-semibold text-muted">{scope.kicker}</p>
+      <div className="mt-1.5">
+        <Summary
+          standing={standing}
+          groups={groups}
+          passed={result.counts.passed}
+          selectedId={selectedId}
+          onSelect={onSelect}
+          heading="h2"
+          headingId="verdict-heading"
+          host={result.title}
+          compact
+          t={t}
+        >
+          <KeyboardCheck
+            scope={scope}
+            walking={walking}
+            error={deepError}
+            stops={result.keyboard?.focusPath.length ?? 0}
+            round={round}
+            onWalk={onWalk}
+            onContinue={onContinue}
+            onShowKeyboard={onShowKeyboard}
+          />
 
-      <KeyboardCheck
-        scope={scope}
-        walking={walking}
-        error={deepError}
-        stops={result.keyboard?.focusPath.length ?? 0}
-        round={round}
-        onWalk={onWalk}
-        onContinue={onContinue}
-        onShowKeyboard={onShowKeyboard}
-      />
-
-      {!scoringIsCurrent(result) && (
-        <div className="mt-2.5 border border-dashed border-border bg-canvas px-2.5 py-2">
-          <SectionKicker as="h3">{t("standing.staleTitle")}</SectionKicker>
-          <p className="mt-1 text-[12.5px] leading-normal text-body">{t("standing.staleBody")}</p>
-        </div>
-      )}
+          {!scoringIsCurrent(result) && (
+            <div className="mt-3 border-l-2 border-dashed border-border pl-3">
+              <h3 className="text-[13.5px] font-semibold text-ink-2">{t("standing.staleTitle")}</h3>
+              <p className="mt-0.5 text-[13px] leading-normal text-ink-2">
+                {t("standing.staleBody")}
+              </p>
+            </div>
+          )}
+        </Summary>
+      </div>
     </section>
   );
 }
@@ -239,50 +270,50 @@ function KeyboardCheck({
 
   if (walking) {
     return (
-      <div className="mt-3 border-t border-hairline pt-2.5">
-        <p className="text-[12.5px] font-semibold text-ink">{t("panel.walkingFocusPath")}</p>
+      <div className="mt-4 border-t border-hairline pt-3">
+        <p className="text-[13.5px] font-semibold text-ink">{t("panel.walkingFocusPath")}</p>
         <StageList stages={FOCUS_STAGES} current={STAGE_AT["focus-path"][walking] ?? 0} />
       </div>
     );
   }
 
   return (
-    <div className="mt-3 border-t border-hairline pt-2.5">
+    <div className="mt-4 border-t border-hairline pt-3">
       {outcome && (
-        <div role="status" className="mb-2.5">
-          <p className="text-[12.5px] leading-normal text-body">
+        <div role="status" className="mb-3">
+          <p className="text-[13.5px] leading-normal text-ink-2">
             {t("panel.roundChecked", { count: outcome.checked })}{" "}
             {outcome.problems > 0
               ? t("panel.roundProblems", { count: outcome.problems })
               : t("panel.roundNoProblems")}
           </p>
           {onShowKeyboard && (
-            <button type="button" onClick={onShowKeyboard} className={`${SMALL_BUTTON} mt-1.5`}>
+            <button type="button" onClick={onShowKeyboard} className={`${QUIET_BUTTON} mt-2`}>
               {t("panel.showKeyboardProblems")}
             </button>
           )}
         </div>
       )}
       {(pending || cut || started) && (
-        <p className="text-[12.5px] leading-normal font-semibold text-moderate-text">
+        <p className="text-[13.5px] leading-normal font-semibold text-moderate-text">
           {pending ? scope.lead : scope.badge}
         </p>
       )}
       {error && (
-        <p role="alert" className="mt-1.5 text-[12.5px] leading-normal text-critical">
+        <p role="alert" className="mt-1.5 text-[13.5px] leading-normal text-critical">
           {error}
         </p>
       )}
       {pending && (
         <>
-          <p id="walk-debugger-note" className="mt-1.5 text-[12px] leading-normal text-body">
+          <p id="walk-debugger-note" className="mt-1.5 text-[13px] leading-normal text-ink-2">
             {t("panel.walkDebuggerNote")}
           </p>
           <button
             type="button"
             onClick={onWalk}
             aria-describedby="walk-debugger-note"
-            className={`${SECONDARY_BUTTON} mt-2`}
+            className={`${SECONDARY_BUTTON} mt-2.5`}
           >
             {t("panel.walkNow")}
           </button>
@@ -294,11 +325,11 @@ function KeyboardCheck({
             type="button"
             onClick={onContinue}
             aria-describedby="continue-walk-note"
-            className={`${SECONDARY_BUTTON} mt-2`}
+            className={`${SECONDARY_BUTTON} mt-2.5`}
           >
             {t("panel.continueWalk")}
           </button>
-          <p id="continue-walk-note" className="mt-1.5 text-[12px] leading-normal text-muted">
+          <p id="continue-walk-note" className="mt-1.5 text-[13px] leading-normal text-muted">
             {t("panel.continueWalkNote", { stops })}
           </p>
         </>
@@ -317,497 +348,14 @@ function Collapsed({
   children: React.ReactNode;
 }) {
   return (
-    <details className="mt-1 border-t border-hairline px-3 py-2.5">
-      <summary className="cursor-pointer text-[13px] font-semibold text-ink">
-        <h2 className="inline text-[13px] font-semibold">{title}</h2>
-        {note && <span className="ml-2 font-normal text-muted">{note}</span>}
+    <details className="mt-6 border-t border-hairline px-3 py-3">
+      <summary className="flex cursor-pointer flex-wrap items-baseline gap-x-2 gap-y-0.5">
+        <span aria-hidden className="ac-chev text-ink-2" />
+        <h2 className="text-[14px] font-semibold text-ink">{title}</h2>
+        {note && <span className="text-[13px] text-muted">{note}</span>}
       </summary>
-      <div className="mt-2.5">{children}</div>
+      <div className="mt-3">{children}</div>
     </details>
-  );
-}
-
-function Capture({ result }: { result: ScanResult }) {
-  if (!result.screenshot) return null;
-  const marked = result.markers.length;
-
-  return (
-    <section className="mt-4" aria-labelledby="about-screenshot">
-      <SectionKicker as="h3" id="about-screenshot">
-        {t("panel.screenshot")}
-      </SectionKicker>
-      <p className="mt-0.5 text-[12px] text-muted">
-        {marked > 0 ? t("panel.evidenceNoteMarked", { count: marked }) : t("panel.evidenceNote")}
-      </p>
-      <div className="relative mt-2 border border-hairline">
-        {/* eslint-disable-next-line @next/next/no-img-element -- the panel is not a Next page */}
-        <img
-          src={result.screenshot}
-          alt={t("panel.screenshotAlt", { url: result.finalUrl })}
-          className="block w-full"
-        />
-        {result.markers.map((m) => (
-          <span
-            key={m.n}
-            title={`${m.n}. ${m.label}`}
-            className="absolute border-2 border-ink"
-            style={{
-              left: `${m.left}%`,
-              top: `${m.top}%`,
-              width: `${m.width}%`,
-              height: `${m.height}%`,
-              background: "rgba(179,38,30,.14)",
-            }}
-          />
-        ))}
-      </div>
-    </section>
-  );
-}
-
-const PRIMARY_BUTTON =
-  "w-full cursor-pointer bg-ink px-3 py-2 text-[13px] font-semibold text-surface hover:bg-ink-2 disabled:cursor-default disabled:bg-canvas disabled:text-disabled";
-
-const SECONDARY_BUTTON =
-  "w-full cursor-pointer border border-ink bg-surface px-3 py-2 text-[13px] font-semibold text-ink hover:bg-band";
-
-const SMALL_BUTTON =
-  "cursor-pointer border border-border bg-canvas px-2 py-1 text-[11.5px] font-semibold text-ink hover:bg-band disabled:cursor-default disabled:text-disabled";
-
-function CopyButton({
-  label,
-  value,
-  className,
-}: {
-  label: string;
-  value: string;
-  className?: string;
-}) {
-  const [state, setState] = useState<"idle" | "done" | "failed">("idle");
-
-  useEffect(() => {
-    if (state === "idle") return;
-    const t = setTimeout(() => setState("idle"), 1800);
-    return () => clearTimeout(t);
-  }, [state]);
-
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      className={`${SMALL_BUTTON} ${className ?? ""}`}
-      onClick={() =>
-        navigator.clipboard.writeText(value).then(
-          () => setState("done"),
-          () => setState("failed"),
-        )
-      }
-    >
-      {state === "done" ? t("panel.copied") : state === "failed" ? t("panel.copyFailed") : label}
-    </button>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="mt-3">
-      <SectionKicker as="h4">{label}</SectionKicker>
-      <div className="mt-1">{children}</div>
-    </div>
-  );
-}
-
-function FindingDetail({
-  finding,
-  onLocate,
-  previous,
-  next,
-}: {
-  finding: FindingView;
-  onLocate: (location: Location, n: number) => Promise<string | null>;
-  previous: (() => void) | null;
-  next: (() => void) | null;
-}) {
-  const locations = locationsOf(finding);
-  const [index, setIndex] = useState(0);
-  const [notice, setNotice] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const latest = useRef(0);
-  const total = locations.length;
-
-  const at = Math.min(index, Math.max(total - 1, 0));
-  const location = locations[at] ?? null;
-
-  const show = async (place: Location) => {
-    const ask = ++latest.current;
-    setNotice(null);
-    setBusy(true);
-    const answer = await onLocate(place, place.stop ?? finding.n);
-    if (ask !== latest.current) return;
-    setNotice(answer);
-    setBusy(false);
-  };
-
-  const step = (delta: number) => {
-    const next = (at + delta + total) % total;
-    setIndex(next);
-    void show(locations[next]);
-  };
-
-  const locate = async () => {
-    if (location) await show(location);
-  };
-
-  return (
-    <>
-      <Where
-        finding={finding}
-        location={location}
-        at={at}
-        total={total}
-        busy={busy}
-        notice={notice}
-        onStep={step}
-        onLocate={() => void locate()}
-      />
-
-      {finding.kind === "manual-review" ? (
-        <HowToCheck ruleId={finding.ruleId} />
-      ) : (
-        <Field label={t("panel.whatToChange")}>
-          <p className="text-[13px] leading-[1.55] break-words text-body">{finding.fixText}</p>
-          {finding.fixCode && (
-            <pre className="mt-1.5 overflow-x-auto bg-code p-2 font-mono text-[12px] text-ink">
-              {finding.fixCode}
-            </pre>
-          )}
-          {verdictTone(finding.verdict) === "quiet" ? (
-            <p className="mt-1.5 text-[12px] leading-normal break-words text-muted">
-              {verdictMessage(finding.verdict, t, finding.measurement)}
-            </p>
-          ) : (
-            <div className="mt-2">
-              <VerdictSeal verdict={finding.verdict} t={t} />
-              <p className="mt-1.5 text-[12.5px] leading-normal break-words text-body">
-                {verdictMessage(finding.verdict, t, finding.measurement)}
-              </p>
-            </div>
-          )}
-        </Field>
-      )}
-
-      <Field label={t("panel.why")}>
-        <p className="text-[13px] leading-[1.55] break-words text-body">{finding.desc}</p>
-        {finding.evidence === "heuristic" && finding.kind !== "manual-review" && (
-          <div className="mt-2 border border-dashed border-border bg-canvas px-2.5 py-2">
-            <SectionKicker as="div">{t("evidence.heuristic.title")}</SectionKicker>
-            <p className="mt-1 text-[12.5px] leading-normal text-body">
-              {t("evidence.heuristic.body")}
-            </p>
-          </div>
-        )}
-        {finding.contexts.length > 0 && (
-          <p className="mt-1.5 text-[12px] text-muted">
-            {t("panel.alsoFailsIn", { contexts: finding.contexts.join(", ") })}
-          </p>
-        )}
-      </Field>
-
-      {location && <ElementDetails location={location} />}
-
-      {(previous || next) && (
-        <nav
-          aria-label={t("panel.problemNavigation")}
-          className="mt-4 flex gap-1.5 border-t border-hairline pt-3"
-        >
-          <button
-            type="button"
-            className={`${SMALL_BUTTON} flex-1 py-1.5`}
-            disabled={!previous}
-            onClick={previous ?? undefined}
-          >
-            {t("panel.previousProblem")}
-          </button>
-          <button
-            type="button"
-            className={`${SMALL_BUTTON} flex-1 py-1.5`}
-            disabled={!next}
-            onClick={next ?? undefined}
-          >
-            {t("panel.nextProblem")}
-          </button>
-        </nav>
-      )}
-    </>
-  );
-}
-
-function HowToCheck({ ruleId }: { ruleId: string }) {
-  const guide = reviewGuidance(ruleId, t);
-
-  return (
-    <Field label={t("panel.howToCheck")}>
-      <p className="text-[13px] leading-[1.55] break-words text-body">{guide.how}</p>
-      <ol className="mt-1.5 list-decimal space-y-1 pl-4 text-[12.5px] leading-normal text-body">
-        {guide.steps.map((step) => (
-          <li key={step}>{step}</li>
-        ))}
-      </ol>
-    </Field>
-  );
-}
-
-function Where({
-  finding,
-  location,
-  at,
-  total,
-  busy,
-  notice,
-  onStep,
-  onLocate,
-}: {
-  finding: FindingView;
-  location: Location | null;
-  at: number;
-  total: number;
-  busy: boolean;
-  notice: string | null;
-  onStep: (delta: number) => void;
-  onLocate: () => void;
-}) {
-  if (!location) {
-    return (
-      <Field label={t("panel.where")}>
-        <p className="text-[13px] leading-[1.55] break-words text-body">
-          {finding.noMarkerReason || t("marker.docLevel")}
-        </p>
-      </Field>
-    );
-  }
-
-  const element = describeElement(location.selector, location.identity ?? undefined, t);
-  const named = location.identity
-    ? element.label
-    : location.tag
-      ? `<${location.tag}>`
-      : location.selector;
-  const context = location.identity ? element.context : location.label || null;
-  const stop = location.keyboard
-    ? location.stop === null
-      ? t("panel.neverReached")
-      : t("panel.stopN", { n: location.stop })
-    : null;
-
-  return (
-    <section className="mt-3" aria-label={t("panel.where")}>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <SectionKicker as="h4">{t("panel.where")}</SectionKicker>
-        {total > 1 && (
-          <OccurrenceStepper
-            t={t}
-            index={at}
-            total={total}
-            onPrev={() => onStep(-1)}
-            onNext={() => onStep(1)}
-          />
-        )}
-      </div>
-
-      <p className="mt-1 font-mono text-[12.5px] leading-snug break-words text-ink">{named}</p>
-      {(context || stop) && (
-        <p className="text-[12px] break-words text-muted">
-          {[stop, context].filter(Boolean).join(" · ")}
-        </p>
-      )}
-      {location.reason && (
-        <p className="mt-1.5 text-[13px] leading-[1.55] break-words text-body">{location.reason}</p>
-      )}
-      {location.keyboard && location.certainty === "needs-review" && (
-        <p className="mt-1.5 text-[12px] leading-normal text-moderate-text">
-          {t("panel.geometryUnsure")}
-        </p>
-      )}
-
-      <button
-        type="button"
-        className={`${PRIMARY_BUTTON} mt-2.5`}
-        disabled={busy}
-        onClick={onLocate}
-      >
-        {busy ? t("panel.locating") : t("panel.locate")}
-      </button>
-
-      {notice && (
-        <p role="status" className="mt-2 text-[12.5px] leading-normal text-moderate-text">
-          {notice}
-        </p>
-      )}
-    </section>
-  );
-}
-
-function ElementDetails({ location }: { location: Location }) {
-  const truncated = location.html?.includes("…") ?? false;
-
-  return (
-    <details className="mt-3 border-t border-hairline pt-2.5">
-      <summary className="cursor-pointer">
-        <SectionKicker as="h4" className="inline">
-          {t("panel.details")}
-        </SectionKicker>
-      </summary>
-
-      <Field label={t("panel.selector")}>
-        <p className="overflow-x-auto font-mono text-[12px] break-all text-steel">
-          {location.selector}
-        </p>
-      </Field>
-
-      {location.html && (
-        <Field label={t("panel.html")}>
-          <pre className="max-h-40 overflow-auto bg-code p-2 font-mono text-[12px] break-all whitespace-pre-wrap text-ink">
-            {location.html}
-          </pre>
-          {truncated && (
-            <p className="mt-1.5 text-[12px] leading-normal text-muted">{t("panel.abbreviated")}</p>
-          )}
-        </Field>
-      )}
-
-      {location.measured && (
-        <Field label={t("panel.measured")}>
-          <p className="text-[12px] leading-normal break-words text-muted">{location.measured}</p>
-        </Field>
-      )}
-
-      {location.rect && (
-        <Field label={t("panel.position")}>
-          <p className="text-[12px] text-muted tabular-nums">
-            {t("panel.positionValue", {
-              w: Math.round(location.rect.w),
-              h: Math.round(location.rect.h),
-              x: Math.round(location.rect.x),
-              y: Math.round(location.rect.y),
-            })}
-            {location.onScreen ? "" : t("panel.offViewport")}
-          </p>
-        </Field>
-      )}
-
-      <div className="mt-2.5 flex flex-wrap gap-1.5">
-        <CopyButton label={t("panel.copySelector")} value={location.selector} />
-        {location.html && <CopyButton label={t("panel.copyHtml")} value={location.html} />}
-      </div>
-    </details>
-  );
-}
-
-function ReadingLanguage({
-  locale,
-  onReaudit,
-}: {
-  locale: ReportLocale | undefined;
-  onReaudit: () => void;
-}) {
-  if (!locale || locale === UI_LOCALE) return null;
-
-  return (
-    <div className="mt-2 border border-moderate bg-surface px-3 py-2.5">
-      <p lang={UI_LOCALE} className="text-[12.5px] leading-normal text-body">
-        {t("panel.readingLanguage", { language: NATIVE_NAME[locale] })}
-      </p>
-      <button type="button" onClick={onReaudit} className={`${SMALL_BUTTON} mt-2`}>
-        {t("panel.auditAgain")}
-      </button>
-    </div>
-  );
-}
-
-const GROUP_TITLE: Record<QueueGroup, MessageKey> = {
-  fix: "panel.group.fix",
-  check: "panel.group.check",
-  recommend: "panel.group.recommend",
-};
-
-function Findings({
-  groups,
-  locale,
-  selected,
-  setSelected,
-  open,
-  onLocate,
-}: {
-  groups: { group: QueueGroup; findings: FindingView[] }[];
-  locale: ReportLocale | undefined;
-  selected: string | null;
-  setSelected: (id: string | null) => void;
-  open: (id: string) => void;
-  onLocate: (location: Location, n: number) => Promise<string | null>;
-}) {
-  const rows = (findings: FindingView[]) =>
-    findings.map((f, i) => (
-      <div
-        key={f.id}
-        id={`finding-${f.id}`}
-        className="scroll-mt-12"
-        {...langAttrs(locale, UI_LOCALE)}
-      >
-        <FindingRow
-          t={t}
-          finding={f}
-          selected={selected === f.id}
-          onSelect={() => setSelected(selected === f.id ? null : f.id)}
-          markerNote={false}
-        />
-        {selected === f.id && (
-          <div className="border-x border-b border-hairline bg-surface px-3 pt-1 pb-3">
-            <FindingDetail
-              finding={f}
-              onLocate={onLocate}
-              previous={i > 0 ? () => open(findings[i - 1].id) : null}
-              next={i < findings.length - 1 ? () => open(findings[i + 1].id) : null}
-            />
-          </div>
-        )}
-      </div>
-    ));
-
-  return (
-    <div className="mt-3 border border-border bg-surface">
-      {groups.map(({ group, findings }) => {
-        const heading = (
-          <SectionKicker
-            as="h2"
-            id={`group-${group}`}
-            className={group === "fix" ? undefined : "inline"}
-          >
-            {t(GROUP_TITLE[group])} · {findings.length}
-          </SectionKicker>
-        );
-
-        if (group === "fix") {
-          return (
-            <section key={group} aria-labelledby={`group-${group}`}>
-              <div className="border-b border-border px-3 py-2">{heading}</div>
-              {findings.length === 0 ? (
-                <p className="px-3 py-3 text-[12.5px] text-muted">{t("panel.noFailures")}</p>
-              ) : (
-                rows(findings)
-              )}
-            </section>
-          );
-        }
-
-        if (findings.length === 0) return null;
-        return (
-          <details key={group} className="border-t border-border">
-            <summary className="cursor-pointer px-3 py-2">{heading}</summary>
-            {rows(findings)}
-          </details>
-        );
-      })}
-    </div>
   );
 }
 
@@ -827,11 +375,11 @@ function ChecksPerformed({ result }: { result: ScanResult }) {
   ].filter((x): x is string => x !== null);
 
   return (
-    <section className="mt-4" aria-labelledby="about-checks">
-      <SectionKicker as="h3" id="about-checks">
+    <section className="mt-5" aria-labelledby="about-checks">
+      <h3 id="about-checks" className="text-[13.5px] font-semibold text-ink-2">
         {t("panel.checksPerformed")} · {ran.length}
-      </SectionKicker>
-      <ul className="mt-1.5 list-disc space-y-1 pl-4 text-[12.5px] leading-[1.5] text-body">
+      </h3>
+      <ul className="mt-1.5 list-disc space-y-1 pl-4 text-[13px] leading-normal text-ink-2 marker:text-muted">
         {ran.map((item) => (
           <li key={item}>{item}</li>
         ))}
@@ -840,38 +388,137 @@ function ChecksPerformed({ result }: { result: ScanResult }) {
   );
 }
 
-function marksFor(result: ScanResult): OverlayMark[] {
-  const keyboard = result.keyboard;
-  if (!keyboard) return [];
-  const jumped = new Set(
-    (keyboard.findings.find((f) => f.id === "focus-order")?.occurrences ?? [])
-      .map((o) => o.stop)
-      .filter((n): n is number => n !== null),
-  );
-
-  return keyboard.focusPath.map((s) => {
-    const unclear = s.focusIndicator === "shared";
-    return {
-      n: s.n,
-      selector: s.selector,
-      kind: !s.focusVisible ? "failure" : jumped.has(s.n) || unclear ? "attention" : "stop",
-      label: !s.focusVisible
-        ? t("panel.mark.noFocusRing")
-        : unclear
-          ? t("panel.mark.checkFocus")
-          : jumped.has(s.n)
-            ? t("panel.mark.checkOrder")
-            : (s.label || t("panel.mark.stop")).slice(0, 28),
-    };
+function Capture({ result, findings }: { result: ScanResult; findings: FindingView[] }) {
+  if (!result.screenshot) return null;
+  const marked = result.markers.length;
+  const marks = findings.flatMap((f) => {
+    const all = occurrencesOf(f);
+    return all.flatMap((o) =>
+      o.markers
+        .filter((m) => captureOf(m) === VIEWPORT_CAPTURE)
+        .map((m) => ({
+          key: `${f.id}:${o.index}:${m.n}`,
+          tag: occurrenceTag(f.n, o.index, all.length),
+          sev: sevOf(f),
+          box: { left: m.left, top: m.top, width: m.width, height: m.height },
+        })),
+    );
   });
+
+  return (
+    <section className="mt-5" aria-labelledby="about-screenshot">
+      <h3 id="about-screenshot" className="text-[13.5px] font-semibold text-ink-2">
+        {t("panel.screenshot")}
+      </h3>
+      <p className="mt-0.5 text-[13px] text-muted">
+        {marked > 0 ? t("panel.evidenceNoteMarked", { count: marked }) : t("panel.evidenceNote")}
+      </p>
+      <div className="relative mt-2.5 border border-hairline">
+        {/* eslint-disable-next-line @next/next/no-img-element -- the panel is not a Next page */}
+        <img
+          src={result.screenshot}
+          alt={t("panel.screenshotAlt", { url: result.finalUrl })}
+          className="block w-full"
+        />
+        {marks.map((m) => (
+          <Fragment key={m.key}>
+            <Locus box={m.box} weight="sibling" />
+            <span
+              aria-hidden
+              className="pointer-events-none absolute"
+              style={{
+                left: `${m.box.left}%`,
+                top: `${m.box.top}%`,
+                transform: "translate(calc(-50% - 5px), calc(-50% - 5px))",
+              }}
+            >
+              <Tag n={m.tag} sev={m.sev} size={17} onPage />
+            </span>
+          </Fragment>
+        ))}
+      </div>
+    </section>
+  );
 }
 
-const NEIGHBOURS = 2;
+function OnPage({
+  busy,
+  notice,
+  onLocate,
+}: {
+  busy: boolean;
+  notice: string | null;
+  onLocate: () => void;
+}) {
+  return (
+    <div className="mt-3.5">
+      <button type="button" className={PRIMARY_BUTTON} disabled={busy} onClick={onLocate}>
+        {busy ? t("panel.locating") : t("panel.locate")}
+      </button>
+      <p role="status" className="mt-2 text-[13px] leading-normal text-moderate-text empty:hidden">
+        {notice}
+      </p>
+    </div>
+  );
+}
+
+function ReadingLanguage({
+  locale,
+  onReaudit,
+}: {
+  locale: ReportLocale | undefined;
+  onReaudit: () => void;
+}) {
+  if (!locale || locale === UI_LOCALE) return null;
+
+  return (
+    <div className="mx-3 mt-3 border-l-2 border-moderate pl-3">
+      <p lang={UI_LOCALE} className="text-[13px] leading-normal text-ink-2">
+        {t("panel.readingLanguage", { language: NATIVE_NAME[locale] })}
+      </p>
+      <button type="button" onClick={onReaudit} className={`${QUIET_BUTTON} mt-2`}>
+        {t("panel.auditAgain")}
+      </button>
+    </div>
+  );
+}
+
+function findingMarks(f: FindingView, occurrences: Occurrence[], current: number): OverlayMark[] {
+  const total = occurrences.length;
+  const tone = sevOf(f);
+  return occurrences
+    .filter((o) => Math.abs(o.index - current) <= NEARBY_OCCURRENCES)
+    .map((o) => ({
+      n: o.index + 1,
+      selector: o.selector,
+      tag: occurrenceTag(f.n, o.index, total),
+      tone,
+      quiet: o.index !== current,
+      ring: f.ruleId === "focus-not-visible",
+      label: describeElement(o.selector, o.identity ?? undefined, t).label,
+      pick: `${FINDING_KEY}${f.id}:${o.index}`,
+    }));
+}
+
+function stopMarks(result: ScanResult): OverlayMark[] {
+  return (result.keyboard?.focusPath ?? []).map((s) => ({
+    n: s.n,
+    selector: s.selector,
+    tag: String(s.n),
+    tone: "path",
+    shape: "circle",
+    ring: !s.focusVisible,
+    label: s.label || t("panel.mark.stop"),
+    pick: `${STOP_KEY}${s.n}`,
+  }));
+}
 
 function windowAround(marks: OverlayMark[], at: number): OverlayMark[] {
-  return marks
-    .filter((m) => Math.abs(m.n - at) <= NEIGHBOURS)
-    .map((m) => (m.n === at ? m : { ...m, kind: "stop" as const }));
+  return marks.filter((m) => Math.abs(m.n - at) <= NEIGHBOURS);
+}
+
+function wholePath(marks: OverlayMark[], at: number): OverlayMark[] {
+  return marks.map((m) => ({ ...m, quiet: Math.abs(m.n - at) > NEIGHBOURS }));
 }
 
 function FocusPath({
@@ -880,9 +527,11 @@ function FocusPath({
   showing,
   at,
   complete,
+  related,
   onShow,
+  onPick,
   onStep,
-  onToggleComplete,
+  onComplete,
   onExit,
 }: {
   result: ScanResult;
@@ -890,80 +539,66 @@ function FocusPath({
   showing: boolean;
   at: number;
   complete: boolean;
+  related: RelatedFinding[];
   onShow: () => void;
-  onStep: (delta: number) => void;
-  onToggleComplete: () => void;
+  onPick: (n: number) => void;
+  onStep: (delta: 1 | -1) => void;
+  onComplete: (on: boolean) => void;
   onExit: () => void;
 }) {
   const walked = result.keyboard;
   if (!walked) return null;
-  const stops = walked.focusPath.length;
+  const stops = walked.focusPath;
   const lines = focusPathLines(walked, t);
 
   return (
-    <section className="mt-3 border-t border-hairline px-3 pt-3" aria-labelledby="focus-heading">
-      <SectionKicker as="h2" id="focus-heading">
+    <section className="mt-4 border-t border-hairline px-3 pt-4" aria-labelledby="focus-heading">
+      <h2 id="focus-heading" className="text-[14px] font-semibold text-ink">
         {t("panel.focusPath")}
-      </SectionKicker>
+      </h2>
 
-      <p className="mt-1.5 text-[12.5px] leading-normal text-body">{lines.line}</p>
+      <p className="mt-1.5 text-[13.5px] leading-normal text-ink-2">{lines.line}</p>
 
       {lines.notes.map((note) => (
-        <p key={note} className="mt-1.5 text-[12px] leading-normal text-moderate-text">
+        <p key={note} className="mt-1.5 text-[13px] leading-normal text-moderate-text">
           {note}
         </p>
       ))}
 
-      {stops > 0 &&
+      {stops.length > 0 &&
         (!showing ? (
-          <button type="button" onClick={onShow} className={`${SMALL_BUTTON} mt-2.5`}>
+          <button type="button" onClick={onShow} className={`${QUIET_BUTTON} mt-3`}>
             {t("panel.showFocusPath")}
           </button>
         ) : (
-          <div className="mt-2.5 border border-border bg-canvas p-2.5">
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                aria-label={t("panel.previousStop")}
-                className={`${SMALL_BUTTON} flex-1`}
-                onClick={() => onStep(-1)}
-              >
-                {t("panel.previous")}
-              </button>
-              <span
-                aria-live="polite"
-                className="min-w-24 text-center font-cond text-[13px] font-semibold text-ink tabular-nums"
-              >
-                {t("panel.stopOf", { at, total: stops })}
-              </span>
-              <button
-                type="button"
-                aria-label={t("panel.nextStop")}
-                className={`${SMALL_BUTTON} flex-1`}
-                onClick={() => onStep(1)}
-              >
-                {t("panel.next")}
-              </button>
-            </div>
-
-            <div className="mt-1.5 flex flex-wrap gap-1.5">
-              <button type="button" className={SMALL_BUTTON} onClick={onToggleComplete}>
-                {complete ? t("panel.showNearbyOnly") : t("panel.showComplete")}
-              </button>
-              <button type="button" className={`${SMALL_BUTTON} ml-auto`} onClick={onExit}>
-                {t("panel.exitInspection")}
-              </button>
-            </div>
-
-            <p className="mt-1.5 text-[11.5px] leading-normal text-muted">
-              {complete
-                ? t("panel.drawingAll")
-                : t("panel.drawingWindow", { neighbours: NEIGHBOURS })}
-            </p>
+          <div className="mt-3">
+            <FocusSequence
+              stops={stops}
+              current={at}
+              onPick={onPick}
+              onStep={onStep}
+              whole={complete}
+              onWhole={onComplete}
+              related={related}
+              compact
+              t={t}
+              status={
+                <p className="text-[12.5px] leading-normal text-muted">
+                  {complete
+                    ? t("panel.drawingAll")
+                    : t("panel.drawingWindow", { neighbours: NEIGHBOURS })}
+                </p>
+              }
+            />
+            <button type="button" className={`${QUIET_BUTTON} mt-3`} onClick={onExit}>
+              {t("panel.exitInspection")}
+            </button>
           </div>
         ))}
 
-      {notice && <p className="mt-2 text-[12px] leading-normal text-moderate-text">{notice}</p>}
+      <p role="status" className="mt-2 text-[13px] leading-normal text-moderate-text empty:hidden">
+        {notice}
+      </p>
     </section>
   );
 }
@@ -976,16 +611,46 @@ function Running({ url, task, stage }: { url: string; task: AuditTask; stage: Au
     <>
       <StickyBar title={task === "audit" ? t("panel.auditingTab") : t("panel.walkingFocusPath")} />
       <div className="px-3 pt-3">
-        <p className="truncate font-mono text-[12px] text-muted">{url}</p>
-        <div className="mt-3 border border-border bg-surface p-3">
+        <p className="truncate font-mono text-[12.5px] text-muted">{url}</p>
+        <div className="mt-4">
           <StageList stages={stages} current={current} />
         </div>
-        <p className="mt-3 text-[12.5px] leading-[1.5] text-muted">
+        <p className="mt-4 text-[13.5px] leading-normal text-ink-2">
           {task === "audit" ? t("panel.runningNote") : t("panel.runningNoteFocus")}
         </p>
       </div>
     </>
   );
+}
+
+type Draw = (marks: OverlayMark[], focus: number | null, opts: OverlayOptions) => Promise<Drawn>;
+
+type Drawn = HighlightReply | null;
+
+function findingNotice(reply: Drawn): string | null {
+  if (!reply) return t("panel.pageUnreachable");
+  if (!reply.ok) return reply.message;
+  const focused = reply.report.focused;
+  if (!focused) return null;
+  if (!focused.found) return t("panel.elementGone");
+  if (focused.side === "above") return t("chain.offAbove");
+  if (focused.side === "below") return t("chain.offBelow");
+  return null;
+}
+
+function pathNotice(marks: OverlayMark[], reply: Drawn): string | null {
+  if (!reply) return t("panel.pageUnreachable");
+  if (!reply.ok) return reply.message;
+  const { missing, offScreen, focused, drawn } = reply.report;
+  if (!focused) return null;
+  if (!focused.found) return t("panel.elementGone");
+  if (missing.length > 0) {
+    return t("panel.someStopsGone", { missing: missing.length, total: missing.length + drawn });
+  }
+  if (offScreen.length > 0 && marks.length > 1) {
+    return t("panel.someStopsOffScreen", { offScreen: offScreen.length, total: marks.length });
+  }
+  return null;
 }
 
 function Report({
@@ -1005,24 +670,27 @@ function Report({
   onReaudit: () => void;
   onWalk: () => void;
   onContinue: () => void;
-  draw: (
-    marks: OverlayMark[],
-    focus: number | null,
-    timeoutMs: number,
-  ) => Promise<{ notice: string | null }>;
+  draw: Draw;
   clear: () => void;
   restoreScroll: () => Promise<unknown>;
 }) {
+  const groups = useMemo(() => workQueue(result), [result]);
+  const findings = useMemo(() => groups.flatMap((g) => g.findings), [groups]);
+  const inv = useInvestigation(findings);
+  const [onPage, setOnPage] = useState<{ busy: boolean; notice: string | null }>({
+    busy: false,
+    notice: null,
+  });
   const [notice, setNotice] = useState<string | null>(null);
   const [showing, setShowing] = useState(false);
   const [complete, setComplete] = useState(false);
   const [at, setAt] = useState(1);
-  const [selected, setSelected] = useState<string | null>(null);
   const [roundFrom, setRoundFrom] = useState<number | null>(null);
   const [wasWalking, setWasWalking] = useState(walking !== null);
-  const marks = marksFor(result);
+  const latest = useRef(0);
+  const drawn = useRef<"finding" | "path" | null>(null);
+  const marks = useMemo(() => stopMarks(result), [result]);
   const scope = auditScope(result, t);
-  const groups = workQueue(result);
   const stops = result.keyboard?.focusPath.length ?? 0;
 
   if ((walking !== null) !== wasWalking) {
@@ -1030,43 +698,116 @@ function Report({
     if (walking !== null) setRoundFrom(stops);
   }
 
-  const keyboardProblems = groups.flatMap((g) => g.findings).filter((f) => f.kind === "keyboard");
+  const keyboardProblems = findings.filter((f) => f.kind === "keyboard");
   const round =
     roundFrom !== null && walking === null
       ? { checked: Math.max(0, stops - roundFrom), problems: keyboardProblems.length }
       : null;
 
-  const open = (id: string) => {
-    setSelected(id);
-    requestAnimationFrame(() => {
-      const row = document.getElementById(`finding-${id}`);
-      const group = row?.closest("details");
-      if (group) group.open = true;
-      row?.scrollIntoView({ block: "start" });
-      row?.querySelector("button")?.focus({ preventScroll: true });
-    });
-  };
-
-  const locate = async (location: Location, n: number) => {
+  const showFinding = async (f: FindingView, index: number, scroll: boolean) => {
+    const ask = ++latest.current;
+    drawn.current = "finding";
     setShowing(false);
     setNotice(null);
-    const mark: OverlayMark = {
-      n,
-      selector: location.selector,
-      kind: location.certainty === "conclusive" ? "failure" : "attention",
-      label: location.label || undefined,
-    };
-    const done = await draw([mark], mark.n, 6000);
-    return done.notice;
+    setOnPage({ busy: scroll, notice: null });
+    const reply = await draw(findingMarks(f, occurrencesOf(f), index), index + 1, {
+      scroll,
+      path: false,
+      timeoutMs: 0,
+    });
+    if (ask !== latest.current) return;
+    setOnPage({ busy: false, notice: findingNotice(reply) });
+  };
+
+  const go = (id: string, index = 0, origin: Origin = "nav") => {
+    const f = findings.find((x) => x.id === id);
+    if (!f) return;
+    inv.select(id, index, origin);
+    void showFinding(f, index, false);
+  };
+
+  const toggle = (id: string) => {
+    if (id === inv.selectedId) {
+      inv.toggle(id);
+      return;
+    }
+    go(id, 0, "row");
+  };
+
+  const pick = (index: number) => {
+    if (!inv.selected) return;
+    inv.pick(index);
+    void showFinding(inv.selected, index, true);
+  };
+
+  const locate = () => {
+    if (inv.selected) void showFinding(inv.selected, inv.occIndex, true);
   };
 
   const showPath = async (focus: number, everything = complete) => {
     const next = Math.min(Math.max(focus, 1), marks.length);
+    const ask = ++latest.current;
+    drawn.current = "path";
     setAt(next);
     setShowing(true);
-    const done = await draw(everything ? marks : windowAround(marks, next), next, 0);
-    setNotice(done.notice);
+    const shown = everything ? wholePath(marks, next) : windowAround(marks, next);
+    const reply = await draw(shown, next, { scroll: true, path: true, timeoutMs: 0 });
+    if (ask !== latest.current) return;
+    setNotice(pathNotice(shown, reply));
   };
+
+  const exitPath = () => {
+    ++latest.current;
+    drawn.current = null;
+    setShowing(false);
+    setNotice(null);
+    const open = inv.selected;
+    const index = inv.occIndex;
+    void restoreScroll().then(open ? () => showFinding(open, index, false) : clear);
+  };
+
+  const pausedForWalk = (start: () => void) => () => {
+    ++latest.current;
+    drawn.current = null;
+    setShowing(false);
+    setNotice(null);
+    start();
+  };
+
+  const related: RelatedFinding[] = findingsAtStops(findings).map((r) => ({
+    stop: r.stop,
+    tag: r.tag,
+    onOpen: () => go(r.findingId, r.index, "stop"),
+  }));
+
+  const fromPage = useEffectEvent((key: string) => {
+    if (key.startsWith(STOP_KEY)) {
+      const n = Number(key.slice(STOP_KEY.length));
+      if (Number.isFinite(n) && showing) void showPath(n);
+      return;
+    }
+    if (!key.startsWith(FINDING_KEY)) return;
+    const rest = key.slice(FINDING_KEY.length);
+    const cut = rest.lastIndexOf(":");
+    const index = Number(rest.slice(cut + 1));
+    if (cut < 0 || !Number.isInteger(index)) return;
+    go(rest.slice(0, cut), index, "mark");
+  });
+
+  useEffect(() => {
+    const listener = (message: PanelMessage) => {
+      if (message.type === OVERLAY_PICK) fromPage(message.key);
+    };
+    chrome.runtime.onMessage.addListener(listener);
+    return () => chrome.runtime.onMessage.removeListener(listener);
+  }, []);
+
+  useEffect(() => {
+    if (inv.selectedId !== null || drawn.current !== "finding") return;
+    ++latest.current;
+    drawn.current = null;
+    clear();
+  }, [inv.selectedId, clear]);
 
   return (
     <>
@@ -1077,54 +818,73 @@ function Report({
         onReaudit={onReaudit}
         busy={walking !== null}
       />
-      <div className="px-3">
-        <p className="mt-2 truncate font-mono text-[12px] text-muted">{result.finalUrl}</p>
-        <ReadingLanguage locale={result.locale} onReaudit={onReaudit} />
-        <Header
-          result={result}
+      <p className="mt-2 truncate px-3 font-mono text-[12.5px] text-muted">{result.finalUrl}</p>
+      <ReadingLanguage locale={result.locale} onReaudit={onReaudit} />
+      <Header
+        result={result}
+        groups={groups}
+        selectedId={inv.selectedId}
+        onSelect={(id) => go(id, 0, "index")}
+        walking={walking}
+        deepError={deepError}
+        round={round}
+        onWalk={pausedForWalk(onWalk)}
+        onContinue={pausedForWalk(onContinue)}
+        onShowKeyboard={
+          keyboardProblems.length > 0 ? () => go(keyboardProblems[0].id, 0, "nav") : null
+        }
+      />
+      <div className="border-t border-hairline">
+        <FindingList
           groups={groups}
-          walking={walking}
-          deepError={deepError}
-          round={round}
-          onWalk={onWalk}
-          onContinue={onContinue}
-          onShowKeyboard={keyboardProblems.length > 0 ? () => open(keyboardProblems[0].id) : null}
-        />
-        <Findings
-          groups={groups}
-          locale={result.locale}
-          selected={selected}
-          setSelected={setSelected}
-          open={open}
-          onLocate={locate}
-        />
-        <FocusPath
-          result={result}
-          notice={notice}
-          showing={showing}
-          at={at}
-          complete={complete}
-          onShow={() => void showPath(at)}
-          onStep={(delta) => void showPath(((at - 1 + delta + marks.length) % marks.length) + 1)}
-          onToggleComplete={() => {
-            const next = !complete;
-            setComplete(next);
-            void showPath(at, next);
-          }}
-          onExit={() => {
-            setShowing(false);
-            setNotice(null);
-            void restoreScroll().then(clear);
-          }}
+          selectedId={inv.selectedId}
+          onToggle={toggle}
+          compact
+          empty={t("panel.noFailures")}
+          rowAttrs={langAttrs(result.locale, UI_LOCALE)}
+          t={t}
+          renderOpen={(f, siblings, i) => (
+            <EvidenceChain
+              finding={f}
+              occurrences={inv.occurrences}
+              index={inv.occIndex}
+              onPick={pick}
+              host={result.title}
+              compact
+              t={t}
+              located={
+                inv.occurrences.length > 0 ? (
+                  <OnPage busy={onPage.busy} notice={onPage.notice} onLocate={locate} />
+                ) : null
+              }
+              footer={<ProblemNav siblings={siblings} at={i} onGo={(id) => go(id)} t={t} />}
+            />
+          )}
         />
       </div>
+      <FocusPath
+        result={result}
+        notice={notice}
+        showing={showing}
+        at={at}
+        complete={complete}
+        related={related}
+        onShow={() => void showPath(at)}
+        onPick={(n) => void showPath(n)}
+        onStep={(delta) => void showPath(((at - 1 + delta + marks.length) % marks.length) + 1)}
+        onComplete={(on) => {
+          setComplete(on);
+          void showPath(at, on);
+        }}
+        onExit={exitPath}
+      />
 
       <Collapsed title={t("panel.aboutAudit")} note={scope.summary}>
         <section aria-labelledby="about-coverage">
-          <SectionKicker as="h3" id="about-coverage">
+          <h3 id="about-coverage" className="text-[13.5px] font-semibold text-ink-2">
             {t("panel.coverageLimitations")}
-          </SectionKicker>
-          <p className="mt-1 text-[13px] leading-[1.55] text-body">{scope.note}</p>
+          </h3>
+          <p className="mt-1 text-[13.5px] leading-normal text-ink-2">{scope.note}</p>
           <div className="mt-2.5">
             <WarningList
               warnings={result.warnings ?? []}
@@ -1134,7 +894,7 @@ function Report({
           </div>
         </section>
         <ChecksPerformed result={result} />
-        <Capture result={result} />
+        <Capture result={result} findings={findings} />
       </Collapsed>
     </>
   );
@@ -1154,11 +914,9 @@ function Message({
   return (
     <>
       <StickyBar title={kicker} />
-      <div className="px-3 pt-3">
-        <div className="border border-border bg-surface p-4">
-          <h2 className="text-[15px] font-semibold text-ink">{title}</h2>
-          <p className="mt-1.5 text-[13px] leading-[1.55] text-body">{body}</p>
-        </div>
+      <div className="px-3 pt-5">
+        <h2 className="text-[17px] font-bold text-ink">{title}</h2>
+        <p className="mt-1.5 text-[14px] leading-normal text-ink-2">{body}</p>
         {children}
       </div>
     </>
@@ -1208,42 +966,20 @@ function Panel({
     };
   }, [retranslate]);
 
-  const draw = async (
-    marks: OverlayMark[],
-    focus: number | null,
-    timeoutMs: number,
-  ): Promise<{ notice: string | null }> => {
+  const draw: Draw = async (marks, focus, opts) => {
     keepPort();
     const reply = (await send({
       type: "panel:highlight",
       marks,
       focus,
-      scroll: focus !== null,
-      timeoutMs,
+      scroll: opts.scroll ?? false,
+      path: opts.path ?? false,
+      timeoutMs: opts.timeoutMs ?? 0,
     })) as HighlightReply | undefined;
-
-    if (!reply) return { notice: t("panel.pageUnreachable") };
-    if (!reply.ok) return { notice: reply.message };
-
-    const { missing, offScreen, focused } = reply.report;
-    const notice = !focused
-      ? null
-      : !focused.found
-        ? t("panel.elementGone")
-        : missing.length > 0
-          ? t("panel.someStopsGone", {
-              missing: missing.length,
-              total: missing.length + reply.report.drawn,
-            })
-          : offScreen.length > 0 && marks.length > 1
-            ? t("panel.someStopsOffScreen", {
-                offScreen: offScreen.length,
-                total: marks.length,
-              })
-            : null;
-
-    return { notice };
+    return reply ?? null;
   };
+
+  const clear = useCallback(() => void send({ type: "panel:clear-highlight" }), []);
 
   const running = state.kind === "running";
   const walking = state.kind === "running" && state.task === "focus-path" ? state.stage : null;
@@ -1284,7 +1020,7 @@ function Panel({
             <button
               type="button"
               onClick={() => void send({ type: "panel:audit" })}
-              className={`${PRIMARY_BUTTON} mt-3`}
+              className={`${PRIMARY_BUTTON} mt-4`}
             >
               {t("panel.tryAgain")}
             </button>
@@ -1294,6 +1030,7 @@ function Panel({
 
       {shown && (
         <Report
+          key={shown.result.scannedAt}
           result={shown.result}
           deepError={walking ? undefined : shown.deepError}
           walking={walking}
@@ -1301,7 +1038,7 @@ function Panel({
           onWalk={() => void send({ type: "panel:focus-path" })}
           onContinue={() => void send({ type: "panel:continue-walk" })}
           draw={draw}
-          clear={() => void send({ type: "panel:clear-highlight" })}
+          clear={clear}
           restoreScroll={() => send({ type: "panel:restore-scroll" })}
         />
       )}

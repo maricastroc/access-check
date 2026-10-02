@@ -139,6 +139,18 @@ describe("what a contextual capture can honestly be asked to hold", () => {
       { kind: "finding", ref: 4, reason: "unplaced" },
     ]);
   });
+
+  it("plans captures from each finding's first element only, not from its other occurrences", () => {
+    const { anchors, firstCapture } = findingAnchors(
+      [
+        { ...target(1, "serious"), primary: true },
+        { ...target(2, "serious"), primary: false },
+      ],
+      [rect({ docY: 2_000 }), rect({ docY: 300 })],
+    );
+    expect(anchors.map((a) => a.ref)).toEqual([1]);
+    expect(firstCapture).toEqual([]);
+  });
 });
 
 describe("grouping what is near before deciding how much to capture", () => {

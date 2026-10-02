@@ -1,21 +1,15 @@
 import type { FindingView } from "@/lib/report/findings";
+import { occurrencesOf, type Occurrence } from "@/lib/report/occurrences";
+import { severityLabel } from "@/lib/report/severity";
 import type { FocusStop } from "@/lib/scan/keyboard";
 import { captureOf, stopPlacement, type StopPlacement } from "@/lib/scan/placement";
-import { VIEWPORT_CAPTURE, type ScanMarker, type ScanRegion } from "@/lib/scan/types";
-import type { MarkerState } from "@/components/ui";
+import { VIEWPORT_CAPTURE, type ScanRegion } from "@/lib/scan/types";
+import { sevOf, type Box, type PlacedMark, type PlacedStop } from "@/components/investigation";
 import type { Translate } from "@/lib/i18n/t";
 
-export type Layer = "markers" | "focus" | "none";
+export type Layer = "findings" | "path" | "none";
 
-export type StopView = {
-  n: number;
-  left: number;
-  top: number;
-  width: number;
-  height: number;
-  current: boolean;
-  visible: boolean;
-};
+export type StopView = PlacedStop & { current: boolean };
 
 export function buildStopViews(
   stops: FocusStop[],
@@ -29,10 +23,13 @@ export function buildStopViews(
     if (placement.kind !== "placed" || placement.captureId !== captureId) continue;
     views.push({
       n: stop.n,
-      left: placement.left,
-      top: placement.top,
-      width: placement.width,
-      height: placement.height,
+      box: {
+        left: placement.left,
+        top: placement.top,
+        width: placement.width,
+        height: placement.height,
+      },
+      label: stop.label,
       current: stop.n === selected,
       visible: stop.focusVisible,
     });
@@ -71,54 +68,64 @@ export function captureById(
   return { id: region.id, image: region.image, docY: region.docY, missed: region.missed };
 }
 
-export function captureForFinding(finding: FindingView | null): string | null {
-  const marker = finding?.markers[0];
-  return marker ? captureOf(marker) : null;
+export type Place = { captureId: string; box: Box };
+
+export function occurrencePlaces(
+  occ: Occurrence,
+  stops: FocusStop[],
+  regions: ScanRegion[],
+): Place[] {
+  if (occ.keyboard && occ.stop !== null) {
+    const placement = stopPlacement(
+      stops.find((s) => s.n === occ.stop),
+      undefined,
+      regions,
+    );
+    if (placement.kind !== "placed") return [];
+    const { captureId, left, top, width, height } = placement;
+    return [{ captureId, box: { left, top, width, height } }];
+  }
+  return occ.markers.map((m) => ({
+    captureId: captureOf(m),
+    box: { left: m.left, top: m.top, width: m.width, height: m.height },
+  }));
 }
 
-export function markersOfCapture(views: MarkerView[], captureId: string): MarkerView[] {
-  return views.filter((v) => captureOf(v.marker) === captureId);
+export function captureOfOccurrence(
+  occ: Occurrence | null,
+  stops: FocusStop[],
+  regions: ScanRegion[],
+): string | null {
+  return occ ? (occurrencePlaces(occ, stops, regions)[0]?.captureId ?? null) : null;
 }
 
-export function markerLabel(finding: FindingView, t: Translate): string | undefined {
-  if (finding.measurement) {
-    return t("results.measuredNeeds", {
-      measured: finding.measurement.measured.toFixed(1),
-      required: finding.measurement.required.toFixed(1),
+export function marksOnCapture(
+  findings: FindingView[],
+  captureId: string,
+  stops: FocusStop[],
+  regions: ScanRegion[],
+  t: Translate,
+): PlacedMark[] {
+  const marks: PlacedMark[] = [];
+  for (const f of findings) {
+    const occurrences = occurrencesOf(f);
+    const kind = f.passLabel ?? (f.severity ? severityLabel(f.severity, t) : "");
+    occurrences.forEach((occ) => {
+      const place = occurrencePlaces(occ, stops, regions).find((p) => p.captureId === captureId);
+      if (!place) return;
+      marks.push({
+        findingId: f.id,
+        n: f.n,
+        sev: sevOf(f),
+        index: occ.index,
+        total: occurrences.length,
+        title: f.title,
+        kind,
+        box: place.box,
+      });
     });
   }
-  if (finding.criterionSc) return finding.criterionSc;
-  return undefined;
-}
-
-export type MarkerView = {
-  marker: ScanMarker;
-  state: MarkerState;
-  dimmed: boolean;
-  label?: string;
-  findingId: string | null;
-};
-
-export function buildMarkerViews(
-  markers: ScanMarker[],
-  selected: FindingView | null,
-  t: Translate,
-): MarkerView[] {
-  const selectedNs = new Set((selected?.markers ?? []).map((m) => m.n));
-
-  return markers.map((marker) => {
-    if (!selected) {
-      return { marker, state: "idle" as MarkerState, dimmed: false, findingId: null };
-    }
-    const belongs = selectedNs.has(marker.n);
-    return {
-      marker,
-      state: belongs ? ("selected" as MarkerState) : ("idle" as MarkerState),
-      dimmed: !belongs,
-      label: belongs ? markerLabel(selected, t) : undefined,
-      findingId: belongs ? selected.id : null,
-    };
-  });
+  return marks;
 }
 
 export function stepFocusStop(

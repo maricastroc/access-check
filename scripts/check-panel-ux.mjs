@@ -142,7 +142,9 @@ try {
     for (const el of focusable) {
       el.focus();
       const s = getComputedStyle(el);
-      const ring = s.outlineStyle !== "none" || s.boxShadow !== "none";
+      const brackets = getComputedStyle(el, "::after").backgroundImage;
+      const ring =
+        s.outlineStyle !== "none" || s.boxShadow !== "none" || (brackets && brackets !== "none");
       if (!ring) ringless.push(el.textContent.trim().slice(0, 30) || el.tagName);
     }
     return { count: focusable.length, ringless };
@@ -152,7 +154,7 @@ try {
   check(keyboard.ringless.length === 0, `no focus ring on: ${keyboard.ringless.join(", ")}`);
 
   const shift = await panel.evaluate(async () => {
-    const row = [...document.querySelectorAll("button")].find((b) => b.querySelector("h3"));
+    const row = document.querySelector("h3 > button");
     if (!row) return { skipped: true };
     const before = row.getBoundingClientRect().top;
     row.click();
@@ -167,12 +169,13 @@ try {
   await audit("/several");
   const severalPanel = await openPanel(400);
   const stepping = await severalPanel.evaluate(async () => {
-    const rows = () =>
-      [...document.querySelectorAll('section[aria-labelledby="group-fix"] button')].filter((b) =>
-        b.querySelector("h3"),
-      );
+    const rows = () => [
+      ...document.querySelectorAll('section[aria-labelledby="group-fix"] h3 > button'),
+    ];
     const byText = (text) =>
-      [...document.querySelectorAll("button")].find((b) => b.textContent.trim() === text);
+      [...document.querySelectorAll("button")].find(
+        (b) => b.textContent.replace(/[←→]/g, "").trim() === text,
+      );
     const opened = () => rows().findIndex((r) => r.getAttribute("aria-expanded") === "true");
     rows()[0]?.click();
     await new Promise((r) => setTimeout(r, 120));
@@ -183,7 +186,10 @@ try {
       .filter((b) => {
         b.focus();
         const s = getComputedStyle(b);
-        return s.outlineStyle === "none" && s.boxShadow === "none";
+        const brackets = getComputedStyle(b, "::after").backgroundImage;
+        return (
+          s.outlineStyle === "none" && s.boxShadow === "none" && (!brackets || brackets === "none")
+        );
       })
       .map((b) => b.textContent.trim());
     const total = rows().length;
@@ -222,8 +228,13 @@ try {
     const heading = (group) => document.getElementById(`group-${group}`);
     const read = (group) => heading(group)?.textContent.trim() ?? null;
     const holder = (group) => heading(group)?.closest("details") ?? null;
-    const band = document.querySelector('[aria-labelledby="verdict-heading"]').textContent;
-    const said = (label) => Number(band.match(new RegExp(`(\\d+) ${label}`))?.[1] ?? 0);
+    const band = [...document.querySelectorAll('[aria-labelledby="verdict-heading"] span')].map(
+      (s) => s.textContent.trim(),
+    );
+    const said = (label) =>
+      Number(
+        band.find((text) => new RegExp(`^\\d+ ${label}$`).test(text))?.match(/^\d+/)?.[0] ?? 0,
+      );
     const check = holder("check");
     const closedAtFirst = {
       check: check ? !check.open : null,
@@ -231,12 +242,13 @@ try {
     };
     check?.querySelector("summary").click();
     await new Promise((r) => setTimeout(r, 60));
-    const review = [...(check?.querySelectorAll("button") ?? [])].find(
-      (b) => b.querySelector("h3") && /Manual review/i.test(b.textContent),
-    );
+    const review = check
+      ?.querySelector('li[data-kind="manual-review"]')
+      ?.querySelector("h3 > button");
     review?.click();
     await new Promise((r) => setTimeout(r, 120));
-    const detail = review?.nextElementSibling?.innerText ?? "";
+    const section = review?.closest("li")?.querySelector("section") ?? null;
+    const detail = section?.innerText ?? "";
     return {
       fix: read("fix"),
       check: read("check"),
@@ -245,14 +257,14 @@ try {
       band: { fix: said("to fix"), check: said("to check by hand") },
       reviewOpened: !!review,
       howToCheck: /^How to check$/im.test(detail),
-      steps: review?.nextElementSibling?.querySelectorAll("ol li").length ?? 0,
+      steps: section?.querySelectorAll("ol.list-decimal li").length ?? 0,
       locate: /^Locate on page$/m.test(detail),
-      whatToChange: /^What to change$/im.test(detail),
+      whatToChange: /^Change$/m.test(detail),
       markerNote: /not pictured/.test(document.body.innerText),
     };
   });
   console.log("the queue's groups:", JSON.stringify(groups));
-  const listed = (label) => Number(label?.split("·")[1] ?? 0);
+  const listed = (label) => Number(label?.match(/(\d+)\s*$/)?.[1] ?? 0);
   const counted = await sw.evaluate(async () => {
     const { panelState } = await chrome.storage.session.get("panelState");
     const r = panelState.state.result;
@@ -290,7 +302,7 @@ try {
   await audit("/long");
   const longPanel = await openPanel(400);
   const long = await longPanel.evaluate(async () => {
-    const row = [...document.querySelectorAll("button")].find((b) => b.querySelector("h3"));
+    const row = document.querySelector("h3 > button");
     row?.click();
     await new Promise((r) => setTimeout(r, 200));
     const doc = document.documentElement;
@@ -319,9 +331,11 @@ try {
       if (!button) return null;
       window.scrollTo(0, Math.max(0, button.getBoundingClientRect().top - 120));
       document.getElementById("verdict-heading").dataset.probe = text;
+      button.parentElement.dataset.probeBox = text;
       const y = window.scrollY;
+      const top = button.parentElement.getBoundingClientRect().top;
       button.click();
-      return y;
+      return { y, top };
     }, label);
     if (before === null) return { label, missing: true };
     await keepPlace.waitForFunction(
@@ -337,18 +351,21 @@ try {
       { timeout: 30000 },
     );
     return keepPlace.evaluate(
-      ({ text, y }) => ({
+      ({ text, y, top }) => ({
         label: text,
         missing: false,
         before: y,
         after: window.scrollY,
+        boxBefore: top,
+        boxAfter:
+          document.querySelector(`[data-probe-box="${text}"]`)?.getBoundingClientRect().top ?? null,
         sameReport: document.getElementById("verdict-heading")?.dataset.probe === text,
         said:
           document
             .querySelector('[aria-labelledby="verdict-heading"] [role="status"]')
             ?.textContent.trim() ?? null,
       }),
-      { text: label, y: before },
+      { text: label, ...before },
     );
   };
   const walkedFrom = await staysPut("Check keyboard");
@@ -359,9 +376,10 @@ try {
     if (moved.missing) continue;
     check(moved.before > 100, `${moved.label} was pressed without the panel scrolled`);
     check(moved.sameReport, `${moved.label} replaced the reading instead of keeping it`);
+    check(moved.after > 100, `${moved.label} sent the panel back to the top`);
     check(
-      Math.abs(moved.after - moved.before) <= 2,
-      `${moved.label} moved the panel from ${moved.before}px to ${moved.after}px`,
+      moved.boxAfter !== null && Math.abs(moved.boxAfter - moved.boxBefore) <= 2,
+      `${moved.label} moved the keyboard check on screen from ${moved.boxBefore}px to ${moved.boxAfter}px`,
     );
     check(
       /^This round checked \d+ stops?\. \d+ keyboard problems? (is|are) in the queue\./.test(
@@ -391,7 +409,7 @@ try {
     const box = open?.getBoundingClientRect();
     return {
       button: true,
-      kind: open?.textContent.match(/KEYBOARD|Keyboard/)?.[0] ?? null,
+      kind: open?.closest("li")?.dataset.kind === "keyboard" ? "keyboard" : null,
       focused: document.activeElement === open,
       inView: !!box && box.top >= 0 && box.top < innerHeight,
     };
@@ -407,15 +425,16 @@ try {
   await walkFocusPath();
   const manyPanel = await openPanel(400);
   const many = await manyPanel.evaluate(async () => {
-    const row = [...document.querySelectorAll("button")].find(
-      (b) => b.querySelector("h3") && /focus/i.test(b.textContent),
+    const row = [...document.querySelectorAll("h3 > button")].find((b) =>
+      /focus/i.test(b.textContent),
     );
     row?.click();
     await new Promise((r) => setTimeout(r, 250));
     const counter = () =>
       [...document.querySelectorAll("span")]
         .map((h) => h.textContent.trim())
-        .find((t) => /^Occurrence \d+ of \d+$/.test(t));
+        .map((t) => t.match(/^Occurrence \d+ of \d+/)?.[0])
+        .find(Boolean);
     const first = counter();
     document.querySelector('button[aria-label="Next occurrence"]')?.click();
     await new Promise((r) => setTimeout(r, 80));
@@ -434,7 +453,7 @@ try {
   await audit("/plain");
   const live = await openPanel(400);
   const pinned = await live.evaluate(async () => {
-    const row = [...document.querySelectorAll("button")].find((b) => b.querySelector("h3"));
+    const row = document.querySelector("h3 > button");
     row?.click();
     await new Promise((r) => setTimeout(r, 150));
     const bar = document.querySelector("h1").parentElement;
@@ -480,7 +499,7 @@ try {
     await live.waitForTimeout(200);
     secondReading = await scannedAt();
   }
-  await live.waitForFunction(() => document.body.textContent.includes("To fix ·"), null, {
+  await live.waitForFunction(() => document.getElementById("group-fix") !== null, null, {
     timeout: 20000,
   });
   console.log(

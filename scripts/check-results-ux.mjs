@@ -92,35 +92,18 @@ const overflow = (page) =>
   });
 
 const legend = (page) =>
+  page.evaluate(() => document.getElementById("capture-legend")?.textContent.trim() ?? "");
+
+const caption = (page) =>
   page.evaluate(
-    () =>
-      [...document.querySelectorAll("span")]
-        .map((s) => s.textContent.trim())
-        .find((t) => /^Screenshot|^Captura/.test(t)) ?? "",
+    () => document.querySelector('#evidence p[role="status"]')?.textContent.trim() ?? "",
   );
-
-const banner = (page) =>
-  page.evaluate(() =>
-    [...document.querySelectorAll("p")]
-      .filter((p) => p.className.includes("bottom-0"))
-      .map((p) => p.textContent.trim())
-      .join(" "),
-  );
-
-const openStops = (page) =>
-  page.evaluate(async () => {
-    const summary = [...document.querySelectorAll("summary")].find((s) =>
-      /focus-path stops|paradas/i.test(s.textContent ?? ""),
-    );
-    summary?.click();
-    await new Promise((r) => setTimeout(r, 300));
-    return Boolean(summary);
-  });
 
 const pickStop = (page, n) =>
   page.evaluate(async (stop) => {
-    const row = document.getElementById(`focus-stop-row-${stop}`);
-    const button = row?.querySelector("button") ?? row;
+    const button = document
+      .getElementById("focus-heading")
+      ?.parentElement?.querySelector(`button[data-stop="${stop}"]`);
     button?.click();
     await new Promise((r) => setTimeout(r, 400));
     return Boolean(button);
@@ -129,11 +112,93 @@ const pickStop = (page, n) =>
 const backButton = (page) =>
   page.evaluate(() =>
     Boolean(
-      [...document.querySelectorAll("button")].find((b) =>
+      [...document.querySelectorAll("#evidence button")].find((b) =>
         /Back to the first screenshot|Voltar à primeira captura/.test(b.textContent ?? ""),
       ),
     ),
   );
+
+const showFindings = (page) =>
+  page.evaluate(async () => {
+    const tab = [...document.querySelectorAll('[role="tab"]')].find(
+      (b) => !/Screenshot|Captura/.test(b.textContent ?? ""),
+    );
+    tab?.click();
+    await new Promise((r) => setTimeout(r, 300));
+  });
+
+const queueOf = (page) =>
+  page.evaluate(() =>
+    [...document.querySelectorAll("[data-group]")].map((g) => ({
+      group: g.dataset.group,
+      heading: (g.querySelector("h2")?.textContent ?? "").replace(/\s+/g, " ").trim(),
+      open: g.tagName === "DETAILS" ? g.open : true,
+      rows: g.querySelectorAll("li[data-finding] h3 > button").length,
+    })),
+  );
+
+const openFinding = (page, pattern) =>
+  page.evaluate(async (source) => {
+    const row = [...document.querySelectorAll("li[data-finding] h3 > button")].find((b) =>
+      new RegExp(source, "i").test(b.textContent ?? ""),
+    );
+    row?.closest("details")?.setAttribute("open", "");
+    if (row && row.getAttribute("aria-expanded") !== "true") row.click();
+    await new Promise((r) => setTimeout(r, 500));
+    const section = row?.closest("li")?.querySelector("section");
+    if (!section) return null;
+    const verdict = [...section.querySelectorAll("details")].find((d) =>
+      /How this was verified/.test(d.querySelector("summary")?.textContent ?? ""),
+    );
+    const details = [...section.querySelectorAll("details")].find((d) =>
+      /^Details$/.test(d.querySelector("summary")?.textContent.trim() ?? ""),
+    );
+    return {
+      stations: [...section.querySelectorAll(":scope > ol > li > h4")].map((h) =>
+        h.firstElementChild.textContent.trim(),
+      ),
+      end: section.dataset.chainEnd,
+      testedInVerdict: Boolean(verdict),
+      verdictOpen: verdict?.open ?? null,
+      detailsOpen: details?.open ?? null,
+      steps: section.querySelectorAll("ol.list-decimal li").length,
+      guessNote: /not counted as a failure/.test(section.textContent ?? ""),
+      showButton: [...section.querySelectorAll("button")].some((b) =>
+        /Show on screenshot/.test(b.textContent ?? ""),
+      ),
+      focused: document.activeElement === row,
+    };
+  }, pattern);
+
+const marksOn = (page) =>
+  page.evaluate(() => {
+    const figure = document.getElementById("capture-figure");
+    return {
+      findings: figure?.querySelectorAll('button[aria-label^="Finding "]').length ?? 0,
+      stops: figure?.querySelectorAll('button[aria-label^="Focus stop"]').length ?? 0,
+      current: Boolean(figure?.querySelector('[data-anchor="locus-current"]')),
+    };
+  });
+
+const layer = (page, name) =>
+  page.evaluate(async (label) => {
+    const option = [...document.querySelectorAll("#evidence fieldset label")].find(
+      (l) => l.textContent.trim() === label,
+    );
+    option?.click();
+    await new Promise((r) => setTimeout(r, 300));
+    return Boolean(option);
+  }, name);
+
+const layerControl = (page) =>
+  page.evaluate(() => {
+    const set = document.querySelector("#evidence fieldset");
+    return {
+      legend: set?.querySelector("legend")?.textContent.trim() ?? null,
+      radios: set?.querySelectorAll('input[type="radio"]').length ?? 0,
+      checked: set?.querySelector("input:checked")?.parentElement.textContent.trim() ?? null,
+    };
+  });
 
 try {
   for (const width of [1280, 1440]) {
@@ -158,19 +223,19 @@ try {
   {
     const { page, context } = await open(1440);
     const top = await page.evaluate(() => {
-      const heading = [...document.querySelectorAll("section")].find((s) =>
-        /Where this page stands/i.test(s.textContent ?? ""),
-      );
-      const firstRow = [...document.querySelectorAll("button")].find((b) => b.querySelector("h3"));
+      const standing = document.getElementById("standing-heading");
+      const firstRow = document.querySelector("li[data-finding] h3 > button");
+      const caseFile = document.getElementById("case-file");
       const about = [...document.querySelectorAll("details")].find((d) =>
         /About this audit/.test(d.querySelector("summary")?.textContent ?? ""),
       );
       const text = document.body.innerText;
       return {
-        bandHeight: heading ? Math.round(heading.getBoundingClientRect().height) : null,
+        h1: document.querySelectorAll("h1").length,
+        standingIsH1: standing?.tagName === "H1",
         firstRow: firstRow ? Math.round(firstRow.getBoundingClientRect().top + scrollY) : null,
-        work: /\d+ to fix|\d+ to check by hand/.test(heading?.textContent ?? ""),
-        chips: /fails|No failures|not evaluated/i.test(heading?.textContent ?? ""),
+        work: /\d+ to fix|\d+ to check by hand/.test(caseFile?.textContent ?? ""),
+        chips: /fails|No failures|not evaluated/i.test(caseFile?.textContent ?? ""),
         share: /of what is left|What to fix first/i.test(text),
         partialAtTop: [...document.querySelectorAll("h3")].some(
           (h) => /^Partial report$/.test(h.textContent.trim()) && !h.closest("details"),
@@ -189,19 +254,18 @@ try {
             /^Provenance$/i.test(el.textContent.trim()) &&
             !el.closest("details"),
         ),
+        capture: Boolean(document.querySelector("#capture-figure img")),
       };
     });
     console.log("the top of the results:", JSON.stringify(top));
+    check(top.h1 === 1 && top.standingIsH1, "the standing is not the page's one h1");
     check(
-      top.bandHeight !== null && top.bandHeight <= 200,
-      `the summary band is ${top.bandHeight}px tall`,
-    );
-    check(
-      top.firstRow !== null && top.firstRow < 450,
+      top.firstRow !== null && top.firstRow < 700,
       `the first finding starts at ${top.firstRow}px`,
     );
     check(top.work, "the top does not say how much work is left");
     check(top.chips, "the WCAG chips left the top");
+    check(top.capture, "the capture is not beside the case file");
     check(!top.share, "the share of what is left is still on the page");
     check(!top.partialAtTop, "the partial report still opens the page");
     check(top.about && !top.about.open, "About this audit is missing or open by default");
@@ -217,70 +281,50 @@ try {
     await context.close();
   }
 
-  const queueOf = (page) =>
-    page.evaluate(() =>
-      [...document.querySelectorAll("[data-group]")].map((g) => ({
-        group: g.dataset.group,
-        heading: g.querySelector("h2")?.textContent.trim() ?? "",
-        open: g.tagName === "DETAILS" ? g.open : true,
-        rows: g.querySelectorAll("button h3").length,
-      })),
-    );
-
   {
     const { page, context } = await open(1440);
     const queue = await queueOf(page);
-    const leftovers = await page.evaluate(() =>
-      [...document.querySelectorAll("summary")].some((s) =>
-        /manual-review items/i.test(s.textContent ?? ""),
-      ),
-    );
-    await page.evaluate(() => {
-      const check = document.querySelector('details[data-group="check"]');
-      if (check) check.open = true;
-    });
-    await page.waitForTimeout(200);
     const review = await page.evaluate(async () => {
-      const row = document.querySelector('details[data-group="check"] button');
+      const group = document.querySelector('details[data-group="check"]');
+      if (group) group.open = true;
+      await new Promise((r) => setTimeout(r, 200));
+      const row = group?.querySelector("li[data-finding] h3 > button");
       row?.click();
       await new Promise((r) => setTimeout(r, 400));
-      const detail = row?.parentElement;
+      const section = row?.closest("li")?.querySelector("section");
       return {
-        howToCheck: /How to check/.test(detail?.textContent ?? ""),
-        steps: detail?.querySelectorAll("ol li").length ?? 0,
-        guessNote: /not counted as a failure/.test(detail?.textContent ?? ""),
+        end: section?.dataset.chainEnd ?? null,
+        howToCheck: /How to check/.test(section?.textContent ?? ""),
+        steps: section?.querySelectorAll("ol.list-decimal li").length ?? 0,
+        guessNote: /not counted as a failure/.test(section?.textContent ?? ""),
+        change: [...(section?.querySelectorAll("h4") ?? [])].some(
+          (h) => h.firstElementChild?.textContent.trim() === "Change",
+        ),
       };
     });
-    console.log("the work queue:", JSON.stringify({ queue, leftovers, review }));
+    console.log("the work queue:", JSON.stringify({ queue, review }));
     check(
       queue.map((g) => g.group).join() === "fix,check,recommend",
       `the queue groups are ${queue.map((g) => g.group).join()}`,
     );
-    check(queue[0]?.heading === "To fix · 3", `the fix group reads ${queue[0]?.heading}`);
+    check(queue[0]?.heading === "To fix 3", `the fix group reads ${queue[0]?.heading}`);
+    check(queue[1]?.heading === "To check by hand 1", `the check group reads ${queue[1]?.heading}`);
     check(
-      queue[1]?.heading === "To check by hand · 1",
-      `the check group reads ${queue[1]?.heading}`,
-    );
-    check(
-      queue[2]?.heading === "Recommendations · 1",
+      queue[2]?.heading === "Recommendations 1",
       `the recommendations read ${queue[2]?.heading}`,
     );
     check(queue[0]?.open && queue[0]?.rows === 3, "the fix group is not open with its three rows");
     check(!queue[1]?.open && !queue[2]?.open, "a secondary group starts open");
-    check(!leftovers, "the manual-review list still sits apart from the queue");
+    check(review.end === "person", `a manual review ends with ${review.end}, not a person`);
     check(review.howToCheck && review.steps > 0, "a manual review lost its steps to check");
+    check(!review.change, "a manual review is framed as something to change");
     check(!review.guessNote, "a manual review is explained as a guess");
     await context.close();
   }
 
   {
     const { page, context } = await open(420);
-    await page.evaluate(() =>
-      [...document.querySelectorAll('[role="tab"]')]
-        .find((b) => /Findings/.test(b.textContent ?? ""))
-        ?.click(),
-    );
-    await page.waitForTimeout(300);
+    await showFindings(page);
     const queue = await queueOf(page);
     console.log("the work queue on a phone:", JSON.stringify(queue));
     check(
@@ -296,83 +340,38 @@ try {
     console.log("the work queue in pt-BR:", JSON.stringify(queue.map((g) => g.heading)));
     check(
       queue.map((g) => g.heading).join(" | ") ===
-        "A corrigir · 3 | Conferir à mão · 1 | Recomendações · 1",
+        "A corrigir 3 | Conferir à mão 1 | Recomendações 1",
       "the pt-BR queue headings are off",
     );
     await context.close();
   }
 
-  const readDetail = (page, pattern) =>
-    page.evaluate(async (source) => {
-      const row = [...document.querySelectorAll("button")].find(
-        (b) => b.querySelector("h3") && new RegExp(source, "i").test(b.textContent ?? ""),
-      );
-      row?.click();
-      await new Promise((r) => setTimeout(r, 500));
-      const detail = row?.nextElementSibling;
-      if (!detail) return null;
-      const parts = [...detail.querySelectorAll("h4")].map((h) => h.textContent.trim());
-      const change = [...detail.querySelectorAll("section")].find((s) =>
-        /^What to change/.test(s.querySelector("h4")?.textContent ?? ""),
-      );
-      const details = detail.querySelector("details");
-      return {
-        parts,
-        sealInChange: /Fix tested/.test(change?.textContent ?? ""),
-        detailsOpen: details?.open ?? null,
-        showButton: [...detail.querySelectorAll("button")].some((b) =>
-          /Show on screenshot/.test(b.textContent ?? ""),
-        ),
-      };
-    }, pattern);
-
   {
     const { page, context } = await open(1440);
-    const contrast = await readDetail(page, "contrast ratio");
-    const under = await page.evaluate(() => {
-      const frame = document.getElementById("evidence");
-      return {
-        elementAndCode: /Element and code/i.test(frame?.textContent ?? ""),
-        code: Boolean(frame?.querySelector("pre, code")),
-      };
-    });
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-    await page.waitForTimeout(200);
-    const altText = await readDetail(page, "alternative text");
-    await page.evaluate(() =>
-      [...document.querySelectorAll("button")]
-        .find((b) => /Show on screenshot/.test(b.textContent ?? ""))
-        ?.click(),
-    );
-    await page.waitForTimeout(800);
-    const frameTop = await page.evaluate(() =>
-      Math.round(document.getElementById("evidence")?.getBoundingClientRect().top ?? -1),
-    );
-    console.log("an opened finding:", JSON.stringify({ contrast, altText, under, frameTop }));
+    const contrast = await openFinding(page, "contrast ratio");
+    const onContrast = await marksOn(page);
+    const altText = await openFinding(page, "alternative text");
+    const onAlt = await marksOn(page);
+    const connector = await page.evaluate(() => Boolean(document.querySelector("svg.fixed path")));
+    console.log("an opened finding:", JSON.stringify({ contrast, onContrast, altText, onAlt }));
     check(
-      contrast?.parts.join(" > ") === "Where > What to change > Why > Details",
-      `the detail reads ${contrast?.parts.join(" > ")}`,
+      contrast?.stations.join(" > ") === "Located > Measured > Change > Verified",
+      `the contrast chain reads ${contrast?.stations.join(" > ")}`,
     );
-    check(contrast?.sealInChange, "Fix tested sits outside what to change");
-    check(contrast?.detailsOpen === false, "the details start open");
-    check(altText?.showButton, "where does not lead to the screenshot");
-    check(frameTop >= 0 && frameTop < 200, `Show on screenshot left the frame at ${frameTop}px`);
-    check(
-      !under.elementAndCode && !under.code,
-      "the screenshot still repeats the element and code",
-    );
+    check(contrast?.end === "tested", `the contrast chain ends ${contrast?.end}`);
+    check(contrast?.testedInVerdict, "how the fix was tested left the verdict");
+    check(contrast?.verdictOpen === false, "how the fix was tested starts open");
+    check(contrast?.detailsOpen === false, "the element details start open");
+    check(altText?.stations[0] === "Located", `the alt text chain reads ${altText?.stations}`);
+    check(onAlt.current, "opening a finding did not mark it on the capture");
+    check(connector, "nothing ties the opened finding to its place on the capture");
     await context.close();
   }
 
   {
     const { page, context } = await open(420);
-    await page.evaluate(() =>
-      [...document.querySelectorAll('[role="tab"]')]
-        .find((b) => /Findings/.test(b.textContent ?? ""))
-        ?.click(),
-    );
-    await page.waitForTimeout(300);
-    const altText = await readDetail(page, "alternative text");
+    await showFindings(page);
+    const altText = await openFinding(page, "alternative text");
     await page.evaluate(() =>
       [...document.querySelectorAll("button")]
         .find((b) => /Show on screenshot/.test(b.textContent ?? ""))
@@ -383,10 +382,8 @@ try {
       () => document.querySelector('[role="tab"][aria-selected="true"]')?.textContent ?? "",
     );
     console.log("an opened finding on a phone:", JSON.stringify({ altText, tab }));
-    check(
-      altText?.parts.join(" > ") === "Where > What to change > Why > Details",
-      `the phone detail reads ${altText?.parts.join(" > ")}`,
-    );
+    check(altText?.stations[0] === "Located", `the phone chain reads ${altText?.stations}`);
+    check(altText?.showButton, "the phone chain does not lead to the screenshot");
     check(/Screenshot/.test(tab), "Show on screenshot did not bring the phone to the screenshot");
     await context.close();
   }
@@ -400,23 +397,24 @@ try {
   }
 
   const { page, context } = await open(1440);
-  await openStops(page);
 
   await pickStop(page, 3);
   const first = {
     legend: await legend(page),
-    banner: await banner(page),
+    caption: await caption(page),
     back: await backButton(page),
+    marks: await marksOn(page),
   };
   console.log("stop in the first capture:", JSON.stringify(first));
   check(/1200/.test(first.legend), `the first capture lost its label: ${first.legend}`);
   check(!first.back, "the first capture offers a way back to itself");
-  check(first.banner === "", `the first capture explains itself away: ${first.banner}`);
+  check(first.caption === "", `the first capture explains itself away: ${first.caption}`);
+  check(first.marks.stops > 0, "picking a stop did not draw the focus path");
 
   await pickStop(page, 12);
   const contextual = {
     legend: await legend(page),
-    banner: await banner(page),
+    caption: await caption(page),
     back: await backButton(page),
   };
   console.log("stop in a contextual capture:", JSON.stringify(contextual));
@@ -425,10 +423,10 @@ try {
     `the contextual capture is unlabelled: ${contextual.legend}`,
   );
   check(contextual.back, "a contextual capture offers no way back");
-  check(contextual.banner === "", `a placed stop was explained away: ${contextual.banner}`);
+  check(contextual.caption === "", `a placed stop was explained away: ${contextual.caption}`);
 
   await page.evaluate(() => {
-    [...document.querySelectorAll("button")]
+    [...document.querySelectorAll("#evidence button")]
       .find((b) => /Back to the first screenshot/.test(b.textContent ?? ""))
       ?.click();
   });
@@ -442,136 +440,75 @@ try {
   check(!returned.back, "Back stayed on screen after returning");
 
   await pickStop(page, 28);
-  const scroller = {
-    banner: await banner(page),
-    boxes: await page.evaluate(
-      () => document.querySelectorAll('[aria-label^="Focus stop"]').length,
-    ),
-  };
+  const scroller = await caption(page);
   console.log("stop inside a scroller:", JSON.stringify(scroller));
-  check(
-    /scrolling area/i.test(scroller.banner),
-    `the scroller case says nothing: ${scroller.banner}`,
-  );
-  check(
-    /at rest/i.test(scroller.banner),
-    "the scroller case does not say why the position is not drawn",
-  );
-  check(
-    !/#feed/.test(scroller.banner) || !/ > /.test(scroller.banner),
-    "a css path leaked into the sentence",
-  );
+  check(/scrolling area/i.test(scroller), `the scroller case says nothing: ${scroller}`);
+  check(/at rest/i.test(scroller), "the scroller case does not say why the position is not drawn");
+  check(!/#feed/.test(scroller) || !/ > /.test(scroller), "a css path leaked into the sentence");
 
   await pickStop(page, 41);
   const missed = {
     legend: await legend(page),
     back: await backButton(page),
-    panel: await page.evaluate(
-      () =>
-        [...document.querySelectorAll("section, div")]
-          .map((d) => d.textContent ?? "")
-          .filter((t) => /was not captured|não foi capturada/.test(t))
-          .sort((a, b) => a.length - b.length)[0]
-          ?.slice(0, 160) ?? "",
-    ),
-    image: await page.evaluate(() =>
-      Boolean([...document.querySelectorAll("img")].some((i) => i.src.startsWith("data:image"))),
-    ),
+    panel: await page.evaluate(() => document.getElementById("evidence")?.textContent ?? ""),
+    image: await page.evaluate(() => Boolean(document.querySelector("#capture-figure img"))),
   };
   console.log("stop in a region the budget could not pay for:", JSON.stringify(missed));
   check(/3200px/.test(missed.legend), `the missed region kept another label: ${missed.legend}`);
   check(!missed.image, "a missed region still shows a screenshot underneath");
-  check(/was not captured/i.test(missed.panel), `the missed region says nothing: ${missed.panel}`);
-  check(/weight/i.test(missed.panel), `the missed region does not say why: ${missed.panel}`);
+  check(/was not captured/i.test(missed.panel), "the missed region says nothing");
+  check(/weight/i.test(missed.panel), "the missed region does not say why");
   check(missed.back, "a missed region offers no way back to the first capture");
   await context.close();
 
   const wide = await open(1560);
-  const layout = await wide.page.evaluate(() => {
-    const img = [...document.querySelectorAll("img")].find((i) => i.src.startsWith("data:image"));
-    return {
-      rail: Boolean(document.querySelector("div.bg-band.border-r")),
-      overlayLabel: [...document.querySelectorAll("section, div")].some((d) =>
-        /^OVERLAY$/i.test((d.firstElementChild?.textContent ?? "").trim()),
-      ),
-      shot: img ? Math.round(img.getBoundingClientRect().width) : 0,
-    };
-  });
-  console.log("layout at 1560px:", JSON.stringify(layout));
-  check(!layout.rail, "the overlay column is back");
-  check(!layout.overlayLabel, "an OVERLAY heading is still on the page");
-  check(
-    layout.shot / 1200 >= 0.88,
-    `the screenshot renders at ${Math.round((layout.shot / 1200) * 100)}%`,
+  const shot = await wide.page.evaluate(() =>
+    Math.round(document.querySelector("#capture-figure img")?.getBoundingClientRect().width ?? 0),
   );
+  console.log("capture at 1560px:", shot);
+  check(shot / 1200 >= 0.7, `the screenshot renders at ${Math.round((shot / 1200) * 100)}%`);
 
-  const count = (page) =>
-    page.evaluate(() => ({
-      markers: document.querySelectorAll('[aria-label^="Marker "]').length,
-      stops: document.querySelectorAll('[aria-label^="Focus stop"]').length,
-    }));
-  const press = (page, pattern) =>
-    page.evaluate(async (source) => {
-      const button = [...document.querySelectorAll("button")].find((b) =>
-        new RegExp(source).test(b.textContent ?? ""),
-      );
-      button?.click();
-      await new Promise((r) => setTimeout(r, 300));
-      return Boolean(button);
-    }, pattern);
-  const openFinding = (page, pattern) =>
-    page.evaluate(async (source) => {
-      const row = [...document.querySelectorAll("button")].find(
-        (b) => b.querySelector("h3") && new RegExp(source, "i").test(b.textContent ?? ""),
-      );
-      row?.click();
-      await new Promise((r) => setTimeout(r, 400));
-      return Boolean(row);
-    }, pattern);
+  const control = await layerControl(wide.page);
+  console.log("the choice of marks:", JSON.stringify(control));
+  check(control.legend === "Marks", `the choice of marks is labelled ${control.legend}`);
+  check(control.radios === 3, `the choice of marks offers ${control.radios} options`);
+  check(control.checked === "Findings", `the capture opens on ${control.checked}`);
 
-  const shown = await count(wide.page);
-  await press(wide.page, "^Hide overlay$");
-  const hidden = await count(wide.page);
-  const hiddenLabel = await wide.page.evaluate(() =>
-    [...document.querySelectorAll("button")].some((b) =>
-      /^Show overlay$/.test(b.textContent ?? ""),
-    ),
-  );
-  await press(wide.page, "^Show overlay$");
-  const restored = await count(wide.page);
-  console.log("overlay toggle:", JSON.stringify({ shown, hidden, hiddenLabel, restored }));
-  check(shown.markers > 0, "nothing is marked before the toggle is touched");
-  check(
-    hidden.markers === 0 && hidden.stops === 0,
-    "hiding the overlay left marks on the screenshot",
-  );
-  check(hiddenLabel, "the toggle does not offer to show the overlay again");
-  check(restored.markers === shown.markers, "showing the overlay again lost marks");
+  const shown = await marksOn(wide.page);
+  await layer(wide.page, "None");
+  const hidden = await marksOn(wide.page);
+  await layer(wide.page, "Findings");
+  const restored = await marksOn(wide.page);
+  console.log("layers:", JSON.stringify({ shown, hidden, restored }));
+  check(shown.findings > 0, "nothing is marked before the layers are touched");
+  check(hidden.findings === 0 && hidden.stops === 0, "None left marks on the screenshot");
+  check(restored.findings === shown.findings, "showing the findings again lost marks");
 
-  await openStops(wide.page);
   await pickStop(wide.page, 3);
-  const onStop = await count(wide.page);
+  const onStop = await marksOn(wide.page);
   await openFinding(wide.page, "alternative text");
-  const onFinding = await count(wide.page);
+  const onFinding = await marksOn(wide.page);
   console.log("stop then finding:", JSON.stringify({ onStop, onFinding }));
   check(onStop.stops > 0, "picking a stop did not draw the focus path");
-  check(onFinding.markers > 0, "picking a finding after a stop did not bring its marker back");
+  check(onFinding.current, "picking a finding after a stop did not bring its mark back");
   check(onFinding.stops === 0, "picking a finding left the focus path drawn over it");
+
+  const keyboard = await wide.page.evaluate(async () => {
+    const row = document.querySelector('li[data-finding] h3 > button[aria-expanded="false"]');
+    row.focus();
+    row.click();
+    await new Promise((r) => setTimeout(r, 300));
+    return document.activeElement === row && row.getAttribute("aria-expanded") === "true";
+  });
+  check(keyboard, "opening a finding moved keyboard focus off its row");
   await wide.context.close();
 
   const pt = await open(1440, "pt-BR");
-  await openStops(pt.page);
   await pickStop(pt.page, 12);
   const ptLegend = await legend(pt.page);
-  const ptBack = await pt.page.evaluate(() =>
-    Boolean(
-      [...document.querySelectorAll("button")].find((b) =>
-        /Voltar à primeira captura/.test(b.textContent ?? ""),
-      ),
-    ),
-  );
+  const ptBack = await backButton(pt.page);
   await pickStop(pt.page, 28);
-  const ptScroller = await banner(pt.page);
+  const ptScroller = await caption(pt.page);
   console.log(
     "pt-BR:",
     JSON.stringify({ legend: ptLegend, back: ptBack, scroller: ptScroller.slice(0, 80) }),

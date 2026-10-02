@@ -100,6 +100,7 @@ export type ScanRegion = {
 export type ScanMarker = {
   n: number;
   captureId?: string;
+  selector?: string;
   severity: Severity;
   label: string;
   left: number;

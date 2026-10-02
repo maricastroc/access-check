@@ -122,19 +122,19 @@ try {
   const report = await ctx.newPage();
   await report.setViewportSize({ width: 400, height: 720 });
   await report.goto(`chrome-extension://${sw.url().split("/")[2]}/panel.html`);
-  await report.waitForFunction(() => document.body.textContent.includes("To fix"), null, {
+  await report.waitForFunction(() => document.getElementById("group-fix") !== null, null, {
     timeout: 20000,
   });
 
   const seen = await report.evaluate(() => {
     const text = document.body.textContent;
-    const rows = [...document.querySelectorAll("button h3")];
+    const rows = [...document.querySelectorAll("li[data-finding] h3 > button")];
     return {
       text: text.slice(0, 160),
       groups: Object.fromEntries(
         [...document.querySelectorAll("h2")]
           .map((s) =>
-            s.textContent.trim().match(/^(To fix|To check by hand|Recommendations) · (\d+)$/),
+            s.textContent.trim().match(/^(To fix|To check by hand|Recommendations)\s*(\d+)$/),
           )
           .filter(Boolean)
           .map((m) => [m[1], Number(m[2])]),
@@ -144,10 +144,8 @@ try {
         Number(h.tagName.slice(1)),
       ),
       firstHeading: document.querySelector("h1")?.textContent?.trim() ?? null,
-      rows: rows.map((h) => h.textContent),
-      origins: [...document.querySelectorAll("button .font-cond.uppercase")].map(
-        (s) => s.textContent,
-      ),
+      rows: rows.map((b) => b.closest("li").id),
+      origins: rows.map((b) => b.innerText),
       readsThisTab: text.includes("This tab"),
       focusPending:
         text.includes("Keyboard not checked yet") &&
@@ -168,13 +166,23 @@ try {
       claimsClean: /\bExcellent\b/i.test(text),
       claimsNoFailures: /no automated .* failures/i.test(text),
       band: (() => {
-        const band =
-          document.querySelector('[aria-labelledby="verdict-heading"]')?.textContent ?? "";
-        const read = (label) => Number(band.match(new RegExp(`(\\d+) ${label}`))?.[1] ?? 0);
-        return { fix: read("to fix"), check: read("to check by hand"), dl: /<dl/.test(band) };
+        const band = document.querySelector('[aria-labelledby="verdict-heading"]');
+        const lines = [...(band?.querySelectorAll("span") ?? [])].map((x) => x.textContent.trim());
+        const read = (label) =>
+          Number(
+            lines.find((text) => new RegExp(`^\\d+ ${label}$`).test(text))?.match(/^\d+/)?.[0] ?? 0,
+          );
+        return {
+          fix: read("to fix"),
+          check: read("to check by hand"),
+          dl: !!band?.querySelector("dl"),
+        };
       })(),
       screenshot: !!document.querySelector("img[alt^='Screenshot of']"),
-      markers: document.querySelectorAll("span[title]").length,
+      markers:
+        document
+          .querySelector("img[alt^='Screenshot of']")
+          ?.parentElement.querySelectorAll("span[data-sev]").length ?? 0,
       evidenceCollapsed: [...document.querySelectorAll("details")].some(
         (d) => !!d.querySelector("img[alt^='Screenshot of']") && !d.open,
       ),
@@ -190,11 +198,7 @@ try {
       ),
       order: [...document.querySelectorAll("h1, h2")]
         .map((s) => s.textContent.trim())
-        .filter((t) =>
-          /^(Quick audit score|Current-tab audit score|To fix · \d+|Focus path|About this audit)/.test(
-            t,
-          ),
-        ),
+        .filter((t) => /^(To fix\s*\d+|Focus path|About this audit)/.test(t)),
       requests: performance
         .getEntriesByType("resource")
         .filter((r) => !r.name.startsWith("chrome-extension://")).length,
@@ -287,25 +291,24 @@ try {
 
   await report.keyboard.press("Tab");
   const expanded = await report.evaluate(async () => {
-    const rows = [...document.querySelectorAll("button")].filter((b) => b.querySelector("h3"));
+    const rows = [...document.querySelectorAll('section[data-group="fix"] h3 > button')];
     const row = rows[0];
     row.focus();
     const focused = document.activeElement === row;
 
     const sealed = [];
     for (const each of rows) {
+      const cue = /\btested\b/.test(each.innerText);
       each.click();
       await new Promise((r) => setTimeout(r, 40));
-      const text = each.nextElementSibling?.innerText ?? "";
+      const section = each.closest("li").querySelector("section");
+      const text = section?.innerText ?? "";
       const at = (label) => text.search(new RegExp(`^${label}$`, "im"));
       sealed.push({
-        rule: each.innerText.split("\n").find((l) => /^[a-z-]+$/.test(l.trim())) ?? "",
-        section: /^(fix tested|needs review)$/im.test(text),
-        cue: /fix tested|needs review/i.test(each.innerText),
-        ordered:
-          at("where") === 0 &&
-          at("where") < at("what to change") &&
-          at("what to change") < at("why"),
+        rule: each.closest("li").id.split(":").pop(),
+        section: section?.dataset.chainEnd === "tested",
+        cue,
+        ordered: at("located") === 0 && at("located") < Math.max(at("measured"), at("evidence")),
         locate: /^Locate on page$/m.test(text),
       });
       each.click();
@@ -317,7 +320,7 @@ try {
     const doc = document.documentElement;
     return {
       focused,
-      fix: !!document.querySelector("button + div p"),
+      fix: !!document.querySelector("section[id^='investigation-'] p"),
       overflow: doc.scrollWidth - doc.clientWidth,
       sealed,
       stale:
@@ -352,24 +355,24 @@ try {
   }
 
   const locating = await report.evaluate(async () => {
-    const row = [...document.querySelectorAll("button")].find(
-      (b) => b.querySelector("h3") && /color-contrast/.test(b.innerText),
-    );
+    const row = document.querySelector('li[id$=":color-contrast"] h3 > button');
     if (row.getAttribute("aria-expanded") !== "true") row.click();
     await new Promise((r) => setTimeout(r, 60));
-    const locate = [...row.nextElementSibling.querySelectorAll("button")].find(
+    const section = row.closest("li").querySelector("section");
+    const locate = [...section.querySelectorAll("button")].find(
       (b) => b.textContent.trim() === "Locate on page",
     );
     locate.click();
     await new Promise((r) => setTimeout(r, 900));
-    return { notice: row.nextElementSibling.querySelector('[role="status"]')?.textContent ?? null };
+    return { notice: section.querySelector('[role="status"]')?.textContent || null };
   });
   const drawn = await page.evaluate(() => {
-    const root = document.getElementById("accesscheck-overlay");
-    const box = root?.firstElementChild?.getBoundingClientRect();
+    const root = document.getElementById("accesscheck-overlay")?.shadowRoot;
+    const marks = [...(root?.querySelectorAll("[data-mark]") ?? [])];
+    const box = marks.find((m) => m.dataset.current === "true")?.getBoundingClientRect();
     const target = document.querySelector("p[style]").getBoundingClientRect();
     return {
-      boxes: root ? root.children.length : 0,
+      boxes: marks.length,
       onTarget:
         !!box && Math.abs(box.top - target.top) < 12 && Math.abs(box.left - target.left) < 12,
     };

@@ -96,23 +96,28 @@ try {
 
   const readFindings = () =>
     panel.evaluate(async () => {
-      const rows = [...document.querySelectorAll("button")].filter((b) => b.querySelector("h3"));
+      const rows = [...document.querySelectorAll("li[data-finding] h3 > button")];
       const seen = [];
       for (const row of rows) {
+        row.closest("details")?.setAttribute("open", "");
+        const cue = /\btested\b/.test(row.innerText);
         row.click();
         await new Promise((r) => setTimeout(r, 120));
-        const text = row.parentElement.innerText;
-        const element =
-          text
-            .split(/^WHERE$/m)[1]
-            ?.split(/^[A-Z ]{4,}$/m)[0]
-            ?.trim() ?? null;
+        const section = row.closest("li").querySelector("section");
+        const located = section
+          ?.querySelector('[data-anchor="station-located"]')
+          ?.closest("li")?.innerText;
         seen.push({
-          rule: (row.innerText.match(/\n([a-z][a-z0-9-]+)\n/) ?? [])[1] ?? null,
-          cue: /fix tested|needs review/.test(row.innerText),
-          section: /^(Fix tested|Needs review)$/m.test(text),
-          seal: (text.match(/^(Fix tested|Needs review)$/m) ?? [])[1] ?? null,
-          element: element ? element.split("\n").map((l) => l.trim()) : null,
+          rule: row.closest("li").id.split(":").pop(),
+          cue,
+          section: section?.dataset.chainEnd === "tested",
+          seal: section?.dataset.chainEnd ?? null,
+          element: located
+            ? located
+                .split("\n")
+                .map((l) => l.trim())
+                .filter(Boolean)
+            : null,
         });
         row.click();
         await new Promise((r) => setTimeout(r, 60));
@@ -179,21 +184,23 @@ try {
     const text = document.body.innerText;
     return {
       stops: (text.match(/(\d+) stops/) ?? [])[1] ?? null,
-      section: /FOCUS PATH/.test(text),
+      section: document.getElementById("focus-heading") !== null,
     };
   });
 
   const located = await panel.evaluate(async () => {
-    const rows = [...document.querySelectorAll("button")].filter((b) => b.querySelector("h3"));
+    const rows = [...document.querySelectorAll("li[data-finding] h3 > button")];
     const row = rows.find((b) => /focus|keyboard|reach/i.test(b.textContent));
     if (!row) return { opened: false };
     row.click();
     await new Promise((r) => setTimeout(r, 400));
-    const panelText = row.parentElement.innerText;
-    const lines = panelText.split("\n").map((l) => l.trim());
-    const at = lines.findIndex((l) => l === "ELEMENT");
-    const selector = lines.slice(at + 1).find((l) => l.length > 0) ?? null;
-    const where = lines.find((l) => /^Stop \d+ \u00b7 /.test(l)) ?? null;
+    const section = row.closest("li").querySelector("section");
+    const selector = section?.querySelector("dd.font-mono")?.textContent.trim() ?? null;
+    const where =
+      section?.innerText
+        .split("\n")
+        .map((l) => l.trim())
+        .find((l) => /^Stop \d+ \u00b7 /.test(l)) ?? null;
 
     let copied = null;
     navigator.clipboard.writeText = async (value) => {
