@@ -767,7 +767,7 @@ export function FinalCta({ t }: { t: Translate }) {
             </p>
           </div>
           <div>
-            <UrlForm accent examples={["wikipedia.org", "stripe.com", "github.com"]} />
+            <UrlForm accent examples={["news.ycombinator.com", "lrb.co.uk", "kinfolk.com"]} />
             <p className="mt-3 text-[13px] text-disabled">{t("home.cta.publicOnly")}</p>
           </div>
         </div>

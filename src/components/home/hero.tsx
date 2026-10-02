@@ -38,14 +38,8 @@ export function Hero({ t }: { t: Translate }) {
               {t("home.hero.body")}
             </p>
             <div className="mt-6">
-              <UrlForm examples={["wikipedia.org", "stripe.com", "github.com"]} />
+              <UrlForm examples={["news.ycombinator.com", "lrb.co.uk", "kinfolk.com"]} />
             </div>
-            <p className="mt-4 flex items-start gap-2.5 border-l-[3px] border-steel bg-steel/6 px-3 py-2 text-[13px] text-body">
-              <SectionKicker tone="steel" className="mt-px shrink-0">
-                {t("home.notSeal.kicker")}
-              </SectionKicker>
-              {t("home.notSeal.body")}
-            </p>
           </div>
 
           <div className="lg:pt-1">

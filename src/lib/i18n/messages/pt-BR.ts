@@ -761,9 +761,6 @@ export const ptBR: Catalog = {
   "home.form.exportNote": "Exporte em PDF ou Markdown",
   "home.demo.roasted": "Torrado no Porto toda terça e enviado na mesma semana.",
 
-  "home.notSeal.kicker": "Não é",
-  "home.notSeal.body":
-    "um selo de conformidade. A ferramenta mede o que o teste automático consegue provar e separa o restante para uma pessoa revisar.",
   "home.mostRecent": "Auditoria pública mais recente · como a página está",
   "home.auditSite": "Auditar site",
   "home.auditPage": "Auditar página",
