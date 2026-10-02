@@ -42,7 +42,8 @@
 A tool that measures contrast shouldn't have questionable contrast of its own, so the landing page is audited with the same engine on every change.
 
 <p align="center">
-  <img src="docs/self-audit.png" alt="AccessCheck's own capture of its landing page during a self-audit" width="800" />
+  <img width="3118" height="1950" alt="AccessCheck's own capture of its landing page during a self-audit" src="https://github.com/user-attachments/assets/a7fd85e0-e1e7-41fc-a092-409784c087b6" width="800" />
+
 </p>
 
 - **The product interface passes: 0 automated contrast failures.** Every eyebrow, label, form field, section heading and button in the real UI clears WCAG AA (4.5:1, or 3:1 for large text), checked with axe-core.
