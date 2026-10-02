@@ -19,7 +19,7 @@ const cdnOrigin = `http://127.0.0.1:${cdn.address().port}`;
 
 const HTML = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Extension fixture</title>
 <link rel="stylesheet" href="${cdnOrigin}/styles.css">
-<style>.tiny{width:16px;height:16px;padding:0;border:0}</style></head>
+<style>.tiny{width:16px;height:16px;padding:0;border:0}div:empty{display:none}</style></head>
 <body><main><h1>Extension fixture</h1>
 <img src="/logo.png">
 <input id="email" name="email" type="email" placeholder="Your email">

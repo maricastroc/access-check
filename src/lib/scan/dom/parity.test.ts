@@ -273,6 +273,34 @@ describe("the overlay says when the element it points at cannot be seen", () => 
     expect(reports[1]).toMatchObject({ found: true, onScreen: false, side: "right" });
     expect(reports[2]).toMatchObject({ found: true, onScreen: false, hidden: true });
   });
+
+  it("stays visible on a page that hides empty or aria-hidden boxes", async () => {
+    const shown = await page.evaluate(() => {
+      const theme = document.createElement("style");
+      theme.textContent =
+        "div:empty { display: none; } [aria-hidden='true'] { visibility: hidden; opacity: 0; }";
+      document.head.append(theme);
+      window.__accessCheckDom!.overlayShow(
+        [{ n: 1, selector: "h1", tag: "1", tone: "serious", shape: "square" }],
+        1,
+        {},
+      );
+      const root = document.getElementById("accesscheck-overlay")!;
+      const style = getComputedStyle(root);
+      const mark = root.shadowRoot!.querySelector("[data-mark]")!.getBoundingClientRect();
+      const shown = {
+        display: style.display,
+        visibility: style.visibility,
+        opacity: style.opacity,
+        drawn: mark.width > 0 && mark.height > 0,
+      };
+      window.__accessCheckDom!.overlayClear();
+      theme.remove();
+      return shown;
+    });
+
+    expect(shown).toEqual({ display: "block", visibility: "visible", opacity: "1", drawn: true });
+  });
 });
 
 describe("the engine reads the page the same way from either caller", () => {
