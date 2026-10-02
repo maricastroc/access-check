@@ -29,7 +29,12 @@ export type OverlayReport = {
   drawn: number;
   missing: number[];
   offScreen: number[];
-  focused: { found: boolean; onScreen: boolean; side: OverlaySide | null } | null;
+  focused: {
+    found: boolean;
+    onScreen: boolean;
+    side: OverlaySide | null;
+    hidden: boolean;
+  } | null;
   movedScroll: boolean;
 };
 
@@ -262,6 +267,11 @@ function seen(r: DOMRect): boolean {
     r.top < innerHeight &&
     r.left < innerWidth
   );
+}
+
+function rendered(el: Element, r: DOMRect): boolean {
+  if (r.width === 0 || r.height === 0) return false;
+  return el.checkVisibility?.({ opacityProperty: true, visibilityProperty: true }) ?? true;
 }
 
 function sideOf(r: DOMRect): OverlaySide | null {
@@ -630,6 +640,7 @@ export function overlayShow(
             found: found !== null,
             onScreen: current !== null && current.visible,
             side: current && !current.visible ? sideOf(current.rect) : null,
+            hidden: current !== null && !rendered(current.el, current.rect),
           },
   };
 }

@@ -1372,6 +1372,8 @@ export const en = {
   "chain.closeUp": "Close-up of {label}",
   "chain.offAbove": "Above what the page shows now",
   "chain.offBelow": "Below what the page shows now",
+  "chain.notShowing":
+    "This element is on the page but not showing right now, often because it sits in a closed menu, drawer or dialog. Open it and press Locate on page again.",
   "chain.gap.name": "name missing",
   "chain.gap.alt": "alt missing",
   "chain.gap.ring": "nothing shows focus",

@@ -856,6 +856,14 @@ describe("the panel is an inspector, not a squeezed report", () => {
     expect(panel).toContain('if (focused.side === "below") return t("chain.offBelow");');
   });
 
+  it("says when the element is on the page but not showing, instead of staying silent", () => {
+    expect(overlay).toContain("hidden: current !== null && !rendered(current.el, current.rect),");
+    expect(panel).toContain('if (focused.hidden) return t("chain.notShowing");');
+    expect(panel).toContain(
+      'if (focused.side === "left" || focused.side === "right") return t("chain.notShowing");',
+    );
+  });
+
   it("lets a mark on the page pick its finding in the panel, and only from a real click", () => {
     expect(overlay).toContain("if (e.isTrusted) act();");
     expect(overlay).toContain("{ type: OVERLAY_PICK, key }");
