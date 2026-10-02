@@ -4,13 +4,13 @@ import type { ElementIdentity } from "./identity";
 import type { RawLiveRegions } from "../live-regions";
 import type { RawTargetSize } from "../target-size";
 import type { DomRect } from "./rects";
-import type { FocusProbe, FocusReach, RestingStyle } from "./focus";
+import type { FocusProbe, FocusReach, RestingStyle, StopRef } from "./focus";
 import type { VerifyOp } from "./verify";
 import type { FixVerification } from "../types";
-import type { OverlayMark, OverlayReport } from "./overlay";
+import type { OverlayMark, OverlayOptions, OverlayReport } from "./overlay";
 import type { PaintCalm, PrimeReport } from "./prime";
 
-export const DOM_ENGINE_VERSION = 23;
+export const DOM_ENGINE_VERSION = 24;
 
 export type DomEngine = {
   version: number;
@@ -40,11 +40,8 @@ export type DomEngine = {
   readBaseStyles(selectors: string[]): Record<string, RestingStyle>;
   readFocusReach(): FocusReach;
   focusProbeEnd(): { x: number; y: number } | null;
-  overlayShow(
-    marks: OverlayMark[],
-    focus: number | null,
-    opts?: { scroll?: boolean; timeoutMs?: number },
-  ): OverlayReport;
+  matchStops(stops: StopRef[], selectors: string[]): Record<string, number>;
+  overlayShow(marks: OverlayMark[], focus: number | null, opts?: OverlayOptions): OverlayReport;
   overlayClear(): void;
   overlayRestoreScroll(): boolean;
   AXE_TAGS: string[];
