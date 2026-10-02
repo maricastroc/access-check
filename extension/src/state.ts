@@ -59,6 +59,18 @@ const BLOCKED: { test: (url: string) => boolean; reason: MessageKey }[] = [
   },
 ];
 
+export function sameDocument(a: string, b: string): boolean {
+  try {
+    const left = new URL(a);
+    const right = new URL(b);
+    left.hash = "";
+    right.hash = "";
+    return left.href === right.href;
+  } catch {
+    return a === b;
+  }
+}
+
 export function unsupportedReason(url: string | undefined): MessageKey | null {
   if (!url) return "blocked.noAddress";
   return BLOCKED.find((rule) => rule.test(url))?.reason ?? null;

@@ -167,15 +167,46 @@ describe("the panel reuses the product's own report", () => {
     expect(report).toContain("if (ask !== latest.current) return;");
   });
 
-  it("clears the page when the finding closes", () => {
-    expect(panel).toMatch(
-      /if \(inv\.selectedId !== null \|\| drawn\.current !== "finding"\) return;[\s\S]{0,80}clear\(\);/,
+  it("goes back to the overview when the finding closes, and redraws an open one after the walk", () => {
+    const report = between(panel, "function Report(", "function Message(");
+    const settle = between(report, "const settle = useEffectEvent(", "<StickyBar");
+    expect(settle).toContain('if (walking !== null || drawn.current === "path") return;');
+    expect(settle).toContain(
+      'if (drawn.current !== "finding") void showFinding(inv.selected, inv.occIndex, false);',
+    );
+    expect(settle).toMatch(/return;\s*\}\s*showOverview\(\);/);
+    expect(settle).toContain("}, [inv.selectedId, walking, overview]);");
+    expect(report).not.toContain("clear()");
+  });
+
+  it("shows each finding to fix on the page under its number in the queue", () => {
+    const marks = between(panel, "function overviewMarks(", "type StopAlert");
+    expect(marks).toContain("n: f.n,");
+    expect(marks).toContain("tag: String(f.n),");
+    expect(marks).toContain("tone: sevOf(f),");
+    expect(marks).toContain("pick: `${FINDING_KEY}${f.id}:${first.index}`,");
+    expect(marks).toContain("alternates: rest.map((o) => ({");
+    expect(panel).toContain('overviewMarks(groups.find((g) => g.group === "fix")?.findings ?? [])');
+    expect(panel).toContain(
+      "void draw(overview, null, { scroll: false, path: false, timeoutMs: 0 });",
+    );
+  });
+
+  it("returns to the overview when the tab order inspection ends with nothing open", () => {
+    expect(panel).toContain(
+      "void restoreScroll().then(open ? () => showFinding(open, index, false) : showOverview);",
     );
   });
 
   it("reopens the panel's port when the reader acts, rather than holding it open", () => {
     expect(panel).toContain("keepPort()");
-    expect(panel).toMatch(/const draw: Draw = async \([\s\S]{0,200}keepPort\(\);/);
+    expect(panel).toMatch(/const draw: Draw = \([^)]*\) => \{\s*keepPort\(\);/);
+  });
+
+  it("sends one drawing at a time, in the order the reader asked for them", () => {
+    expect(panel).toContain("let drawing: Promise<unknown> = Promise.resolve();");
+    expect(panel).toContain("const reply = drawing.then(");
+    expect(panel).toContain("drawing = reply.catch(() => undefined);");
   });
 
   it("offers a recoverable path when the content script fails", () => {
@@ -812,7 +843,11 @@ describe("the panel is an inspector, not a squeezed report", () => {
   it("does not paint an ordinary stop like a failure", () => {
     const stops = between(panel, "function stopMarks(", "function windowAround(");
     expect(stops).toContain('tone: "path"');
-    expect(stops).toContain("ring: !s.focusVisible");
+    expect(stops).toContain("ring: current && !s.focusVisible,");
+    expect(stops).toContain("alert: alert?.tone,");
+    expect(stops).toContain(
+      "badge: current && alert ? { tag: alert.tag, tone: alert.tone, pick: alert.pick } : undefined,",
+    );
     expect(overlay).toContain("path: PALETTE.path,");
     expect(overlay).toContain('import { PALETTE, withAlpha } from "../../palette";');
   });
@@ -869,6 +904,43 @@ describe("the panel is an inspector, not a squeezed report", () => {
     expect(overlay).toContain("{ type: OVERLAY_PICK, key }");
     expect(panel).toContain("if (message.type === OVERLAY_PICK) fromPage(message.key);");
     expect(panel).toMatch(/go\(rest\.slice\(0, cut\), index, "mark"\)/);
+  });
+
+  it("links stops and findings once, and reads the link the same way in the strip and on the page", () => {
+    expect(panel).toMatch(/findingsAtStops\([\s\S]{0,140}result\.keyboard\?\.targetStops,/);
+    expect(panel).toContain('groups.filter((g) => g.group !== "recommend")');
+    expect(panel).toContain("stopAlerts(atStops, findings)");
+    expect(panel).toMatch(/const related: RelatedFinding\[\] = atStops\.flatMap/);
+    expect(sequence).toContain("const alert = related.find((r) => r.stop === s.n);");
+    expect(sequence).toContain("data-sev={alert?.sev}");
+    expect(sequence).toContain('className={cn("flex rounded-full p-[3px]", alert && "ac-hatch")}');
+    expect(sequence).toContain('t("marks.stopWithFinding", { stop: name, tag: alert.tag })');
+    expect(overlay).toContain(".tag[data-alert]::before {");
+    expect(overlay).toContain("var(--alert) 0 1.5px");
+  });
+
+  it("matches the walked stops to the findings' elements in the page, after the walk", () => {
+    expect(background).toContain("const targetStops = await stopsForTargets(tabId, base, walked);");
+    expect(background).toContain("window.__accessCheckDom!.matchStops(s, sel)");
+    expect(background).toContain(
+      "const keyboard = targetStops ? { ...walked, targetStops } : walked;",
+    );
+  });
+
+  it("refuses to draw once the tab shows another page", () => {
+    expect(background).toContain(
+      "if (auditedTabId !== null && !(await onAuditedPage(auditedTabId))) throw new MovedOn();",
+    );
+    expect(background).toContain("sameDocument(tab.url, state.result.finalUrl)");
+    expect(background).toMatch(
+      /e instanceof MovedOn \|\|[\s\S]{0,140}t\("background\.tabUnreachable"\)/,
+    );
+  });
+
+  it("never takes focus or a click away from the page, and adds nothing to its tab order", () => {
+    const swallow = between(overlay, "function swallow(", "function corners(");
+    expect(swallow).toMatch(/\["pointerdown", "mousedown"\][\s\S]{0,120}e\.preventDefault\(\);/);
+    expect(overlay).not.toMatch(/tabindex|tabIndex|\.focus\(/);
   });
 
   it("draws in its own shadow root, hidden from assistive technology", () => {

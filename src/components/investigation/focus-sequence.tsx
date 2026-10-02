@@ -2,9 +2,9 @@ import type { ReactNode } from "react";
 import type { FocusStop } from "@/lib/scan/keyboard";
 import type { Translate } from "@/lib/i18n/t";
 import { cn } from "@/lib/cn";
-import { Tag } from "./notation";
+import { Tag, type Sev } from "./notation";
 
-export type RelatedFinding = { stop: number; tag: string; onOpen: () => void };
+export type RelatedFinding = { stop: number; tag: string; sev: Sev; onOpen: () => void };
 
 const LONG = 24;
 const AROUND = 6;
@@ -50,6 +50,10 @@ export function FocusSequence({
         {listed.map(({ s, i }, k) => {
           const now = s.n === current;
           const gap = k > 0 && i - listed[k - 1].i > 1;
+          const alert = related.find((r) => r.stop === s.n);
+          const name = s.focusVisible
+            ? t("marks.stopLabel", { n: s.n, label: s.label })
+            : t("marks.stopNoFocus", { n: s.n, label: s.label });
           return (
             <li key={s.n} className="flex items-center">
               {gap && (
@@ -63,16 +67,15 @@ export function FocusSequence({
                 data-stop={s.n}
                 aria-current={now ? "step" : undefined}
                 aria-label={
-                  s.focusVisible
-                    ? t("marks.stopLabel", { n: s.n, label: s.label })
-                    : t("marks.stopNoFocus", { n: s.n, label: s.label })
+                  alert ? t("marks.stopWithFinding", { stop: name, tag: alert.tag }) : name
                 }
                 onClick={() => onPick(s.n)}
                 className="flex min-h-6 min-w-6 cursor-pointer items-center justify-center"
               >
                 <span
-                  data-sev="serious"
-                  className={cn("flex rounded-full p-[3px]", !s.focusVisible && "ac-hatch")}
+                  data-sev={alert?.sev}
+                  data-alert={alert ? "true" : undefined}
+                  className={cn("flex rounded-full p-[3px]", alert && "ac-hatch")}
                 >
                   <Tag
                     n={s.n}

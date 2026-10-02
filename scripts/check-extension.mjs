@@ -404,6 +404,75 @@ try {
     `Locate on page stayed quiet about a link in a closed drawer: ${tucked.notice}`,
   );
 
+  await report.evaluate(async () => {
+    document.querySelector('h3 > button[aria-expanded="true"]')?.click();
+    await new Promise((r) => setTimeout(r, 600));
+  });
+  const queue = await report.evaluate(() =>
+    [...document.querySelectorAll('section[data-group="fix"] li[id^="finding-"]')].map((li) => ({
+      id: li.id.slice("finding-".length),
+      n:
+        [...li.querySelectorAll("h3 *")]
+          .find((el) => el.children.length === 0 && /^\d+$/.test(el.textContent.trim()))
+          ?.textContent.trim() ?? null,
+    })),
+  );
+  const overview = await page.evaluate(() => {
+    const root = document.getElementById("accesscheck-overlay")?.shadowRoot;
+    return [...(root?.querySelectorAll(".tag") ?? [])].map((tag) => {
+      const r = tag.getBoundingClientRect();
+      return {
+        text: tag.textContent,
+        pick: tag.dataset.pick ?? null,
+        shown: tag.style.display !== "none" && r.width > 0,
+        x: r.left + r.width / 2,
+        y: r.top + r.height / 2,
+      };
+    });
+  });
+  console.log("overview with nothing open:", JSON.stringify({ queue, overview }));
+  const contrastN = queue.find((f) => f.id === "wcag:color-contrast")?.n;
+  const contrastTag = overview.find((m) => m.text === contrastN && m.shown);
+  check(overview.length > 0, "the page shows nothing when no finding is open");
+  check(
+    overview.every((m) => queue.some((f) => f.n === m.text && m.pick?.startsWith(`f:${f.id}:`))),
+    "an overview mark does not match its finding's number in the queue",
+  );
+  check(
+    new Set(overview.map((m) => m.text)).size === overview.length,
+    "a finding is marked more than once in the overview",
+  );
+  check(Boolean(contrastTag), "the low-contrast paragraph has no mark in the overview");
+
+  await page.bringToFront();
+  if (contrastTag) await page.mouse.click(contrastTag.x, contrastTag.y);
+  await new Promise((r) => setTimeout(r, 800));
+  const opened = await report.evaluate(
+    () => document.querySelector('h3 > button[aria-expanded="true"]')?.closest("li")?.id ?? null,
+  );
+  console.log("clicking the overview mark opened:", opened);
+  check(opened === "finding-wcag:color-contrast", `clicking the mark opened ${opened}`);
+
+  await page.goto(`${origin}/another-page`, { waitUntil: "domcontentloaded" });
+  await report.bringToFront();
+  const moved = await report.evaluate(async () => {
+    const section = document
+      .querySelector('h3 > button[aria-expanded="true"]')
+      .closest("li")
+      .querySelector("section");
+    [...section.querySelectorAll("button")]
+      .find((b) => b.textContent.trim() === "Locate on page")
+      .click();
+    await new Promise((r) => setTimeout(r, 900));
+    return section.querySelector('[role="status"]')?.textContent || null;
+  });
+  const drewOnOther = await page.evaluate(
+    () => document.getElementById("accesscheck-overlay") !== null,
+  );
+  console.log("locating after the tab moved on:", JSON.stringify({ moved, drewOnOther }));
+  check(!drewOnOther, "marks were drawn on a page that was never audited");
+  check(/moved on/.test(moved ?? ""), `Locate on page on another page answered: ${moved}`);
+
   if (failures.length > 0) {
     console.error("\nFAILED:\n- " + failures.join("\n- "));
     process.exitCode = 1;

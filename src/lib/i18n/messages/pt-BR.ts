@@ -1429,6 +1429,7 @@ export const ptBR: Catalog = {
   "marks.occurrence": "Problema {n}, ocorrência {i} de {total}: {title}",
   "marks.stopNoFocus": "Parada de foco {n}: {label}, nada mostra o foco",
   "marks.stopLabel": "Parada de foco {n}: {label}",
+  "marks.stopWithFinding": "{stop}, problema {tag}",
   "focusPath.sequence": {
     one: "1 parada, na ordem em que o Tab chega nela",
     other: "{count} paradas, na ordem em que o Tab chega nelas",

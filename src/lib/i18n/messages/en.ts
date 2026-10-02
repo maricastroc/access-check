@@ -1398,6 +1398,7 @@ export const en = {
   "marks.occurrence": "Finding {n}, occurrence {i} of {total}: {title}",
   "marks.stopNoFocus": "Focus stop {n}: {label}, nothing shows focus",
   "marks.stopLabel": "Focus stop {n}: {label}",
+  "marks.stopWithFinding": "{stop}, finding {tag}",
   "focusPath.sequence": {
     one: "1 stop, in the order Tab reaches it",
     other: "{count} stops, in the order Tab reaches them",

@@ -1,5 +1,9 @@
 import type { ScanResult } from "../../src/lib/scan/types";
+import type { KeyboardReport } from "../../src/lib/scan/keyboard";
+import type { StopRef } from "../../src/lib/scan/dom/focus";
 import type { OverlayMark, OverlayOptions, OverlayReport } from "../../src/lib/scan/dom/overlay";
+import { workQueue } from "../../src/lib/report/findings";
+import { stopCandidates } from "../../src/lib/report/occurrences";
 import { withScoring } from "../../src/lib/scan/scored";
 import type { AuditContext } from "./audit";
 import { walkChangedPage, warningsAfterDeepAudit } from "./coverage";
@@ -9,6 +13,7 @@ import { translator } from "../../src/lib/i18n/t";
 import { browserLocale, LOCALE_KEY, readLocale } from "./locale-preference";
 import { DeepAuditCancelled, DeepAuditError, runDeepAudit } from "./deep";
 import {
+  sameDocument,
   unsupportedReason,
   type AuditTask,
   type AuditStage,
@@ -89,6 +94,24 @@ async function contentSignature(tabId: number): Promise<string | null> {
   return (frame?.result as string | null) ?? null;
 }
 
+async function stopsForTargets(
+  tabId: number,
+  base: ScanResult,
+  keyboard: KeyboardReport,
+): Promise<Record<string, number> | undefined> {
+  const selectors = stopCandidates(workQueue(base).flatMap((g) => g.findings));
+  if (selectors.length === 0 || keyboard.focusPath.length === 0) return undefined;
+  const stops: StopRef[] = keyboard.focusPath.map(({ n, selector }) => ({ n, selector }));
+  const [frame] = await chrome.scripting
+    .executeScript({
+      target: { tabId },
+      func: (s: StopRef[], sel: string[]) => window.__accessCheckDom!.matchStops(s, sel),
+      args: [stops, selectors],
+    })
+    .catch(() => [undefined]);
+  return (frame?.result as Record<string, number> | undefined) ?? undefined;
+}
+
 async function withFocusPath(
   base: ScanResult,
   tabId: number,
@@ -98,8 +121,10 @@ async function withFocusPath(
   try {
     deepTabId = tabId;
     const before = await contentSignature(tabId);
-    const keyboard = await runDeepAudit(tabId, t, resumeFrom);
+    const walked = await runDeepAudit(tabId, t, resumeFrom);
     const after = await contentSignature(tabId);
+    const targetStops = await stopsForTargets(tabId, base, walked);
+    const keyboard = targetStops ? { ...walked, targetStops } : walked;
 
     const kept = warningsAfterDeepAudit(warnings, t);
     const withWalk =
@@ -229,11 +254,20 @@ async function inAuditedTab<T>(run: (tabId: number) => Promise<T>): Promise<T> {
   return run(auditedTabId);
 }
 
+class MovedOn extends Error {}
+
+async function onAuditedPage(tabId: number): Promise<boolean> {
+  if (state.kind !== "done") return true;
+  const tab = await chrome.tabs.get(tabId).catch(() => null);
+  return !tab?.url || sameDocument(tab.url, state.result.finalUrl);
+}
+
 async function showOverlay(
   marks: OverlayMark[],
   focus: number | null,
   opts: OverlayOptions,
 ): Promise<OverlayReport> {
+  if (auditedTabId !== null && !(await onAuditedPage(auditedTabId))) throw new MovedOn();
   return inAuditedTab(async (tabId) => {
     const [{ result }] = await chrome.scripting.executeScript({
       target: { tabId },
@@ -310,7 +344,8 @@ chrome.runtime.onMessage.addListener((message: PanelMessage, _sender, sendRespon
           sendResponse({
             ok: false,
             message:
-              e instanceof Error && /Cannot access|No tab with id|Frame with ID/i.test(e.message)
+              e instanceof MovedOn ||
+              (e instanceof Error && /Cannot access|No tab with id|Frame with ID/i.test(e.message))
                 ? t("background.tabUnreachable")
                 : t("background.markupFailed"),
           } satisfies HighlightReply),
