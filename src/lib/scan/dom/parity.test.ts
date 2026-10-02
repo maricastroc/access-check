@@ -242,6 +242,39 @@ describe("the two environments load one artifact", () => {
   });
 });
 
+describe("the overlay says when the element it points at cannot be seen", () => {
+  it("tells a closed drawer and a collapsed element apart from one in plain view", async () => {
+    const reports = await page.evaluate(() => {
+      const drawer = document.createElement("aside");
+      drawer.style.cssText = "position:fixed;top:0;right:0;width:300px;transform:translateX(110%)";
+      drawer.innerHTML = '<a id="in-drawer" href="/bag">Bag</a>';
+      const folded = document.createElement("a");
+      folded.id = "folded";
+      folded.href = "/folded";
+      folded.style.display = "none";
+      document.body.append(drawer, folded);
+      const marks = ["h1", "#in-drawer", "#folded"].map((selector, i) => ({
+        n: i + 1,
+        selector,
+        tag: String(i + 1),
+        tone: "serious" as const,
+        shape: "square" as const,
+      }));
+      const focused = [1, 2, 3].map(
+        (n) => window.__accessCheckDom!.overlayShow(marks, n, { scroll: true }).focused,
+      );
+      window.__accessCheckDom!.overlayClear();
+      drawer.remove();
+      folded.remove();
+      return focused;
+    });
+
+    expect(reports[0]).toMatchObject({ found: true, onScreen: true, hidden: false });
+    expect(reports[1]).toMatchObject({ found: true, onScreen: false, side: "right" });
+    expect(reports[2]).toMatchObject({ found: true, onScreen: false, hidden: true });
+  });
+});
+
 describe("the engine reads the page the same way from either caller", () => {
   it("reads live regions", async () => {
     const raw = await page.evaluate(() => window.__accessCheckDom!.collectLiveRegionsRaw());

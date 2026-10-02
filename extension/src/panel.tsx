@@ -633,8 +633,10 @@ function findingNotice(reply: Drawn): string | null {
   const focused = reply.report.focused;
   if (!focused) return null;
   if (!focused.found) return t("panel.elementGone");
+  if (focused.hidden) return t("chain.notShowing");
   if (focused.side === "above") return t("chain.offAbove");
   if (focused.side === "below") return t("chain.offBelow");
+  if (focused.side === "left" || focused.side === "right") return t("chain.notShowing");
   return null;
 }
 

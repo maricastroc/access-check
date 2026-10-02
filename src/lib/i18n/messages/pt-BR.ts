@@ -1403,6 +1403,8 @@ export const ptBR: Catalog = {
   "chain.closeUp": "Detalhe de {label}",
   "chain.offAbove": "Acima do que a página mostra agora",
   "chain.offBelow": "Abaixo do que a página mostra agora",
+  "chain.notShowing":
+    "Este elemento está na página, mas não aparece agora, muitas vezes porque fica num menu, gaveta ou diálogo fechado. Abra e use Localizar na página de novo.",
   "chain.gap.name": "sem nome",
   "chain.gap.alt": "sem alt",
   "chain.gap.ring": "nada mostra o foco",

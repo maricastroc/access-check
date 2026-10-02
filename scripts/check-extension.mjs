@@ -26,7 +26,9 @@ const HTML = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>
 <button class="tiny" aria-label="one">1</button>
 <div role="alert" aria-live="off">muted</div>
 <p style="color:#bbb;background:#fff">baixo contraste</p>
-</main></body></html>`;
+</main>
+<aside style="position:fixed;top:0;right:0;width:300px;transform:translateX(110%)"><a href="/bag" style="display:block;width:40px;height:40px"></a></aside>
+</body></html>`;
 
 const server = createServer((_q, res) => {
   res.writeHead(200, {
@@ -381,6 +383,26 @@ try {
   check(drawn.boxes === 1, `Locate on page drew ${drawn.boxes} boxes for one contrast element`);
   check(drawn.onTarget, "Locate on page drew away from the low-contrast paragraph");
   check(locating.notice === null, `Locate on page answered: ${locating.notice}`);
+
+  const tucked = await report.evaluate(async () => {
+    const row = document.querySelector('li[id$=":link-name"] h3 > button');
+    if (!row) return { row: false, notice: null };
+    if (row.getAttribute("aria-expanded") !== "true") row.click();
+    await new Promise((r) => setTimeout(r, 60));
+    const section = row.closest("li").querySelector("section");
+    const locate = [...section.querySelectorAll("button")].find(
+      (b) => b.textContent.trim() === "Locate on page",
+    );
+    locate.click();
+    await new Promise((r) => setTimeout(r, 900));
+    return { row: true, notice: section.querySelector('[role="status"]')?.textContent || null };
+  });
+  console.log("locating a link in a closed drawer:", JSON.stringify(tucked));
+  check(tucked.row, "the link in the closed drawer was not reported");
+  check(
+    /not showing right now/.test(tucked.notice ?? ""),
+    `Locate on page stayed quiet about a link in a closed drawer: ${tucked.notice}`,
+  );
 
   if (failures.length > 0) {
     console.error("\nFAILED:\n- " + failures.join("\n- "));
