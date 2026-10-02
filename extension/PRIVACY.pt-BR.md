@@ -41,17 +41,18 @@ disparados por você e os dois desfeitos na hora:
   compara o markup da página antes e depois, byte a byte, e quebra o build se
   houver qualquer diferença. Sugestões que dependem do que a página significa
   nunca são aplicadas.
-- **Para mostrar um elemento.** Quando você abre um problema, aperta
-  "Localizar na página" ou escolhe um dos elementos dele, ela desenha marcações
-  numeradas num contêiner próprio na raiz do documento. Inspecionar a ordem de
-  tabulação desenha marcadores numerados do mesmo jeito. O contêiner é
-  `aria-hidden` e nunca toca os elementos auditados. Só duas partes dele
-  respondem a um clique: o número de uma marcação, que escolhe aquele elemento
-  no painel, e a seta que aparece para um elemento fora da tela, que rola a
-  página até ele. As marcações ficam enquanto o problema está aberto, os
-  marcadores da ordem de tabulação somem quando você aperta Sair, e tudo o que
-  ela desenhou é removido quando você fecha o problema ou o painel, e no início
-  de qualquer auditoria.
+- **Para mostrar onde estão os problemas.** Enquanto o relatório está aberto,
+  ela desenha marcações numeradas num contêiner próprio na raiz do documento:
+  uma para cada problema a corrigir quando nenhum está aberto, ou os elementos
+  do problema que você abrir. Inspecionar a ordem de tabulação desenha
+  marcadores numerados do mesmo jeito. O contêiner é `aria-hidden`, não
+  acrescenta nada à ordem de tabulação da página e nunca toca os elementos
+  auditados. Só duas partes dele respondem a um clique: o número de uma
+  marcação, que abre aquele problema ou elemento no painel sem mover o foco da
+  página, e a seta que aparece para um elemento fora da tela, que rola a página
+  até ele. Nada é desenhado depois que a aba passa a mostrar outra página. Tudo
+  o que ela desenhou é removido quando o painel fecha e no início de qualquer
+  auditoria.
 
 Nada do que você digitou é escrito, relido ou guardado.
 

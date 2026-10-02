@@ -4,6 +4,7 @@ HOW IT WORKS
 
 • Click the toolbar icon and the side panel opens with the verdict and what's left, for example "3 to fix" and "1 to check by hand", each problem with its own number.
 • The queue is split into To fix, To check by hand and Recommendations, with the most serious problems first.
+• The page itself shows where the problems are: each problem to fix gets its number from the queue, on its element. Click a number to open that problem.
 • Open a problem and its elements are marked on the page with numbers. The panel names each one the way a person would recognize it, and "Locate on page" scrolls to it. Click a mark on the page and the panel jumps to that element.
 • Each problem reads in order: why it matters, where it is, what was measured, what to change with code you can copy, and whether the fix was tested. The selector, the HTML and the raw numbers sit under Details.
 • When a fix can be computed, such as a contrast color, AccessCheck applies it to the page for a moment, runs that rule again and puts the page back. If the rule passes, the fix is marked "Fix tested".
@@ -11,7 +12,7 @@ HOW IT WORKS
 
 KEYBOARD
 
-"Check keyboard" presses Tab through the page for real and records every stop. The problems it finds, like focus you can't see or controls that Tab never reaches, join the same queue. Each round covers up to 200 stops and tells you what it found, and "Inspect tab order" lets you step through the stops on the page. Chrome shows its debugging banner during the check, because real Tab presses need the debugger, and it is released as soon as the check ends.
+"Check keyboard" presses Tab through the page for real and records every stop. The problems it finds, like focus you can't see or controls that Tab never reaches, join the same queue. Each round covers up to 200 stops and tells you what it found, and "Inspect tab order" draws the path the Tab key takes across the page. Stops where the path meets a problem carry a hatched ring in the problem's color, and the current stop names it. Chrome shows its debugging banner during the check, because real Tab presses need the debugger, and it is released as soon as the check ends.
 
 WHAT IT CHECKS
 
@@ -29,7 +30,7 @@ HOW IT TREATS YOUR BROWSER
 
 • No account, no sign-in, no telemetry
 • It only reads a tab after you click the toolbar icon on that tab
-• The audited page is left as it was. Any change made to test a fix is undone right away, and the marks it draws stay only while a problem is open. They are cleared when you close it, exit the inspection or close the panel
+• The audited page is left as it was. Any change made to test a fix is undone right away, and the marks it draws live in their own layer, never take focus from the page and are cleared when you close the panel or audit again
 • Nothing is uploaded. The extension has no network code, and the audit runs entirely in your browser
 
 LANGUAGES

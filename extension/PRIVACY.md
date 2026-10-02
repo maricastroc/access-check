@@ -37,15 +37,17 @@ trigger and both undone immediately:
   it found it. An automated check in the project compares the page's markup before
   and after, byte for byte, and fails the build on any difference. Suggestions
   that depend on what the page means are never applied.
-- **Showing an element.** When you open a problem, press "Locate on page" or
-  pick one of its elements, it draws numbered marks in its own container at the
-  document root. Inspecting the tab order draws numbered markers the same way.
-  The container is `aria-hidden` and never touches the audited elements. Only
-  two parts of it answer a click: a mark's number, which picks that element in
-  the panel, and the arrow shown for an element off screen, which scrolls the
-  page to it. The marks stay while the problem is open, the tab order markers
-  are removed when you press Exit, and everything it drew is removed when you
-  close the problem or the panel, and at the start of any audit.
+- **Showing where the problems are.** While the report is open, it draws
+  numbered marks in its own container at the document root: one for each
+  problem to fix when none is open, or the elements of the problem you open.
+  Inspecting the tab order draws numbered markers the same way. The container
+  is `aria-hidden`, adds nothing to the page's tab order and never touches the
+  audited elements. Only two parts of it answer a click: a mark's number, which
+  opens that problem or element in the panel without moving focus on the page,
+  and the arrow shown for an element off screen, which scrolls the page to it.
+  Nothing is drawn once the tab shows a different page from the one audited.
+  Everything it drew is removed when the panel closes and at the start of any
+  audit.
 
 Nothing you typed is written, read back or stored.
 

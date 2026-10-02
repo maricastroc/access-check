@@ -4,6 +4,7 @@ COMO FUNCIONA
 
 • Clique no ícone da barra e o painel lateral abre com o veredito e o que falta fazer, por exemplo "3 para corrigir" e "1 para conferir à mão", cada problema com o seu número.
 • A fila é dividida em A corrigir, Conferir à mão e Recomendações, com os problemas mais graves primeiro.
+• A própria página mostra onde estão os problemas: cada problema a corrigir aparece no seu elemento, com o número da fila. Clique no número para abrir o problema.
 • Abra um problema e os elementos dele ganham marcações numeradas na página. O painel dá a cada um o nome que uma pessoa reconheceria, e "Localizar na página" rola até ele. Clique numa marcação na página e o painel vai para aquele elemento.
 • Cada problema segue uma ordem: por que importa, onde está, o que foi medido, o que mudar, com código para copiar, e se a correção foi testada. O seletor, o HTML e os números brutos ficam em Detalhes.
 • Quando dá para calcular a correção, como uma cor de contraste, o AccessCheck aplica a mudança na página por um instante, roda a regra de novo e devolve a página ao que era. Se a regra passar, a correção aparece como "Correção testada".
@@ -11,7 +12,7 @@ COMO FUNCIONA
 
 TECLADO
 
-"Verificar teclado" pressiona Tab de verdade pela página e registra cada parada. Os problemas encontrados, como foco invisível ou controles que o Tab nunca alcança, entram na mesma fila. Cada rodada cobre até 200 paradas e diz o que encontrou, e "Inspecionar ordem de tabulação" deixa você passar pelas paradas na página. O Chrome mostra o aviso de depuração durante a verificação, porque pressionar Tab de verdade exige o depurador, e ele é liberado assim que a verificação termina.
+"Verificar teclado" pressiona Tab de verdade pela página e registra cada parada. Os problemas encontrados, como foco invisível ou controles que o Tab nunca alcança, entram na mesma fila. Cada rodada cobre até 200 paradas e diz o que encontrou, e "Inspecionar ordem de tabulação" desenha o caminho que o Tab percorre pela página. As paradas em que o caminho encontra um problema ganham um anel hachurado na cor do problema, e a parada atual diz qual é. O Chrome mostra o aviso de depuração durante a verificação, porque pressionar Tab de verdade exige o depurador, e ele é liberado assim que a verificação termina.
 
 O QUE ELE VERIFICA
 
@@ -29,7 +30,7 @@ COMO ELE TRATA O SEU NAVEGADOR
 
 • Sem conta, sem login, sem telemetria
 • Só lê uma aba depois que você clica no ícone da barra naquela aba
-• A página auditada continua como estava. Qualquer mudança feita para testar uma correção é desfeita na hora, e as marcações que ele desenha só ficam enquanto um problema está aberto. Elas são apagadas quando você fecha o problema, sai da inspeção ou fecha o painel
+• A página auditada continua como estava. Qualquer mudança feita para testar uma correção é desfeita na hora, e as marcações que ele desenha ficam numa camada própria, nunca tiram o foco da página e são apagadas quando você fecha o painel ou audita de novo
 • Nada é enviado para lugar nenhum. A extensão não tem código de rede, e a auditoria roda inteira no seu navegador
 
 IDIOMAS
