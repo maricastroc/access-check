@@ -739,9 +739,6 @@ export const en = {
   "home.form.exportNote": "Export as PDF or Markdown",
   "home.demo.roasted": "Roasted in Porto every Tuesday and shipped the same week.",
 
-  "home.notSeal.kicker": "Not",
-  "home.notSeal.body":
-    "a conformance seal. It measures what automated tools can prove, and marks the rest for a human to review.",
   "home.mostRecent": "Most recent public audit \u00b7 where the page stands",
   "home.auditSite": "Audit site",
   "home.auditPage": "Audit page",
