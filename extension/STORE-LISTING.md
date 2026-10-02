@@ -6,7 +6,7 @@ submitted automatically.
 ## Basics
 
 - **Item name:** AccessCheck
-- **Version:** 1.3.1
+- **Version:** 1.4.0
 - **Category:** Developer Tools
 - **Default language:** English (United States)
 - **Visibility:** Public
@@ -41,10 +41,12 @@ Typed into the dashboard once per language. Paste the files as they are:
 The five files in `store/screenshots/`, in order, all 1280×800:
 
 1. `1-verdict-and-findings.png`: the verdict, the work left and the queue
-2. `2-element-identity.png`: a problem opened on where it is
-3. `3-verified-fix.png`: a fix tested on the page and undone
+2. `2-element-identity.png`: a problem opened on its element, with what screen
+   readers hear and what to change
+3. `3-verified-fix.png`: a contrast problem measured, changed and tested on the
+   page
 4. `4-focus-path.png`: the tab order inspected stop by stop
-5. `5-located-on-page.png`: an element found and drawn on the live page
+5. `5-located-on-page.png`: an element found and marked on the live page
 
 Regenerate them with `npm run build:screenshots`.
 
@@ -53,9 +55,10 @@ Regenerate them with `npm run build:screenshots`.
 1. Open any ordinary web page.
 2. Click the AccessCheck icon in the toolbar. The side panel opens and the audit
    runs. No debugger is attached at this point.
-3. Open a problem in To fix. It starts with where the problem is: press
-   "Locate on page", or step through the elements with the arrows, and the
-   element is drawn on the page.
+3. Open a problem in To fix. Its elements are marked on the page with numbers,
+   and the problem reads in order: where it is, what was measured, what to
+   change and whether the fix was tested. Press "Locate on page" to scroll to an
+   element, or pick another one from the numbered chips.
 4. Press "Check keyboard" to follow the real tab order. Chrome shows its own
    banner while the debugger is attached and releases it when the check ends.
    The top of the panel then says what the round found.
@@ -141,6 +144,26 @@ Certifications to accept, all of which the code supports:
 > Clicking the toolbar icon runs the whole audit, including the rules, the
 > extension's own checks and the fix verification, without attaching the
 > debugger at all.
+
+## What changed in 1.4.0
+
+- Every problem reads as one chain, the same as on the site: why it matters,
+  Located, Measured, Change, and then whether the fix was tested or needs a
+  person. The selector, the HTML and the raw numbers stay under Details.
+- Opening a problem marks each of its elements on the page with a number, such
+  as 3·1 and 3·2. Numbered chips in the panel pick an element, and clicking a
+  mark on the page picks it in the panel.
+- The verdict shows each problem as a numbered square in its severity color,
+  next to "to fix" and "to check by hand".
+- New type and palette: Atkinson Hyperlegible, warm paper, dark ink and
+  stronger severity colors.
+- "Locate on page" works on pages whose CSS hides empty boxes, such as
+  Shopify's Dawn theme, where the marks used to vanish.
+- When the element sits in a closed menu, drawer or dialog, or off to the side,
+  "Locate on page" says so instead of doing nothing.
+- The text sample in a contrast problem wraps instead of being cut.
+- A tested fix now says it was tested on this page and undone, which is what
+  the extension does.
 
 ## What changed in 1.3.1
 

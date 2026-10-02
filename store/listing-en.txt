@@ -2,10 +2,10 @@ AccessCheck audits the tab you're on and turns the result into a list of work: w
 
 HOW IT WORKS
 
-• Click the toolbar icon and the side panel opens with the verdict and one line of what's left, for example "7 to fix · 3 to check by hand".
+• Click the toolbar icon and the side panel opens with the verdict and what's left, for example "3 to fix" and "1 to check by hand", each problem with its own number.
 • The queue is split into To fix, To check by hand and Recommendations, with the most serious problems first.
-• Open a problem and it starts with where it is: the element, named the way a person would recognize it, and "Locate on page", which scrolls to it and draws a box around it. Step through the elements with the arrows and the page follows.
-• Then comes what to change, with code you can copy, and why it matters. The selector, the HTML and the raw measurements sit under Details.
+• Open a problem and its elements are marked on the page with numbers. The panel names each one the way a person would recognize it, and "Locate on page" scrolls to it. Click a mark on the page and the panel jumps to that element.
+• Each problem reads in order: why it matters, where it is, what was measured, what to change with code you can copy, and whether the fix was tested. The selector, the HTML and the raw numbers sit under Details.
 • When a fix can be computed, such as a contrast color, AccessCheck applies it to the page for a moment, runs that rule again and puts the page back. If the rule passes, the fix is marked "Fix tested".
 • Fix it in your code, then press "Audit again" from anywhere in the panel.
 
@@ -29,7 +29,7 @@ HOW IT TREATS YOUR BROWSER
 
 • No account, no sign-in, no telemetry
 • It only reads a tab after you click the toolbar icon on that tab
-• The audited page is left as it was. Any change made to test a fix is undone right away, the highlights it draws fade on their own, and all of them are cleared when you exit the inspection or close the panel
+• The audited page is left as it was. Any change made to test a fix is undone right away, and the marks it draws stay only while a problem is open. They are cleared when you close it, exit the inspection or close the panel
 • Nothing is uploaded. The extension has no network code, and the audit runs entirely in your browser
 
 LANGUAGES

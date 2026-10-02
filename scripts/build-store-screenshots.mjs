@@ -11,10 +11,16 @@ const OUT = join(process.cwd(), "store/screenshots");
 const SITE = "https://northwind.example/";
 
 const cover = (bg, ink, band) =>
-  `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 168'%3E%3Crect width='120' height='168' fill='%23${bg}'/%3E%3Crect x='0' y='0' width='14' height='168' fill='%23${ink}'/%3E%3Crect x='28' y='28' width='68' height='9' rx='2' fill='%23${band}'/%3E%3Crect x='28' y='44' width='46' height='9' rx='2' fill='%23${band}'/%3E%3Ccircle cx='62' cy='104' r='26' fill='%23${ink}' opacity='.22'/%3E%3Crect x='28' y='140' width='34' height='6' rx='3' fill='%23${ink}' opacity='.5'/%3E%3C/svg%3E`;
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 168"><rect width="120" height="168" fill="#${bg}"/><rect x="0" y="0" width="14" height="168" fill="#${ink}"/><rect x="28" y="28" width="68" height="9" rx="2" fill="#${band}"/><rect x="28" y="44" width="46" height="9" rx="2" fill="#${band}"/><circle cx="62" cy="104" r="26" fill="#${ink}" opacity=".22"/><rect x="28" y="140" width="34" height="6" rx="3" fill="#${ink}" opacity=".5"/></svg>`;
+
+const COVERS = {
+  "/covers/the-salt-path.svg": cover("d9c9a3", "14342b", "fffdf7"),
+  "/covers/piranesi.svg": cover("c4622d", "3a1a0c", "ffe9d6"),
+  "/covers/small-things-like-these.svg": cover("2f5b4c", "0f281f", "d9e8e0"),
+};
 
 const FIXTURE = `<!doctype html><html lang="en"><head><meta charset="utf-8">
-<title>Northwind Books — staff picks</title>
+<title>Northwind Books, staff picks</title>
 <style>
   :root { color-scheme: light }
   * { box-sizing: border-box }
@@ -81,7 +87,7 @@ const FIXTURE = `<!doctype html><html lang="en"><head><meta charset="utf-8">
 
   <div class="grid">
     <div class="card">
-      <img src="${cover("d9c9a3", "14342b", "fffdf7")}" alt="Cover of The Salt Path">
+      <img src="/covers/the-salt-path.svg" alt="Cover of The Salt Path">
       <h4>The Salt Path</h4>
       <p class="by muted">Raynor Winn</p>
       <p class="stars">★★★★☆</p>
@@ -89,7 +95,7 @@ const FIXTURE = `<!doctype html><html lang="en"><head><meta charset="utf-8">
       <button class="buy">Add to basket</button>
     </div>
     <div class="card">
-      <img src="${cover("c4622d", "3a1a0c", "ffe9d6")}">
+      <img src="/covers/piranesi.svg">
       <h4>Piranesi</h4>
       <p class="by muted">Susanna Clarke</p>
       <p class="stars">★★★★★</p>
@@ -97,7 +103,7 @@ const FIXTURE = `<!doctype html><html lang="en"><head><meta charset="utf-8">
       <button class="buy">Add to basket</button>
     </div>
     <div class="card">
-      <img src="${cover("2f5b4c", "0f281f", "d9e8e0")}" alt="Cover of Small Things Like These">
+      <img src="/covers/small-things-like-these.svg" alt="Cover of Small Things Like These">
       <h4>Small Things Like These</h4>
       <p class="by muted">Claire Keegan</p>
       <p class="stars">★★★★☆</p>
@@ -133,9 +139,12 @@ const ctx = await chromium.launchPersistentContext(mkdtempSync(join(tmpdir(), "a
   args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`],
 });
 
-await ctx.route(`${SITE}**`, (route) =>
-  route.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body: FIXTURE }),
-);
+await ctx.route(`${SITE}**`, (route) => {
+  const art = COVERS[new URL(route.request().url()).pathname];
+  return art
+    ? route.fulfill({ status: 200, contentType: "image/svg+xml", body: art })
+    : route.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body: FIXTURE });
+});
 
 mkdirSync(OUT, { recursive: true });
 const made = [];
@@ -169,14 +178,16 @@ try {
   const panel = await ctx.newPage();
   await panel.setViewportSize({ width: PANEL, height: HEIGHT });
   await panel.goto(`chrome-extension://${extId}/panel.html`);
-  await panel.waitForFunction(() => document.body.textContent.includes("To fix ·"), null, {
-    timeout: 20000,
-  });
+  const ready = () =>
+    panel.waitForFunction(() => document.getElementById("group-fix") !== null, null, {
+      timeout: 20000,
+    });
+  await ready();
 
   const dom = await panel.evaluate(() => ({
     roots: document.querySelectorAll("#root").length,
     findingsHeaders: document.querySelectorAll("#findings-heading").length,
-    rows: document.querySelectorAll("button h3").length,
+    rows: document.querySelectorAll("h3 > button").length,
     verdicts: document.querySelectorAll("#verdict-heading").length,
     bodyHeight: document.body.scrollHeight,
     scripts: document.querySelectorAll("script").length,
@@ -206,19 +217,19 @@ try {
 
   const scrollPanelTo = (needle) =>
     panel.evaluate(async (text) => {
-      const target = [...document.querySelectorAll("span, h2, h3, h4, summary")].find((el) =>
-        el.textContent.trim().startsWith(text),
+      const open = document.querySelector('h3 > button[aria-expanded="true"]')?.closest("li");
+      const target = [...(open ?? document).querySelectorAll("*")].find(
+        (el) => el.children.length === 0 && el.textContent.trim() === text,
       );
-      target?.scrollIntoView({ block: "start", behavior: "instant" });
+      if (!target) throw new Error(`the open finding shows no "${text}"`);
+      target.scrollIntoView({ block: "start", behavior: "instant" });
       window.scrollBy(0, -56);
       await new Promise((r) => setTimeout(r, 200));
     }, needle);
 
   const scrollToOpenFinding = () =>
     panel.evaluate(async () => {
-      const open = [...document.querySelectorAll("button[aria-expanded='true']")].find((b) =>
-        b.querySelector("h3"),
-      );
+      const open = document.querySelector('h3 > button[aria-expanded="true"]');
       open?.scrollIntoView({ block: "start", behavior: "instant" });
       window.scrollBy(0, -56);
       await new Promise((r) => setTimeout(r, 200));
@@ -235,39 +246,36 @@ try {
 
   await compose("1-verdict-and-findings", "the verdict, the work left, and the queue");
 
-  const openFinding = (pattern) =>
-    panel.evaluate(async (source) => {
-      const wanted = new RegExp(source, "i");
-      const rows = [...document.querySelectorAll("button")].filter((b) => b.querySelector("h3"));
-      const open = rows.find((b) => b.getAttribute("aria-pressed") === "true");
-      if (open) {
-        open.click();
-        await new Promise((r) => setTimeout(r, 200));
-      }
-      const row = rows.find((b) => wanted.test(b.textContent)) ?? rows[0];
-      row.scrollIntoView({ block: "center", behavior: "instant" });
-      row.click();
+  const openFinding = (key) =>
+    panel.evaluate(async (id) => {
+      const item = document.getElementById(`finding-${id}`);
+      if (!item) throw new Error(`no finding ${id} in the panel`);
+      item.closest("details")?.setAttribute("open", "");
+      const row = item.querySelector("h3 > button");
+      if (row.getAttribute("aria-expanded") !== "true") row.click();
       await new Promise((r) => setTimeout(r, 400));
-      return row.querySelector("h3")?.textContent ?? null;
-    }, pattern.source ?? pattern);
+      return row.textContent.trim();
+    }, key);
 
-  console.log("  identity shot:", await openFinding("button-name|image-alt|target-size|label"));
+  console.log("  identity shot:", await openFinding("wcag:image-alt"));
   await scrollToOpenFinding();
   await compose("2-element-identity", "a problem opened on where it is, named by its element");
 
-  console.log("  verified shot:", await openFinding("color-contrast"));
-  await scrollToOpenFinding();
-  const tested = await panel.evaluate(() => document.body.textContent.includes("Fix tested"));
+  console.log("  verified shot:", await openFinding("wcag:color-contrast"));
+  const tested = await panel.evaluate(
+    () =>
+      document.querySelector('[id="finding-wcag:color-contrast"] [data-chain-end="tested"]') !==
+      null,
+  );
   if (!tested) throw new Error("3-verified-fix: the contrast fix is not marked as tested");
+  await scrollPanelTo("Measured");
   await compose("3-verified-fix", "a fix tested on the page, then undone");
 
   await walkFocusPath();
   await panel.reload();
-  await panel.waitForFunction(() => document.body.textContent.includes("To fix \u00b7"), null, {
-    timeout: 20000,
-  });
+  await ready();
 
-  console.log("  keyboard shot:", await openFinding("focus|keyboard|reach"));
+  console.log("  keyboard shot:", await openFinding("keyboard:focus-not-visible"));
   await clickPanel("Inspect tab order");
   const stop = await panel.evaluate(async () => {
     const next = [...document.querySelectorAll("button")].find(
@@ -282,13 +290,15 @@ try {
       ?.scrollIntoView({ block: "start", behavior: "instant" });
     window.scrollBy(0, -56);
     await new Promise((r) => setTimeout(r, 400));
-    return document.querySelector('[aria-live="polite"].min-w-24')?.textContent ?? null;
+    return [...document.querySelectorAll("[aria-live] p, [aria-live]")]
+      .map((el) => el.textContent.trim())
+      .find((text) => text.startsWith("Stop "));
   });
   console.log("  focus stop:", stop);
   await compose("4-focus-path", "the tab order inspected stop by stop");
 
   await clickPanel("Locate on page");
-  await scrollPanelTo("Occurrence");
+  await scrollPanelTo("Located");
   await compose("5-located-on-page", "an element found and drawn on the live page");
 } finally {
   await ctx.close();

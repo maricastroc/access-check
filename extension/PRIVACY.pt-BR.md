@@ -1,6 +1,6 @@
 # Extensão AccessCheck: política de privacidade
 
-**Em vigor desde 29 de setembro de 2026.** Esta política cobre a extensão de
+**Em vigor desde 2 de outubro de 2026.** Esta política cobre a extensão de
 navegador do AccessCheck. O analisador hospedado no site do AccessCheck é um
 produto separado, com contas e armazenamento próprios; esta política trata
 apenas da extensão.
@@ -41,14 +41,17 @@ disparados por você e os dois desfeitos na hora:
   compara o markup da página antes e depois, byte a byte, e quebra o build se
   houver qualquer diferença. Sugestões que dependem do que a página significa
   nunca são aplicadas.
-- **Para mostrar um elemento.** Quando você aperta "Localizar na página", ou
-  passa para outro elemento com as setas, ela desenha uma caixa de destaque num
-  contêiner próprio na raiz do documento. Inspecionar a ordem de tabulação
-  desenha marcadores numerados do mesmo jeito. O contêiner é `aria-hidden`, não
-  recebe eventos e nunca toca os elementos auditados. A caixa de um elemento
-  localizado some depois de alguns segundos, os marcadores da ordem de
-  tabulação somem quando você aperta Sair, e tudo o que ela desenhou é removido
-  quando o painel fecha e no início de qualquer auditoria.
+- **Para mostrar um elemento.** Quando você abre um problema, aperta
+  "Localizar na página" ou escolhe um dos elementos dele, ela desenha marcações
+  numeradas num contêiner próprio na raiz do documento. Inspecionar a ordem de
+  tabulação desenha marcadores numerados do mesmo jeito. O contêiner é
+  `aria-hidden` e nunca toca os elementos auditados. Só duas partes dele
+  respondem a um clique: o número de uma marcação, que escolhe aquele elemento
+  no painel, e a seta que aparece para um elemento fora da tela, que rola a
+  página até ele. As marcações ficam enquanto o problema está aberto, os
+  marcadores da ordem de tabulação somem quando você aperta Sair, e tudo o que
+  ela desenhou é removido quando você fecha o problema ou o painel, e no início
+  de qualquer auditoria.
 
 Nada do que você digitou é escrito, relido ou guardado.
 
