@@ -105,7 +105,7 @@ function LanguageChoice({ preference }: { preference: LocalePreference }) {
             .then(markLanguageChanged)
             .then(() => location.reload());
         }}
-        className="ml-auto min-h-8 max-w-full min-w-0 cursor-pointer border border-border bg-surface px-2 text-[13px] text-ink"
+        className="ml-auto min-h-8 max-w-full min-w-0 cursor-pointer border border-border bg-surface pr-3 pl-2 text-[13px] text-ink"
       >
         <option value={FOLLOW_BROWSER}>{t("language.followBrowser")}</option>
         {REPORT_LOCALES.map((option) => (
