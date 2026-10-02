@@ -30,6 +30,7 @@ import {
 import { captureOf } from "../../src/lib/scan/placement";
 import {
   OVERLAY_PICK,
+  OVERLAY_VIEW,
   type OverlayMark,
   type OverlayOptions,
   type OverlayTone,
@@ -190,6 +191,7 @@ function Header({
   onWalk,
   onContinue,
   onShowKeyboard,
+  offScreen,
 }: {
   result: ScanResult;
   groups: FindingGroups;
@@ -201,6 +203,7 @@ function Header({
   onWalk: () => void;
   onContinue: () => void;
   onShowKeyboard: (() => void) | null;
+  offScreen: number;
 }) {
   const scope = auditScope(result, t);
   const standing = standingOf(result.counts);
@@ -221,6 +224,11 @@ function Header({
           compact
           t={t}
         >
+          {offScreen > 0 && (
+            <p className="mt-3 text-[13px] leading-normal text-moderate-text">
+              {t("panel.notOnScreen", { count: offScreen })}
+            </p>
+          )}
           <KeyboardCheck
             scope={scope}
             walking={walking}
@@ -745,6 +753,7 @@ function Report({
     notice: null,
   });
   const [notice, setNotice] = useState<string | null>(null);
+  const [unseen, setUnseen] = useState(0);
   const [showing, setShowing] = useState(false);
   const [complete, setComplete] = useState(false);
   const [at, setAt] = useState(1);
@@ -806,10 +815,12 @@ function Report({
     if (inv.selected) void showFinding(inv.selected, inv.occIndex, true);
   };
 
-  const showOverview = () => {
-    ++latest.current;
+  const showOverview = async () => {
+    const ask = ++latest.current;
     drawn.current = "overview";
-    void draw(overview, null, { scroll: false, path: false, timeoutMs: 0 });
+    const reply = await draw(overview, null, { scroll: false, path: false, timeoutMs: 0 });
+    if (ask !== latest.current) return;
+    setUnseen(reply?.ok ? reply.report.missing.length + reply.report.offScreen.length : 0);
   };
 
   const showPath = async (focus: number, everything = complete) => {
@@ -868,6 +879,9 @@ function Report({
   useEffect(() => {
     const listener = (message: PanelMessage) => {
       if (message.type === OVERLAY_PICK) fromPage(message.key);
+      if (message.type === OVERLAY_VIEW && drawn.current === "overview") {
+        setUnseen(message.total - message.shown);
+      }
     };
     chrome.runtime.onMessage.addListener(listener);
     return () => chrome.runtime.onMessage.removeListener(listener);
@@ -910,6 +924,7 @@ function Report({
         onShowKeyboard={
           keyboardProblems.length > 0 ? () => go(keyboardProblems[0].id, 0, "nav") : null
         }
+        offScreen={inv.selectedId === null && !showing && walking === null ? unseen : 0}
       />
       <div className="border-t border-hairline">
         <FindingList

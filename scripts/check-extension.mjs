@@ -444,6 +444,22 @@ try {
   );
   check(Boolean(contrastTag), "the low-contrast paragraph has no mark in the overview");
 
+  const readOffScreen = () =>
+    report.evaluate(
+      () =>
+        [...document.querySelectorAll('[aria-labelledby="verdict-heading"] p')]
+          .map((p) => p.textContent)
+          .find((text) => /not on screen right now/.test(text)) ?? null,
+    );
+  const hiddenMarks = overview.filter((m) => !m.shown).length;
+  const offScreenNotice = await readOffScreen();
+  console.log("findings not on screen:", JSON.stringify({ hiddenMarks, offScreenNotice }));
+  check(hiddenMarks === 1, `the link in the closed drawer should be the one mark not shown`);
+  check(
+    offScreenNotice?.startsWith("1 problem to fix is not on screen right now") ?? false,
+    `the panel does not say a finding to fix is off screen: ${offScreenNotice}`,
+  );
+
   await page.bringToFront();
   if (contrastTag) await page.mouse.click(contrastTag.x, contrastTag.y);
   await new Promise((r) => setTimeout(r, 800));
@@ -452,6 +468,7 @@ try {
   );
   console.log("clicking the overview mark opened:", opened);
   check(opened === "finding-wcag:color-contrast", `clicking the mark opened ${opened}`);
+  check((await readOffScreen()) === null, "the off-screen notice stays up while a finding is open");
 
   await page.goto(`${origin}/another-page`, { waitUntil: "domcontentloaded" });
   await report.bringToFront();

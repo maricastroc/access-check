@@ -179,6 +179,27 @@ describe("the panel reuses the product's own report", () => {
     expect(report).not.toContain("clear()");
   });
 
+  it("says how many findings to fix have no mark on screen, only while the overview is up", () => {
+    expect(panel).toContain(
+      "setUnseen(reply?.ok ? reply.report.missing.length + reply.report.offScreen.length : 0);",
+    );
+    expect(panel).toMatch(
+      /message\.type === OVERLAY_VIEW && drawn\.current === "overview"[\s\S]{0,60}setUnseen\(message\.total - message\.shown\);/,
+    );
+    expect(panel).toContain(
+      "offScreen={inv.selectedId === null && !showing && walking === null ? unseen : 0}",
+    );
+    expect(panel).toContain('t("panel.notOnScreen", { count: offScreen })');
+    expect(overlay).toContain("viewTotal = focus === null ? marks.length : null;");
+    expect(overlay).toContain("post({ type: OVERLAY_VIEW, shown, total: viewTotal });");
+    expect(t("panel.notOnScreen", { count: 2 })).toBe(
+      "2 problems to fix are not on screen right now. Open them from the list to find them.",
+    );
+    expect(pt("panel.notOnScreen", { count: 1 })).toBe(
+      "1 problema a corrigir não aparece na tela agora. Abra pela lista para encontrá-lo.",
+    );
+  });
+
   it("shows each finding to fix on the page under its number in the queue", () => {
     const marks = between(panel, "function overviewMarks(", "type StopAlert");
     expect(marks).toContain("n: f.n,");
@@ -188,7 +209,7 @@ describe("the panel reuses the product's own report", () => {
     expect(marks).toContain("alternates: rest.map((o) => ({");
     expect(panel).toContain('overviewMarks(groups.find((g) => g.group === "fix")?.findings ?? [])');
     expect(panel).toContain(
-      "void draw(overview, null, { scroll: false, path: false, timeoutMs: 0 });",
+      "const reply = await draw(overview, null, { scroll: false, path: false, timeoutMs: 0 });",
     );
   });
 

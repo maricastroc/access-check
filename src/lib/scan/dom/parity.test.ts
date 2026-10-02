@@ -634,6 +634,85 @@ describe("the overlay as an overview, and along the focus path", () => {
     expect(after).toEqual({ focused: "email", clicks: 0, hidden: "true", focusable: 0 });
   });
 
+  it("tells the panel how many overview marks are on screen, each time that number changes", async () => {
+    const seen = await page.evaluate(async () => {
+      const sent: { type: string; shown: number; total: number }[] = [];
+      const before = Object.getOwnPropertyDescriptor(window, "chrome");
+      Object.defineProperty(window, "chrome", {
+        configurable: true,
+        writable: true,
+        value: {
+          runtime: {
+            id: "test",
+            sendMessage: (message: { type: string; shown: number; total: number }) => {
+              sent.push(message);
+              return Promise.resolve();
+            },
+          },
+        },
+      });
+      const frame = () =>
+        new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
+      const near = document.createElement("p");
+      near.id = "near-view";
+      near.textContent = "Near the top";
+      const spacer = document.createElement("div");
+      spacer.style.height = "2400px";
+      const far = document.createElement("p");
+      far.id = "far-view";
+      far.textContent = "Far down";
+      document.body.prepend(near);
+      document.body.append(spacer, far);
+      window.scrollTo(0, 0);
+
+      const report = window.__accessCheckDom!.overlayShow(
+        [
+          { n: 1, selector: "#near-view", tag: "1", tone: "critical", alternates: [] },
+          { n: 2, selector: "#far-view", tag: "2", tone: "serious", alternates: [] },
+          { n: 3, selector: "#nowhere", tag: "3", tone: "serious", alternates: [] },
+        ],
+        null,
+        {},
+      );
+      near.style.visibility = "hidden";
+      await frame();
+      near.style.visibility = "";
+      window.scrollTo(0, document.documentElement.scrollHeight);
+      await frame();
+      const overview = sent.length;
+      window.__accessCheckDom!.overlayShow(
+        [{ n: 1, selector: "#near-view", tag: "1·1", tone: "critical" }],
+        1,
+        {},
+      );
+      await frame();
+      const fromFinding = sent.length - overview;
+
+      window.__accessCheckDom!.overlayClear();
+      near.remove();
+      spacer.remove();
+      far.remove();
+      window.scrollTo(0, 0);
+      if (before) Object.defineProperty(window, "chrome", before);
+      else delete (window as unknown as { chrome?: unknown }).chrome;
+      return {
+        missing: report.missing,
+        offScreen: report.offScreen,
+        sent: sent.slice(0, overview),
+        fromFinding,
+      };
+    });
+
+    expect(seen.missing).toEqual([3]);
+    expect(seen.offScreen).toEqual([2]);
+    expect(seen.sent).toEqual([
+      { type: "overlay:view", shown: 1, total: 3 },
+      { type: "overlay:view", shown: 0, total: 3 },
+      { type: "overlay:view", shown: 1, total: 3 },
+    ]);
+    expect(seen.fromFinding).toBe(0);
+  });
+
   it("matches each finding's element to the stop it is, or sits inside", async () => {
     const matched = await page.evaluate(() => {
       const box = document.createElement("div");
