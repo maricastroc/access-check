@@ -10,7 +10,8 @@ export type ReadyOptions = {
 export const CONTENT_SIGNATURE = () => {
   const d = document;
   const text = d.body ? d.body.innerText.length : 0;
-  return `${d.querySelectorAll("*").length}|${d.styleSheets.length}|${text}`;
+  const own = d.querySelectorAll("[data-accesscheck]").length;
+  return `${d.querySelectorAll("*").length - own}|${d.styleSheets.length}|${text}`;
 };
 
 export async function waitForContentReady(
