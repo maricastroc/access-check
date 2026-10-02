@@ -1,5 +1,5 @@
 import type { ScanResult } from "./types";
-import { SCAN_FRESH_MS } from "./cache-policy";
+import { freshFor } from "./cache-policy";
 import { SCORING_VERSION, scoringVersionOf } from "./scored";
 import { DEFAULT_REPORT_LOCALE, type ReportLocale } from "../i18n/locale";
 
@@ -35,7 +35,6 @@ function store(key: string, entry: Entry): void {
 }
 
 export function rememberScan(result: ScanResult, typed?: string): void {
-  if (result.partial) return;
   if (scoringVersionOf(result) !== SCORING_VERSION) return;
   const locale = result.locale ?? DEFAULT_REPORT_LOCALE;
   const entry: Entry = { result, storedAt: Date.now() };
@@ -49,7 +48,7 @@ export function recallScan(url: string, locale: ReportLocale): ScanResult | null
   const entry = entries.get(key);
   if (!entry) return null;
   if (scoringVersionOf(entry.result) !== SCORING_VERSION) return null;
-  if (ageOf(entry) > SCAN_FRESH_MS) {
+  if (ageOf(entry) > freshFor(entry.result)) {
     entries.delete(key);
     return null;
   }
