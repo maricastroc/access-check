@@ -473,6 +473,61 @@ try {
   check(!drewOnOther, "marks were drawn on a page that was never audited");
   check(/moved on/.test(moved ?? ""), `Locate on page on another page answered: ${moved}`);
 
+  const overlayIn = (tab) =>
+    tab.evaluate(() => document.getElementById("accesscheck-overlay") !== null);
+  const auditActive = () =>
+    sw.evaluate(async () => {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      await globalThis.__accessCheckAuditTab(tab);
+    });
+
+  await page.goto(`${origin}/`, { waitUntil: "domcontentloaded" });
+  await page.bringToFront();
+  await auditActive();
+  await report.evaluate(async () => {
+    document.querySelector('h3 > button[aria-expanded="true"]')?.click();
+    await new Promise((r) => setTimeout(r, 900));
+  });
+  const beforePush = await overlayIn(page);
+  await page.evaluate(() => history.pushState({}, "", "/routed-elsewhere"));
+  await new Promise((r) => setTimeout(r, 700));
+  const afterPush = await overlayIn(page);
+  console.log("an in-page route change:", JSON.stringify({ beforePush, afterPush }));
+  check(beforePush, "the overview was not drawn before the route change");
+  check(!afterPush, "marks stayed on the page after the app moved to another address");
+
+  await page.goto(`${origin}/`, { waitUntil: "domcontentloaded" });
+  await page.bringToFront();
+  await auditActive();
+  await new Promise((r) => setTimeout(r, 1200));
+  const firstBefore = await overlayIn(page);
+  const second = await ctx.newPage();
+  await second.goto(`${origin}/second`, { waitUntil: "domcontentloaded" });
+  await second.bringToFront();
+  await auditActive();
+  await new Promise((r) => setTimeout(r, 1200));
+  const firstAfter = await overlayIn(page);
+  const secondDrawn = await overlayIn(second);
+  console.log("auditing a second tab:", JSON.stringify({ firstBefore, firstAfter, secondDrawn }));
+  check(firstBefore, "the overview was not drawn on the first tab");
+  check(!firstAfter, "auditing another tab left the first tab's marks on its page");
+  check(secondDrawn, "the second tab got no overview");
+
+  await report.bringToFront();
+  await report.evaluate(async () => {
+    [...document.querySelectorAll("button")]
+      .find((b) => b.textContent.trim() === "Audit again")
+      .click();
+    await new Promise((r) => setTimeout(r, 900));
+  });
+  const otherTab = await sw.evaluate(
+    async () => (await chrome.storage.session.get("panelState")).panelState.state.kind,
+  );
+  const leftOver = await overlayIn(second);
+  console.log("auditing again from another tab:", JSON.stringify({ otherTab, leftOver }));
+  check(otherTab === "error", `auditing again from another tab ended in ${otherTab}`);
+  check(!leftOver, "the marks stayed on the page after the report gave way to an error");
+
   if (failures.length > 0) {
     console.error("\nFAILED:\n- " + failures.join("\n- "));
     process.exitCode = 1;

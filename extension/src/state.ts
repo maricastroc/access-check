@@ -59,12 +59,16 @@ const BLOCKED: { test: (url: string) => boolean; reason: MessageKey }[] = [
   },
 ];
 
+function routeOf(hash: string): string {
+  return /^#!?\//.test(hash) ? hash : "";
+}
+
 export function sameDocument(a: string, b: string): boolean {
   try {
     const left = new URL(a);
     const right = new URL(b);
-    left.hash = "";
-    right.hash = "";
+    left.hash = routeOf(left.hash);
+    right.hash = routeOf(right.hash);
     return left.href === right.href;
   } catch {
     return a === b;

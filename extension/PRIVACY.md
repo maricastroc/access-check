@@ -22,34 +22,35 @@ tab:
 - **CSS selectors** for the elements a finding refers to, so you can locate them.
 - **A short, abbreviated HTML snippet** for each occurrence. It is rebuilt from a
   fixed list of attributes (id, class, type, role, name, alt, title, placeholder,
-  aria-\*, tabindex, disabled, href). The `value` attribute is deliberately left
-  out, because it holds what you typed, and `href` keeps only its path. The
+  aria-\*, tabindex, disabled, href) and the first 60 characters of the
+  element's text. The `value` attribute is deliberately left out, because it
+  holds what you typed into a form field, and `href` keeps only its path. The
   query string, where tokens usually live, is removed.
 
 ## What the extension writes
 
-It writes nothing to your page except in two moments, both of them yours to
-trigger and both undone immediately:
+It writes to your page in two ways only:
 
-- **Testing a fix.** Where a fix can be computed from measured values, which in
-  practice means a contrast colour, the extension sets that one CSS property on
-  the element, runs that one rule again, and puts the attribute back exactly as
-  it found it. An automated check in the project compares the page's markup before
-  and after, byte for byte, and fails the build on any difference. Suggestions
-  that depend on what the page means are never applied.
+- **Testing a fix.** During the audit, where a fix can be computed from measured
+  values, which in practice means a contrast colour, the extension sets that one
+  CSS property on the element, runs that one rule again, and puts the attribute
+  back exactly as it found it. An automated check in the project compares the
+  page's markup before and after, byte for byte, and fails the build on any
+  difference. Suggestions that depend on what the page means are never applied.
 - **Showing where the problems are.** While the report is open, it draws
-  numbered marks in its own container at the document root: one for each
-  problem to fix when none is open, or the elements of the problem you open.
-  Inspecting the tab order draws numbered markers the same way. The container
-  is `aria-hidden`, adds nothing to the page's tab order and never touches the
-  audited elements. Only two parts of it answer a click: a mark's number, which
-  opens that problem or element in the panel without moving focus on the page,
-  and the arrow shown for an element off screen, which scrolls the page to it.
-  Nothing is drawn once the tab shows a different page from the one audited.
-  Everything it drew is removed when the panel closes and at the start of any
-  audit.
+  numbered marks in its own container at the document root, without being
+  asked: one for each problem to fix that is on screen when none is open, or
+  the elements of the problem you open. Inspecting the tab order draws numbered
+  markers the same way. The container is `aria-hidden`, adds nothing to the
+  page's tab order and never touches the audited elements. Only its numbers and
+  the arrow shown for an element off screen answer a click: a number opens its
+  problem, element or stop in the panel, and the arrow scrolls the page to the
+  element. None of them moves focus on the page. When the tab moves to a
+  different page from the one audited, including another route of the same app,
+  the marks are removed and nothing more is drawn. Everything it drew is also
+  removed when the panel closes and at the start of any audit.
 
-Nothing you typed is written, read back or stored.
+What you type into a form field is never read, written or stored.
 
 ## Where it goes
 
@@ -91,8 +92,8 @@ fails the build if the report is ever published while it is still attached.
 
 - **activeTab**: grants access to the one tab you clicked on, and only after
   that click. The extension asks for no standing access to any site.
-- **scripting**: injects the audit into that tab and draws the temporary
-  highlights and markers you ask for.
+- **scripting**: injects the audit into that tab and draws the numbered marks
+  described above while the report is open.
 - **sidePanel**: shows the report beside the page.
 - **storage**: `chrome.storage.session` for the single report described above,
   and `chrome.storage.local` for the report language you picked. Nothing else.

@@ -928,8 +928,8 @@ describe("the panel is an inspector, not a squeezed report", () => {
   });
 
   it("refuses to draw once the tab shows another page", () => {
-    expect(background).toContain(
-      "if (auditedTabId !== null && !(await onAuditedPage(auditedTabId))) throw new MovedOn();",
+    expect(background).toMatch(
+      /if \(auditedTabId !== null && !\(await onAuditedPage\(auditedTabId\)\)\) \{\s*await clearOverlay\(\);\s*throw new MovedOn\(\);/,
     );
     expect(background).toContain("sameDocument(tab.url, state.result.finalUrl)");
     expect(background).toMatch(

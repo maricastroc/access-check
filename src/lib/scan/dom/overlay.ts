@@ -152,6 +152,7 @@ type Painted = {
   mark: OverlayMark;
   el: Element;
   choices: Choice[];
+  roaming: boolean;
   current: boolean;
   locus: HTMLElement;
   tag: HTMLElement;
@@ -167,6 +168,7 @@ let lines: SVGSVGElement | null = null;
 let edge: HTMLElement | null = null;
 let drawPath = false;
 let onMove: (() => void) | null = null;
+let watcher: MutationObserver | null = null;
 let frame = 0;
 let timer = 0;
 let sessionScroll: { x: number; y: number } | null = null;
@@ -289,8 +291,11 @@ function placeBadge(badge: HTMLElement, beside: Rect, taken: Rect[]): void {
   const sides: Rect[] = [
     { x: beside.x + beside.w + 3, y, w, h },
     { x: beside.x - w - 3, y, w, h },
+    { x: beside.x, y: beside.y - h - 3, w, h },
+    { x: beside.x, y: beside.y + beside.h + 3, w, h },
   ];
-  const fits = (c: Rect) => c.x >= 2 && c.x + c.w <= innerWidth - 2;
+  const fits = (c: Rect) =>
+    c.x >= 2 && c.x + c.w <= innerWidth - 2 && c.y >= 2 && c.y + c.h <= innerHeight - 2;
   const spot = sides.find((c) => fits(c) && !taken.some((o) => clash(c, o))) ?? sides[0];
   taken.push(spot);
   css(badge, { left: `${spot.x}px`, top: `${spot.y}px` });
@@ -321,6 +326,26 @@ function seen(r: DOMRect): boolean {
 function rendered(el: Element, r: DOMRect): boolean {
   if (r.width === 0 || r.height === 0) return false;
   return el.checkVisibility?.({ opacityProperty: true, visibilityProperty: true }) ?? true;
+}
+
+function clipped(el: Element, r: DOMRect): boolean {
+  if (getComputedStyle(el).position === "fixed") return false;
+  for (let node = el.parentElement; node && node !== document.body; node = node.parentElement) {
+    const cs = getComputedStyle(node);
+    const clipsX = cs.overflowX !== "visible";
+    const clipsY = cs.overflowY !== "visible";
+    if (clipsX || clipsY) {
+      const box = node.getBoundingClientRect();
+      if (clipsX && (r.right <= box.left || r.left >= box.right)) return true;
+      if (clipsY && (r.bottom <= box.top || r.top >= box.bottom)) return true;
+    }
+    if (cs.position === "fixed") return false;
+  }
+  return false;
+}
+
+function shows(el: Element, r: DOMRect): boolean {
+  return seen(r) && rendered(el, r) && !clipped(el, r);
 }
 
 function sideOf(r: DOMRect): OverlaySide | null {
@@ -413,6 +438,7 @@ function placeTags(): void {
   for (const p of painted) p.spot = null;
   const current = painted.find((p) => p.current && p.visible) ?? null;
   const taken: Rect[] = [];
+  const tags: Rect[] = [];
   const siblings = painted.filter((p) => p.visible && !p.current && p.mark.quiet);
   const last = Math.max(0, ...painted.map((p) => p.mark.n));
   const beside = current
@@ -464,6 +490,7 @@ function placeTags(): void {
     const y = Math.min(Math.max(chosen.y, 2), innerHeight - h - 2);
     p.spot = { x, y, w, h };
     taken.push({ x, y, w, h });
+    tags.push({ x, y, w, h });
     if (p.current) {
       const box = circle ? (p.mark.ring ? RING : 0) + LOCUS.current.inset : inset;
       taken.push({
@@ -474,21 +501,24 @@ function placeTags(): void {
       });
     }
     css(p.tag, { left: `${x}px`, top: `${y}px` });
-    if (p.badge) placeBadge(p.badge, p.spot, taken);
+  }
+  for (const p of order) {
+    if (p.badge && p.spot) placeBadge(p.badge, p.spot, tags);
   }
 }
 
 function place(): void {
   frame = 0;
   for (const p of painted) {
-    if (p.choices.length > 1) {
-      const shown = p.choices.find((c) => seen(c.el.getBoundingClientRect())) ?? p.choices[0];
+    if (p.roaming) {
+      const shown =
+        p.choices.find((c) => shows(c.el, c.el.getBoundingClientRect())) ?? p.choices[0];
       p.el = shown.el;
       if (shown.pick) p.tag.dataset.pick = shown.pick;
     }
     const r = p.el.getBoundingClientRect();
     p.rect = r;
-    p.visible = seen(r);
+    p.visible = p.roaming ? shows(p.el, r) : seen(r);
     const show = p.visible ? "block" : "none";
     p.locus.style.setProperty("display", show);
     p.tag.style.setProperty("display", p.visible ? "inline-flex" : "none");
@@ -538,6 +568,8 @@ export function overlayClear(): void {
     removeEventListener("resize", onMove);
     onMove = null;
   }
+  watcher?.disconnect();
+  watcher = null;
   painted = [];
   lines = null;
   edge = null;
@@ -598,6 +630,7 @@ export function overlayShow(
 
   lines = svg("svg", { class: "layer" });
   const marksLayer = document.createElement("div");
+  const badgesLayer = document.createElement("div");
   const tagsLayer = document.createElement("div");
 
   const ordered = [...marks].sort(
@@ -627,11 +660,12 @@ export function overlayShow(
     marksLayer.append(locus);
     tagsLayer.append(tag);
     const badge = badgeFor(mark);
-    if (badge) tagsLayer.append(badge);
+    if (badge) badgesLayer.append(badge);
     painted.push({
       mark,
       el,
       choices,
+      roaming: mark.alternates !== undefined,
       current,
       locus,
       tag,
@@ -671,7 +705,7 @@ export function overlayShow(
     );
   }
 
-  shadow.append(lines, marksLayer, tagsLayer);
+  shadow.append(lines, marksLayer, badgesLayer, tagsLayer);
   if (edge) shadow.append(edge);
   document.documentElement.appendChild(root);
 
@@ -685,6 +719,8 @@ export function overlayShow(
   onMove = schedule;
   addEventListener("scroll", onMove, { passive: true, capture: true });
   addEventListener("resize", onMove, { passive: true });
+  watcher = new MutationObserver(schedule);
+  watcher.observe(document.documentElement, { subtree: true, childList: true, attributes: true });
 
   if (current && current.visible && !calm()) {
     current.locus.animate(

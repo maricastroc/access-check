@@ -17,6 +17,7 @@ import { MAX_IDENTIFIED } from "../violations";
 import { INTERACTIVE } from "../target-size";
 import { injectDomEngine, runScan } from "../scan";
 import { SCORING_VERSION } from "../scored";
+import { CONTENT_SIGNATURE } from "../page-ready";
 import type { ScanResult } from "../types";
 
 const FIXTURE = `<!doctype html>
@@ -344,6 +345,168 @@ describe("the overlay as an overview, and along the focus path", () => {
     });
 
     expect(picks).toEqual({ atTop: "f:a:1", below: "f:a:0" });
+  });
+
+  it("tags an element that shows, passing over one that is transparent or scrolled out of its box", async () => {
+    const picks = await page.evaluate(() => {
+      const box = document.createElement("div");
+      box.innerHTML = `
+        <div style="position:relative;width:200px;height:100px">
+          <img id="ov-faded" src="/logo.png" style="position:absolute;left:0;top:0;width:200px;height:100px;opacity:0">
+          <img id="ov-shown" src="/logo.png" style="position:absolute;left:0;top:0;width:200px;height:100px">
+        </div>
+        <div id="ov-list" style="height:100px;overflow:auto;margin-top:150px">
+          <div style="height:100px"><span id="ov-above">Scrolled away</span></div>
+          <div style="height:100px"><span id="ov-in">In view</span></div>
+        </div>`;
+      document.body.prepend(box);
+      document.getElementById("ov-list")!.scrollTop = 100;
+      window.scrollTo(0, 0);
+      window.__accessCheckDom!.overlayShow(
+        [
+          {
+            n: 1,
+            selector: "#ov-faded",
+            tag: "1",
+            tone: "serious",
+            pick: "f:a:0",
+            alternates: [{ selector: "#ov-shown", pick: "f:a:1" }],
+          },
+          {
+            n: 2,
+            selector: "#ov-above",
+            tag: "2",
+            tone: "serious",
+            pick: "f:b:0",
+            alternates: [{ selector: "#ov-in", pick: "f:b:1" }],
+          },
+          { n: 3, selector: "#ov-above", tag: "3", tone: "serious", pick: "f:c:0", alternates: [] },
+        ],
+        null,
+        {},
+      );
+      const root = document.getElementById("accesscheck-overlay")!.shadowRoot!;
+      const tag = (n: number) => root.querySelector<HTMLElement>(`.tag[data-for="${n}"]`)!;
+      const out = {
+        first: tag(1).dataset.pick,
+        second: tag(2).dataset.pick,
+        third: tag(3).style.display,
+      };
+      window.__accessCheckDom!.overlayClear();
+      box.remove();
+      return out;
+    });
+
+    expect(picks).toEqual({ first: "f:a:1", second: "f:b:1", third: "none" });
+  });
+
+  it("follows the page when it removes or moves an element without scrolling", async () => {
+    const seen = await page.evaluate(async () => {
+      const box = document.createElement("div");
+      box.innerHTML = `
+        <p id="mv-banner">Banner that goes away</p>
+        <div style="width:300px;height:60px;overflow:hidden">
+          <div id="mv-slides" style="display:flex;width:900px">
+            <span id="mv-slide" style="width:300px">First slide</span><span style="width:300px">Next</span>
+          </div>
+        </div>`;
+      document.body.prepend(box);
+      window.scrollTo(0, 0);
+      window.__accessCheckDom!.overlayShow(
+        [
+          { n: 1, selector: "#mv-banner", tag: "1", tone: "serious", alternates: [] },
+          { n: 2, selector: "#mv-slide", tag: "2", tone: "serious", alternates: [] },
+        ],
+        null,
+        {},
+      );
+      const root = document.getElementById("accesscheck-overlay")!.shadowRoot!;
+      const shown = () =>
+        [...root.querySelectorAll<HTMLElement>(".tag")]
+          .filter((t) => t.style.display !== "none")
+          .map((t) => t.textContent);
+      const frames = () =>
+        new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
+      const before = shown();
+      document.getElementById("mv-banner")!.remove();
+      document.getElementById("mv-slides")!.style.transform = "translateX(-300px)";
+      await frames();
+      const after = shown();
+      window.__accessCheckDom!.overlayClear();
+      box.remove();
+      return { before, after };
+    });
+
+    expect(seen).toEqual({ before: ["1", "2"], after: [] });
+  });
+
+  it("keeps the current stop's finding from covering the stops beside it", async () => {
+    const drawn = await page.evaluate(() => {
+      const row = document.createElement("p");
+      row.style.marginTop = "120px";
+      row.innerHTML = Array.from(
+        { length: 6 },
+        (_, i) => `<a id="bd-${i}" href="/${i}" style="margin:0 4px">Link ${i}</a>`,
+      ).join("");
+      document.body.prepend(row);
+      window.scrollTo(0, 0);
+      window.__accessCheckDom!.overlayShow(
+        Array.from({ length: 6 }, (_, i) => ({
+          n: i + 1,
+          selector: `#bd-${i}`,
+          tag: String(i + 1),
+          tone: "path" as const,
+          shape: "circle" as const,
+          alert: "serious" as const,
+          pick: `s:${i + 1}`,
+          badge: i === 1 ? { tag: "1·2", tone: "serious" as const, pick: "f:k:1" } : undefined,
+        })),
+        2,
+        { path: true },
+      );
+      const root = document.getElementById("accesscheck-overlay")!.shadowRoot!;
+      const stops = [...root.querySelectorAll<HTMLElement>(".tag.circle")].filter(
+        (t) => t.style.display !== "none",
+      );
+      const badge = root.querySelector<HTMLElement>(".badge")!;
+      const b = badge.getBoundingClientRect();
+      const result = {
+        stops: stops.length,
+        hidden: stops
+          .filter((t) => {
+            const r = t.getBoundingClientRect();
+            return root.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2) !== t;
+          })
+          .map((t) => t.textContent),
+        overlapped: stops
+          .filter((t) => {
+            const r = t.getBoundingClientRect();
+            return r.left < b.right && b.left < r.right && r.top < b.bottom && b.top < r.bottom;
+          })
+          .map((t) => t.textContent),
+        badge: badge.style.display,
+      };
+      window.__accessCheckDom!.overlayClear();
+      row.remove();
+      return result;
+    });
+
+    expect(drawn).toEqual({ stops: 6, hidden: [], overlapped: [], badge: "inline-flex" });
+  });
+
+  it("is left out of the signature that tells whether the walk changed the page", async () => {
+    const bare = await page.evaluate(CONTENT_SIGNATURE);
+    await page.evaluate(() =>
+      window.__accessCheckDom!.overlayShow(
+        [{ n: 1, selector: "h1", tag: "1", tone: "serious" }],
+        null,
+        {},
+      ),
+    );
+    const drawn = await page.evaluate(CONTENT_SIGNATURE);
+    await page.evaluate(() => window.__accessCheckDom!.overlayClear());
+
+    expect(drawn).toBe(bare);
   });
 
   it("leaves out a finding whose elements are gone, and adds nothing when none is left", async () => {
@@ -883,6 +1046,26 @@ describe("naming the element a developer has to find", () => {
     const identity = (await read([selector]))[selector];
     return elementLine(selector, identity, translator("en"));
   };
+
+  it("never names a field by what someone typed into it, only a button by its label", async () => {
+    const names = await named.evaluate(() => {
+      const box = document.createElement("div");
+      box.innerHTML =
+        '<input id="typed-text"><textarea id="typed-area"></textarea><input id="send" type="submit" value="Send order">';
+      document.body.append(box);
+      (document.getElementById("typed-text") as HTMLInputElement).value = "my secret note";
+      (document.getElementById("typed-area") as HTMLTextAreaElement).value = "my secret note";
+      const found = window.__accessCheckDom!.collectIdentities([
+        "#typed-text",
+        "#typed-area",
+        "#send",
+      ]);
+      box.remove();
+      return Object.fromEntries(Object.entries(found).map(([k, v]) => [k, v.name]));
+    });
+
+    expect(names).toEqual({ "#typed-text": null, "#typed-area": null, "#send": "Send order" });
+  });
 
   it("ignores generated and utility classes instead of reciting them", async () => {
     expect(await line("nav button")).toBe("button “Sign in” · in <nav> “Primary”");

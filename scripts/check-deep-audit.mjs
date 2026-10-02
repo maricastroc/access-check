@@ -102,6 +102,11 @@ const PAGES = {
     </div>
     <a href="/after">After the list</a>
   </main>`,
+  "/overview": `<main>
+    <a href="/a">First link</a>
+    <button>Second</button>
+    <p style="color:#bbb;background:#fff">Low contrast text</p>
+  </main>`,
   "/several": `<main>
     <a href="/one" style="outline:none">One</a>
     <a href="/two" style="outline:none">Two</a>
@@ -148,7 +153,7 @@ const OVERLAY_READER = () => {
   const shadow = root.shadowRoot;
   const marks = [...shadow.querySelectorAll("[data-mark]")].map((locus) => {
     const n = locus.dataset.mark;
-    const tag = shadow.querySelector(`.tag[data-for="${n}"]`);
+    const tag = shadow.querySelector(`.tag:not(.badge)[data-for="${n}"]`);
     const ring = shadow.querySelector(`.ring[data-for="${n}"]`);
     const style = getComputedStyle(locus);
     return {
@@ -1309,6 +1314,48 @@ try {
   check(
     !quietWarnings.includes("walk-changed-page"),
     "a page the walk did not change was reported as changed",
+  );
+
+  await page.goto(`${origin}/overview`, { waitUntil: "domcontentloaded" });
+  await page.bringToFront();
+  await sw.evaluate(async () => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    await globalThis.__accessCheckAuditTab(tab);
+  });
+  const overviewPanel = await ctx.newPage();
+  await overviewPanel.setViewportSize({ width: 400, height: 800 });
+  await overviewPanel.goto(`chrome-extension://${extId}/panel.html`);
+  await overviewPanel.waitForFunction(() => document.getElementById("group-fix") !== null, null, {
+    timeout: 20000,
+  });
+  await new Promise((r) => setTimeout(r, 900));
+  const overviewBeforeWalk = (await readOverlay()).present;
+  await overviewPanel.evaluate(() =>
+    [...document.querySelectorAll("button")]
+      .find((b) => b.textContent.trim() === "Check keyboard")
+      .click(),
+  );
+  await overviewPanel.waitForFunction(
+    () => document.getElementById("focus-heading") !== null,
+    null,
+    {
+      timeout: 30000,
+    },
+  );
+  const walkedUnderOverview = await sw.evaluate(async () =>
+    (await chrome.storage.session.get("panelState")).panelState.state.result.warnings.map(
+      (w) => w.code,
+    ),
+  );
+  await overviewPanel.close();
+  console.log(
+    "a walk started with the overview on the page:",
+    JSON.stringify({ overviewBeforeWalk, warnings: walkedUnderOverview }),
+  );
+  check(overviewBeforeWalk, "the overview was not on the page when the walk started");
+  check(
+    !walkedUnderOverview.includes("walk-changed-page"),
+    "the walk counted the extension's own marks as the page changing",
   );
 
   await page.goto(`${origin}/mixed`, { waitUntil: "domcontentloaded" });

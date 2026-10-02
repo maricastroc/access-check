@@ -158,6 +158,7 @@ async function runAudit(tab: chrome.tabs.Tab): Promise<void> {
   const url = tab.url ?? "";
 
   try {
+    await clearOverlay();
     const blocked = unsupportedReason(tab.url);
     if (blocked) {
       auditedTabId = null;
@@ -267,7 +268,10 @@ async function showOverlay(
   focus: number | null,
   opts: OverlayOptions,
 ): Promise<OverlayReport> {
-  if (auditedTabId !== null && !(await onAuditedPage(auditedTabId))) throw new MovedOn();
+  if (auditedTabId !== null && !(await onAuditedPage(auditedTabId))) {
+    await clearOverlay();
+    throw new MovedOn();
+  }
   return inAuditedTab(async (tabId) => {
     const [{ result }] = await chrome.scripting.executeScript({
       target: { tabId },
@@ -372,6 +376,7 @@ chrome.runtime.onMessage.addListener((message: PanelMessage, _sender, sendRespon
       await restore();
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (!tab || (auditedTabId !== null && tab.id !== auditedTabId)) {
+        await clearOverlay();
         publish({
           kind: "error",
           recoverable: true,
@@ -383,6 +388,15 @@ chrome.runtime.onMessage.addListener((message: PanelMessage, _sender, sendRespon
     })();
     sendResponse({ ok: true });
   }
+});
+
+chrome.tabs.onUpdated.addListener((tabId, change) => {
+  const url = change.url;
+  if (!url) return;
+  void restore().then(() => {
+    if (tabId !== auditedTabId || state.kind !== "done") return;
+    if (!sameDocument(url, state.result.finalUrl)) return clearOverlay();
+  });
 });
 
 chrome.tabs.onRemoved.addListener((tabId) => {

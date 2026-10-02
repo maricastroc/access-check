@@ -11,6 +11,15 @@ describe("the overlay only draws on the page that was audited", () => {
     expect(sameDocument("https://shop.example/a?x=2", "https://shop.example/a?x=1")).toBe(false);
   });
 
+  it("sees another route of an app that routes by the fragment as another page", () => {
+    expect(sameDocument("https://app.example/#/settings", "https://app.example/#/home")).toBe(
+      false,
+    );
+    expect(sameDocument("https://app.example/#!/b", "https://app.example/#!/a")).toBe(false);
+    expect(sameDocument("https://app.example/#/home", "https://app.example/")).toBe(false);
+    expect(sameDocument("https://app.example/#/home", "https://app.example/#/home")).toBe(true);
+  });
+
   it("compares the text itself when either side is not a URL", () => {
     expect(sameDocument("about:blank", "about:blank")).toBe(true);
     expect(sameDocument("not a url", "https://shop.example/")).toBe(false);

@@ -18,7 +18,8 @@ submitted automatically.
 > the results in the side panel.
 
 Everything the extension does serves that one purpose: running the rules,
-checking the keyboard focus order, and highlighting an element on the page.
+checking the keyboard focus order, and marking on the page where the problems
+are.
 
 ## Short description (110 / 132 characters)
 
@@ -54,8 +55,8 @@ Regenerate them with `npm run build:screenshots`.
 
 1. Open any ordinary web page.
 2. Click the AccessCheck icon in the toolbar. The side panel opens and the audit
-   runs. No debugger is attached at this point. The page then shows each
-   problem to fix under its number in the queue.
+   runs. No debugger is attached at this point. The page then marks each
+   problem to fix that is on screen with its number in the queue.
 3. Open a problem in To fix, from the queue or by clicking its number on the
    page. Its elements are marked on the page with numbers,
    and the problem reads in order: where it is, what was measured, what to
@@ -78,10 +79,11 @@ Short answers for the dashboard fields, one per permission.
   user action."
 - **scripting**: "AccessCheck uses scripting to run its packaged accessibility
   audit code in the current tab, inspect the page DOM and computed styles,
-  identify affected elements, and display temporary location and focus order
-  markers requested by the user. To confirm a computed contrast fix, it
-  temporarily applies that single style to the element, runs the one rule
-  again, and restores the original attribute immediately."
+  identify affected elements, and draw numbered markers on the page while the
+  report is open, showing where each problem is and the keyboard focus order.
+  To confirm a computed contrast fix, it temporarily applies that single style
+  to the element, runs the one rule again, and restores the original attribute
+  immediately."
 - **sidePanel**: "AccessCheck uses the Chrome Side Panel to display the audit
   verdict, the list of problems to fix, element details, the keyboard focus
   order and the coverage of the audit, alongside the page being inspected."
@@ -150,14 +152,19 @@ Certifications to accept, all of which the code supports:
 
 ## What changed in 1.4.0
 
-- With no problem open, the page shows each problem to fix once, on its first
-  element on screen, under its number in the queue. Clicking that number opens
-  the problem.
+- With no problem open, the page shows each problem to fix once, on the first
+  of its elements that can be seen on screen, under its number in the queue.
+  Clicking that number opens the problem.
 - The focus path shows where it meets a problem: a stop on a problem's element
   gets a hatched ring in the problem's color, on the page and in the panel's
   list of stops, and only the current stop names the problem.
-- No marks are drawn once the tab shows a different page from the one audited,
-  and clicking a mark never moves focus on the page.
+- The marks are removed, and no more are drawn, once the tab shows a different
+  page from the one audited, including another route of the same app, or once
+  another tab is audited. Clicking a mark never moves focus on the page.
+- The marks follow the page when it moves or removes an element, and the
+  problem named at the current stop never covers the number of a stop beside
+  it.
+- A text field with no label is no longer named by what was typed into it.
 - Every problem reads as one chain, the same as on the site: why it matters,
   Located, Measured, Change, and then whether the fix was tested or needs a
   person. The selector, the HTML and the raw numbers stay under Details.

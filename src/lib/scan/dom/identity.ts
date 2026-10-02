@@ -81,8 +81,10 @@ export function accessibleName(el: Element): string {
     if (value) return clamp(value);
   }
 
-  const value = squash((el as HTMLInputElement).value);
-  if (value) return clamp(value);
+  if (el.matches('input[type="submit" i], input[type="button" i], input[type="reset" i]')) {
+    const value = squash((el as HTMLInputElement).value);
+    if (value) return clamp(value);
+  }
 
   const inner = el.querySelector("[alt],[title],[aria-label]");
   if (inner) {

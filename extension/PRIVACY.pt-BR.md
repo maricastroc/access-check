@@ -24,37 +24,38 @@ aquela aba:
   conseguir localizá-los.
 - **Um trecho de HTML curto e abreviado** para cada ocorrência. Ele é
   reconstruído a partir de uma lista fixa de atributos (id, class, type, role,
-  name, alt, title, placeholder, aria-\*, tabindex, disabled, href). O atributo
-  `value` fica de fora de propósito, porque guarda o que você digitou, e do
+  name, alt, title, placeholder, aria-\*, tabindex, disabled, href) e dos
+  primeiros 60 caracteres do texto do elemento. O atributo `value` fica de fora
+  de propósito, porque guarda o que você digitou num campo de formulário, e do
   `href` sobra apenas o caminho. A query string, onde costumam ficar tokens, é
   removida.
 
 ## O que a extensão escreve
 
-Ela não escreve nada na sua página, a não ser em dois momentos, os dois
-disparados por você e os dois desfeitos na hora:
+Ela escreve na sua página de duas formas apenas:
 
-- **Para testar uma correção.** Quando a correção pode ser calculada a partir de
-  valores medidos, o que na prática significa uma cor de contraste, a extensão
-  aplica aquela única propriedade de CSS no elemento, roda aquela única regra de
-  novo e devolve o atributo exatamente como estava. Uma verificação automatizada do projeto
-  compara o markup da página antes e depois, byte a byte, e quebra o build se
-  houver qualquer diferença. Sugestões que dependem do que a página significa
-  nunca são aplicadas.
+- **Para testar uma correção.** Durante a auditoria, quando a correção pode ser
+  calculada a partir de valores medidos, o que na prática significa uma cor de
+  contraste, a extensão aplica aquela única propriedade de CSS no elemento, roda
+  aquela única regra de novo e devolve o atributo exatamente como estava. Uma
+  verificação automatizada do projeto compara o markup da página antes e depois,
+  byte a byte, e quebra o build se houver qualquer diferença. Sugestões que
+  dependem do que a página significa nunca são aplicadas.
 - **Para mostrar onde estão os problemas.** Enquanto o relatório está aberto,
-  ela desenha marcações numeradas num contêiner próprio na raiz do documento:
-  uma para cada problema a corrigir quando nenhum está aberto, ou os elementos
-  do problema que você abrir. Inspecionar a ordem de tabulação desenha
-  marcadores numerados do mesmo jeito. O contêiner é `aria-hidden`, não
-  acrescenta nada à ordem de tabulação da página e nunca toca os elementos
-  auditados. Só duas partes dele respondem a um clique: o número de uma
-  marcação, que abre aquele problema ou elemento no painel sem mover o foco da
-  página, e a seta que aparece para um elemento fora da tela, que rola a página
-  até ele. Nada é desenhado depois que a aba passa a mostrar outra página. Tudo
-  o que ela desenhou é removido quando o painel fecha e no início de qualquer
-  auditoria.
+  ela desenha marcações numeradas num contêiner próprio na raiz do documento,
+  sem que você precise pedir: uma para cada problema a corrigir que esteja na
+  tela quando nenhum está aberto, ou os elementos do problema que você abrir.
+  Inspecionar a ordem de tabulação desenha marcadores numerados do mesmo
+  jeito. O contêiner é `aria-hidden`, não acrescenta nada à ordem de tabulação
+  da página e nunca toca os elementos auditados. Só os números dele e a seta
+  que aparece para um elemento fora da tela respondem a um clique: um número
+  abre o seu problema, elemento ou parada no painel, e a seta rola a página até
+  o elemento. Nenhum deles move o foco da página. Quando a aba passa a mostrar
+  outra página, inclusive outra rota do mesmo app, as marcações são removidas e
+  nada mais é desenhado. Tudo o que ela desenhou também é removido quando o
+  painel fecha e no início de qualquer auditoria.
 
-Nada do que você digitou é escrito, relido ou guardado.
+O que você digita num campo de formulário nunca é lido, escrito nem guardado.
 
 ## Para onde isso vai
 
@@ -98,8 +99,8 @@ quebra o build caso um relatório chegue a ser publicado com ele ainda anexado.
 
 - **activeTab**: dá acesso apenas à aba em que você clicou, e somente depois
   desse clique. A extensão não pede acesso permanente a nenhum site.
-- **scripting**: injeta a auditoria naquela aba e desenha os destaques e
-  marcadores temporários que você pede.
+- **scripting**: injeta a auditoria naquela aba e desenha as marcações
+  numeradas descritas acima enquanto o relatório está aberto.
 - **sidePanel**: mostra o relatório ao lado da página.
 - **storage**: `chrome.storage.session` para o único relatório descrito acima,
   e `chrome.storage.local` para o idioma do relatório que você escolheu. Nada
