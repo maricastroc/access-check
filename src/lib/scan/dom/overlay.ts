@@ -42,6 +42,7 @@ export type OverlayReport = {
 };
 
 export const OVERLAY_PICK = "overlay:pick";
+export const OVERLAY_VIEW = "overlay:view";
 
 const ROOT_ID = "accesscheck-overlay";
 const SVG = "http://www.w3.org/2000/svg";
@@ -169,6 +170,8 @@ let edge: HTMLElement | null = null;
 let drawPath = false;
 let onMove: (() => void) | null = null;
 let watcher: MutationObserver | null = null;
+let viewTotal: number | null = null;
+let lastShown = -1;
 let frame = 0;
 let timer = 0;
 let sessionScroll: { x: number; y: number } | null = null;
@@ -182,7 +185,7 @@ function css(el: Element, props: Record<string, string>): void {
   for (const [prop, value] of Object.entries(props)) style.setProperty(prop, value);
 }
 
-function tell(key: string): void {
+function post(message: { type: string } & Record<string, unknown>): void {
   const runtime = (
     globalThis as {
       chrome?: { runtime?: { id?: string; sendMessage?: (message: unknown) => unknown } };
@@ -190,10 +193,22 @@ function tell(key: string): void {
   ).chrome?.runtime;
   if (!runtime?.id || !runtime.sendMessage) return;
   try {
-    void Promise.resolve(runtime.sendMessage({ type: OVERLAY_PICK, key })).catch(() => {});
+    void Promise.resolve(runtime.sendMessage(message)).catch(() => {});
   } catch {
     return;
   }
+}
+
+function tell(key: string): void {
+  post({ type: OVERLAY_PICK, key });
+}
+
+function reportView(): void {
+  if (viewTotal === null) return;
+  const shown = painted.filter((p) => p.visible).length;
+  if (shown === lastShown) return;
+  lastShown = shown;
+  post({ type: OVERLAY_VIEW, shown, total: viewTotal });
 }
 
 function swallow(el: HTMLElement, act: () => void): void {
@@ -535,6 +550,7 @@ function place(): void {
     if (p.ring) css(p.ring, box);
   }
   placeTags();
+  reportView();
   if (!lines) return;
   lines.replaceChildren();
   const current = painted.find((p) => p.current) ?? null;
@@ -570,6 +586,8 @@ export function overlayClear(): void {
   }
   watcher?.disconnect();
   watcher = null;
+  viewTotal = null;
+  lastShown = -1;
   painted = [];
   lines = null;
   edge = null;
@@ -623,6 +641,7 @@ export function overlayShow(
   overlayClear();
   sessionScroll = carried ?? { x: window.scrollX, y: window.scrollY };
   drawPath = opts.path === true;
+  viewTotal = focus === null ? marks.length : null;
 
   const { root, shadow } = host();
   const missing: number[] = [];

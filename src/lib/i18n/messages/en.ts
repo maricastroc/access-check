@@ -1221,6 +1221,11 @@ export const en = {
   "panel.count.manualReview": "manual review",
   "panel.toFix": { one: "{count} to fix", other: "{count} to fix" },
   "panel.toCheck": { one: "{count} to check by hand", other: "{count} to check by hand" },
+  "panel.notOnScreen": {
+    one: "1 problem to fix is not on screen right now. Open it from the list to find it.",
+    other:
+      "{count} problems to fix are not on screen right now. Open them from the list to find them.",
+  },
 
   "panel.screenshot": "Screenshot of the visible page",
   "panel.evidenceNote": "viewport screenshot",

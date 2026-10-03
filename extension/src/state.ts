@@ -1,5 +1,10 @@
 import type { ScanResult } from "../../src/lib/scan/types";
-import type { OVERLAY_PICK, OverlayMark, OverlayReport } from "../../src/lib/scan/dom/overlay";
+import type {
+  OVERLAY_PICK,
+  OVERLAY_VIEW,
+  OverlayMark,
+  OverlayReport,
+} from "../../src/lib/scan/dom/overlay";
 import type { MessageKey } from "../../src/lib/i18n/t";
 
 export type AuditStage = "structure" | "rules" | "focus" | "report";
@@ -33,7 +38,8 @@ export type PanelMessage =
   | { type: "panel:clear-highlight" }
   | { type: "panel:restore-scroll" }
   | { type: "panel:state"; state: PanelState }
-  | { type: typeof OVERLAY_PICK; key: string };
+  | { type: typeof OVERLAY_PICK; key: string }
+  | { type: typeof OVERLAY_VIEW; shown: number; total: number };
 
 const BLOCKED: { test: (url: string) => boolean; reason: MessageKey }[] = [
   {

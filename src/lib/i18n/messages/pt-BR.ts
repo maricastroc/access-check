@@ -1249,6 +1249,11 @@ export const ptBR: Catalog = {
   "panel.count.manualReview": "revisão manual",
   "panel.toFix": { one: "{count} para corrigir", other: "{count} para corrigir" },
   "panel.toCheck": { one: "{count} para conferir à mão", other: "{count} para conferir à mão" },
+  "panel.notOnScreen": {
+    one: "1 problema a corrigir não aparece na tela agora. Abra pela lista para encontrá-lo.",
+    other:
+      "{count} problemas a corrigir não aparecem na tela agora. Abra pela lista para encontrá-los.",
+  },
 
   "panel.screenshot": "Captura da parte visível da página",
   "panel.evidenceNote": "captura do viewport",
