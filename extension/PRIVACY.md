@@ -1,6 +1,6 @@
 # AccessCheck extension: privacy policy
 
-**Effective 2 October 2026.** This policy covers the AccessCheck browser
+**Effective 3 October 2026.** This policy covers the AccessCheck browser
 extension. The hosted scanner at the AccessCheck website is a separate product
 with its own accounts and storage; this policy is only about the extension.
 
@@ -47,7 +47,9 @@ It writes to your page in two ways only:
   problem, element or stop in the panel, and the arrow scrolls the page to the
   element. None of them moves focus on the page. When the tab moves to a
   different page from the one audited, including another route of the same app,
-  the marks are removed and nothing more is drawn. Everything it drew is also
+  the marks are removed and nothing is drawn on that page. They come back only
+  when the tab shows the audited page again, after going back to it or
+  reloading it. Everything it drew is also
   removed when the panel closes and at the start of any audit.
 
 What you type into a form field is never read, written or stored.

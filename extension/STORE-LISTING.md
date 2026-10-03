@@ -157,12 +157,22 @@ Certifications to accept, all of which the code supports:
   Clicking that number opens the problem.
 - When some problems to fix have no mark on screen, because they sit lower on
   the page or in a part it hides, the panel says how many under the verdict.
+  It also says how many apply to the whole page, such as a missing title or
+  language, which never get a mark, so the marks and those lines add up to the
+  number to fix.
 - The focus path shows where it meets a problem: a stop on a problem's element
   gets a hatched ring in the problem's color, on the page and in the panel's
   list of stops, and only the current stop names the problem.
-- The marks are removed, and no more are drawn, once the tab shows a different
-  page from the one audited, including another route of the same app, or once
-  another tab is audited. Clicking a mark never moves focus on the page.
+- The marks are removed once the tab shows a different page from the one
+  audited, including another route of the same app, or once another tab is
+  audited, and the panel says the tab moved on. They come back when the tab
+  shows the audited page again, after going back or reloading. Clicking a mark
+  never moves focus on the page.
+- Check keyboard only walks the page that was audited. On another page it says
+  the tab moved on and leaves the report as it was.
+- The marks also go when the panel closes after Chrome put the extension to
+  sleep, and auditing another tab clears the first one's marks in that case
+  too.
 - The marks follow the page when it moves or removes an element, and the
   problem named at the current stop never covers the number of a stop beside
   it.
@@ -180,7 +190,12 @@ Certifications to accept, all of which the code supports:
 - "Locate on page" works on pages whose CSS hides empty boxes, such as
   Shopify's Dawn theme, where the marks used to vanish.
 - When the element sits in a closed menu, drawer or dialog, or off to the side,
-  "Locate on page" says so instead of doing nothing.
+  "Locate on page" says so instead of doing nothing. It also scrolls the box
+  that holds the element, and no mark is drawn over what an element is
+  scrolled out of.
+- Problems crowded on one element or on elements side by side each keep a
+  number that can be seen and clicked.
+- Text in the panel's own severity colors reads at 4.5:1 or more.
 - The text sample in a contrast problem wraps instead of being cut.
 - A tested fix now says it was tested on this page and undone, which is what
   the extension does.
