@@ -1,8 +1,8 @@
 # AccessCheck extension
 
-Audits the page you are already on — including pages behind a login, on localhost
+Audits the page you are already on, including pages behind a login, on localhost
 or on staging, which the hosted scanner cannot reach. Nothing leaves the browser:
-no network calls, no account. The only things kept are the last report, in
+no uploads, no account. The only things kept are the last report, in
 `chrome.storage.session`, and the report language you picked, in
 `chrome.storage.local` (see [PRIVACY.md](PRIVACY.md)).
 
@@ -47,13 +47,13 @@ up to six seconds. A page that is still hydrating gives a different answer every
 time it is asked, so a reading taken before it settles is marked
 `content-unsettled` and says as much.
 
-**Walk the focus path now** is a separate action beside the verdict, and the
-panel states what it costs before you press it. It does not re-run the rules. If
-it does not finish — you cancel it, DevTools is holding the tab, or Chrome
-refuses to debug the page — everything already read is kept, the report says
-which step stopped and why, and **Continue the walk** picks up at the stop it
-reached instead of starting over. A partial audit is never turned into a total
-failure.
+**Check keyboard** is a separate action under the verdict, and the panel says
+what it costs before you press it. It does not re-run the rules. If it does not
+finish, because you cancel it, DevTools is holding the tab or Chrome refuses to
+debug the page, everything already read is kept and the report says why the
+keyboard was not checked. A round that stops at its limit keeps the stops it
+reached, and **Continue where it stopped** picks up from there instead of
+starting over. A partial audit is never turned into a total failure.
 
 ## Naming the element
 
@@ -85,7 +85,8 @@ that is guaranteed to be unique.
 
 ## Locating a finding on the page
 
-Each keyboard finding opens into its occurrences: stop number, the element's
+Each finding opens into its occurrences, numbered like its marks on the page
+(`3·1`, `3·2`). A keyboard occurrence also shows its stop number, the element's
 readable name, the region of the page it sits in, a sanitized snippet, the
 measured rectangle, the CSS selector to hand to `querySelector`, and — for
 `focus-not-visible` — the exact visual change that did not happen, with the
@@ -94,28 +95,49 @@ computed styles that show it. For `focus-order`, each jump is shown as
 human check: geometry can show focus moved backwards, only a person can say the
 intended reading order was broken.
 
-**Locate on page** re-queries the selector, brings it into view only if it is
-not already visible, and draws a temporary numbered box. **Show focus path**
-opens a navigator — Previous, `Stop N of M`, Next — that draws the current stop
-and two either side, so a fifty-stop page stays readable; **Show complete path**
-draws them all. Stepping the page moves the panel to the same occurrence, and
-**Back to where you were** returns the page to where inspecting began.
+With no finding open, the page shows the **overview**: each finding in To fix
+once, on the first of its elements that can be seen, tagged with its number in
+the queue and coloured by its severity. The tag moves to another element of the
+same finding as the page scrolls, and clicking it opens the finding at that
+element. An element that is transparent, hidden, or scrolled out of the box that
+holds it gets no tag. When findings to fix have nothing on screen, a line under
+the verdict says how many, so an empty page never reads as a clean one.
 
-The overlay reads by colour _and_ by text: blue for an ordinary stop, amber for
-one worth checking, red for a failure, with the current stop at full strength
-and labelled while the rest are dimmed and numbered. Both actions say so plainly
-when an element is no longer in the page, and when stops are outside the
-viewport and therefore not drawn.
+Opening a finding marks its own elements instead, with the current one
+bracketed, and says where to look when the element is above or below the
+screen. **Locate on page** re-queries the selector and brings the element into
+view only if it is not already visible. It says so plainly when the element is
+no longer in the page, or is on the page but not showing, as in a closed menu.
 
-The drawing lives in one namespaced container at the document root: it is
-`aria-hidden`, takes no events (`pointer-events: none`), never touches the
-audited elements, and is removed on Clear, on a timeout, when another occurrence
-is selected, when the panel is closed, and at the start of any audit. It is
-never part of a reading — a check in `npm run check:deep` audits the page again
-after a highlight and compares the DOM byte for byte.
+**Inspect tab order** opens a navigator, Previous, `Stop N of M` and Next, that
+draws the current stop and two either side, so a long path stays readable.
+**Show complete path** draws them all, and **Exit** puts the page back where
+inspecting began. A stop where the path meets a finding carries a hatched ring
+in that finding's colour, on the page and in the panel's list of stops, and the
+stop's accessible name says which finding it is. Only the current stop shows the
+finding's tag beside its number and, for a focus finding, a ring around the
+element. Clicking a stop's number moves the inspection there, and clicking the
+finding's tag opens it.
 
-Scrolling to an element happens only after that explicit click, and is not the
-same thing as the audit putting your scroll position back.
+The marks read by text as well as colour: every tag carries a number, stops are
+blue circles, and the current mark is larger and ringed while the others stay
+lighter.
+
+The drawing lives in one container at the document root, in its own shadow root
+and `aria-hidden`. It adds nothing to the tab order and never touches the
+audited elements. Only its numbers and the arrow shown for an element off screen
+take a click, and a click never moves focus or starts a selection on the page. It
+follows the page as it scrolls, resizes, or moves and removes elements. It is
+removed when the panel closes, at the start of any audit, when the tab moves to
+another page or another route of the same app, and when the report gives way to
+an error. It is never part of a reading: a check in `npm run check:deep` audits
+the page again after a highlight and compares the DOM byte for byte, and the
+signature the keyboard check uses to tell whether the walk changed the page
+leaves it out.
+
+The page scrolls only when you ask: Locate on page, an element chip, a step
+along the tab order, or the arrow. That is not the same thing as the audit
+putting your scroll position back.
 
 ## Automated check
 
@@ -141,10 +163,11 @@ build applies it to the live DOM, re-runs that one rule, and puts the DOM back
 byte for byte before reporting whether the rule cleared. That check needs no
 debugger, so it runs inside the ordinary click.
 
-Only those findings carry a verification label: **Verified fix** when the rule
-stopped flagging the element, **Needs review** when the change was applied and it
-still flags. Everything else is a suggestion that depends on what the page means,
-so it is shown as one — no badge, no "not re-audited". On eight production pages
+Only those findings say whether the fix was tested: the row reads **fix tested**
+and the chain ends in **Verified** when the rule stopped flagging the element,
+and both say it **still fails** when the change was applied and the rule still
+flags it. Everything else is a suggestion that depends on what the page means,
+so it is shown as one, with nothing claiming it was tested. On eight production pages
 that is 49 of 55 findings, which is why the quiet case is the quiet one.
 
 ## Deep audit
@@ -173,11 +196,12 @@ and the reading is shown as a partial focus path. A walk that did not start at
 the top is never allowed to conclude that controls are unreachable: it ran out
 of document, which is not the same as having been everywhere.
 
-The walk is capped at 50 stops and 20 seconds, stops on a trap or a completed
-cycle, and puts focus and scroll back where they were. It cannot see inside
-cross-origin iframes or open shadow roots: focus that moves in there ends the
-walk, and the report says the path is partial rather than pretending to have
-covered it.
+Each round of the walk is capped at 200 stops and 20 seconds, stops on a trap
+or a completed cycle, and puts focus and scroll back where they were. The hosted
+scanner keeps its own cap of 50 stops, because it has a time budget to keep. The
+walk cannot follow focus into an iframe or an open shadow root: focus that moves
+in there ends the walk, and the report says the path is partial rather than
+pretending to have covered it.
 
 ## What it does not check
 
@@ -185,7 +209,9 @@ covered it.
 - **Reduced motion** — needs media emulation
 - **Keyboard focus path, until you ask for it** — the walk needs the debugger, so
   it is a separate action rather than part of the click
-- **iframes and closed shadow roots** — only the top frame is audited
+- **iframes and closed shadow roots** — the rules read only the top frame and open
+  shadow roots, and a finding inside a shadow root is listed without a place on
+  the page
 
 Every one of these is listed in the report itself, and the result is marked
 `partial`, so a reading from this build never poses as a full audit. The panel says
