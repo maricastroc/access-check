@@ -153,7 +153,7 @@ async function runAudit(tab: chrome.tabs.Tab): Promise<void> {
   if (!tab.id || !tab.windowId) return;
   if (running) return;
   running = true;
-  await syncLocale();
+  await restore();
 
   const url = tab.url ?? "";
 
@@ -230,15 +230,25 @@ async function addFocusPath(opts: { resume?: boolean } = {}): Promise<void> {
 
   const previous = state.result;
   const url = previous.finalUrl;
+  const tabId = auditedTabId;
   running = true;
 
   try {
+    if (!(await showsPage(tabId, url))) {
+      await clearOverlay();
+      publish({ kind: "done", result: previous, deepError: t("background.tabUnreachable") });
+      return;
+    }
     stage(url, "focus-path", "focus");
     const walked = await withFocusPath(
       previous,
-      auditedTabId,
+      tabId,
       opts.resume ? previous.keyboard : undefined,
     );
+    if (!(await showsPage(tabId, url))) {
+      publish({ kind: "done", result: previous, deepError: t("deep.tabMovedOn") });
+      return;
+    }
     stage(url, "focus-path", "report");
     publish({ kind: "done", result: walked.result, deepError: walked.deepError });
   } finally {
@@ -256,6 +266,11 @@ async function inAuditedTab<T>(run: (tabId: number) => Promise<T>): Promise<T> {
 }
 
 class MovedOn extends Error {}
+
+async function showsPage(tabId: number, audited: string): Promise<boolean> {
+  const tab = await chrome.tabs.get(tabId).catch(() => null);
+  return Boolean(tab?.url) && sameDocument(tab!.url!, audited);
+}
 
 async function onAuditedPage(tabId: number): Promise<boolean> {
   if (state.kind !== "done") return true;
@@ -311,7 +326,7 @@ chrome.action.onClicked.addListener(async (tab) => {
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name !== "panel") return;
   port.onDisconnect.addListener(() => {
-    void clearOverlay();
+    void restore().then(clearOverlay);
   });
 });
 
@@ -392,18 +407,21 @@ chrome.runtime.onMessage.addListener((message: PanelMessage, _sender, sendRespon
 
 chrome.tabs.onUpdated.addListener((tabId, change) => {
   const url = change.url;
-  if (!url) return;
-  void restore().then(() => {
+  if (!url && change.status !== "complete") return;
+  void restore().then(async () => {
     if (tabId !== auditedTabId || state.kind !== "done") return;
-    if (!sameDocument(url, state.result.finalUrl)) return clearOverlay();
+    if (url && !sameDocument(url, state.result.finalUrl)) await clearOverlay();
+    const message: PanelMessage = { type: "panel:page-changed" };
+    chrome.runtime.sendMessage(message).catch(() => {});
   });
 });
 
 chrome.tabs.onRemoved.addListener((tabId) => {
-  if (tabId === auditedTabId) {
+  void restore().then(() => {
+    if (tabId !== auditedTabId) return;
     auditedTabId = null;
     publish({ kind: "idle" });
-  }
+  });
 });
 
 const seams = globalThis as unknown as {

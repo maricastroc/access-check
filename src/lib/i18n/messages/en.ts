@@ -1222,9 +1222,13 @@ export const en = {
   "panel.toFix": { one: "{count} to fix", other: "{count} to fix" },
   "panel.toCheck": { one: "{count} to check by hand", other: "{count} to check by hand" },
   "panel.notOnScreen": {
-    one: "1 problem to fix is not on screen right now. Open it from the list to find it.",
+    one: "1 problem to fix has no mark on screen right now. Open it from the list to find it.",
     other:
-      "{count} problems to fix are not on screen right now. Open them from the list to find them.",
+      "{count} problems to fix have no mark on screen right now. Open them from the list to find them.",
+  },
+  "panel.wholePage": {
+    one: "1 problem to fix applies to the whole page, so it has no mark.",
+    other: "{count} problems to fix apply to the whole page, so they have no mark.",
   },
 
   "panel.screenshot": "Screenshot of the visible page",

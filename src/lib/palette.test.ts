@@ -49,6 +49,12 @@ const CHECKS: [string, PaletteToken | typeof WHITE, PaletteToken, number][] = [
   ["serious on surface", "serious", "surface", TEXT],
   ["moderate-text on surface", "moderate-text", "surface", TEXT],
   ["moderate-text on canvas", "moderate-text", "canvas", TEXT],
+  ["critical-text on canvas", "critical-text", "canvas", TEXT],
+  ["critical-text on surface", "critical-text", "surface", TEXT],
+  ["serious-text on canvas", "serious-text", "canvas", TEXT],
+  ["serious-text on surface", "serious-text", "surface", TEXT],
+  ["review-text on canvas", "review-text", "canvas", TEXT],
+  ["review-text on surface", "review-text", "surface", TEXT],
   ["verified on surface", "verified", "surface", TEXT],
   ["review on surface", "review", "surface", TEXT],
   ["path on surface", "path", "surface", TEXT],
@@ -80,7 +86,7 @@ describe("the palette keeps WCAG contrast where the product uses it", () => {
     expect(contrastRatio(rgb(color(fg)), rgb(color(bg)))).toBeGreaterThanOrEqual(need);
   });
 
-  it("checks all thirty-six uses", () => {
-    expect(CHECKS).toHaveLength(36);
+  it("checks all forty-two uses", () => {
+    expect(CHECKS).toHaveLength(42);
   });
 });

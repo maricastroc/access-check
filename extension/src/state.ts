@@ -38,6 +38,7 @@ export type PanelMessage =
   | { type: "panel:clear-highlight" }
   | { type: "panel:restore-scroll" }
   | { type: "panel:state"; state: PanelState }
+  | { type: "panel:page-changed" }
   | { type: typeof OVERLAY_PICK; key: string }
   | { type: typeof OVERLAY_VIEW; shown: number; total: number };
 

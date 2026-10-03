@@ -179,24 +179,30 @@ describe("the panel reuses the product's own report", () => {
     expect(report).not.toContain("clear()");
   });
 
-  it("says how many findings to fix have no mark on screen, only while the overview is up", () => {
+  it("says how many findings to fix have no mark on screen, and how many apply to the whole page, only while the overview is up", () => {
     expect(panel).toContain(
       "setUnseen(reply?.ok ? reply.report.missing.length + reply.report.offScreen.length : 0);",
     );
     expect(panel).toMatch(
       /message\.type === OVERLAY_VIEW && drawn\.current === "overview"[\s\S]{0,60}setUnseen\(message\.total - message\.shown\);/,
     );
-    expect(panel).toContain(
-      "offScreen={inv.selectedId === null && !showing && walking === null ? unseen : 0}",
-    );
-    expect(panel).toContain('t("panel.notOnScreen", { count: offScreen })');
+    expect(panel).toMatch(/notices=\{\s*inv\.selectedId === null && !showing && walking === null/);
+    expect(panel).toContain('unseen > 0 ? t("panel.notOnScreen", { count: unseen }) : null,');
+    expect(panel).toContain('wholePage > 0 ? t("panel.wholePage", { count: wholePage }) : null,');
+    expect(panel).toContain(".filter(appliesToWholePage).length");
     expect(overlay).toContain("viewTotal = focus === null ? marks.length : null;");
     expect(overlay).toContain("post({ type: OVERLAY_VIEW, shown, total: viewTotal });");
     expect(t("panel.notOnScreen", { count: 2 })).toBe(
-      "2 problems to fix are not on screen right now. Open them from the list to find them.",
+      "2 problems to fix have no mark on screen right now. Open them from the list to find them.",
     );
     expect(pt("panel.notOnScreen", { count: 1 })).toBe(
-      "1 problema a corrigir não aparece na tela agora. Abra pela lista para encontrá-lo.",
+      "1 problema a corrigir não tem marca na tela agora. Abra pela lista para encontrá-lo.",
+    );
+    expect(t("panel.wholePage", { count: 1 })).toBe(
+      "1 problem to fix applies to the whole page, so it has no mark.",
+    );
+    expect(pt("panel.wholePage", { count: 2 })).toBe(
+      "2 problemas a corrigir se aplicam à página inteira, por isso não têm marca.",
     );
   });
 
@@ -219,9 +225,11 @@ describe("the panel reuses the product's own report", () => {
     );
   });
 
-  it("reopens the panel's port when the reader acts, rather than holding it open", () => {
+  it("keeps the panel's port open, even after Chrome stops the worker, so closing it clears the page", () => {
     expect(panel).toContain("keepPort()");
     expect(panel).toMatch(/const draw: Draw = \([^)]*\) => \{\s*keepPort\(\);/);
+    expect(panel).toMatch(/port = null;\s*setTimeout\(keepPort, 250\);/);
+    expect(background).toContain("void restore().then(clearOverlay);");
   });
 
   it("sends one drawing at a time, in the order the reader asked for them", () => {
@@ -892,7 +900,7 @@ describe("the panel is an inspector, not a squeezed report", () => {
     const tags = between(overlay, "function placeTags(", "function place(");
     expect(overlay).toContain("const SIBLING_TAGS = 4;");
     expect(tags).toContain("siblings.length > SIBLING_TAGS && !beside.has(p.mark.n)");
-    expect(tags).toContain("const chosen = free ?? (sibling ? null :");
+    expect(tags).toContain("free ?? (sibling ? null : nearestFree(");
   });
 
   it("runs the focus path through the numbered circles", () => {
@@ -902,7 +910,7 @@ describe("the panel is an inspector, not a squeezed report", () => {
   });
 
   it("travels only when the element cannot already be seen", () => {
-    expect(overlay).toContain("if (!visible) found.scrollIntoView(");
+    expect(overlay).toContain("if (!visible || clipped(found, r)) {");
     expect(overlay).toContain("export function overlayRestoreScroll()");
   });
 
@@ -913,7 +921,9 @@ describe("the panel is an inspector, not a squeezed report", () => {
   });
 
   it("says when the element is on the page but not showing, instead of staying silent", () => {
-    expect(overlay).toContain("hidden: current !== null && !rendered(current.el, current.rect),");
+    expect(overlay).toMatch(
+      /hidden:\s*current !== null &&\s*\(!rendered\(current\.el, current\.rect\) \|\| clipped\(current\.el, current\.rect\)\)/,
+    );
     expect(panel).toContain('if (focused.hidden) return t("chain.notShowing");');
     expect(panel).toContain(
       'if (focused.side === "left" || focused.side === "right") return t("chain.notShowing");',

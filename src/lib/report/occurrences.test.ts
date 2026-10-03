@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  appliesToWholePage,
   findingsAtStops,
   firstAtEachStop,
   locatable,
@@ -106,6 +107,17 @@ describe("every finding that names an element can be found on the page", () => {
     expect(locatable("header > a")).toBe(true);
     expect(locatable("div.metadata")).toBe(true);
     expect(locatable("#main .title")).toBe(true);
+  });
+
+  it("says a finding applies to the whole page only when the page itself is what fails", () => {
+    const wcag = (ruleId: string, affectedSelectors: string[]) =>
+      finding({ kind: "wcag", ruleId, affectedSelectors });
+    expect(appliesToWholePage(wcag("html-has-lang", ["html"]))).toBe(true);
+    expect(appliesToWholePage(wcag("document-title", ["html"]))).toBe(true);
+    expect(appliesToWholePage(wcag("meta-viewport", ['meta[name="viewport"]']))).toBe(true);
+    expect(appliesToWholePage(wcag("region", ["body > p"]))).toBe(false);
+    expect(appliesToWholePage(wcag("image-alt", ["img.logo"]))).toBe(false);
+    expect(appliesToWholePage(wcag("image-alt", []))).toBe(false);
   });
 });
 

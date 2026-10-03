@@ -133,7 +133,9 @@ function Located({
         <p className="mt-1.5 text-[14.5px] leading-normal break-words text-ink-2">{occ.reason}</p>
       )}
       {occ.keyboard && occ.certainty === "needs-review" && (
-        <p className="mt-1.5 text-[13px] leading-normal text-review">{t("panel.geometryUnsure")}</p>
+        <p className="mt-1.5 text-[13px] leading-normal text-review-text">
+          {t("panel.geometryUnsure")}
+        </p>
       )}
       <OccurrenceNav
         n={finding.n}

@@ -20,6 +20,7 @@ import {
 import { workQueue, type FindingView } from "../../src/lib/report/findings";
 import { describeElement } from "../../src/lib/report/identity";
 import {
+  appliesToWholePage,
   findingsAtStops,
   firstAtEachStop,
   occurrenceTag,
@@ -91,6 +92,18 @@ const FINDING_KEY = "f:";
 const STOP_KEY = "s:";
 
 let drawing: Promise<unknown> = Promise.resolve();
+let port: chrome.runtime.Port | null = null;
+
+function keepPort(): void {
+  if (port) return;
+  const opened = chrome.runtime.connect({ name: "panel" });
+  opened.onDisconnect.addListener(() => {
+    if (port !== opened) return;
+    port = null;
+    setTimeout(keepPort, 250);
+  });
+  port = opened;
+}
 
 function send(message: PanelMessage): Promise<unknown> {
   return chrome.runtime.sendMessage(message).catch(() => undefined);
@@ -191,7 +204,7 @@ function Header({
   onWalk,
   onContinue,
   onShowKeyboard,
-  offScreen,
+  notices,
 }: {
   result: ScanResult;
   groups: FindingGroups;
@@ -203,7 +216,7 @@ function Header({
   onWalk: () => void;
   onContinue: () => void;
   onShowKeyboard: (() => void) | null;
-  offScreen: number;
+  notices: string[];
 }) {
   const scope = auditScope(result, t);
   const standing = standingOf(result.counts);
@@ -224,11 +237,11 @@ function Header({
           compact
           t={t}
         >
-          {offScreen > 0 && (
-            <p className="mt-3 text-[13px] leading-normal text-moderate-text">
-              {t("panel.notOnScreen", { count: offScreen })}
+          {notices.map((line) => (
+            <p key={line} className="mt-3 text-[13px] leading-normal text-moderate-text">
+              {line}
             </p>
-          )}
+          ))}
           <KeyboardCheck
             scope={scope}
             walking={walking}
@@ -313,7 +326,7 @@ function KeyboardCheck({
         </p>
       )}
       {error && (
-        <p role="alert" className="mt-1.5 text-[13.5px] leading-normal text-critical">
+        <p role="alert" className="mt-1.5 text-[13.5px] leading-normal text-critical-text">
           {error}
         </p>
       )}
@@ -738,6 +751,10 @@ function Report({
     () => overviewMarks(groups.find((g) => g.group === "fix")?.findings ?? []),
     [groups],
   );
+  const wholePage = useMemo(
+    () => (groups.find((g) => g.group === "fix")?.findings ?? []).filter(appliesToWholePage).length,
+    [groups],
+  );
   const atStops = useMemo(
     () =>
       findingsAtStops(
@@ -754,6 +771,7 @@ function Report({
   });
   const [notice, setNotice] = useState<string | null>(null);
   const [unseen, setUnseen] = useState(0);
+  const [away, setAway] = useState<string | null>(null);
   const [showing, setShowing] = useState(false);
   const [complete, setComplete] = useState(false);
   const [at, setAt] = useState(1);
@@ -820,10 +838,11 @@ function Report({
     drawn.current = "overview";
     const reply = await draw(overview, null, { scroll: false, path: false, timeoutMs: 0 });
     if (ask !== latest.current) return;
+    setAway(reply?.ok === false ? reply.message : null);
     setUnseen(reply?.ok ? reply.report.missing.length + reply.report.offScreen.length : 0);
   };
 
-  const showPath = async (focus: number, everything = complete) => {
+  const showPath = async (focus: number, everything = complete, scroll = true) => {
     const next = Math.min(Math.max(focus, 1), stops);
     const ask = ++latest.current;
     drawn.current = "path";
@@ -831,7 +850,7 @@ function Report({
     setShowing(true);
     const marks = stopMarks(result, alerts, next);
     const shown = everything ? wholePath(marks, next) : windowAround(marks, next);
-    const reply = await draw(shown, next, { scroll: true, path: true, timeoutMs: 0 });
+    const reply = await draw(shown, next, { scroll, path: true, timeoutMs: 0 });
     if (ask !== latest.current) return;
     setNotice(pathNotice(shown, reply));
   };
@@ -876,8 +895,17 @@ function Report({
     go(rest.slice(0, cut), index, "mark");
   });
 
+  const redraw = useEffectEvent(() => {
+    if (walking !== null) return;
+    if (drawn.current === "path") void showPath(at, complete, false);
+    else if (drawn.current === "finding" && inv.selected) {
+      void showFinding(inv.selected, inv.occIndex, false);
+    } else if (drawn.current === "overview") void showOverview();
+  });
+
   useEffect(() => {
     const listener = (message: PanelMessage) => {
+      if (message.type === "panel:page-changed") redraw();
       if (message.type === OVERLAY_PICK) fromPage(message.key);
       if (message.type === OVERLAY_VIEW && drawn.current === "overview") {
         setUnseen(message.total - message.shown);
@@ -924,7 +952,16 @@ function Report({
         onShowKeyboard={
           keyboardProblems.length > 0 ? () => go(keyboardProblems[0].id, 0, "nav") : null
         }
-        offScreen={inv.selectedId === null && !showing && walking === null ? unseen : 0}
+        notices={
+          inv.selectedId === null && !showing && walking === null
+            ? away
+              ? [away]
+              : [
+                  unseen > 0 ? t("panel.notOnScreen", { count: unseen }) : null,
+                  wholePage > 0 ? t("panel.wholePage", { count: wholePage }) : null,
+                ].filter((line): line is string => line !== null)
+            : []
+        }
       />
       <div className="border-t border-hairline">
         <FindingList
@@ -1026,16 +1063,6 @@ function Panel({
   const [state, setState] = useState<PanelState>({ kind: "idle" });
   const [lastDone, setLastDone] = useState<DoneState | null>(null);
   if (state.kind === "done" && state !== lastDone) setLastDone(state);
-  const port = useRef<chrome.runtime.Port | null>(null);
-
-  const keepPort = () => {
-    if (port.current) return;
-    const opened = chrome.runtime.connect({ name: "panel" });
-    opened.onDisconnect.addListener(() => {
-      if (port.current === opened) port.current = null;
-    });
-    port.current = opened;
-  };
 
   useEffect(() => {
     const listener = (message: PanelMessage) => {
@@ -1055,7 +1082,9 @@ function Panel({
     );
     return () => {
       chrome.runtime.onMessage.removeListener(listener);
-      port.current?.disconnect();
+      const open = port;
+      port = null;
+      open?.disconnect();
     };
   }, [retranslate]);
 
