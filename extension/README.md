@@ -48,10 +48,11 @@ time it is asked, so a reading taken before it settles is marked
 `content-unsettled` and says as much.
 
 **Check keyboard** is a separate action under the verdict, and the panel says
-what it costs before you press it. It does not re-run the rules. If it does not
-finish, because you cancel it, DevTools is holding the tab or Chrome refuses to
-debug the page, everything already read is kept and the report says why the
-keyboard was not checked. A round that stops at its limit keeps the stops it
+what it costs before you press it. It does not re-run the rules, and it only
+walks the page that was audited: on another page or route it says the tab moved
+on. If it does not finish, because you cancel it, DevTools is holding the tab or
+Chrome refuses to debug the page, everything already read is kept and the report
+says why the keyboard was not checked. A round that stops at its limit keeps the stops it
 reached, and **Continue where it stopped** picks up from there instead of
 starting over. A partial audit is never turned into a total failure.
 
@@ -100,14 +101,18 @@ once, on the first of its elements that can be seen, tagged with its number in
 the queue and coloured by its severity. The tag moves to another element of the
 same finding as the page scrolls, and clicking it opens the finding at that
 element. An element that is transparent, hidden, or scrolled out of the box that
-holds it gets no tag. When findings to fix have nothing on screen, a line under
-the verdict says how many, so an empty page never reads as a clean one.
+holds it gets no tag. When findings to fix have no mark on screen, a line under
+the verdict says how many, and another says how many apply to the whole page,
+such as a missing title or language, which never get a mark. The marks and those
+lines add up to the number to fix, so an empty page never reads as a clean one.
 
 Opening a finding marks its own elements instead, with the current one
 bracketed, and says where to look when the element is above or below the
 screen. **Locate on page** re-queries the selector and brings the element into
-view only if it is not already visible. It says so plainly when the element is
-no longer in the page, or is on the page but not showing, as in a closed menu.
+view only if it is not already visible, scrolling the box that holds it when
+that box scrolls on its own. It says so plainly when the element is no longer in
+the page, or is on the page but not showing, as in a closed menu, and draws no
+mark over what an element is scrolled out of.
 
 **Inspect tab order** opens a navigator, Previous, `Stop N of M` and Next, that
 draws the current stop and two either side, so a long path stays readable.
@@ -130,7 +135,9 @@ take a click, and a click never moves focus or starts a selection on the page. I
 follows the page as it scrolls, resizes, or moves and removes elements. It is
 removed when the panel closes, at the start of any audit, when the tab moves to
 another page or another route of the same app, and when the report gives way to
-an error. It is never part of a reading: a check in `npm run check:deep` audits
+an error. When the tab moves on, the panel says so, and the drawing comes back
+when the tab shows the audited page again, after going back or reloading. It is
+never part of a reading: a check in `npm run check:deep` audits
 the page again after a highlight and compares the DOM byte for byte, and the
 signature the keyboard check uses to tell whether the walk changed the page
 leaves it out.

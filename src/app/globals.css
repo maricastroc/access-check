@@ -23,14 +23,17 @@
   --color-halo: rgba(255, 255, 255, 0.94);
 
   --color-critical: #da2218;
+  --color-critical-text: #d12117;
   --color-critical-hatch: #f39a8f;
   --color-serious: #bf4900;
+  --color-serious-text: #b84600;
   --color-serious-hatch: #f6ae6a;
   --color-moderate: #916800;
   --color-moderate-text: #7a5800;
   --color-moderate-hatch: #e8c55a;
   --color-verified: #008046;
   --color-review: #824ee9;
+  --color-review-text: #7d4be0;
   --color-path: #2c64f2;
   --color-steel: #2d5486;
 

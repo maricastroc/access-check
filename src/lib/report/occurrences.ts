@@ -3,6 +3,7 @@ import type { ElementIdentity } from "@/lib/scan/dom/identity";
 import type { FocusRect, KeyboardCertainty } from "@/lib/scan/keyboard";
 import { captureOf } from "@/lib/scan/placement";
 import type { FindingView } from "./findings";
+import { isDocLevelCategory } from "./guidance";
 
 export type Occurrence = {
   index: number;
@@ -87,6 +88,10 @@ export function occurrencesOf(finding: FindingView): Occurrence[] {
           : [],
     ),
   }));
+}
+
+export function appliesToWholePage(finding: FindingView): boolean {
+  return occurrencesOf(finding).length === 0 && isDocLevelCategory(finding.ruleId, finding.kind);
 }
 
 export function occurrenceTag(n: number, index: number, total: number): string {

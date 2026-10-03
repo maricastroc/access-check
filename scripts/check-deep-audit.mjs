@@ -1316,6 +1316,54 @@ try {
     "a page the walk did not change was reported as changed",
   );
 
+  const walkAfterLeaving = async (leave) => {
+    await page.goto(`${origin}/ordinary`, { waitUntil: "domcontentloaded" });
+    await page.bringToFront();
+    await sw.evaluate(async () => {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      await globalThis.__accessCheckAuditTab(tab);
+    });
+    await leave();
+    await page.bringToFront();
+    return sw.evaluate(async () => {
+      await globalThis.__accessCheckDeepAudit();
+      await new Promise((r) => setTimeout(r, 600));
+      const state = (await chrome.storage.session.get("panelState")).panelState?.state;
+      return {
+        reportFor: state?.result?.finalUrl ?? null,
+        stops: state?.result?.keyboard?.focusPath.map((s) => s.label) ?? null,
+        deepError: state?.deepError ?? null,
+      };
+    });
+  };
+  const routedAway = await walkAfterLeaving(() =>
+    page.evaluate(() => {
+      history.pushState({}, "", "/settings");
+      document.querySelector("main").innerHTML =
+        "<button>Save settings</button><button>Cancel settings</button>";
+    }),
+  );
+  const navigatedAway = await walkAfterLeaving(() =>
+    page.goto(`${origin}/order`, { waitUntil: "domcontentloaded" }),
+  );
+  console.log(
+    "checking the keyboard after the tab left the audited page:",
+    JSON.stringify({ routedAway, navigatedAway }),
+  );
+  for (const [how, walked] of [
+    ["a route change", routedAway],
+    ["a navigation", navigatedAway],
+  ]) {
+    check(
+      walked.stops === null,
+      `after ${how}, the report of ${walked.reportFor} took the stops of another page: ${JSON.stringify(walked.stops)}`,
+    );
+    check(
+      /moved on/.test(walked.deepError ?? ""),
+      `after ${how}, the keyboard check said: ${walked.deepError}`,
+    );
+  }
+
   await page.goto(`${origin}/overview`, { waitUntil: "domcontentloaded" });
   await page.bringToFront();
   await sw.evaluate(async () => {

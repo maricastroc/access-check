@@ -177,8 +177,8 @@ URL → headless Chromium (Playwright) → inject axe-core → WCAG audit
 
 **It proves the fix, doesn't assert it.** A deterministic fix — one computed from measured values, in practice a contrast colour — carries a structured DOM mutation. AccessCheck applies that mutation in the page, re-runs axe scoped to that one rule, then reverts, and reports only what the re-run showed:
 
-- **Verified fix** — the rule stopped flagging the element.
-- **Needs review** — the change was applied and the rule still flags it. The suggestion isn't enough on its own.
+- **Fix tested**, ending in **Verified**: the rule stopped flagging the element.
+- **Still fails** (**Needs review** in the Markdown export): the change was applied and the rule still flags it. The suggestion isn't enough on its own.
 
 Everything else — an alt text, an `aria-label`, a structural change — is a suggestion that depends on what the page means, and no re-run can settle it. Those findings carry no verification label at all: they read as what they are, a suggestion that needs a person. Measured over eight production pages: 55 findings, 4 verified, 2 needing review, 49 in that third group — which is why it is the quiet one rather than a badge repeated on every card. The distinction is still in the data (`verified` / `failed` / `unchecked` per fix group); it is the interface that stopped spending attention on it.
 
@@ -192,7 +192,7 @@ The web app audits a URL. The extension audits **the tab you are already looking
 
 **Install it from the [Chrome Web Store](https://chromewebstore.google.com/detail/accesscheck/odhbdcnojfgjbkbfajidablhibhhckgf).**
 
-- **The debugger is opt-in, not the price of admission.** Clicking the icon runs the rules, the own-rule audits and the fix verification without ever attaching `chrome.debugger`. Walking the keyboard focus path is a separate action that states its cost before you press it, and **Continue the walk** resumes a walk that was cut short instead of starting over.
+- **The debugger is opt-in, not the price of admission.** Clicking the icon runs the rules, the own-rule audits and the fix verification without ever attaching `chrome.debugger`. **Check keyboard** is a separate action that states its cost before you press it, and **Continue where it stopped** picks up a round that reached its limit instead of starting over.
 - **A real focus path, not a simulated one.** The walk attaches `chrome.debugger` and dispatches genuine `Tab` / `Shift+Tab` through CDP, so the order it reports is the order Chrome actually produces — including what the browser skips. The debugger is attached for that step only and released before the report appears; a walk that is cut short still releases it.
 - **It names the element, not just its CSS path.** axe points at `.bg-gradient-left.dark\:bg-gradient-left-dark…` — 501 characters of compiled Tailwind on react.dev. The report reads `span.text-gray-30 “example.com/”  ·  in <article>`, built from the tag, one stable attribute, the accessible name and the enclosing landmark, with generated ids and hashed classes deliberately left out. Repeated elements that would read the same way are numbered (`1 of 3`) rather than invented. The selector is kept beside the name for **Locate on page** and **Copy selector** — identity is for people, the locator is for `querySelector`.
 - **It says what it could not check.** Coverage is stated next to the verdict (_"Partial coverage · 3 checks unavailable"_) rather than quietly rounded away, and the reading is never called complete when checks were skipped.

@@ -121,10 +121,10 @@ export function FocusSequence({
             </span>
             {here.label && <span className="break-words text-ink-2"> · “{here.label}”</span>}
             {!here.focusVisible && (
-              <span className="text-serious"> · {t("focusPath.stopNoFocus")}</span>
+              <span className="text-serious-text"> · {t("focusPath.stopNoFocus")}</span>
             )}
             {here.focusIndicator === "shared" && (
-              <span className="text-serious"> · {t("results.focusOnContainer")}</span>
+              <span className="text-serious-text"> · {t("results.focusOnContainer")}</span>
             )}
             {here.rect?.scrolled && (
               <span className="text-muted"> · {t("focusPath.insideScroller")}</span>

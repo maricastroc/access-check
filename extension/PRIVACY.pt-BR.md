@@ -1,6 +1,6 @@
 # Extensão AccessCheck: política de privacidade
 
-**Em vigor desde 2 de outubro de 2026.** Esta política cobre a extensão de
+**Em vigor desde 3 de outubro de 2026.** Esta política cobre a extensão de
 navegador do AccessCheck. O analisador hospedado no site do AccessCheck é um
 produto separado, com contas e armazenamento próprios; esta política trata
 apenas da extensão.
@@ -52,7 +52,9 @@ Ela escreve na sua página de duas formas apenas:
   abre o seu problema, elemento ou parada no painel, e a seta rola a página até
   o elemento. Nenhum deles move o foco da página. Quando a aba passa a mostrar
   outra página, inclusive outra rota do mesmo app, as marcações são removidas e
-  nada mais é desenhado. Tudo o que ela desenhou também é removido quando o
+  nada é desenhado nessa página. Elas só voltam quando a aba mostra de novo a
+  página auditada, depois de voltar a ela ou recarregá-la. Tudo o que ela
+  desenhou também é removido quando o
   painel fecha e no início de qualquer auditoria.
 
 O que você digita num campo de formulário nunca é lido, escrito nem guardado.

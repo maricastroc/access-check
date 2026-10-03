@@ -303,9 +303,102 @@ describe("the overlay says when the element it points at cannot be seen", () => 
 
     expect(shown).toEqual({ display: "block", visibility: "visible", opacity: "1", drawn: true });
   });
+
+  it("marks nothing over an element scrolled out of its box, and brings it into view when asked", async () => {
+    const seen = await page.evaluate(() => {
+      const box = document.createElement("div");
+      box.innerHTML = `
+        <div id="cl-list" style="width:240px;height:80px;overflow:auto">
+          <div style="height:300px">Filler</div>
+          <span id="cl-far">Far down the list</span>
+        </div>`;
+      document.body.prepend(box);
+      window.scrollTo(0, 0);
+      const mark = { n: 1, selector: "#cl-far", tag: "1", tone: "serious" as const };
+      const locus = () =>
+        document
+          .getElementById("accesscheck-overlay")!
+          .shadowRoot!.querySelector<HTMLElement>('[data-mark="1"]')!.style.display;
+      const opened = window.__accessCheckDom!.overlayShow([mark], 1, { scroll: false });
+      const closed = { focused: opened.focused, locus: locus() };
+      const located = window.__accessCheckDom!.overlayShow([mark], 1, { scroll: true });
+      const out = {
+        closed,
+        located: {
+          focused: located.focused,
+          locus: locus(),
+          scrolled: document.getElementById("cl-list")!.scrollTop > 0,
+        },
+      };
+      window.__accessCheckDom!.overlayClear();
+      box.remove();
+      window.scrollTo(0, 0);
+      return out;
+    });
+
+    expect(seen.closed.locus).toBe("none");
+    expect(seen.closed.focused).toMatchObject({
+      found: true,
+      onScreen: false,
+      side: null,
+      hidden: true,
+    });
+    expect(seen.located.scrolled).toBe(true);
+    expect(seen.located.locus).toBe("block");
+    expect(seen.located.focused).toMatchObject({ found: true, onScreen: true, hidden: false });
+  });
 });
 
 describe("the overlay as an overview, and along the focus path", () => {
+  it("gives every tag of a crowded overview its own place, even with several findings on one element", async () => {
+    const seen = await page.evaluate(() => {
+      const row = document.createElement("div");
+      row.style.cssText = "margin:80px 0 0 300px;white-space:nowrap";
+      row.innerHTML = Array.from(
+        { length: 5 },
+        (_, i) =>
+          `<span id="cr-${i}" style="display:inline-block;width:14px;height:14px;margin-right:2px">.</span>`,
+      ).join("");
+      document.body.prepend(row);
+      window.scrollTo(0, 0);
+      const on = [0, 0, 0, 0, 1, 2, 2, 3, 4];
+      window.__accessCheckDom!.overlayShow(
+        on.map((el, i) => ({
+          n: i + 1,
+          selector: `#cr-${el}`,
+          tag: String(i + 1),
+          tone: "serious" as const,
+          pick: `f:${i}:0`,
+          alternates: [],
+        })),
+        null,
+        {},
+      );
+      const tags = [
+        ...document
+          .getElementById("accesscheck-overlay")!
+          .shadowRoot!.querySelectorAll<HTMLElement>(".tag"),
+      ]
+        .filter((t) => t.style.display !== "none")
+        .map((t) => t.getBoundingClientRect());
+      let overlaps = 0;
+      for (let i = 0; i < tags.length; i++) {
+        for (let j = i + 1; j < tags.length; j++) {
+          const a = tags[i];
+          const b = tags[j];
+          if (a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom) {
+            overlaps++;
+          }
+        }
+      }
+      window.__accessCheckDom!.overlayClear();
+      row.remove();
+      return { shown: tags.length, overlaps };
+    });
+
+    expect(seen).toEqual({ shown: 9, overlaps: 0 });
+  });
+
   it("tags the first element of a finding that is on screen, and follows the scroll", async () => {
     const picks = await page.evaluate(async () => {
       const spacer = document.createElement("div");

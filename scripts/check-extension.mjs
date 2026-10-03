@@ -30,12 +30,17 @@ const HTML = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>
 <aside style="position:fixed;top:0;right:0;width:300px;transform:translateX(110%)"><a href="/bag" style="display:block;width:40px;height:40px"></a></aside>
 </body></html>`;
 
-const server = createServer((_q, res) => {
+const WHOLE_PAGE = HTML.replace('<html lang="en">', "<html>").replace(
+  "<title>Extension fixture</title>",
+  "",
+);
+
+const server = createServer((q, res) => {
   res.writeHead(200, {
     "content-type": "text/html; charset=utf-8",
     "content-security-policy": "default-src 'self'; script-src 'self'; style-src * 'unsafe-inline'",
   });
-  res.end(HTML);
+  res.end(q.url === "/whole-page" ? WHOLE_PAGE : HTML);
 });
 await new Promise((r) => server.listen(0, "localhost", r));
 const origin = `http://localhost:${server.address().port}`;
@@ -449,14 +454,14 @@ try {
       () =>
         [...document.querySelectorAll('[aria-labelledby="verdict-heading"] p')]
           .map((p) => p.textContent)
-          .find((text) => /not on screen right now/.test(text)) ?? null,
+          .find((text) => /no mark on screen right now/.test(text)) ?? null,
     );
   const hiddenMarks = overview.filter((m) => !m.shown).length;
   const offScreenNotice = await readOffScreen();
   console.log("findings not on screen:", JSON.stringify({ hiddenMarks, offScreenNotice }));
   check(hiddenMarks === 1, `the link in the closed drawer should be the one mark not shown`);
   check(
-    offScreenNotice?.startsWith("1 problem to fix is not on screen right now") ?? false,
+    offScreenNotice?.startsWith("1 problem to fix has no mark on screen right now") ?? false,
     `the panel does not say a finding to fix is off screen: ${offScreenNotice}`,
   );
 
@@ -544,6 +549,139 @@ try {
   console.log("auditing again from another tab:", JSON.stringify({ otherTab, leftOver }));
   check(otherTab === "error", `auditing again from another tab ended in ${otherTab}`);
   check(!leftOver, "the marks stayed on the page after the report gave way to an error");
+
+  const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+  const panelLine = () =>
+    report.evaluate(
+      () =>
+        [...document.querySelectorAll('[aria-labelledby="verdict-heading"] p')]
+          .map((p) => p.textContent)
+          .find((text) => /no mark on screen right now|moved on/.test(text)) ?? null,
+    );
+
+  await page.goto(`${origin}/`, { waitUntil: "domcontentloaded" });
+  await page.bringToFront();
+  await auditActive();
+  await pause(1200);
+  const atAudit = { drawn: await overlayIn(page), line: await panelLine() };
+  await page.evaluate(() => history.replaceState({}, "", "/?sort=asc"));
+  await pause(900);
+  const elsewhere = { drawn: await overlayIn(page), line: await panelLine() };
+  await page.evaluate(() => history.replaceState({}, "", "/"));
+  await pause(900);
+  const back = { drawn: await overlayIn(page), line: await panelLine() };
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await pause(1500);
+  const reloaded = { drawn: await overlayIn(page), line: await panelLine() };
+  console.log(
+    "the address changes and comes back:",
+    JSON.stringify({ atAudit, elsewhere, back, reloaded }),
+  );
+  check(atAudit.drawn, "the overview was not drawn before the address changed");
+  check(!elsewhere.drawn, "marks stayed on the page after its address changed");
+  check(
+    /moved on/.test(elsewhere.line ?? ""),
+    `with the tab on another address the panel said: ${elsewhere.line}`,
+  );
+  check(back.drawn, "the overview did not come back with the audited address");
+  check(back.line === atAudit.line, `back on the audited address the panel said: ${back.line}`);
+  check(reloaded.drawn, "the overview did not come back after the page reloaded");
+  check(reloaded.line === atAudit.line, `after a reload the panel said: ${reloaded.line}`);
+
+  await page.goto(`${origin}/whole-page`, { waitUntil: "domcontentloaded" });
+  await page.bringToFront();
+  await auditActive();
+  await pause(1200);
+  const overviewSays = {
+    toFix: await report.evaluate(
+      () => document.querySelectorAll('section[data-group="fix"] li[id^="finding-"]').length,
+    ),
+    marked: await page.evaluate(
+      () =>
+        [
+          ...(document
+            .getElementById("accesscheck-overlay")
+            ?.shadowRoot?.querySelectorAll(".tag[data-pick]") ?? []),
+        ].filter((t) => t.style.display !== "none").length,
+    ),
+    lines: await report.evaluate(() =>
+      [...document.querySelectorAll('[aria-labelledby="verdict-heading"] p')]
+        .map((p) => p.textContent)
+        .filter((text) => /no mark/.test(text)),
+    ),
+  };
+  const counted = (pattern) =>
+    Number(overviewSays.lines.find((line) => pattern.test(line))?.match(/^\d+/)?.[0] ?? 0);
+  const unmarked = counted(/no mark on screen/);
+  const wholePage = counted(/whole page/);
+  console.log("findings to fix and what the overview says of them:", JSON.stringify(overviewSays));
+  check(wholePage === 2, `the missing title and language were not counted as the whole page's`);
+  check(
+    overviewSays.marked + unmarked + wholePage === overviewSays.toFix,
+    `${overviewSays.toFix} to fix, but the page shows ${overviewSays.marked} and the panel accounts for ${unmarked + wholePage} more`,
+  );
+
+  const doomed = await ctx.newPage();
+  await doomed.goto(`${origin}/doomed`, { waitUntil: "load" });
+  await doomed.bringToFront();
+  await auditActive();
+  await pause(600);
+  await sw.evaluate(() => globalThis.__accessCheckForgetState());
+  await doomed.close();
+  await pause(800);
+  const afterClose = await sw.evaluate(
+    async () => (await chrome.storage.session.get("panelState")).panelState.state.kind,
+  );
+  console.log("closing the audited tab after the worker slept:", afterClose);
+  check(
+    afterClose === "idle",
+    `closing the audited tab after the worker slept left: ${afterClose}`,
+  );
+
+  await page.bringToFront();
+  await auditActive();
+  await pause(1200);
+  const drawnFirst = await overlayIn(page);
+  const later = await ctx.newPage();
+  await later.goto(`${origin}/later`, { waitUntil: "load" });
+  await pause(500);
+  await sw.evaluate(() => globalThis.__accessCheckForgetState());
+  await later.bringToFront();
+  await auditActive();
+  await pause(1200);
+  const firstAfterSleep = await overlayIn(page);
+  console.log(
+    "auditing another tab after the worker slept:",
+    JSON.stringify({ drawnFirst, firstAfterSleep }),
+  );
+  check(drawnFirst, "the overview was not drawn before the worker slept");
+  check(!firstAfterSleep, "auditing another tab after the worker slept left the first tab's marks");
+
+  await page.bringToFront();
+  await auditActive();
+  await pause(1200);
+  const extId = sw.url().split("/")[2];
+  const cdp = await ctx.newCDPSession(page);
+  const versions = [];
+  cdp.on("ServiceWorker.workerVersionUpdated", (e) => versions.push(...e.versions));
+  await cdp.send("ServiceWorker.enable");
+  await pause(300);
+  for (const v of versions) {
+    if (v.scriptURL.startsWith(`chrome-extension://${extId}/`) && v.runningStatus === "running") {
+      await cdp.send("ServiceWorker.stopWorker", { versionId: v.versionId });
+    }
+  }
+  await pause(1500);
+  const drawnBeforeClose = await overlayIn(page);
+  await report.close();
+  await pause(1500);
+  const leftAfterClose = await overlayIn(page);
+  console.log(
+    "closing the panel after Chrome stopped the worker:",
+    JSON.stringify({ drawnBeforeClose, leftAfterClose }),
+  );
+  check(drawnBeforeClose, "the overview was not on the page when the worker stopped");
+  check(!leftAfterClose, "closing the panel after the worker stopped left the marks on the page");
 
   if (failures.length > 0) {
     console.error("\nFAILED:\n- " + failures.join("\n- "));

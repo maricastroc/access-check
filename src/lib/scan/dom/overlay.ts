@@ -144,6 +144,7 @@ const LOCUS = {
 
 const RING = 6;
 const SIBLING_TAGS = 4;
+const NUDGES = 4;
 
 type Rect = { x: number; y: number; w: number; h: number };
 
@@ -449,6 +450,17 @@ function clash(a: Rect, b: Rect): boolean {
   return a.x < b.x + b.w + 3 && b.x < a.x + a.w + 3 && a.y < b.y + b.h + 3 && b.y < a.y + a.h + 3;
 }
 
+function nearestFree(c: Rect, taken: Rect[]): Rect {
+  for (let step = 1; step <= NUDGES; step++) {
+    for (const dir of [1, -1]) {
+      const spot = { ...c, x: c.x + dir * step * (c.w + 3) };
+      const inside = spot.x >= 2 && spot.x + spot.w <= innerWidth - 2;
+      if (inside && !taken.some((o) => clash(spot, o))) return spot;
+    }
+  }
+  return c;
+}
+
 function placeTags(): void {
   for (const p of painted) p.spot = null;
   const current = painted.find((p) => p.current && p.visible) ?? null;
@@ -496,7 +508,8 @@ function placeTags(): void {
     const fits = (c: Rect) =>
       c.y >= 0 && c.y + c.h <= innerHeight && c.x + c.w > 0 && c.x < innerWidth;
     const free = candidates.find((c) => fits(c) && !taken.some((o) => clash(c, o)));
-    const chosen = free ?? (sibling ? null : (candidates.find(fits) ?? candidates[0]));
+    const chosen =
+      free ?? (sibling ? null : nearestFree(candidates.find(fits) ?? candidates[0], taken));
     if (!chosen) {
       p.tag.style.setProperty("display", "none");
       continue;
@@ -533,7 +546,9 @@ function place(): void {
     }
     const r = p.el.getBoundingClientRect();
     p.rect = r;
-    p.visible = p.roaming ? shows(p.el, r) : seen(r);
+    p.visible = p.roaming
+      ? shows(p.el, r)
+      : seen(r) && (p.mark.shape === "circle" || !clipped(p.el, r));
     const show = p.visible ? "block" : "none";
     p.locus.style.setProperty("display", show);
     p.tag.style.setProperty("display", p.visible ? "inline-flex" : "none");
@@ -731,7 +746,9 @@ export function overlayShow(
   if (opts.scroll && found) {
     const r = found.getBoundingClientRect();
     const visible = r.top >= 0 && r.bottom <= innerHeight && r.left >= 0 && r.right <= innerWidth;
-    if (!visible) found.scrollIntoView({ block: "center", inline: "nearest", behavior: "instant" });
+    if (!visible || clipped(found, r)) {
+      found.scrollIntoView({ block: "center", inline: "nearest", behavior: "instant" });
+    }
   }
 
   place();
@@ -771,7 +788,9 @@ export function overlayShow(
             found: found !== null,
             onScreen: current !== null && current.visible,
             side: current && !current.visible ? sideOf(current.rect) : null,
-            hidden: current !== null && !rendered(current.el, current.rect),
+            hidden:
+              current !== null &&
+              (!rendered(current.el, current.rect) || clipped(current.el, current.rect)),
           },
   };
 }

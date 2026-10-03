@@ -1250,9 +1250,13 @@ export const ptBR: Catalog = {
   "panel.toFix": { one: "{count} para corrigir", other: "{count} para corrigir" },
   "panel.toCheck": { one: "{count} para conferir à mão", other: "{count} para conferir à mão" },
   "panel.notOnScreen": {
-    one: "1 problema a corrigir não aparece na tela agora. Abra pela lista para encontrá-lo.",
+    one: "1 problema a corrigir não tem marca na tela agora. Abra pela lista para encontrá-lo.",
     other:
-      "{count} problemas a corrigir não aparecem na tela agora. Abra pela lista para encontrá-los.",
+      "{count} problemas a corrigir não têm marca na tela agora. Abra pela lista para encontrá-los.",
+  },
+  "panel.wholePage": {
+    one: "1 problema a corrigir se aplica à página inteira, por isso não tem marca.",
+    other: "{count} problemas a corrigir se aplicam à página inteira, por isso não têm marca.",
   },
 
   "panel.screenshot": "Captura da parte visível da página",

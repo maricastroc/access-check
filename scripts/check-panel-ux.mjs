@@ -523,6 +523,51 @@ try {
   );
   await live.close();
 
+  const AXE = readFileSync(join(process.cwd(), "node_modules/axe-core/axe.min.js"), "utf8");
+  const contrastFailures = (panel) =>
+    panel.evaluate(async (source) => {
+      if (!window.axe) (0, eval)(source);
+      const { violations } = await window.axe.run(document, { runOnly: ["color-contrast"] });
+      return violations.flatMap((v) =>
+        v.nodes.map((n) => `${n.target.join(" ")}: ${n.any[0]?.message ?? v.id}`),
+      );
+    }, AXE);
+
+  await audit("/long");
+  await walkFocusPath();
+  const inspecting = await openPanel(400);
+  await inspecting.evaluate(async () => {
+    [...document.querySelectorAll("button")]
+      .find((b) => b.textContent.trim() === "Inspect tab order")
+      ?.click();
+    await new Promise((r) => setTimeout(r, 600));
+  });
+  const ringless = await inspecting.evaluate(() =>
+    document.body.innerText.includes("nothing shows focus"),
+  );
+  const whileInspecting = await contrastFailures(inspecting);
+  await page.goto(`${origin}/plain`, { waitUntil: "domcontentloaded" });
+  await walkFocusPath();
+  const keyboardError = await inspecting.evaluate(
+    () => document.querySelector('[role="alert"]')?.textContent ?? null,
+  );
+  const withError = await contrastFailures(inspecting);
+  console.log(
+    "contrast of the panel's own text:",
+    JSON.stringify({ ringless, whileInspecting, keyboardError, withError }),
+  );
+  check(ringless, "the inspection never reached a stop where nothing shows focus");
+  check(
+    whileInspecting.length === 0,
+    `text in the inspection fails contrast: ${whileInspecting.join("; ")}`,
+  );
+  check(keyboardError !== null, "a keyboard check on a page that moved on said nothing");
+  check(
+    withError.length === 0,
+    `the keyboard check's error fails contrast: ${withError.join("; ")}`,
+  );
+  await inspecting.close();
+
   if (failures.length > 0) {
     console.error("\nFAILED:\n- " + failures.join("\n- "));
     process.exitCode = 1;
