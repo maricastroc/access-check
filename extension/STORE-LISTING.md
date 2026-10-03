@@ -155,6 +155,8 @@ Certifications to accept, all of which the code supports:
 - With no problem open, the page shows each problem to fix once, on the first
   of its elements that can be seen on screen, under its number in the queue.
   Clicking that number opens the problem.
+- When some problems to fix have no mark on screen, because they sit lower on
+  the page or in a part it hides, the panel says how many under the verdict.
 - The focus path shows where it meets a problem: a stop on a problem's element
   gets a hatched ring in the problem's color, on the page and in the panel's
   list of stops, and only the current stop names the problem.
