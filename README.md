@@ -80,7 +80,7 @@ A tool that measures contrast shouldn't have questionable contrast of its own, s
     <td rowspan="2" valign="top"><img src="docs/pdf-mobile.png" alt="PDF report — Mobile" /></td>
   </tr>
   <tr>
-    <td valign="top"><img src="docs/results-desktop.png" alt="Results — Desktop" /></td>
+    <td valign="top"><img src="docs/results-desktop.png" alt="Results | Desktop" /></td>
   </tr>
 </table>
 
