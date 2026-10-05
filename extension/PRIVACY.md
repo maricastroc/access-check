@@ -1,8 +1,8 @@
 # AccessCheck extension: privacy policy
 
-**Effective 3 October 2026.** This policy covers the AccessCheck browser
+**Effective 5 October 2026.** This policy covers the AccessCheck browser
 extension. The hosted scanner at the AccessCheck website is a separate product
-with its own accounts and storage; this policy is only about the extension.
+with its own storage; this policy is only about the extension.
 
 ## The short version
 

@@ -7,109 +7,8 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  createdAt     DateTime  @default(now())
-
-  accounts  Account[]
-  sessions  Session[]
-  scans     Scan[]
-  siteScans SiteScan[]
-
-  @@map("users")
-}
-
-model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String?
-  access_token      String?
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?
-  session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
-  @@index([userId])
-  @@map("accounts")
-}
-
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@map("sessions")
-}
-
-model VerificationToken {
-  identifier String
-  token      String
-  expires    DateTime
-
-  @@unique([identifier, token])
-  @@map("verification_tokens")
-}
-
-model Scan {
-  id     String @id @default(cuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  url      String
-  finalUrl String
-  title    String
-  score    Int
-
-  critical Int
-  serious  Int
-  moderate Int
-  minor    Int
-  passed   Int
-
-  durationMs Int
-
-  scoringVersion Int @default(1)
-
-  result Json
-
-  createdAt DateTime @default(now())
-
-  screenshot Screenshot?
-
-  @@index([userId, createdAt])
-  @@index([userId, url, createdAt])
-  @@map("scans")
-}
-
-model Screenshot {
-  scanId   String @id
-  scan     Scan   @relation(fields: [scanId], references: [id], onDelete: Cascade)
-  data     Bytes
-  mimeType String @default("image/jpeg")
-
-  @@map("screenshots")
-}
-
-
 model SiteScan {
-  id     String  @id @default(cuid())
-  userId String?
-  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id String @id @default(cuid())
 
   rootUrl String
   status  String @default("running")
@@ -126,7 +25,6 @@ model SiteScan {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([userId, createdAt])
   @@map("site_scans")
 }
 

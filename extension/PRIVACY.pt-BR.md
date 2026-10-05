@@ -1,9 +1,9 @@
 # Extensão AccessCheck: política de privacidade
 
-**Em vigor desde 3 de outubro de 2026.** Esta política cobre a extensão de
+**Em vigor desde 5 de outubro de 2026.** Esta política cobre a extensão de
 navegador do AccessCheck. O analisador hospedado no site do AccessCheck é um
-produto separado, com contas e armazenamento próprios; esta política trata
-apenas da extensão.
+produto separado, com armazenamento próprio; esta política trata apenas da
+extensão.
 
 ## Versão curta
 

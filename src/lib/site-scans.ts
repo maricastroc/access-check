@@ -14,14 +14,9 @@ export const CRAWL_SCAN_OPTS: ScanOptions = {
   verifyFixes: false,
 };
 
-export async function createSiteScan(
-  rootUrl: string,
-  urls: string[],
-  userId: string | null,
-): Promise<string> {
+export async function createSiteScan(rootUrl: string, urls: string[]): Promise<string> {
   const site = await prisma.siteScan.create({
     data: {
-      userId: userId ?? null,
       rootUrl,
       status: "running",
       totalPages: urls.length,

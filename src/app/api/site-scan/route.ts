@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
 import { clientKey, siteScanRateLimit } from "@/lib/rate-limit";
 import { discoverUrls, normalizeRoot } from "@/lib/scan/discover";
 import { assertPublicUrl, BlockedUrlError } from "@/lib/scan/ssrf";
@@ -37,8 +36,7 @@ export async function POST(req: Request) {
   }
 
   const urls = await discoverUrls(root);
-  const userId = (await auth())?.user?.id ?? null;
-  const id = await createSiteScan(root, urls, userId);
+  const id = await createSiteScan(root, urls);
 
   const jobs = urls.map((url) => ({ siteScanId: id, url }));
 

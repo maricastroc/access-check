@@ -1,19 +1,16 @@
 import { BrandMark, ColorSwatch, Marker, Ruler, SectionKicker, StatusSeal } from "@/components/ui";
-import { STANDING_LABEL, STANDING_NOTE, STANDING_TONE, type Standing } from "@/lib/report/standing";
+import { STANDING_LABEL, STANDING_NOTE, STANDING_TONE } from "@/lib/report/standing";
 import {
   axeRules,
   complementaryPasses,
   exampleFinding,
   exampleMarkdownKeys,
   exampleScore,
-  exampleTimeline,
   steps,
-  type TimelineEntry,
 } from "./content";
 import { UrlForm } from "./url-form";
 import { CapturePreview } from "./evidence-preview";
 import type { MessageKey, Translate } from "@/lib/i18n/t";
-import type { Severity } from "@/lib/scan/types";
 
 function SectionHead({
   kicker,
@@ -571,168 +568,6 @@ export function ExportSection({ t }: { t: Translate }) {
             </div>
           </div>
         </div>
-      </div>
-    </section>
-  );
-}
-
-const TIMELINE_DOT: Record<Severity, string> = {
-  critical: "bg-critical",
-  serious: "bg-serious",
-  moderate: "bg-moderate",
-  minor: "bg-steel",
-};
-
-function AuditStamp({
-  label,
-  standing,
-  dim,
-  cleared,
-  t,
-}: {
-  label: string;
-  standing: Standing;
-  dim?: boolean;
-  cleared?: number;
-  t: Translate;
-}) {
-  return (
-    <div className="px-5 py-5">
-      <SectionKicker tone="steel">{label}</SectionKicker>
-      <div className="mt-1.5 flex items-start gap-2.5">
-        <p
-          className="font-cond text-[30px] leading-[1.02]"
-          style={{ color: dim ? "var(--color-muted)" : STANDING_TONE[standing] }}
-        >
-          {t(STANDING_LABEL[standing])}
-        </p>
-        {cleared !== undefined && (
-          <span className="ml-auto inline-flex items-center gap-1.5 border border-verified bg-verified/[0.08] px-2 py-1 font-cond text-[12px] tracking-[0.04em] text-verified tabular-nums">
-            <span aria-hidden>✓</span>
-            {t("home.track.cleared", { count: cleared })}
-          </span>
-        )}
-      </div>
-      <p className={`mt-1 text-[12px] leading-normal ${dim ? "text-muted" : "text-body"}`}>
-        {t(STANDING_NOTE[standing])}
-      </p>
-    </div>
-  );
-}
-
-function TimelineList({
-  kicker,
-  glyph,
-  tone,
-  items,
-  empty,
-  className,
-  t,
-}: {
-  kicker: string;
-  glyph: string;
-  tone: "verified" | "critical";
-  items: TimelineEntry[];
-  empty: string;
-  className?: string;
-  t: Translate;
-}) {
-  const toneClass =
-    tone === "verified" ? "border-verified text-verified" : "border-critical text-critical";
-
-  return (
-    <div className={className}>
-      <div className="flex items-center gap-2.5 border-b border-hairline px-5 py-3">
-        <span
-          aria-hidden
-          className={`inline-flex size-5 items-center justify-center border font-cond text-[12px] ${toneClass}`}
-        >
-          {glyph}
-        </span>
-        <SectionKicker tone="ink">{kicker}</SectionKicker>
-        <span className="ml-auto font-cond text-[15px] text-muted tabular-nums">
-          {items.length}
-        </span>
-      </div>
-
-      {items.length === 0 ? (
-        <p className="px-5 py-4 text-[13px] text-muted">{empty}</p>
-      ) : (
-        <ul className="grid grid-cols-1 gap-y-2.5 px-5 py-4">
-          {items.map((v) => (
-            <li key={v.sc} className="grid grid-cols-[52px_1fr] items-center gap-3">
-              <span className="font-mono text-[13px] text-steel tabular-nums">{v.sc}</span>
-              <span className="flex items-center gap-2 text-[13.5px] text-body">
-                <span aria-hidden className={`size-1.5 shrink-0 ${TIMELINE_DOT[v.severity]}`} />
-                <span>{t(v.label)}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-export function TrackOverTimeSection({ t }: { t: Translate }) {
-  const { fromStanding, toStanding, daysApart, fixed, regressed } = exampleTimeline;
-
-  return (
-    <section id="track" className="bg-canvas">
-      <div className="mx-auto w-full max-w-300 px-6 py-12">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <SectionHead kicker={t("home.track.kicker")} title={t("home.track.title")} />
-          <p className="max-w-[46ch] text-[14px] leading-normal text-body">
-            {t("home.track.body")}
-          </p>
-        </div>
-
-        <div className="mt-9 border border-ink bg-surface">
-          <div className="grid grid-cols-1 border-b border-ink sm:grid-cols-[1fr_auto_1fr]">
-            <AuditStamp t={t} label={t("home.track.previousAudit")} standing={fromStanding} dim />
-            <div className="flex items-center justify-center gap-2 border-y border-hairline px-5 py-3 sm:flex-col sm:gap-1 sm:border-x sm:border-y-0 sm:px-6">
-              <span
-                aria-hidden
-                className="rotate-90 font-cond text-[22px] leading-none text-steel sm:rotate-0"
-              >
-                →
-              </span>
-              <span className="text-center text-[11px] leading-tight text-muted">
-                {t("home.track.daysLater", { count: daysApart })}
-              </span>
-            </div>
-            <AuditStamp
-              t={t}
-              label={t("home.track.thisAudit")}
-              standing={toStanding}
-              cleared={fixed.length}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2">
-            <TimelineList
-              t={t}
-              kicker={t("diff.cleared")}
-              glyph="✓"
-              tone="verified"
-              items={fixed}
-              empty={t("diff.noneCleared")}
-            />
-            <TimelineList
-              t={t}
-              kicker={t("diff.newOrWorse")}
-              glyph="!"
-              tone="critical"
-              items={regressed}
-              empty={t("diff.noneWorse")}
-              className="border-t border-hairline md:border-t-0 md:border-l"
-            />
-          </div>
-        </div>
-
-        <p className="mt-4 max-w-[70ch] text-[13px] leading-normal text-muted">
-          {t("home.track.note")}
-        </p>
       </div>
     </section>
   );
