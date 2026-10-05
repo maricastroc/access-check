@@ -380,10 +380,17 @@ try {
     const box = current?.getBoundingClientRect();
     const target = document.querySelector("p[style]").getBoundingClientRect();
     const at = (r) => r && [r.left, r.top, r.width, r.height].map(Math.round);
+    const placed = current && {
+      left: parseFloat(current.style.left),
+      top: parseFloat(current.style.top),
+    };
     return {
       boxes: marks.length,
       onTarget:
-        !!box && Math.abs(box.top - target.top) < 12 && Math.abs(box.left - target.left) < 12,
+        !!placed &&
+        Math.abs(placed.top - target.top) < 12 &&
+        Math.abs(placed.left - target.left) < 12,
+      placed: placed && [placed.left, placed.top].map(Math.round),
       box: at(box),
       boxDisplay: current?.style.display ?? null,
       target: at(target),
