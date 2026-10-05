@@ -30,6 +30,7 @@ const server = spawn("npx", ["next", "start", "--port", String(PORT)], {
   cwd: process.cwd(),
   stdio: ["ignore", "pipe", "pipe"],
   env,
+  detached: true,
 });
 server.stdout.on("data", () => {});
 server.stderr.on("data", () => {});
@@ -527,7 +528,12 @@ try {
   await pt.context.close();
 } finally {
   await browser.close();
-  server.kill("SIGTERM");
+  try {
+    process.kill(-server.pid, "SIGTERM");
+  } catch {}
+  server.stdout.destroy();
+  server.stderr.destroy();
+  server.unref();
   writeFileSync("tsconfig.json", tsconfig);
 }
 

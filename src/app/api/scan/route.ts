@@ -2,19 +2,11 @@ import { NextResponse } from "next/server";
 import { runScan, normalizeUrl, ScanFailure } from "@/lib/scan/scan";
 import type { ScanErrorCode, ScanResult } from "@/lib/scan/types";
 import type { ScanStreamEvent } from "@/lib/scan/stream";
-import { auth } from "@/auth";
-import { findRecentScan, saveScan } from "@/lib/scans";
 import { cacheGet, cacheSet } from "@/lib/redis";
-import {
-  PARTIAL_FRESH_SECONDS,
-  SCAN_FRESH_MS,
-  SCAN_FRESH_SECONDS,
-  trimForCache,
-} from "@/lib/scan/cache-policy";
+import { PARTIAL_FRESH_SECONDS, SCAN_FRESH_SECONDS, trimForCache } from "@/lib/scan/cache-policy";
 import { SCORING_VERSION } from "@/lib/scan/scored";
 import { clientKey, scanRateLimit } from "@/lib/rate-limit";
 import { assertPublicUrl, BlockedUrlError } from "@/lib/scan/ssrf";
-import { logError } from "@/lib/observability/log";
 import { localeFromRequest, translateForRequest } from "@/lib/i18n/server";
 import type { ReportLocale } from "@/lib/i18n/locale";
 import type { Translate } from "@/lib/i18n/t";
@@ -97,12 +89,8 @@ export async function POST(req: Request) {
     );
   }
 
-  const userId = (await auth())?.user?.id;
-
   if (body.force !== true) {
-    const reused = userId
-      ? await findRecentScan(userId, url, SCAN_FRESH_MS)
-      : await cacheGet<ScanResult>(scanCacheKey(url, locale));
+    const reused = await cacheGet<ScanResult>(scanCacheKey(url, locale));
 
     if (reused) {
       const at = reused.scannedAt ? Date.parse(reused.scannedAt) : NaN;
@@ -111,7 +99,7 @@ export async function POST(req: Request) {
           event: "scan",
           url,
           status: "reused",
-          from: userId ? "history" : "cache",
+          from: "cache",
           ageMs: Number.isNaN(at) ? null : Date.now() - at,
         }),
       );
@@ -173,19 +161,11 @@ export async function POST(req: Request) {
           warnings: published.warnings?.map((w) => w.code) ?? [],
         });
 
-        if (userId) {
-          try {
-            await saveScan(userId, published);
-          } catch (e) {
-            logError("scan.history.failed", e);
-          }
-        } else {
-          await cacheSet(
-            scanCacheKey(url, locale),
-            trimForCache(published),
-            published.partial ? PARTIAL_FRESH_SECONDS : SCAN_FRESH_SECONDS,
-          );
-        }
+        await cacheSet(
+          scanCacheKey(url, locale),
+          trimForCache(published),
+          published.partial ? PARTIAL_FRESH_SECONDS : SCAN_FRESH_SECONDS,
+        );
         return;
       }
 

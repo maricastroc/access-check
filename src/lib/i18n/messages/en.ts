@@ -17,9 +17,6 @@ export const en = {
   "nav.howItWorks": "How it works",
   "nav.checks": "Checks",
   "nav.evidenceLens": "Evidence Lens",
-  "nav.history": "History",
-  "nav.account": "Account",
-  "nav.signOut": "Sign out",
   "capture.stopOutside":
     "Stop {n} sits about {docY}px down the page. No screenshot in this report covers it.",
   "capture.stopInsideScroller":
@@ -40,7 +37,6 @@ export const en = {
     "The page did not answer while the area around {docY}px down was being photographed. Everything else in the report is unaffected.",
   "capture.noMarkersLanded":
     "No finding is marked on this screenshot. Open a finding and the report moves to the part of the page it came from.",
-  "nav.signIn": "Sign in",
   "language.label": "Language",
   "language.followBrowser": "Browser default",
 
@@ -182,12 +178,6 @@ export const en = {
   "md.noFailures": "No automated failures on this page. This is coverage, not WCAG conformance.",
   "md.manualOutsideScore":
     "Automated testing couldn't decide these, so confirm them by hand. They are not counted here.",
-
-  "diff.noneCleared": "No rules cleared since the last audit.",
-  "diff.cleared": "Cleared",
-  "diff.newOrWorse": "New or worse",
-  "diff.andMore": "+ {count} more",
-  "diff.noneWorse": "No new rules flagged. Nothing got worse.",
 
   "preview.stillFlagged":
     "The calculated pair reaches the minimum, but the located element's live re-audit still flags it. The real background is probably an image, gradient or overlapping layer, so this sampled solid color isn't the true background.",
@@ -621,15 +611,6 @@ export const en = {
   "home.lens.before": "Before",
   "home.lens.after": "After",
 
-  "history.deleteOneTitle": "Delete this audit?",
-  "history.deleteOneBody":
-    "This removes the saved report and its screenshot from your history. This can\u2019t be undone.",
-  "history.deleteOne": "Delete this audit",
-  "history.deleteAllTitle": "Clear your audit history?",
-  "history.deleteAllBody":
-    "This permanently deletes every saved audit and screenshot. This can\u2019t be undone.",
-  "history.deleteAll": "Delete all audits",
-
   "stages.opening": "Opening the page and waiting for it to settle",
   "stages.rules": "Running the WCAG A and AA checks (axe-core)",
   "stages.testingFixes": "Testing fixes on a copy of the page",
@@ -649,10 +630,6 @@ export const en = {
   "form.addressHint": "Enter a web address to audit, like example.com.",
   "form.whatToAudit": "What to audit",
 
-  "login.title": "Sign in to AccessCheck",
-  "login.github": "Sign in with GitHub",
-  "login.google": "Sign in with Google",
-
   "results.couldNotOpen": "Couldn't open the page",
   "results.tryAnotherUrl": "Try another URL",
   "results.seeWhatWeAudit": "See what we can audit",
@@ -666,23 +643,6 @@ export const en = {
   "site.listNote":
     "We build the list from the sitemap and the links we can reach, then audit each page.",
 
-  "history.tryDifferentDomain":
-    "Try a different domain, or clear the score filter to see everything again.",
-  "history.runAudit": "Run an audit",
-  "history.scoreUp": {
-    one: "up {count} point since the previous audit",
-    other: "up {count} points since the previous audit",
-  },
-  "history.scoreDown": {
-    one: "down {count} point since the previous audit",
-    other: "down {count} points since the previous audit",
-  },
-  "history.sortLabel": "Sort audits",
-  "history.clearHistory": "Clear history",
-  "history.backToHistory": "Back to history",
-  "history.savedReport": "Saved report",
-  "history.searchByDomain": "Search audits by domain",
-
   "report.sandboxApplied":
     "Applied and re-checked on a copy of the page. The audited site was not altered.",
   "report.whereScoreCouldGo": "Where this page could stand",
@@ -692,15 +652,7 @@ export const en = {
   "report.detailedFindings": "Detailed findings",
   "report.noSeriousOnPage":
     "No critical or serious automated failures on this page. Moderate items and manual review are on page 3.",
-  "report.rulesMoved": { one: "{count} rule moved", other: "{count} rules moved" },
-  "report.changesSinceLast": "Changes since last audit",
-  "report.scoringModelUpdated": "Scoring model updated",
-  "report.whatMoved": "What moved since {date}",
   "report.sectionTwo": "Section 02",
-
-  "login.subtitle": "Save your audits and see what moved on each site over time.",
-  "login.note":
-    "No passwords. We use GitHub or Google only to confirm who you are. AccessCheck stays free without an account.",
 
   "wcagReading.notEvaluated": "Not evaluated. AccessCheck runs A and AA",
   "wcagReading.internalNote":
@@ -789,16 +741,6 @@ export const en = {
   "home.export.mdTitle": "Selector, snippet and verification status",
   "home.export.mdBody":
     "A severity table and a prioritized list, ready to paste into a ticket or a pull request, with the verified fixes already marked.",
-  "home.track.kicker": "Over time",
-  "home.track.title": "Audit again later and see exactly what moved",
-  "home.track.body":
-    "A page that passes today can fail after the next deploy. Every audit you run signed in is saved, and the next one is compared with it rule by rule: which barriers cleared, which came back, and whether that changed where the page stands.",
-  "home.track.cleared": { one: "{count} cleared", other: "{count} cleared" },
-  "home.track.previousAudit": "Previous audit",
-  "home.track.thisAudit": "This audit",
-  "home.track.daysLater": { one: "{count} day later", other: "{count} days later" },
-  "home.track.note":
-    "History is saved when you sign in with GitHub or Google. Everything else on this page, including the audit, the fixes and the exports, works without an account.",
 
   "home.cta.measured": "Measured",
   "home.cta.located": "Located",
@@ -1011,8 +953,6 @@ export const en = {
     "AccessCheck runs axe-core against WCAG levels A and AA (2.0, 2.1 and 2.2). Automated testing covers only part of the WCAG checkpoints. The rest need a person to review, often with a screen reader or other assistive technology. Level AAA is not checked, and this report is not a statement of conformance.",
   "report.findingsIntro":
     "Each finding grouped by severity and mapped to its WCAG A/AA success criterion, with the human impact, the measurement where one exists, and a fix re-audited in a sandbox copy.",
-  "report.scoringModelNote":
-    "These two audits were scored by different models (v{from} and v{to}), so the numbers above are not a rise or a fall. Which rules were fixed and which regressed is unaffected.",
 
   "site.theSite": "the site",
   "site.notFound": "Site scan not found.",
@@ -1030,16 +970,6 @@ export const en = {
   "stepper.position": "Occurrence {at} of {total}",
   "seal.verified": "Fix tested: applied temporarily and rechecked successfully",
   "seal.needsReview": "Needs review: the suggestion alone doesn't clear it",
-  "history.title": "Audit history",
-  "history.kicker": "History",
-  "history.scoreLabel": "Score",
-  "history.noMatches": "No audits match your filters",
-  "history.empty": "No audits yet",
-  "history.emptyBody":
-    "Run an audit while signed in and it’ll show up here, so you can see what moved on each site over time.",
-  "history.searchPlaceholder": "Search by domain\u2026",
-  "history.clearSearch": "Clear search",
-  "history.filterByScore": "Filter by score",
 
   "site.score": "Site score",
   "site.runningAverage": "running average across audited pages",

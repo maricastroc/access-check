@@ -5,7 +5,6 @@ export { Button } from "./button";
 export type { ButtonProps, ButtonVariant, ButtonSize } from "./button";
 export { Card } from "./card";
 export { ColorSwatch } from "./color-swatch";
-export { ConfirmDialog } from "./confirm-dialog";
 export { CopyableCode } from "./copyable-code";
 export { IconBadge } from "./icon-badge";
 export { Logo, BrandMark } from "./logo";

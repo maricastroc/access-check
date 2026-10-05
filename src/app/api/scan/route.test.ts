@@ -1,16 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ScanResult } from "@/lib/scan/types";
-import { PARTIAL_FRESH_SECONDS, SCAN_FRESH_MS, SCAN_FRESH_SECONDS } from "@/lib/scan/cache-policy";
+import { PARTIAL_FRESH_SECONDS, SCAN_FRESH_SECONDS } from "@/lib/scan/cache-policy";
 import { SCORING_VERSION } from "@/lib/scan/scored";
 
-const auth = vi.fn();
 const runScan = vi.fn();
 const cacheGet = vi.fn();
 const cacheSet = vi.fn();
-const findRecentScan = vi.fn();
-const saveScan = vi.fn();
-
-vi.mock("@/auth", () => ({ auth }));
 
 vi.mock("@/lib/scan/scan", () => ({
   runScan,
@@ -24,8 +19,6 @@ vi.mock("@/lib/redis", () => ({
   cacheGet,
   cacheSet,
 }));
-
-vi.mock("@/lib/scans", () => ({ findRecentScan, saveScan }));
 
 vi.mock("@/lib/scan/ssrf", () => ({
   assertPublicUrl: vi.fn(async () => {}),
@@ -91,10 +84,8 @@ async function eventsOf(res: Response) {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.spyOn(console, "log").mockImplementation(() => {});
-  auth.mockResolvedValue(null);
   cacheGet.mockResolvedValue(null);
   cacheSet.mockResolvedValue(undefined);
-  findRecentScan.mockResolvedValue(null);
   runScan.mockResolvedValue(result());
 });
 
@@ -103,7 +94,7 @@ afterEach(() => {
 });
 
 describe("POST /api/scan", () => {
-  it("answers an anonymous repeat from the shared cache, screenshot and all", async () => {
+  it("answers a repeat from the shared cache, screenshot and all", async () => {
     cacheGet.mockResolvedValue(result({ title: "From cache" }));
 
     const events = await eventsOf(await post({ url: "example.com" }));
@@ -118,18 +109,6 @@ describe("POST /api/scan", () => {
     ]);
   });
 
-  it("reuses a signed-in reader's own recent audit instead of the shared cache", async () => {
-    auth.mockResolvedValue({ user: { id: "user-1" } });
-    findRecentScan.mockResolvedValue(result({ title: "From history" }));
-
-    const events = await eventsOf(await post({ url: "example.com" }));
-
-    expect(runScan).not.toHaveBeenCalled();
-    expect(cacheGet).not.toHaveBeenCalled();
-    expect(findRecentScan).toHaveBeenCalledWith("user-1", "https://example.com", SCAN_FRESH_MS);
-    expect(events[0].result?.title).toBe("From history");
-  });
-
   it("measures again when the reader asks for a re-audit", async () => {
     cacheGet.mockResolvedValue(result({ title: "From cache" }));
 
@@ -140,7 +119,7 @@ describe("POST /api/scan", () => {
     expect(events.at(-1)?.result?.title).toBe("Example");
   });
 
-  it("keeps the screenshot in the entry it writes for anonymous readers", async () => {
+  it("keeps the screenshot in the entry it writes to the shared cache", async () => {
     await eventsOf(await post({ url: "example.com" }));
 
     expect(cacheSet).toHaveBeenCalledWith(
@@ -182,14 +161,5 @@ describe("POST /api/scan", () => {
 
     expect(runScan).not.toHaveBeenCalled();
     expect(events[0].result?.title).toBe("Partial from cache");
-  });
-
-  it("writes a signed-in reader's audit to history, not to the shared cache", async () => {
-    auth.mockResolvedValue({ user: { id: "user-1" } });
-
-    await eventsOf(await post({ url: "example.com" }));
-
-    expect(saveScan).toHaveBeenCalledWith("user-1", expect.objectContaining({ score: 100 }));
-    expect(cacheSet).not.toHaveBeenCalled();
   });
 });

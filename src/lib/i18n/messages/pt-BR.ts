@@ -21,9 +21,6 @@ export const ptBR: Catalog = {
   "nav.howItWorks": "Como funciona",
   "nav.checks": "Verificações",
   "nav.evidenceLens": "Evidências",
-  "nav.history": "Histórico",
-  "nav.account": "Conta",
-  "nav.signOut": "Sair",
   "capture.stopOutside":
     "A parada {n} fica cerca de {docY}px abaixo do topo. Nenhuma captura deste relatório cobre esse ponto.",
   "capture.stopInsideScroller":
@@ -44,7 +41,6 @@ export const ptBR: Catalog = {
     "A página não respondeu enquanto a área em torno de {docY}px do topo era fotografada. O resto do relatório não é afetado.",
   "capture.noMarkersLanded":
     "Nenhum problema está marcado nesta captura. Abra um problema e o relatório vai para a parte da página de onde ele veio.",
-  "nav.signIn": "Entrar",
   "language.label": "Idioma",
   "language.followBrowser": "Padrão do navegador",
 
@@ -189,12 +185,6 @@ export const ptBR: Catalog = {
     "Nenhuma falha detectada automaticamente nesta página. Isto é cobertura, não conformidade WCAG.",
   "md.manualOutsideScore":
     "O teste automatizado não conseguiu decidir estes, então confirme à mão. Eles não entram nesta contagem.",
-
-  "diff.noneCleared": "Nenhuma regra foi resolvida desde a última auditoria.",
-  "diff.cleared": "Resolvidos",
-  "diff.newOrWorse": "Novas ou piores",
-  "diff.andMore": "+ {count} a mais",
-  "diff.noneWorse": "Nenhuma regra nova sinalizada. Nada piorou.",
 
   "preview.stillFlagged":
     "O par calculado atinge o mínimo, mas a reauditoria ao vivo do elemento localizado ainda sinaliza. O fundo real provavelmente é uma imagem, um gradiente ou uma camada sobreposta, então a cor sólida que detectamos não é o fundo real.",
@@ -644,15 +634,6 @@ export const ptBR: Catalog = {
   "home.lens.before": "Antes",
   "home.lens.after": "Depois",
 
-  "history.deleteOneTitle": "Excluir esta auditoria?",
-  "history.deleteOneBody":
-    "Isso remove o relatório salvo e a captura de tela do seu histórico. Não dá para desfazer.",
-  "history.deleteOne": "Excluir esta auditoria",
-  "history.deleteAllTitle": "Limpar seu histórico de auditorias?",
-  "history.deleteAllBody":
-    "Isso exclui permanentemente todas as auditorias e capturas salvas. Não dá para desfazer.",
-  "history.deleteAll": "Excluir todas as auditorias",
-
   "stages.opening": "Abrindo a página e esperando ela estabilizar",
   "stages.rules": "Rodando as verificações WCAG A e AA (axe-core)",
   "stages.testingFixes": "Testando correções em uma cópia da página",
@@ -672,10 +653,6 @@ export const ptBR: Catalog = {
   "form.addressHint": "Digite um endereço da web para auditar, como example.com.",
   "form.whatToAudit": "O que auditar",
 
-  "login.title": "Entrar no AccessCheck",
-  "login.github": "Entrar com GitHub",
-  "login.google": "Entrar com Google",
-
   "results.couldNotOpen": "Não foi possível abrir a página",
   "results.tryAnotherUrl": "Tentar outro endereço",
   "results.seeWhatWeAudit": "Veja o que conseguimos auditar",
@@ -689,23 +666,6 @@ export const ptBR: Catalog = {
   "site.listNote":
     "Montamos a lista a partir do sitemap e dos links que conseguimos alcançar, e então auditamos cada página.",
 
-  "history.tryDifferentDomain":
-    "Tente outro domínio, ou limpe o filtro de nota para ver tudo de novo.",
-  "history.runAudit": "Auditar uma página",
-  "history.scoreUp": {
-    one: "{count} ponto a mais que na auditoria anterior",
-    other: "{count} pontos a mais que na auditoria anterior",
-  },
-  "history.scoreDown": {
-    one: "{count} ponto a menos que na auditoria anterior",
-    other: "{count} pontos a menos que na auditoria anterior",
-  },
-  "history.sortLabel": "Ordenar as auditorias",
-  "history.clearHistory": "Limpar o histórico",
-  "history.backToHistory": "Voltar ao histórico",
-  "history.savedReport": "Relatório guardado",
-  "history.searchByDomain": "Buscar auditorias por domínio",
-
   "report.sandboxApplied":
     "Aplicada e reconferida em uma cópia da página. O site auditado não foi alterado.",
   "report.whereScoreCouldGo": "Até onde esta página pode chegar",
@@ -715,15 +675,7 @@ export const ptBR: Catalog = {
   "report.detailedFindings": "Problemas detalhados",
   "report.noSeriousOnPage":
     "Nenhuma falha crítica ou grave detectada automaticamente nesta página. Itens moderados e revisão manual estão na página 3.",
-  "report.rulesMoved": { one: "{count} regra mudou", other: "{count} regras mudaram" },
-  "report.changesSinceLast": "Mudanças desde a última auditoria",
-  "report.scoringModelUpdated": "Modelo de pontuação atualizado",
-  "report.whatMoved": "O que mudou desde {date}",
   "report.sectionTwo": "Seção 02",
-
-  "login.subtitle": "Salve suas auditorias e veja o que mudou em cada site ao longo do tempo.",
-  "login.note":
-    "Sem senhas. Usamos GitHub ou Google só para confirmar quem você é. O AccessCheck continua gratuito sem conta.",
 
   "wcagReading.notEvaluated": "Não avaliado. O AccessCheck cobre os níveis A e AA",
   "wcagReading.internalNote":
@@ -811,16 +763,6 @@ export const ptBR: Catalog = {
   "home.export.mdTitle": "Seletor, trecho e status de verificação",
   "home.export.mdBody":
     "Tabela de severidade e lista priorizada, prontas para colar em um ticket ou pull request, já com as correções verificadas marcadas.",
-  "home.track.kicker": "Ao longo do tempo",
-  "home.track.title": "Audite de novo depois e veja exatamente o que mudou",
-  "home.track.body":
-    "Uma página que passa hoje pode falhar no próximo deploy. Cada auditoria feita com login fica salva, e a seguinte é comparada com ela regra a regra: quais barreiras foram resolvidas, quais voltaram e se isso mudou a situação da página.",
-  "home.track.cleared": { one: "{count} resolvido", other: "{count} resolvidos" },
-  "home.track.previousAudit": "Auditoria anterior",
-  "home.track.thisAudit": "Esta auditoria",
-  "home.track.daysLater": { one: "{count} dia depois", other: "{count} dias depois" },
-  "home.track.note":
-    "O histórico é salvo quando você entra com GitHub ou Google. Todo o resto desta página, incluindo a auditoria, as correções e as exportações, funciona sem cadastro.",
 
   "home.cta.measured": "Medido",
   "home.cta.located": "Localizado",
@@ -1037,8 +979,6 @@ export const ptBR: Catalog = {
     "O AccessCheck roda o axe-core contra os níveis A e AA da WCAG (2.0, 2.1 e 2.2). O teste automático cobre apenas parte dos critérios da WCAG; o restante exige a revisão de uma pessoa, muitas vezes com leitor de tela ou outra tecnologia assistiva. O nível AAA não é verificado, e este relatório não é uma declaração de conformidade.",
   "report.findingsIntro":
     "Cada problema aparece agrupado por severidade e associado ao critério de sucesso A/AA da WCAG, com o impacto nas pessoas, a medição quando existe e uma correção reauditada em uma cópia da página.",
-  "report.scoringModelNote":
-    "As duas auditorias foram pontuadas por modelos diferentes (v{from} e v{to}), então os números acima não representam alta nem queda. Quais regras foram corrigidas e quais regrediram continua valendo.",
 
   "site.theSite": "o site",
   "site.notFound": "Auditoria de site não encontrada.",
@@ -1056,16 +996,6 @@ export const ptBR: Catalog = {
   "stepper.position": "Ocorrência {at} de {total}",
   "seal.verified": "Correção testada: aplicada temporariamente e verificada novamente com sucesso",
   "seal.needsReview": "Precisa de revisão: a sugestão sozinha não resolve",
-  "history.kicker": "Histórico",
-  "history.scoreLabel": "Nota",
-  "history.title": "Histórico de auditorias",
-  "history.noMatches": "Nenhuma auditoria corresponde aos seus filtros",
-  "history.empty": "Nenhuma auditoria ainda",
-  "history.emptyBody":
-    "Rode uma auditoria logado e ela aparece aqui, para você ver o que mudou em cada site ao longo do tempo.",
-  "history.searchPlaceholder": "Buscar por domínio\u2026",
-  "history.clearSearch": "Limpar busca",
-  "history.filterByScore": "Filtrar por nota",
 
   "site.score": "Nota do site",
   "site.runningAverage": "média parcial entre as páginas auditadas",

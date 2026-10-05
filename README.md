@@ -80,15 +80,9 @@ A tool that measures contrast shouldn't have questionable contrast of its own, s
     <td rowspan="2" valign="top"><img src="docs/pdf-mobile.png" alt="PDF report — Mobile" /></td>
   </tr>
   <tr>
-    <td valign="top"><img src="docs/results-desktop.png" alt="Results — Desktop" /></td>
+    <td valign="top"><img src="docs/results-desktop.png" alt="Results | Desktop" /></td>
   </tr>
 </table>
-
-<p align="center"><em>Change tracking, as explained on the landing page — an example page moving from failing to minor gaps, with two rules cleared and one regression.</em></p>
-
-<p align="center">
-  <img src="docs/track-over-time.png" alt="AccessCheck's change-over-time section: a previous audit reading as failing and the current one as minor gaps, listing two cleared rules and one new regression" width="820" />
-</p>
 
 <p align="center"><em>The side panel: every problem to fix marked on the live page, and the focus path drawn across it.</em></p>
 
@@ -113,7 +107,6 @@ A tool that measures contrast shouldn't have questionable contrast of its own, s
   <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
   <img src="https://img.shields.io/badge/Prisma-2D3748?style=for-the-badge&logo=prisma&logoColor=white" alt="Prisma" />
   <img src="https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white" alt="Upstash Redis" />
-  <img src="https://img.shields.io/badge/Auth.js-000000?style=for-the-badge&logo=auth0&logoColor=white" alt="Auth.js" />
   <img src="https://img.shields.io/badge/Chrome_MV3-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Chrome Manifest V3" />
 </p>
 
@@ -124,7 +117,6 @@ A tool that measures contrast shouldn't have questionable contrast of its own, s
 | **Styling**            | Tailwind CSS v4                                                   |
 | **Audit Engine**       | axe-core, Playwright (`playwright-core` + `@sparticuz/chromium`)  |
 | **Database**           | PostgreSQL (Neon, serverless driver) + Prisma 7                   |
-| **Authentication**     | Auth.js / NextAuth v5 (GitHub, Google — OAuth only)               |
 | **Cache & Rate Limit** | Upstash Redis (HTTP-based, shared across instances)               |
 | **Background Jobs**    | Upstash QStash (fan-out of the multi-page crawl, one run/page)    |
 | **Browser Extension**  | Chrome Manifest V3 (side panel, `chrome.debugger` / CDP), esbuild |
@@ -145,8 +137,7 @@ The scan runs server-side in a Node runtime (`/api/scan`) because Playwright nee
 
 - **Verified, copy-paste remediation:** The flagship feature. See the [dedicated section](#-the-verified-fix-engine) below — each fix is deterministically generated, applied to the live DOM, and re-audited to label it **Verified** or **Needs review** before it's ever suggested.
 - **Whole-site crawl (background job):** Point it at a domain and AccessCheck discovers pages from the sitemap (falling back to a same-origin link crawl), then audits them in parallel. Because a single scan already spends 10–25s in a headless browser and Vercel caps a function at 60s, the crawl is decomposed into a durable background job: [Upstash QStash](https://upstash.com/docs/qstash) fans out **one short serverless invocation per page**, each writes its result to Postgres, and the client polls a live progress view that ends in an aggregate site reading. It degrades gracefully — with no QStash configured (local dev) the pages are processed inline instead. Works signed-in or anonymous.
-- **Scan history with diffs:** Signed-in scans are saved at `/history` (newest first, with thumbnails and a delta vs the previous scan of the same URL). Opening a saved report shows a **"Changes since last scan"** panel — exactly which rules were **fixed** or **regressed** over time, computed by a pure, unit-tested diff function.
-- **Three-layer result reuse & rate limiting:** A page audited in the last 5 minutes isn't audited again. The browser session answers first (instant, survives leaving the report and coming back, or hopping to the PDF export), then Upstash Redis for anonymous readers (shared across serverless instances, screenshot included so a hit still opens with its evidence frame), then the reader's own scan history in Postgres when signed in. A reused reading never poses as a new one — it carries the `scannedAt` of the run that produced it and the report says how old it is, with **Re-audit** walking past every layer. Scans are gated at 5/min per IP via the same Redis, and everything degrades gracefully to measuring again when Redis isn't configured.
+- **Two-layer result reuse & rate limiting:** A page audited in the last 5 minutes isn't audited again. The browser session answers first (instant, survives leaving the report and coming back, or hopping to the PDF export), then Upstash Redis (shared across serverless instances, screenshot included so a hit still opens with its evidence frame). A reused reading never poses as a new one — it carries the `scannedAt` of the run that produced it and the report says how old it is, with **Re-audit** walking past every layer. Scans are gated at 5/min per IP via the same Redis, and everything degrades gracefully to measuring again when Redis isn't configured.
 - **Keyboard focus-path analysis:** Every scan tabs through the page in the real browser, maps the focus order, and flags invisible focus indicators, keyboard traps, positive `tabindex`, and interactive controls that can't be reached by keyboard — operability checks axe-core doesn't perform.
 - **Context-aware re-scans:** Beyond the default desktop pass, AccessCheck re-audits the page at a mobile viewport and after opening menus / disclosures, surfacing violations that only appear on small screens or once dynamic UI is expanded.
 - **Three-tier reporting:** Results are split into WCAG violations (confirmed failures), best practices (recommendations beyond the spec, clearly labelled as non-blocking), and needs-manual-review items (axe flagged something but can't decide automatically — surfaced with the affected selectors _plus a per-rule, step-by-step walkthrough of how to confirm it by hand_) so you know exactly where to look. Most tools collapse these into one list or discard tiers 2 and 3 entirely.
@@ -204,7 +195,7 @@ The panel is held to the standard the product sells: one `<main>`, one `<h1>`, n
 
 ## 🛠️ Engineering challenges
 
-The most challenging part of this project was making the remediation **trustworthy** rather than just plausible. Generating a fix is easy; proving it actually clears the violation meant building a structured apply-and-revert layer over a live DOM and re-running the audit scoped to a single rule. Getting the contrast math right — guaranteeing the suggested color passes its WCAG target _after_ rounding — pushed me toward property-based testing. The deterministic core (color math, fix generators, scoring, grouping, and the history diff) is fully unit-tested with Vitest, ensuring reliability and maintainability of the codebase.
+The most challenging part of this project was making the remediation **trustworthy** rather than just plausible. Generating a fix is easy; proving it actually clears the violation meant building a structured apply-and-revert layer over a live DOM and re-running the audit scoped to a single rule. Getting the contrast math right — guaranteeing the suggested color passes its WCAG target _after_ rounding — pushed me toward property-based testing. The deterministic core (color math, fix generators, scoring and grouping) is fully unit-tested with Vitest, ensuring reliability and maintainability of the codebase.
 
 The second one was **making the extension and the server agree.** Two audits of the same page that disagree are worse than one audit, so there is only ever one engine: [`src/lib/scan/dom/engine.ts`](src/lib/scan/dom/engine.ts) is bundled by esbuild into a single IIFE (`dom-engine/dom-engine.js`) with its `sha256` written beside it, and both drivers load that identical artifact — Playwright injects it server-side, the extension ships it as a file. A parity gate then audits the same fixtures through both and fails the build if the focus paths, selectors, markup or measured rectangles diverge, so the two can't quietly drift apart. The packaged release is checked the same way: the archive is rejected if any file in it differs from a fresh build.
 
@@ -225,7 +216,7 @@ npm install
 ```
 
 > Rename the .env.example file to .env and add the necessary information to it.
-> (The app runs without a database, Redis, or OAuth configured — those only enable history, caching, and sign-in.)
+> (The app runs without a database or Redis configured: the database only backs the whole-site crawl, and Redis the cache and rate limiting.)
 
 > Start the service:
 

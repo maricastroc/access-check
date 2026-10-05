@@ -376,12 +376,20 @@ try {
   const drawn = await page.evaluate(() => {
     const root = document.getElementById("accesscheck-overlay")?.shadowRoot;
     const marks = [...(root?.querySelectorAll("[data-mark]") ?? [])];
-    const box = marks.find((m) => m.dataset.current === "true")?.getBoundingClientRect();
+    const current = marks.find((m) => m.dataset.current === "true");
+    const box = current?.getBoundingClientRect();
     const target = document.querySelector("p[style]").getBoundingClientRect();
+    const at = (r) => r && [r.left, r.top, r.width, r.height].map(Math.round);
     return {
       boxes: marks.length,
       onTarget:
         !!box && Math.abs(box.top - target.top) < 12 && Math.abs(box.left - target.left) < 12,
+      box: at(box),
+      boxDisplay: current?.style.display ?? null,
+      target: at(target),
+      scrollY: window.scrollY,
+      viewport: [innerWidth, innerHeight],
+      visibility: document.visibilityState,
     };
   });
   console.log("locating an axe finding:", JSON.stringify({ ...locating, ...drawn }));
