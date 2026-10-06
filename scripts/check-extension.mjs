@@ -30,10 +30,12 @@ const HTML = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>
 <aside style="position:fixed;top:0;right:0;width:300px;transform:translateX(110%)"><a href="/bag" style="display:block;width:40px;height:40px"></a></aside>
 </body></html>`;
 
-const WHOLE_PAGE = HTML.replace('<html lang="en">', "<html>").replace(
-  "<title>Extension fixture</title>",
-  "",
-);
+const WHOLE_PAGE = HTML.replace('<html lang="en">', "<html>")
+  .replace("<title>Extension fixture</title>", '<meta http-equiv="refresh" content="7200">')
+  .replace(
+    "</main>",
+    '<span id="card"><template shadowrootmode="open"><button></button></template></span></main>',
+  );
 
 const server = createServer((q, res) => {
   res.writeHead(200, {
@@ -622,18 +624,34 @@ try {
     lines: await report.evaluate(() =>
       [...document.querySelectorAll('[aria-labelledby="verdict-heading"] p')]
         .map((p) => p.textContent)
-        .filter((text) => /no mark/.test(text)),
+        .filter((text) => /no mark|marks do not reach/.test(text)),
     ),
+    shadowReason: await report.evaluate(async () => {
+      document.querySelector('li[id="finding-wcag:button-name"] h3 > button')?.click();
+      await new Promise((r) => setTimeout(r, 600));
+      return (
+        document.querySelector('li[id="finding-wcag:button-name"] section')?.textContent ?? ""
+      ).includes("inside a shadow root, which the marks on the page do not reach");
+    }),
   };
   const counted = (pattern) =>
     Number(overviewSays.lines.find((line) => pattern.test(line))?.match(/^\d+/)?.[0] ?? 0);
   const unmarked = counted(/no mark on screen/);
   const wholePage = counted(/whole page/);
+  const inShadowRoot = counted(/shadow root/);
   console.log("findings to fix and what the overview says of them:", JSON.stringify(overviewSays));
-  check(wholePage === 2, `the missing title and language were not counted as the whole page's`);
   check(
-    overviewSays.marked + unmarked + wholePage === overviewSays.toFix,
-    `${overviewSays.toFix} to fix, but the page shows ${overviewSays.marked} and the panel accounts for ${unmarked + wholePage} more`,
+    wholePage === 3,
+    "the missing title and language and the timed refresh were not counted as the whole page's",
+  );
+  check(inShadowRoot === 1, "the button inside a shadow root was not counted apart");
+  check(
+    overviewSays.shadowReason,
+    "the finding inside a shadow root does not say why it has no mark",
+  );
+  check(
+    overviewSays.marked + unmarked + wholePage + inShadowRoot === overviewSays.toFix,
+    `${overviewSays.toFix} to fix, but the page shows ${overviewSays.marked} and the panel accounts for ${unmarked + wholePage + inShadowRoot} more`,
   );
 
   const doomed = await ctx.newPage();

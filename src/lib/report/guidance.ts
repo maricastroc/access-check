@@ -205,16 +205,19 @@ export function fixGuidance(ruleId: string, t: Translate, kind?: string): Guidan
   };
 }
 
+export type Unplaced = "whole-page" | "shadow-root";
+
 export function markerReason(
   ruleId: string,
   kind: string,
-  isDocLevel: boolean,
+  unplaced: Unplaced | null,
   t: Translate,
 ): string {
   if (kind === "best-practice") return t("marker.bestPractice");
   if (kind === "context") return t("marker.context");
   if (kind === "keyboard") return t("marker.keyboard");
-  if (isDocLevel) return t("marker.docLevel");
+  if (unplaced === "whole-page") return t("marker.docLevel");
+  if (unplaced === "shadow-root") return t("marker.shadowRoot");
   return t("marker.offCapture");
 }
 

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { ScanMarker, ScanResult, ScanViolation } from "@/lib/scan/types";
 import { buildFindings, queueGroupOf, reviewFindings, workQueue } from "./findings";
+import { unplaced } from "./occurrences";
+import { translator } from "../i18n/t";
 
 function baseResult(over: Partial<ScanResult>): ScanResult {
   return {
@@ -55,6 +57,43 @@ const heading: ScanViolation = {
   nodes: 1,
   verification: "unchecked",
 };
+
+describe("why a finding to fix has no mark", () => {
+  const t = translator("en");
+  const violation = (id: string, where: string): ScanViolation => ({
+    id,
+    severity: "serious",
+    title: id,
+    criterion: "WCAG 2.4.1 · Bypass Blocks",
+    where,
+    desc: "d",
+    fix: "f",
+    nodes: 1,
+    verification: "unchecked",
+  });
+  const findings = buildFindings(
+    baseResult({
+      violations: [
+        violation("bypass", "html"),
+        violation("meta-refresh", 'meta[http-equiv="refresh"]'),
+        violation("button-name", "\u2014"),
+      ],
+    }),
+  );
+  const byRule = Object.fromEntries(findings.map((f) => [f.ruleId, f]));
+
+  it("says a rule about the document applies to the whole page, whatever its category", () => {
+    for (const id of ["bypass", "meta-refresh"]) {
+      expect(unplaced(byRule[id])).toBe("whole-page");
+      expect(byRule[id].noMarkerReason).toBe(t("marker.docLevel"));
+    }
+  });
+
+  it("says a finding inside a shadow root sits where the marks do not reach", () => {
+    expect(unplaced(byRule["button-name"])).toBe("shadow-root");
+    expect(byRule["button-name"].noMarkerReason).toBe(t("marker.shadowRoot"));
+  });
+});
 
 describe("buildFindings", () => {
   it("orders by severity and appends best-practice last with no WCAG severity", () => {
