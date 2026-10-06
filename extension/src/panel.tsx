@@ -23,6 +23,7 @@ import {
   appliesToWholePage,
   findingsAtStops,
   firstAtEachStop,
+  insideShadowRoot,
   occurrenceTag,
   occurrencesOf,
   type Occurrence,
@@ -771,6 +772,10 @@ function Report({
     () => (groups.find((g) => g.group === "fix")?.findings ?? []).filter(appliesToWholePage).length,
     [groups],
   );
+  const inShadowRoot = useMemo(
+    () => (groups.find((g) => g.group === "fix")?.findings ?? []).filter(insideShadowRoot).length,
+    [groups],
+  );
   const atStops = useMemo(
     () =>
       findingsAtStops(
@@ -975,6 +980,7 @@ function Report({
               : [
                   unseen > 0 ? t("panel.notOnScreen", { count: unseen }) : null,
                   wholePage > 0 ? t("panel.wholePage", { count: wholePage }) : null,
+                  inShadowRoot > 0 ? t("panel.inShadowRoot", { count: inShadowRoot }) : null,
                 ].filter((line): line is string => line !== null)
             : []
         }

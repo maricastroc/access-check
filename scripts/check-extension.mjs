@@ -3,6 +3,7 @@ import { cpSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { chromium } from "playwright";
+import { openPanelWindow } from "./panel-window.mjs";
 
 const EXT = mkdtempSync(join(tmpdir(), "ac-ext-build-"));
 cpSync(join(process.cwd(), "extension/dist"), EXT, { recursive: true });
@@ -30,10 +31,12 @@ const HTML = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>
 <aside style="position:fixed;top:0;right:0;width:300px;transform:translateX(110%)"><a href="/bag" style="display:block;width:40px;height:40px"></a></aside>
 </body></html>`;
 
-const WHOLE_PAGE = HTML.replace('<html lang="en">', "<html>").replace(
-  "<title>Extension fixture</title>",
-  "",
-);
+const WHOLE_PAGE = HTML.replace('<html lang="en">', "<html>")
+  .replace("<title>Extension fixture</title>", '<meta http-equiv="refresh" content="7200">')
+  .replace(
+    "</main>",
+    '<span id="card"><template shadowrootmode="open"><button></button></template></span></main>',
+  );
 
 const server = createServer((q, res) => {
   res.writeHead(200, {
@@ -126,9 +129,8 @@ try {
   console.log("unhandled in the isolated world:", JSON.stringify(unhandled));
   console.log("console noise:", JSON.stringify(noise));
 
-  const report = await ctx.newPage();
+  const report = await openPanelWindow(ctx, sw);
   await report.setViewportSize({ width: 400, height: 720 });
-  await report.goto(`chrome-extension://${sw.url().split("/")[2]}/panel.html`);
   await report.waitForFunction(() => document.getElementById("group-fix") !== null, null, {
     timeout: 20000,
   });
@@ -499,7 +501,6 @@ try {
   check((await readOffScreen()) === null, "the off-screen notice stays up while a finding is open");
 
   await page.goto(`${origin}/another-page`, { waitUntil: "domcontentloaded" });
-  await report.bringToFront();
   const moved = await report.evaluate(async () => {
     const section = document
       .querySelector('h3 > button[aria-expanded="true"]')
@@ -558,7 +559,7 @@ try {
   check(!firstAfter, "auditing another tab left the first tab's marks on its page");
   check(secondDrawn, "the second tab got no overview");
 
-  await report.bringToFront();
+  await page.bringToFront();
   await report.evaluate(async () => {
     [...document.querySelectorAll("button")]
       .find((b) => b.textContent.trim() === "Audit again")
@@ -630,18 +631,99 @@ try {
     lines: await report.evaluate(() =>
       [...document.querySelectorAll('[aria-labelledby="verdict-heading"] p')]
         .map((p) => p.textContent)
-        .filter((text) => /no mark/.test(text)),
+        .filter((text) => /no mark|marks do not reach/.test(text)),
     ),
+    shadowReason: await report.evaluate(async () => {
+      document.querySelector('li[id="finding-wcag:button-name"] h3 > button')?.click();
+      await new Promise((r) => setTimeout(r, 600));
+      return (
+        document.querySelector('li[id="finding-wcag:button-name"] section')?.textContent ?? ""
+      ).includes("inside a shadow root, which the marks on the page do not reach");
+    }),
   };
   const counted = (pattern) =>
     Number(overviewSays.lines.find((line) => pattern.test(line))?.match(/^\d+/)?.[0] ?? 0);
   const unmarked = counted(/no mark on screen/);
   const wholePage = counted(/whole page/);
+  const inShadowRoot = counted(/shadow root/);
   console.log("findings to fix and what the overview says of them:", JSON.stringify(overviewSays));
-  check(wholePage === 2, `the missing title and language were not counted as the whole page's`);
   check(
-    overviewSays.marked + unmarked + wholePage === overviewSays.toFix,
-    `${overviewSays.toFix} to fix, but the page shows ${overviewSays.marked} and the panel accounts for ${unmarked + wholePage} more`,
+    wholePage === 3,
+    "the missing title and language and the timed refresh were not counted as the whole page's",
+  );
+  check(inShadowRoot === 1, "the button inside a shadow root was not counted apart");
+  check(
+    overviewSays.shadowReason,
+    "the finding inside a shadow root does not say why it has no mark",
+  );
+  check(
+    overviewSays.marked + unmarked + wholePage + inShadowRoot === overviewSays.toFix,
+    `${overviewSays.toFix} to fix, but the page shows ${overviewSays.marked} and the panel accounts for ${unmarked + wholePage + inShadowRoot} more`,
+  );
+
+  const deepError = () =>
+    sw.evaluate(
+      async () =>
+        (await chrome.storage.session.get("panelState")).panelState.state.deepError ?? null,
+    );
+  const locateNotice = () =>
+    report.evaluate(async () => {
+      const section = document
+        .querySelector('h3 > button[aria-expanded="true"]')
+        ?.closest("li")
+        ?.querySelector("section");
+      [...(section?.querySelectorAll("button") ?? [])]
+        .find((b) => b.textContent.trim() === "Locate on page")
+        ?.click();
+      await new Promise((r) => setTimeout(r, 900));
+      return section?.querySelector('[role="status"]')?.textContent || null;
+    });
+
+  await page.goto(`${origin}/`, { waitUntil: "domcontentloaded" });
+  await page.bringToFront();
+  await auditActive();
+  await pause(1200);
+  await report.evaluate(async () => {
+    document.querySelector("li[data-finding] h3 > button").click();
+    await new Promise((r) => setTimeout(r, 600));
+    await chrome.runtime.sendMessage({ type: "panel:clear-highlight" });
+  });
+  const inFront = await ctx.newPage();
+  await inFront.goto(`${origin}/second`, { waitUntil: "domcontentloaded" });
+  await inFront.bringToFront();
+  await pause(900);
+  const behind = {
+    notice: await locateNotice(),
+    drawn: await overlayIn(page),
+  };
+  await sw.evaluate(() => globalThis.__accessCheckDeepAudit());
+  behind.walk = await deepError();
+  await page.bringToFront();
+  await pause(1200);
+  const returned = {
+    drawn: await overlayIn(page),
+    notice: await locateNotice(),
+    walk: await deepError(),
+  };
+  await inFront.close();
+  console.log("locating with another tab in front:", JSON.stringify({ behind, returned }));
+  check(!behind.drawn, "Locate on page drew on the audited tab while another tab was in front");
+  check(
+    /report is for another tab/.test(behind.notice ?? ""),
+    `with another tab in front Locate on page answered: ${behind.notice}`,
+  );
+  check(
+    /report is for another tab/.test(behind.walk ?? ""),
+    `with another tab in front Check keyboard answered: ${behind.walk}`,
+  );
+  check(returned.drawn, "back on the audited tab, Locate on page drew nothing");
+  check(
+    !/another tab/.test(returned.notice ?? ""),
+    `back on the audited tab the finding said: ${returned.notice}`,
+  );
+  check(
+    returned.walk === null,
+    `back on the audited tab the keyboard check said: ${returned.walk}`,
   );
 
   const doomed = await ctx.newPage();

@@ -44,7 +44,8 @@ describe("categoryOf / markerReason", () => {
   });
 
   it("explains why a doc-level finding has no marker", () => {
-    expect(markerReason("html-has-lang", "wcag", true, t)).toMatch(/document|structure/i);
-    expect(markerReason("color-contrast", "wcag", false, t)).toMatch(/viewport|hidden|box/i);
+    expect(markerReason("html-has-lang", "wcag", "whole-page", t)).toMatch(/document|structure/i);
+    expect(markerReason("button-name", "wcag", "shadow-root", t)).toMatch(/shadow root/i);
+    expect(markerReason("color-contrast", "wcag", null, t)).toMatch(/viewport|hidden|box/i);
   });
 });

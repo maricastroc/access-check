@@ -3,6 +3,7 @@ import { cpSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { chromium } from "playwright";
+import { openPanelWindow } from "./panel-window.mjs";
 
 const SOURCE = resolve(process.argv[2] ?? "extension/dist");
 
@@ -87,9 +88,8 @@ try {
 
   out.debuggerDuringAudit = await sw.evaluate(() => globalThis.__smokeDebugger.slice());
 
-  const panel = await ctx.newPage();
+  const panel = await openPanelWindow(ctx, sw);
   await panel.setViewportSize({ width: 400, height: 760 });
-  await panel.goto(`chrome-extension://${extId}/panel.html`);
   await panel.waitForFunction(() => document.body.textContent.includes("To fix"), null, {
     timeout: 20000,
   });

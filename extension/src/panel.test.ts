@@ -963,8 +963,8 @@ describe("the panel is an inspector, not a squeezed report", () => {
       /if \(auditedTabId !== null && !\(await onAuditedPage\(auditedTabId\)\)\) \{\s*await clearOverlay\(\);\s*throw new MovedOn\(\);/,
     );
     expect(background).toContain("sameDocument(tab.url, state.result.finalUrl)");
-    expect(background).toMatch(
-      /e instanceof MovedOn \|\|[\s\S]{0,140}t\("background\.tabUnreachable"\)/,
+    expect(background).toContain(
+      'if (e instanceof MovedOn) return t("background.tabUnreachable");',
     );
   });
 
