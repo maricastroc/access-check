@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { BrowserContext, Page } from "playwright-core";
 import { acquireBrowser, closeSharedBrowser } from "../browser";
 import { injectDomEngine } from "../scan";
+import { openIsolatedWorld, type IsolatedWorld } from "../world";
 import { collectKeyboard } from "../keyboard";
 import { analyzeTargetSize, INTERACTIVE } from "../target-size";
 import { analyzeLiveRegions } from "../live-regions";
@@ -60,10 +61,12 @@ const LIVE = `<!doctype html>
 
 let context: BrowserContext;
 let page: Page;
+let world: IsolatedWorld;
 
 async function load(html: string): Promise<void> {
   await page.setContent(html, { waitUntil: "domcontentloaded" });
-  await injectDomEngine(page);
+  world = await openIsolatedWorld(page);
+  await injectDomEngine(world);
 }
 
 beforeAll(async () => {
@@ -81,7 +84,7 @@ describe("which controls the walk expects to reach", () => {
   beforeAll(() => load(COLLAPSED));
 
   const candidates = async () =>
-    (await page.evaluate(() => window.__accessCheckDom!.readFocusReach())).unreachable;
+    (await world.evaluate(() => window.__accessCheckDom!.readFocusReach())).unreachable;
 
   it("leaves out links inside a container hidden with visibility: hidden", async () => {
     const expected = await candidates();
@@ -111,7 +114,7 @@ describe("which controls the walk expects to reach", () => {
 describe("walking a page whose hidden content Chrome skips", () => {
   it("does not call collapsed, hidden or closed content unreachable", async () => {
     await load(COLLAPSED);
-    const report = await collectKeyboard(page, VIEWPORT, t);
+    const report = await collectKeyboard(page, world, VIEWPORT, t);
 
     expect(report.cycleComplete).toBe(true);
     expect(report.findings.map((f) => f.id)).not.toContain("unreachable-control");
@@ -123,7 +126,7 @@ describe("walking a page whose hidden content Chrome skips", () => {
 
 describe("which targets are measured for size", () => {
   const measured = async () =>
-    (await page.evaluate(
+    (await world.evaluate(
       (interactive) => window.__accessCheckDom!.collectTargetSizeRaw(interactive),
       INTERACTIVE,
     )) as RawTargetSize;
@@ -153,7 +156,7 @@ describe("which targets are measured for size", () => {
 });
 
 describe("reading live regions", () => {
-  const read = () => page.evaluate(() => window.__accessCheckDom!.collectLiveRegionsRaw());
+  const read = () => world.evaluate(() => window.__accessCheckDom!.collectLiveRegionsRaw());
 
   it("reports a region as hidden when an ancestor hides it", async () => {
     await load(LIVE);

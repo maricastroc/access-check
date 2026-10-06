@@ -1,4 +1,4 @@
-import type { Page } from "playwright-core";
+import type { DomWorld } from "./world";
 import type { AuditFinding } from "./audits";
 import { MAX_AUDIT_SELECTORS, sortFindings } from "./audits";
 import type { MessageKey, Translate } from "../i18n/t";
@@ -106,8 +106,11 @@ export function analyzeLiveRegions(raw: RawLiveRegions, t: Translate): LiveRegio
   return { regions: regions.length, findings: sortFindings(findings) };
 }
 
-export async function collectLiveRegions(page: Page, t: Translate): Promise<LiveRegionsReport> {
-  const raw = (await page.evaluate(() =>
+export async function collectLiveRegions(
+  world: DomWorld,
+  t: Translate,
+): Promise<LiveRegionsReport> {
+  const raw = (await world.evaluate(() =>
     window.__accessCheckDom!.collectLiveRegionsRaw(),
   )) as RawLiveRegions;
   return analyzeLiveRegions(raw, t);

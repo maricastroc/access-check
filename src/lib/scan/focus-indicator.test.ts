@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { BrowserContext, Page } from "playwright-core";
 import { acquireBrowser, closeSharedBrowser } from "./browser";
 import { injectDomEngine } from "./scan";
+import { openIsolatedWorld } from "./world";
 import {
   buildKeyboardReport,
   collectKeyboard,
@@ -63,8 +64,9 @@ beforeAll(async () => {
   context = await browser.newContext({ viewport: VIEWPORT });
   page = await context.newPage();
   await page.setContent(COMPONENTS, { waitUntil: "domcontentloaded" });
-  await injectDomEngine(page);
-  report = await collectKeyboard(page, VIEWPORT, t);
+  const world = await openIsolatedWorld(page);
+  await injectDomEngine(world);
+  report = await collectKeyboard(page, world, VIEWPORT, t);
 }, 90_000);
 
 afterAll(async () => {

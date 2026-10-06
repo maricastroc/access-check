@@ -1,4 +1,5 @@
 import type { Page } from "playwright-core";
+import type { DomWorld } from "./world";
 import type { EvidenceClass, Severity } from "./types";
 import type { FocusProbe, FocusReach, FocusScopePart, FocusStyle, RestingStyle } from "./dom/focus";
 import type { ElementIdentity } from "./dom/identity";
@@ -824,25 +825,26 @@ export async function collectFocusPath(
 
 export async function collectKeyboard(
   page: Page,
+  world: DomWorld,
   viewport: Viewport,
   t: Translate,
   opts: { maxMs?: number } = {},
 ): Promise<KeyboardReport> {
   const raw = await collectFocusPath(
     {
-      start: () => page.evaluate(() => window.__accessCheckDom!.focusProbeStart()),
-      focusFirst: () => page.evaluate(() => window.__accessCheckDom!.focusFirstStop()),
+      start: () => world.evaluate(() => window.__accessCheckDom!.focusProbeStart()),
+      focusFirst: () => world.evaluate(() => window.__accessCheckDom!.focusFirstStop()),
       focusSelector: (selector) =>
-        page.evaluate((sel) => window.__accessCheckDom!.focusSelector(sel), selector),
-      relativeToSeed: () => page.evaluate(() => window.__accessCheckDom!.focusRelativeToSeed()),
+        world.evaluate((sel) => window.__accessCheckDom!.focusSelector(sel), selector),
+      relativeToSeed: () => world.evaluate(() => window.__accessCheckDom!.focusRelativeToSeed()),
       pressTab: () => page.keyboard.press("Tab"),
       pressShiftTab: () => page.keyboard.press("Shift+Tab"),
-      readStop: () => page.evaluate(() => window.__accessCheckDom!.readFocusedStop()),
-      peekStop: () => page.evaluate(() => window.__accessCheckDom!.readFocusedStop(false)),
+      readStop: () => world.evaluate(() => window.__accessCheckDom!.readFocusedStop()),
+      peekStop: () => world.evaluate(() => window.__accessCheckDom!.readFocusedStop(false)),
       readBaseStyles: (selectors) =>
-        page.evaluate((sel) => window.__accessCheckDom!.readBaseStyles(sel), selectors),
-      readReach: () => page.evaluate(() => window.__accessCheckDom!.readFocusReach()),
-      end: () => page.evaluate(() => window.__accessCheckDom!.focusProbeEnd()),
+        world.evaluate((sel) => window.__accessCheckDom!.readBaseStyles(sel), selectors),
+      readReach: () => world.evaluate(() => window.__accessCheckDom!.readFocusReach()),
+      end: () => world.evaluate(() => window.__accessCheckDom!.focusProbeEnd()),
     },
     viewport,
     opts,

@@ -16,6 +16,7 @@ import { buildFindings } from "../../report/findings";
 import { MAX_IDENTIFIED } from "../violations";
 import { INTERACTIVE } from "../target-size";
 import { injectDomEngine, runScan } from "../scan";
+import { openIsolatedWorld } from "../world";
 import { SCORING_VERSION } from "../scored";
 import { CONTENT_SIGNATURE } from "../page-ready";
 import type { ScanResult } from "../types";
@@ -938,7 +939,8 @@ describe("ScanResult parity: hosted runScan vs the extension bundle", () => {
 
 describe("a missing engine fails in the open", () => {
   it("tells the hosted scanner how to build it", async () => {
-    await expect(injectDomEngine(page, repoFile("dom-engine/never-built.js"))).rejects.toThrow(
+    const world = await openIsolatedWorld(page);
+    await expect(injectDomEngine(world, repoFile("dom-engine/never-built.js"))).rejects.toThrow(
       /audit engine could not be loaded[\s\S]*build:engine/,
     );
   });

@@ -1,4 +1,5 @@
 import type { Page } from "playwright-core";
+import type { DomWorld } from "./world";
 import type { Severity } from "./types";
 import { criterionFromTags } from "./wcag";
 import type { Translate } from "../i18n/t";
@@ -82,6 +83,7 @@ type PageAxe = {
 
 export async function collectContexts(
   page: Page,
+  world: DomWorld,
   baselineIdsArr: string[],
   t: Translate,
   opts: { maxMs?: number } = {},
@@ -97,7 +99,7 @@ export async function collectContexts(
   let dynamicRan = false;
 
   try {
-    const triggers = await page.evaluate((max) => {
+    const triggers = await world.evaluate((max) => {
       const nameOf = (el: Element): string => {
         const a = el.getAttribute("aria-label");
         if (a && a.trim()) return a.trim().slice(0, 40);
@@ -146,7 +148,7 @@ export async function collectContexts(
 
     for (const toggle of triggers) {
       if (Date.now() >= dynamicDeadline) break;
-      const state = await page.evaluate(
+      const state = await world.evaluate(
         async ({ toggle, tags }) => {
           const firstTarget = (x: unknown): string | null =>
             Array.isArray(x) && typeof x[0] === "string" ? x[0] : typeof x === "string" ? x : null;
@@ -235,7 +237,7 @@ export async function collectContexts(
     if (Date.now() >= mobileDeadline) throw new Error("out of budget");
     await page.setViewportSize(MOBILE);
     await page.waitForTimeout(400);
-    const rules = await page.evaluate(async (tags) => {
+    const rules = await world.evaluate(async (tags) => {
       const firstTarget = (x: unknown): string | null =>
         Array.isArray(x) && typeof x[0] === "string" ? x[0] : typeof x === "string" ? x : null;
       const axe = (window as unknown as { axe: PageAxe }).axe;

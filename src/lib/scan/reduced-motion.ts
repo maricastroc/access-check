@@ -1,4 +1,5 @@
 import type { Page } from "playwright-core";
+import type { DomWorld } from "./world";
 import type { AuditFinding } from "./audits";
 import { MAX_AUDIT_SELECTORS } from "./audits";
 import type { Translate } from "../i18n/t";
@@ -57,12 +58,16 @@ export function analyzeReducedMotion(raw: RawReducedMotion, t: Translate): Reduc
   return { ran: true, running: raw.animations.length, findings };
 }
 
-export async function collectReducedMotion(page: Page, t: Translate): Promise<ReducedMotionReport> {
+export async function collectReducedMotion(
+  page: Page,
+  world: DomWorld,
+  t: Translate,
+): Promise<ReducedMotionReport> {
   await page.emulateMedia({ reducedMotion: "reduce" });
   try {
     await page.waitForTimeout(200);
 
-    const raw = (await page.evaluate(() => {
+    const raw = (await world.evaluate(() => {
       const anims = typeof document.getAnimations === "function" ? document.getAnimations() : [];
 
       const out: {
