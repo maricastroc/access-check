@@ -115,24 +115,40 @@ function LanguageChoice({ preference }: { preference: LocalePreference }) {
       <label htmlFor="panel-language" className="shrink-0 text-[13px] font-semibold text-ink-2">
         {t("language.label")}
       </label>
-      <select
-        id="panel-language"
-        value={preference}
-        onChange={(e) => {
-          const chosen = e.target.value as LocalePreference;
-          void writePreference(chosen)
-            .then(markLanguageChanged)
-            .then(() => location.reload());
-        }}
-        className="ml-auto min-h-8 max-w-full min-w-0 cursor-pointer border border-border bg-surface pr-3 pl-2 text-[13px] text-ink"
-      >
-        <option value={FOLLOW_BROWSER}>{t("language.followBrowser")}</option>
-        {REPORT_LOCALES.map((option) => (
-          <option key={option} value={option} lang={option}>
-            {NATIVE_NAME[option]}
-          </option>
-        ))}
-      </select>
+      <span className="relative ml-auto inline-flex max-w-full min-w-0">
+        <select
+          id="panel-language"
+          value={preference}
+          onChange={(e) => {
+            const chosen = e.target.value as LocalePreference;
+            void writePreference(chosen)
+              .then(markLanguageChanged)
+              .then(() => location.reload());
+          }}
+          className="min-h-8 max-w-full min-w-0 cursor-pointer appearance-none border border-border bg-surface pr-9 pl-3 text-[13px] text-ink"
+        >
+          <option value={FOLLOW_BROWSER}>{t("language.followBrowser")}</option>
+          {REPORT_LOCALES.map((option) => (
+            <option key={option} value={option} lang={option}>
+              {NATIVE_NAME[option]}
+            </option>
+          ))}
+        </select>
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 10 6"
+          className="pointer-events-none absolute top-1/2 right-3 h-1.5 w-2.5 -translate-y-1/2 text-ink"
+        >
+          <path
+            d="M1 1l4 4 4-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </span>
     </div>
   );
 }
