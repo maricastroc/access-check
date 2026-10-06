@@ -45,6 +45,7 @@ import {
 } from "./violations";
 import { captureScreenshot, SCREENSHOT_MIME, SCREENSHOT_QUALITY } from "./screenshot";
 import { installNetworkGuard } from "./ssrf";
+import { openIsolatedWorld, type DomWorld, type IsolatedWorld } from "./world";
 import type {
   FixVerification,
   RegionStop,
@@ -84,14 +85,14 @@ const AXE_PATH = path.join(process.cwd(), "node_modules/axe-core/axe.min.js");
 const DOM_ENGINE_PATH = path.join(process.cwd(), "dom-engine/dom-engine.js");
 
 export async function injectDomEngine(
-  page: Page,
+  world: IsolatedWorld,
   enginePath = DOM_ENGINE_PATH,
   locale: ReportLocale = DEFAULT_REPORT_LOCALE,
 ): Promise<void> {
   const t = translator(locale);
 
   try {
-    await page.addScriptTag({ path: enginePath });
+    await world.addScript(enginePath);
   } catch (err) {
     throw new ScanFailure(
       t("scanFail.engineMissing", {
@@ -102,7 +103,7 @@ export async function injectDomEngine(
     );
   }
 
-  const version = await page.evaluate(() => window.__accessCheckDom?.version ?? null);
+  const version = await world.evaluate(() => window.__accessCheckDom?.version ?? null);
   if (version !== DOM_ENGINE_VERSION) {
     throw new ScanFailure(
       t("scanFail.engineVersion", { found: String(version), needed: DOM_ENGINE_VERSION }),
@@ -146,8 +147,8 @@ export function normalizeUrl(input: string): string {
   return trimmed;
 }
 
-async function primeLazyContent(page: Page): Promise<void> {
-  await page.evaluate(() => window.__accessCheckDom!.primeLazyContent()).catch(() => {});
+async function primeLazyContent(world: DomWorld): Promise<void> {
+  await world.evaluate(() => window.__accessCheckDom!.primeLazyContent()).catch(() => {});
 }
 
 export type ScanOptions = {
@@ -209,6 +210,7 @@ const REGION_SETTLE_MS = 250;
 
 async function captureRegions(
   page: Page,
+  world: DomWorld,
   input: {
     targets: MarkerTarget[];
     rects: (DomRect | null)[];
@@ -218,7 +220,7 @@ async function captureRegions(
     onMarker: (markers: ScanMarker[]) => void;
   },
 ): Promise<{ regions: ScanRegion[]; coverage: Coverage } | undefined> {
-  const page_ = await page.evaluate(() => ({
+  const page_ = await world.evaluate(() => ({
     docHeight: window.__accessCheckDom!.documentHeight(),
     stickyInset: window.__accessCheckDom!.stickyInset(),
     scrollY: Math.round(window.scrollY),
@@ -255,18 +257,18 @@ async function captureRegions(
         continue;
       }
 
-      const landedAt = await page.evaluate(
+      const landedAt = await world.evaluate(
         (docY) => window.__accessCheckDom!.scrollToDocY(docY),
         planned.docY,
       );
       await page.waitForTimeout(REGION_SETTLE_MS);
 
       const [freshTargets, freshStops] = await Promise.all([
-        page.evaluate(
+        world.evaluate(
           (selectors) => window.__accessCheckDom!.collectRects(selectors),
           input.targets.map((t) => t.selector),
         ),
-        page.evaluate(
+        world.evaluate(
           (selectors) => window.__accessCheckDom!.collectRects(selectors),
           stopSelectors,
         ),
@@ -305,7 +307,7 @@ async function captureRegions(
       });
     }
   } finally {
-    await page
+    await world
       .evaluate((y) => window.__accessCheckDom!.scrollToDocY(y), page_.scrollY)
       .catch(() => null);
   }
@@ -519,9 +521,13 @@ async function runScanAttempt(
       );
     }
 
-    await track("engine", () => injectDomEngine(page, DOM_ENGINE_PATH, locale));
+    const world = await track("engine", async () => {
+      const opened = await openIsolatedWorld(page);
+      await injectDomEngine(opened, DOM_ENGINE_PATH, locale);
+      return opened;
+    });
 
-    await track("prime", () => policy.run("prime", () => primeLazyContent(page), undefined));
+    await track("prime", () => policy.run("prime", () => primeLazyContent(world), undefined));
 
     const readiness = await track("contentReady", () =>
       policy.run(
@@ -543,8 +549,8 @@ async function runScanAttempt(
     phase("auditing");
 
     const runAxe = async (): Promise<AxeResults> => {
-      await page.addScriptTag({ path: AXE_PATH });
-      return page.evaluate(
+      await world.addScript(AXE_PATH);
+      return world.evaluate(
         ([tags, axeLocale]) => window.__accessCheckDom!.runAxe(tags, { locale: axeLocale }),
         [AXE_TAGS, axeLocaleFor(locale)] as const,
       );
@@ -580,7 +586,7 @@ async function runScanAttempt(
             await policy.run<Record<string, ElementInfo>>(
               "element-info",
               () =>
-                page.evaluate(
+                world.evaluate(
                   (selectors) => window.__accessCheckDom!.collectElementInfo(selectors),
                   elementSelectors,
                 ),
@@ -601,7 +607,7 @@ async function runScanAttempt(
       const outcome = await track("verify", () =>
         policy.run(
           "verify",
-          () => page.evaluate((ops) => window.__accessCheckDom!.verifyFixes(ops), verifyOps),
+          () => world.evaluate((ops) => window.__accessCheckDom!.verifyFixes(ops), verifyOps),
           [] as FixVerification[],
         ),
       );
@@ -625,7 +631,7 @@ async function runScanAttempt(
       await policy.run<(DomRect | null)[]>(
         "markers",
         () =>
-          page.evaluate(
+          world.evaluate(
             (selectors) => window.__accessCheckDom!.collectRects(selectors),
             targets.map((t) => t.selector),
           ),
@@ -654,7 +660,7 @@ async function runScanAttempt(
       const collected = await policy.run<Record<string, ElementIdentity>>(
         "element-info",
         () =>
-          page.evaluate(
+          world.evaluate(
             (list) => window.__accessCheckDom!.collectIdentities(list),
             selectors.filter((selector) => !(selector in identities)),
           ),
@@ -719,9 +725,9 @@ async function runScanAttempt(
             "audits",
             async () => {
               const report: AuditsReport = {};
-              report.targetSize = await collectTargetSize(page, translator(locale));
-              report.reducedMotion = await collectReducedMotion(page, translator(locale));
-              report.liveRegions = await collectLiveRegions(page, translator(locale));
+              report.targetSize = await collectTargetSize(world, translator(locale));
+              report.reducedMotion = await collectReducedMotion(page, world, translator(locale));
+              report.liveRegions = await collectLiveRegions(world, translator(locale));
               return report;
             },
             undefined as AuditsReport | undefined,
@@ -766,7 +772,9 @@ async function runScanAttempt(
           policy.run<KeyboardReport | undefined>(
             "keyboard",
             (allowanceMs) =>
-              collectKeyboard(page, VIEWPORT, translator(locale), { maxMs: allowanceMs * 0.75 }),
+              collectKeyboard(page, world, VIEWPORT, translator(locale), {
+                maxMs: allowanceMs * 0.75,
+              }),
             undefined,
           ),
         );
@@ -781,6 +789,7 @@ async function runScanAttempt(
             (allowanceMs) =>
               collectContexts(
                 page,
+                world,
                 violations.map((v) => v.id),
                 translator(locale),
                 { maxMs: allowanceMs * 0.8 },
@@ -797,7 +806,7 @@ async function runScanAttempt(
           policy.run<{ regions: ScanRegion[]; coverage: Coverage } | undefined>(
             "regions",
             (allowanceMs) =>
-              captureRegions(page, {
+              captureRegions(page, world, {
                 targets,
                 rects,
                 stops: keyboard?.focusPath ?? [],

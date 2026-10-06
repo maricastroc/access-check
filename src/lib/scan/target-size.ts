@@ -1,4 +1,4 @@
-import type { Page } from "playwright-core";
+import type { DomWorld } from "./world";
 import type { AuditFinding } from "./audits";
 import { MAX_AUDIT_SELECTORS } from "./audits";
 import type { Translate } from "../i18n/t";
@@ -81,8 +81,8 @@ export const INTERACTIVE =
   '[role="button"], [role="link"], [role="checkbox"], [role="radio"], ' +
   '[role="tab"], [role="menuitem"], [role="switch"], [contenteditable="true"], [onclick]';
 
-export async function collectTargetSize(page: Page, t: Translate): Promise<TargetSizeReport> {
-  const raw = (await page.evaluate(
+export async function collectTargetSize(world: DomWorld, t: Translate): Promise<TargetSizeReport> {
+  const raw = (await world.evaluate(
     (interactive) => window.__accessCheckDom!.collectTargetSizeRaw(interactive),
     INTERACTIVE,
   )) as RawTargetSize;

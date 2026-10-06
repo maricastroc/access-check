@@ -85,6 +85,36 @@ const PAGES: Record<string, { status?: number; html: string }> = {
   </body>
 </html>`,
   },
+  "/patched-builtins": {
+    html: `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Patched built-ins fixture</title>
+    <script>
+      Array.prototype.map = function (iterator, context) {
+        var out = [];
+        for (var i = 0; i < this.length; i++) out.push(iterator.call(context, this[i], i));
+        return out;
+      };
+      Array.prototype.filter = function (iterator, context) {
+        var out = [];
+        for (var i = 0; i < this.length; i++)
+          if (iterator.call(context, this[i], i)) out.push(this[i]);
+        return out;
+      };
+    </script>
+  </head>
+  <body>
+    <main>
+      <h1>Patched built-ins</h1>
+      <p style="color:#bbbbbb;background:#ffffff;margin:0;font-size:16px">
+        texto de baixo contraste
+      </p>
+    </main>
+  </body>
+</html>`,
+  },
   "/clean": {
     html: `<!doctype html>
 <html lang="en">
@@ -348,6 +378,19 @@ describe("runScan (integration — real browser)", () => {
     expect(core?.audits).toBeUndefined();
     expect(full.keyboard).toBeDefined();
     expect(full.audits).toBeDefined();
+  }, 60_000);
+
+  it("reads contrast on a page that rewrites Array methods, as Prototype.js does", async () => {
+    const result = await runScan(`${base}/patched-builtins`, {
+      screenshot: false,
+      keyboard: false,
+      contexts: false,
+      audits: false,
+      verifyFixes: false,
+    });
+
+    expect(result.violations.map((v) => v.id)).toContain("color-contrast");
+    expect(result.incomplete.map((i) => i.id)).not.toContain("color-contrast");
   }, 60_000);
 
   it("aborts with an HTTP message when the page responds 4xx", async () => {

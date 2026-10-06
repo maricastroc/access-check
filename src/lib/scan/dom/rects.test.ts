@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { BrowserContext, Page } from "playwright-core";
 import { acquireBrowser, closeSharedBrowser } from "../browser";
 import { injectDomEngine } from "../scan";
+import { openIsolatedWorld, type IsolatedWorld } from "../world";
 import { buildMarkers, type MarkerTarget } from "../markers";
 
 const VIEWPORT = { width: 1200, height: 800 };
@@ -54,13 +55,15 @@ const PAGE = `<!doctype html>
 
 let context: BrowserContext;
 let page: Page;
+let world: IsolatedWorld;
 
 beforeAll(async () => {
   const browser = await acquireBrowser();
   context = await browser.newContext({ viewport: VIEWPORT });
   page = await context.newPage();
   await page.setContent(PAGE, { waitUntil: "domcontentloaded" });
-  await injectDomEngine(page);
+  world = await openIsolatedWorld(page);
+  await injectDomEngine(world);
 }, 90_000);
 
 afterAll(async () => {
@@ -69,7 +72,7 @@ afterAll(async () => {
 });
 
 const seen = async (ids: string[]) => {
-  const rects = await page.evaluate(
+  const rects = await world.evaluate(
     (selectors) => window.__accessCheckDom!.collectRects(selectors),
     ids.map((id) => `#${id}`),
   );
@@ -103,7 +106,7 @@ describe("whether an element shows in the screenshot being taken", () => {
       label: id,
     });
     const targets = [target("faded"), target("front")];
-    const rects = await page.evaluate(
+    const rects = await world.evaluate(
       (selectors) => window.__accessCheckDom!.collectRects(selectors),
       targets.map((t) => t.selector),
     );
