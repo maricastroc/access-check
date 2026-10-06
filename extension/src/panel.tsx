@@ -498,7 +498,7 @@ function OnPage({
       <button type="button" className={PRIMARY_BUTTON} disabled={busy} onClick={onLocate}>
         {busy ? t("panel.locating") : t("panel.locate")}
       </button>
-      <p role="status" className="mt-2 text-[13px] leading-normal text-moderate-text empty:hidden">
+      <p role="status" className="mt-2 text-[13px] leading-normal text-moderate-text empty:mt-0">
         {notice}
       </p>
     </div>
@@ -684,7 +684,7 @@ function FocusPath({
           </div>
         ))}
 
-      <p role="status" className="mt-2 text-[13px] leading-normal text-moderate-text empty:hidden">
+      <p role="status" className="mt-2 text-[13px] leading-normal text-moderate-text empty:mt-0">
         {notice}
       </p>
     </section>

@@ -956,6 +956,22 @@ try {
     window.scrollTo(0, 0);
     return window.scrollY;
   });
+  const pathRegion = await panel.evaluate(() => {
+    const region = document.querySelector(
+      'section[aria-labelledby="focus-heading"] > p[role="status"]',
+    );
+    return (
+      region && {
+        rendered: getComputedStyle(region).display !== "none",
+        empty: region.textContent === "",
+      }
+    );
+  });
+  console.log("the focus path's live region before any notice:", JSON.stringify(pathRegion));
+  check(
+    pathRegion?.rendered && pathRegion?.empty,
+    "the focus path's live region was not waiting, empty, before the notice",
+  );
   await clickByText("Inspect tab order");
   const nearby = await readOverlay();
   const nav = await panel.evaluate(() => ({

@@ -373,7 +373,11 @@ try {
     );
     locate.click();
     await new Promise((r) => setTimeout(r, 900));
-    return { notice: section.querySelector('[role="status"]')?.textContent || null };
+    const region = section.querySelector('[role="status"]');
+    return {
+      notice: region?.textContent || null,
+      waiting: region && getComputedStyle(region).display !== "none",
+    };
   });
   const drawn = await page.evaluate(() => {
     const root = document.getElementById("accesscheck-overlay")?.shadowRoot;
@@ -405,6 +409,10 @@ try {
   check(drawn.boxes === 1, `Locate on page drew ${drawn.boxes} boxes for one contrast element`);
   check(drawn.onTarget, "Locate on page drew away from the low-contrast paragraph");
   check(locating.notice === null, `Locate on page answered: ${locating.notice}`);
+  check(
+    locating.waiting,
+    "the Locate notice's live region is not rendered while empty, so a notice may go unannounced",
+  );
 
   const tucked = await report.evaluate(async () => {
     const row = document.querySelector('li[id$=":link-name"] h3 > button');
