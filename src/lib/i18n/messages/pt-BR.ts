@@ -259,6 +259,8 @@ export const ptBR: Catalog = {
   "background.nothingAudited": "Nada foi auditado nesta aba ainda.",
   "background.tabUnreachable": "Esta aba mudou de página, então não dá mais para alcançá-la daqui.",
   "background.markupFailed": "Não foi possível marcar a página.",
+  "background.tabBehind":
+    "Este relatório é de outra aba. Volte para ela para localizar os problemas na página ou verificar o teclado.",
 
   "deep.cancelled":
     "Você interrompeu, então o caminho do foco não foi percorrido. O resto deste relatório continua valendo.",

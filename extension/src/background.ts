@@ -234,6 +234,10 @@ async function addFocusPath(opts: { resume?: boolean } = {}): Promise<void> {
   running = true;
 
   try {
+    if (!(await inFront(tabId))) {
+      publish({ kind: "done", result: previous, deepError: t("background.tabBehind") });
+      return;
+    }
     if (!(await showsPage(tabId, url))) {
       await clearOverlay();
       publish({ kind: "done", result: previous, deepError: t("background.tabUnreachable") });
@@ -267,6 +271,22 @@ async function inAuditedTab<T>(run: (tabId: number) => Promise<T>): Promise<T> {
 
 class MovedOn extends Error {}
 
+class Behind extends Error {}
+
+async function inFront(tabId: number): Promise<boolean> {
+  const tab = await chrome.tabs.get(tabId).catch(() => null);
+  return tab?.active !== false;
+}
+
+function drawFailure(e: unknown): string {
+  if (e instanceof Behind) return t("background.tabBehind");
+  if (e instanceof MovedOn) return t("background.tabUnreachable");
+  if (e instanceof Error && /Cannot access|No tab with id|Frame with ID/i.test(e.message)) {
+    return t("background.tabUnreachable");
+  }
+  return t("background.markupFailed");
+}
+
 async function showsPage(tabId: number, audited: string): Promise<boolean> {
   const tab = await chrome.tabs.get(tabId).catch(() => null);
   return Boolean(tab?.url) && sameDocument(tab!.url!, audited);
@@ -287,6 +307,7 @@ async function showOverlay(
     await clearOverlay();
     throw new MovedOn();
   }
+  if (auditedTabId !== null && !(await inFront(auditedTabId))) throw new Behind();
   return inAuditedTab(async (tabId) => {
     const [{ result }] = await chrome.scripting.executeScript({
       target: { tabId },
@@ -362,11 +383,7 @@ chrome.runtime.onMessage.addListener((message: PanelMessage, _sender, sendRespon
         (e: unknown) =>
           sendResponse({
             ok: false,
-            message:
-              e instanceof MovedOn ||
-              (e instanceof Error && /Cannot access|No tab with id|Frame with ID/i.test(e.message))
-                ? t("background.tabUnreachable")
-                : t("background.markupFailed"),
+            message: drawFailure(e),
           } satisfies HighlightReply),
       );
     return true;
@@ -411,6 +428,17 @@ chrome.tabs.onUpdated.addListener((tabId, change) => {
   void restore().then(async () => {
     if (tabId !== auditedTabId || state.kind !== "done") return;
     if (url && !sameDocument(url, state.result.finalUrl)) await clearOverlay();
+    const message: PanelMessage = { type: "panel:page-changed" };
+    chrome.runtime.sendMessage(message).catch(() => {});
+  });
+});
+
+chrome.tabs.onActivated.addListener(() => {
+  void restore().then(async () => {
+    if (auditedTabId === null || state.kind !== "done") return;
+    if (state.deepError === t("background.tabBehind") && (await inFront(auditedTabId))) {
+      publish({ kind: "done", result: state.result });
+    }
     const message: PanelMessage = { type: "panel:page-changed" };
     chrome.runtime.sendMessage(message).catch(() => {});
   });
