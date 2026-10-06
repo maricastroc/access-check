@@ -3,6 +3,7 @@ import { cpSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { chromium } from "playwright";
+import { decode } from "./png-compose.mjs";
 
 const EXT = mkdtempSync(join(tmpdir(), "ac-deep-"));
 cpSync(join(process.cwd(), "extension/dist"), EXT, { recursive: true });
@@ -1023,6 +1024,31 @@ try {
   check(
     strip.every((s) => s.hatched === (s.sev !== null)),
     "the strip hatches a stop without a finding, or misses one with a finding",
+  );
+  const hatchSeen = async (selector) => {
+    const hatch = panel.locator(selector).first();
+    const sev = await hatch.evaluate((el) => {
+      const probe = document.createElement("canvas").getContext("2d");
+      probe.fillStyle = getComputedStyle(el).getPropertyValue("--sev").trim();
+      return probe.fillStyle;
+    });
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt(sev.slice(i, i + 2), 16));
+    const { rows } = decode(await hatch.screenshot());
+    let seen = 0;
+    for (let i = 0; i < rows.length; i += 3) {
+      const d = Math.abs(rows[i] - r) + Math.abs(rows[i + 1] - g) + Math.abs(rows[i + 2] - b);
+      if (d < 90) seen += 1;
+    }
+    return seen;
+  };
+  const hatchPixels = {
+    current: await hatchSeen('button[data-stop][aria-current="step"] [data-alert]'),
+    other: await hatchSeen("button[data-stop]:not([aria-current]) [data-alert]"),
+  };
+  console.log("hatch pixels in the strip:", JSON.stringify(hatchPixels));
+  check(
+    hatchPixels.current >= hatchPixels.other / 2,
+    `the current stop in the strip hides its hatch: ${JSON.stringify(hatchPixels)}`,
   );
   check(
     strip.filter((s) => s.sev).every((s) => /, finding \d+(·\d+)?$/.test(s.label ?? "")),
