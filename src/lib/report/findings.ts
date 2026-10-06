@@ -19,13 +19,8 @@ import { buildVerdict, type Verdict } from "./verdict";
 import { buildContrastPreview, type ContrastPreview } from "./preview";
 import { certifiedVerification, fixConfidenceOf, groupConfidenceOf } from "@/lib/scan/confidence";
 import { translator, type MessageKey, type Translate } from "../i18n/t";
-import {
-  fixGuidance,
-  humanImpact,
-  isDocLevelCategory,
-  markerReason,
-  type Guidance,
-} from "./guidance";
+import { fixGuidance, humanImpact, markerReason, type Guidance } from "./guidance";
+import { unplacedAs } from "./occurrences";
 
 export type FindingKind =
   | "wcag"
@@ -150,7 +145,9 @@ function wcagFinding(
     contexts: v.contexts ?? [],
     occurrences: [],
     noMarkerReason:
-      linked.length > 0 ? "" : markerReason(v.id, "wcag", isDocLevelCategory(v.id), t),
+      linked.length > 0
+        ? ""
+        : markerReason(v.id, "wcag", unplacedAs(v.id, "wcag", affected, v.nodes), t),
   };
 }
 
@@ -217,7 +214,7 @@ function complementaryFinding(
     located: false,
     contexts: [],
     occurrences: f.occurrences ?? [],
-    noMarkerReason: markerReason(f.id, kind, false, t),
+    noMarkerReason: markerReason(f.id, kind, null, t),
   };
 }
 
@@ -259,7 +256,7 @@ function contextFinding(issue: ContextIssue, where: string, t: Translate): Omit<
     located: false,
     contexts: [where],
     occurrences: [],
-    noMarkerReason: markerReason(issue.id, "context", false, t),
+    noMarkerReason: markerReason(issue.id, "context", null, t),
   };
 }
 
@@ -301,7 +298,7 @@ function bestPracticeFindings(result: ScanResult, t: Translate): Omit<FindingVie
       located: false,
       contexts: [],
       occurrences: [],
-      noMarkerReason: markerReason(bp.id, "best-practice", false, t),
+      noMarkerReason: markerReason(bp.id, "best-practice", null, t),
     };
   });
 }
@@ -418,7 +415,7 @@ export function reviewFindings(result: ScanResult): FindingView[] {
       located: false,
       contexts: [],
       occurrences: [],
-      noMarkerReason: markerReason(inc.id, "manual-review", false, t),
+      noMarkerReason: markerReason(inc.id, "manual-review", null, t),
     };
   });
 }
