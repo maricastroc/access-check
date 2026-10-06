@@ -3,6 +3,7 @@ import { cpSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { chromium } from "playwright";
+import { openPanelWindow } from "./panel-window.mjs";
 
 const LONG = "x".repeat(400);
 const PAGES = {
@@ -71,13 +72,11 @@ try {
   };
 
   const openPanel = async (width) => {
-    const panel = await ctx.newPage();
+    const panel = await openPanelWindow(ctx, sw);
     await panel.setViewportSize({ width, height: 800 });
-    await panel.goto(`chrome-extension://${extId}/panel.html`);
     await panel.waitForFunction(() => document.querySelector("main") !== null, null, {
       timeout: 20000,
     });
-    await panel.bringToFront();
     return panel;
   };
 

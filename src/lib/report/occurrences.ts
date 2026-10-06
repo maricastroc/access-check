@@ -3,7 +3,7 @@ import type { ElementIdentity } from "@/lib/scan/dom/identity";
 import type { FocusRect, KeyboardCertainty } from "@/lib/scan/keyboard";
 import { captureOf } from "@/lib/scan/placement";
 import type { FindingView } from "./findings";
-import { isDocLevelCategory } from "./guidance";
+import { isDocLevelCategory, type Unplaced } from "./guidance";
 
 export type Occurrence = {
   index: number;
@@ -90,8 +90,29 @@ export function occurrencesOf(finding: FindingView): Occurrence[] {
   }));
 }
 
+export function unplacedAs(
+  ruleId: string,
+  kind: string,
+  selectors: string[],
+  elements: number,
+): Unplaced | null {
+  if (selectors.some(locatable)) return null;
+  if (selectors.length === 0 && elements > 0) return "shadow-root";
+  if (selectors.length > 0 || isDocLevelCategory(ruleId, kind)) return "whole-page";
+  return null;
+}
+
+export function unplaced(finding: FindingView): Unplaced | null {
+  if (occurrencesOf(finding).length > 0) return null;
+  return unplacedAs(finding.ruleId, finding.kind, finding.affectedSelectors, finding.elements);
+}
+
 export function appliesToWholePage(finding: FindingView): boolean {
-  return occurrencesOf(finding).length === 0 && isDocLevelCategory(finding.ruleId, finding.kind);
+  return unplaced(finding) === "whole-page";
+}
+
+export function insideShadowRoot(finding: FindingView): boolean {
+  return unplaced(finding) === "shadow-root";
 }
 
 export function occurrenceTag(n: number, index: number, total: number): string {

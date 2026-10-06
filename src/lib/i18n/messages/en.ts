@@ -248,6 +248,8 @@ export const en = {
   "background.nothingAudited": "Nothing has been audited in this tab yet.",
   "background.tabUnreachable": "This tab moved on, so the page can no longer be reached from here.",
   "background.markupFailed": "The page could not be marked up.",
+  "background.tabBehind":
+    "This report is for another tab. Go back to it to locate findings on the page or check the keyboard.",
 
   "deep.cancelled":
     "You stopped it, so the focus path was not walked. The rest of this report is unchanged.",
@@ -915,6 +917,8 @@ export const en = {
     "From the keyboard pass, so it appears on the focus path rather than as an issue marker.",
   "marker.docLevel":
     "Applies to the whole document or page structure, not a single positioned element.",
+  "marker.shadowRoot":
+    "The affected element sits inside a shadow root, which the marks on the page do not reach.",
   "marker.offCapture":
     "The affected element sits in a part of the page no screenshot in this report covers, is hidden, or has no visible box.",
 
@@ -1159,6 +1163,10 @@ export const en = {
   "panel.wholePage": {
     one: "1 problem to fix applies to the whole page, so it has no mark.",
     other: "{count} problems to fix apply to the whole page, so they have no mark.",
+  },
+  "panel.inShadowRoot": {
+    one: "1 problem to fix sits inside a shadow root, which the marks do not reach.",
+    other: "{count} problems to fix sit inside a shadow root, which the marks do not reach.",
   },
 
   "panel.screenshot": "Screenshot of the visible page",

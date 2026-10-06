@@ -3,6 +3,7 @@ import { cpSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { chromium } from "playwright";
+import { openPanelWindow } from "./panel-window.mjs";
 import { decode } from "./png-compose.mjs";
 
 const EXT = mkdtempSync(join(tmpdir(), "ac-deep-"));
@@ -733,9 +734,8 @@ try {
       origin: `chrome-extension://${extId}`,
     })
     .catch(() => {});
-  const panel = await ctx.newPage();
+  const panel = await openPanelWindow(ctx, sw);
   await panel.setViewportSize({ width: 400, height: 800 });
-  await panel.goto(`chrome-extension://${extId}/panel.html`);
   await panel.waitForFunction(() => document.getElementById("group-fix") !== null, null, {
     timeout: 20000,
   });
@@ -1225,7 +1225,6 @@ try {
   );
   await panel.evaluate(() => chrome.runtime.sendMessage({ type: "panel:clear-highlight" }));
 
-  await panel.bringToFront();
   await panel.keyboard.press("Tab");
   const byKeyboard = await panel.evaluate(async () => {
     const focusable = [...document.querySelectorAll("button, summary, [tabindex]")].filter(
@@ -1396,9 +1395,8 @@ try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     await globalThis.__accessCheckAuditTab(tab);
   });
-  const overviewPanel = await ctx.newPage();
+  const overviewPanel = await openPanelWindow(ctx, sw);
   await overviewPanel.setViewportSize({ width: 400, height: 800 });
-  await overviewPanel.goto(`chrome-extension://${extId}/panel.html`);
   await overviewPanel.waitForFunction(() => document.getElementById("group-fix") !== null, null, {
     timeout: 20000,
   });
@@ -1442,9 +1440,8 @@ try {
     await new Promise((r) => setTimeout(r, 800));
   });
 
-  const mixedPanel = await ctx.newPage();
+  const mixedPanel = await openPanelWindow(ctx, sw);
   await mixedPanel.setViewportSize({ width: 400, height: 800 });
-  await mixedPanel.goto(`chrome-extension://${extId}/panel.html`);
   await mixedPanel.waitForFunction(() => document.body.textContent.includes("Focus path"), null, {
     timeout: 20000,
   });
@@ -1641,9 +1638,8 @@ try {
     `two audits of the same page scored ${firstPass?.result?.score} and ${secondPass?.result?.score}`,
   );
 
-  const manyPanel = await ctx.newPage();
+  const manyPanel = await openPanelWindow(ctx, sw);
   await manyPanel.setViewportSize({ width: 400, height: 800 });
-  await manyPanel.goto(`chrome-extension://${extId}/panel.html`);
   await manyPanel.waitForFunction(() => document.body.textContent.includes("Focus path"), null, {
     timeout: 20000,
   });
@@ -1911,9 +1907,8 @@ try {
     }));
   });
 
-  const asleep = await ctx.newPage();
+  const asleep = await openPanelWindow(ctx, sw);
   await asleep.setViewportSize({ width: 400, height: 800 });
-  await asleep.goto(`chrome-extension://${extId}/panel.html`);
   await asleep.waitForFunction(() => document.getElementById("group-fix") !== null, null, {
     timeout: 20000,
   });

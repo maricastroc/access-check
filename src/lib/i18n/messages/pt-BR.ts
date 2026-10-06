@@ -259,6 +259,8 @@ export const ptBR: Catalog = {
   "background.nothingAudited": "Nada foi auditado nesta aba ainda.",
   "background.tabUnreachable": "Esta aba mudou de página, então não dá mais para alcançá-la daqui.",
   "background.markupFailed": "Não foi possível marcar a página.",
+  "background.tabBehind":
+    "Este relatório é de outra aba. Volte para ela para localizar os problemas na página ou verificar o teclado.",
 
   "deep.cancelled":
     "Você interrompeu, então o caminho do foco não foi percorrido. O resto deste relatório continua valendo.",
@@ -939,6 +941,8 @@ export const ptBR: Catalog = {
     "Veio da análise de teclado, então aparece no caminho do foco em vez de como marcador de problema.",
   "marker.docLevel":
     "Aplica-se ao documento inteiro ou à estrutura da página, não a um único elemento posicionado.",
+  "marker.shadowRoot":
+    "O elemento afetado está dentro de um shadow root, que as marcas na página não alcançam.",
   "marker.offCapture":
     "O elemento afetado está numa parte da página que nenhuma captura deste relatório cobre, está oculto, ou não tem caixa visível.",
 
@@ -1187,6 +1191,11 @@ export const ptBR: Catalog = {
   "panel.wholePage": {
     one: "1 problema a corrigir se aplica à página inteira, por isso não tem marca.",
     other: "{count} problemas a corrigir se aplicam à página inteira, por isso não têm marca.",
+  },
+  "panel.inShadowRoot": {
+    one: "1 problema a corrigir está dentro de um shadow root, que as marcas não alcançam.",
+    other:
+      "{count} problemas a corrigir estão dentro de um shadow root, que as marcas não alcançam.",
   },
 
   "panel.screenshot": "Captura da parte visível da página",

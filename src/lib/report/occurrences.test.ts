@@ -3,12 +3,14 @@ import {
   appliesToWholePage,
   findingsAtStops,
   firstAtEachStop,
+  insideShadowRoot,
   locatable,
   occurrencesOf,
   occurrenceTag,
   stepOccurrence,
   stopCandidates,
   unlistedOccurrences,
+  unplaced,
 } from "./occurrences";
 import type { FindingView } from "./findings";
 import type { KeyboardOccurrence } from "@/lib/scan/keyboard";
@@ -115,9 +117,23 @@ describe("every finding that names an element can be found on the page", () => {
     expect(appliesToWholePage(wcag("html-has-lang", ["html"]))).toBe(true);
     expect(appliesToWholePage(wcag("document-title", ["html"]))).toBe(true);
     expect(appliesToWholePage(wcag("meta-viewport", ['meta[name="viewport"]']))).toBe(true);
+    expect(appliesToWholePage(wcag("bypass", ["html"]))).toBe(true);
+    expect(appliesToWholePage(wcag("meta-refresh", ['meta[http-equiv="refresh"]']))).toBe(true);
     expect(appliesToWholePage(wcag("region", ["body > p"]))).toBe(false);
     expect(appliesToWholePage(wcag("image-alt", ["img.logo"]))).toBe(false);
     expect(appliesToWholePage(wcag("image-alt", []))).toBe(false);
+  });
+
+  it("tells a finding inside a shadow root from one about the whole page", () => {
+    const wcag = (ruleId: string, affectedSelectors: string[], elements: number) =>
+      finding({ kind: "wcag", ruleId, affectedSelectors, elements });
+    expect(unplaced(wcag("button-name", [], 1))).toBe("shadow-root");
+    expect(unplaced(wcag("region", [], 3))).toBe("shadow-root");
+    expect(unplaced(wcag("bypass", ["html"], 1))).toBe("whole-page");
+    expect(unplaced(wcag("button-name", ["#buy"], 1))).toBe(null);
+    expect(appliesToWholePage(wcag("button-name", [], 1))).toBe(false);
+    expect(insideShadowRoot(wcag("button-name", [], 1))).toBe(true);
+    expect(insideShadowRoot(wcag("bypass", ["html"], 1))).toBe(false);
   });
 });
 
