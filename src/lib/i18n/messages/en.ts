@@ -248,6 +248,8 @@ export const en = {
   "background.nothingAudited": "Nothing has been audited in this tab yet.",
   "background.tabUnreachable": "This tab moved on, so the page can no longer be reached from here.",
   "background.markupFailed": "The page could not be marked up.",
+  "background.tabBehind":
+    "This report is for another tab. Go back to it to locate findings on the page or check the keyboard.",
 
   "deep.cancelled":
     "You stopped it, so the focus path was not walked. The rest of this report is unchanged.",

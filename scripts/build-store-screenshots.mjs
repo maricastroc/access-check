@@ -10,6 +10,7 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { chromium } from "playwright";
+import { openPanelWindow } from "./panel-window.mjs";
 import { sideBySide } from "./png-compose.mjs";
 
 const WIDTH = 1280;
@@ -206,9 +207,8 @@ try {
     await new Promise((r) => setTimeout(r, 700));
   });
 
-  const panel = await ctx.newPage();
+  const panel = await openPanelWindow(ctx, sw);
   await panel.setViewportSize(PANEL_CSS);
-  await panel.goto(`chrome-extension://${extId}/panel.html`);
   const ready = async () => {
     await panel.waitForFunction(() => document.getElementById("group-fix") !== null, null, {
       timeout: 20000,
@@ -223,7 +223,6 @@ try {
     await page.setViewportSize(PAGE_CSS);
     await wait(400);
     const left = await page.screenshot({ type: "png" });
-    await panel.bringToFront();
     const right = await panel.screenshot({ type: "png" });
 
     const shown = await panel.evaluate(() => document.body.textContent ?? "");
