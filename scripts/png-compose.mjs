@@ -28,7 +28,7 @@ function chunks(png) {
   return out;
 }
 
-function decode(png) {
+export function decode(png) {
   const parts = chunks(png);
   const ihdr = parts.find((c) => c.type === "IHDR").data;
   const width = ihdr.readUInt32BE(0);

@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import type { FocusStop } from "@/lib/scan/keyboard";
 import type { Translate } from "@/lib/i18n/t";
 import { cn } from "@/lib/cn";
-import { Tag, type Sev } from "./notation";
+import { RING, Tag, type Sev } from "./notation";
 
 export type RelatedFinding = { stop: number; tag: string; sev: Sev; onOpen: () => void };
 
@@ -76,6 +76,7 @@ export function FocusSequence({
                   data-sev={alert?.sev}
                   data-alert={alert ? "true" : undefined}
                   className={cn("flex rounded-full p-[3px]", alert && "ac-hatch")}
+                  style={now && alert ? { boxShadow: RING } : undefined}
                 >
                   <Tag
                     n={s.n}
@@ -83,7 +84,7 @@ export function FocusSequence({
                     shape="circle"
                     size={now ? 26 : 20}
                     quiet={!now}
-                    selected={now}
+                    selected={now && !alert}
                   />
                 </span>
               </button>
