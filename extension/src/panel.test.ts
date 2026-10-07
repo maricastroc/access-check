@@ -694,6 +694,15 @@ describe("the panel is an inspector, not a squeezed report", () => {
     expect(pt("panel.toCheck", { count: 1 })).toBe("1 para conferir à mão");
   });
 
+  it("says the work line leaves the keyboard out until the walk runs", () => {
+    const header = between(panel, "function Header(", "function KeyboardCheck(");
+    expect(header).toContain(
+      'checkNote={scope.focusPath === "skipped" ? t("panel.keyboardNotCounted") : undefined}',
+    );
+    expect(summary.indexOf("{checkNote")).toBeGreaterThan(summary.indexOf('t("panel.toCheck"'));
+    expect(pt("panel.keyboardNotCounted")).toBe("Teclado ainda não incluído");
+  });
+
   it("offers the keyboard check where the reading says it is missing", () => {
     const keyboard = between(panel, "function KeyboardCheck(", "function Collapsed(");
     expect(keyboard).toContain("{pending ? scope.lead : scope.badge}");

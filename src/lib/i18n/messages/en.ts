@@ -1144,6 +1144,7 @@ export const en = {
   "panel.count.manualReview": "manual review",
   "panel.toFix": { one: "{count} to fix", other: "{count} to fix" },
   "panel.toCheck": { one: "{count} to check by hand", other: "{count} to check by hand" },
+  "panel.keyboardNotCounted": "Keyboard not included yet",
   "panel.notOnScreen": {
     one: "1 finding to fix has no mark on screen right now. Open it from the list to find it.",
     other:

@@ -1175,6 +1175,7 @@ export const ptBR: Catalog = {
   "panel.count.manualReview": "revisão manual",
   "panel.toFix": { one: "{count} para corrigir", other: "{count} para corrigir" },
   "panel.toCheck": { one: "{count} para conferir à mão", other: "{count} para conferir à mão" },
+  "panel.keyboardNotCounted": "Teclado ainda não incluído",
   "panel.notOnScreen": {
     one: "1 problema a corrigir não tem marca na tela agora. Abra pela lista para encontrá-lo.",
     other:
