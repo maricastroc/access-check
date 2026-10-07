@@ -751,8 +751,7 @@ export const en = {
   "home.cta.located": "Located",
   "home.cta.verified": "Tested",
   "home.cta.title": "Audit a page now and see where each barrier is",
-  "home.cta.body":
-    "The report is ready in under half a minute and exports as PDF or Markdown.",
+  "home.cta.body": "The report is ready in under half a minute and exports as PDF or Markdown.",
   "home.form.useExtension": "Audit the tab you are on with the Chrome extension",
   "home.cta.publicOnly":
     "We can only audit public pages. Private or internal addresses will be refused.",

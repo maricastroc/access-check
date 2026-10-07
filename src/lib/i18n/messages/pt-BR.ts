@@ -777,8 +777,7 @@ export const ptBR: Catalog = {
   "home.cta.located": "Localizado",
   "home.cta.verified": "Testado",
   "home.cta.title": "Audite uma página agora e veja onde está cada barreira",
-  "home.cta.body":
-    "O relatório fica pronto em menos de meio minuto e sai em PDF ou Markdown.",
+  "home.cta.body": "O relatório fica pronto em menos de meio minuto e sai em PDF ou Markdown.",
   "home.form.useExtension": "Audite a aba em que você está com a extensão do Chrome",
   "home.cta.publicOnly":
     "Só conseguimos auditar páginas públicas. Endereços privados ou internos serão recusados.",
