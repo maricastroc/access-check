@@ -141,8 +141,6 @@ export function UrlForm({ accent = false, examples }: { accent?: boolean; exampl
         </button>
       </div>
       <p className={cn("mt-3 text-[13.5px]", accent ? "text-disabled" : "text-muted")}>
-        {t("home.form.noAccount")}
-        <span aria-hidden className="mx-2 inline-block h-3 w-px translate-y-0.5 bg-border" />
         {t("home.form.exportNote")}
         <span aria-hidden className="mx-2 inline-block h-3 w-px translate-y-0.5 bg-border" />
         {t("home.timing")}
@@ -175,7 +173,6 @@ export function UrlForm({ accent = false, examples }: { accent?: boolean; exampl
         </p>
       )}
       <p className={cn("mt-2 text-[13px]", accent ? "text-band" : "text-muted")}>
-        {t("home.form.behindLogin")}{" "}
         <a
           href={CHROME_WEB_STORE_URL}
           className={cn("underline underline-offset-2", accent ? "text-surface" : "text-ink")}
