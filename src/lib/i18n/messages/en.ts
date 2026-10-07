@@ -1101,18 +1101,6 @@ export const en = {
   "keyboard.trap.occurrence":
     "Tab was pressed here and focus didn't move, so the check couldn't go any further.",
 
-  "keyboard.notReached.title": {
-    one: "{count} control the keyboard check hasn't reached yet",
-    other: "{count} controls the keyboard check hasn't reached yet",
-  },
-  "keyboard.notReached.desc": {
-    one: "The keyboard check stopped before getting to this control, so it hasn't been tested. That doesn't mean it can't be reached.",
-    other:
-      "The keyboard check stopped before getting to these controls, so they haven't been tested. That doesn't mean they can't be reached.",
-  },
-  "keyboard.notReached.fix":
-    "Let the keyboard check finish before treating any of these as unreachable.",
-  "keyboard.notReached.occurrence": "The keyboard check ended before focus got here.",
   "keyboard.unreachable.title": {
     one: "{count} interactive control can't be reached by keyboard",
     other: "{count} interactive controls can't be reached by keyboard",
