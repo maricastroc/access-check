@@ -41,11 +41,15 @@ function parse(markdown: string): Block[] {
 function Rich({ text }: { text: string }) {
   return (
     <>
-      {text.split(/(\*\*[^*]+\*\*)/).map((part, i) =>
+      {text.split(/(\*\*[^*]+\*\*|`[^`]+`)/).map((part, i) =>
         part.startsWith("**") && part.endsWith("**") ? (
           <strong key={i} className="font-semibold text-ink">
             {part.slice(2, -2)}
           </strong>
+        ) : part.startsWith("`") && part.endsWith("`") ? (
+          <code key={i} className="font-mono text-steel">
+            {part.slice(1, -1)}
+          </code>
         ) : (
           <span key={i}>{part.replace(/\\/g, "")}</span>
         ),
