@@ -180,10 +180,12 @@ describe("the capture stays readable when the page is crowded", () => {
 });
 
 describe("the focus path is a sequence, drawn near the current stop", () => {
-  it("draws only the neighbourhood unless the whole path is asked for", () => {
+  it("draws every stop quietly until one is picked, then only its neighbourhood", () => {
     expect(marks).toContain("const NEIGHBOURS = 2;");
     expect(marks).toContain("wholePath &&");
-    expect(marks).toContain(".filter((s) => wholePath || near(s.n) || s.n === currentStop)");
+    expect(marks).toContain(
+      ".filter((s) => wholePath || currentStop === null || near(s.n) || s.n === currentStop)",
+    );
     expect(sequence).toContain('t("panel.showComplete")');
   });
 
