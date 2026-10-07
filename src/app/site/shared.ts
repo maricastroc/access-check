@@ -1,4 +1,5 @@
 import type { PageStatus, SiteStatus } from "@/lib/scan/site-aggregate";
+import type { ReportLocale } from "@/lib/i18n/locale";
 
 export type { PageStatus, SiteStatus };
 
@@ -16,6 +17,7 @@ export type CrawlSnapshot = {
   id: string;
   rootUrl: string;
   status: SiteStatus;
+  locale: ReportLocale;
   totalPages: number;
   scannedPages: number;
   failedPages: number;

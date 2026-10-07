@@ -9,7 +9,8 @@ import { Ruler, SectionKicker, StatusPill } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { crawlHost, pagePath, type CrawlPage, type CrawlSnapshot } from "../shared";
 import type { Translate } from "@/lib/i18n/t";
-import { useT } from "@/lib/i18n/provider";
+import { langAttrs, type ReportLocale } from "@/lib/i18n/locale";
+import { useLocale, useT } from "@/lib/i18n/provider";
 
 function scoreTone(score: number): string {
   if (score >= 90) return "bg-verified";
@@ -19,6 +20,7 @@ function scoreTone(score: number): string {
 
 export function ProgressHeader({ snap }: { snap: CrawlSnapshot }) {
   const t = useT();
+  const ui = useLocale();
   const running = snap.status === "running";
   const settled = snap.scannedPages + snap.failedPages;
 
@@ -58,7 +60,9 @@ export function ProgressHeader({ snap }: { snap: CrawlSnapshot }) {
 
       {snap.status === "failed" && snap.error && (
         <div role="alert" className="mt-4 border border-critical bg-surface p-4">
-          <p className="text-[13.5px] leading-normal text-body">{snap.error}</p>
+          <p {...langAttrs(snap.locale, ui)} className="text-[13.5px] leading-normal text-body">
+            {snap.error}
+          </p>
         </div>
       )}
     </section>
@@ -219,7 +223,18 @@ function SeverityCounts({ counts, t }: { counts: Record<Severity, number>; t: Tr
   );
 }
 
-export function PageRow({ page, siteId, t }: { page: CrawlPage; siteId: string; t: Translate }) {
+export function PageRow({
+  page,
+  siteId,
+  locale,
+  t,
+}: {
+  page: CrawlPage;
+  siteId: string;
+  locale: ReportLocale;
+  t: Translate;
+}) {
+  const ui = useLocale();
   const done = page.status === "done";
 
   const secondary =
@@ -230,6 +245,7 @@ export function PageRow({ page, siteId, t }: { page: CrawlPage; siteId: string; 
         : page.status === "running"
           ? "Auditing…"
           : page.title || page.url;
+  const secondaryLang = page.status === "failed" && page.error ? langAttrs(locale, ui) : {};
 
   const inner = (
     <div
@@ -249,6 +265,7 @@ export function PageRow({ page, siteId, t }: { page: CrawlPage; siteId: string; 
           {pagePath(page.url)}
         </span>
         <span
+          {...secondaryLang}
           className={cn(
             "mt-0.5 block truncate text-[12.5px]",
             page.status === "failed" ? "text-critical" : "text-muted",

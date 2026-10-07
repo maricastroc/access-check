@@ -1,5 +1,6 @@
 import { Client, Receiver } from "@upstash/qstash";
 import { isProd } from "./env";
+import type { ReportLocale } from "./i18n/locale";
 
 const token = process.env.QSTASH_TOKEN;
 const currentSigningKey = process.env.QSTASH_CURRENT_SIGNING_KEY;
@@ -24,7 +25,7 @@ export function canFanOut(): boolean {
   return qstash !== null && appBaseUrl() !== null;
 }
 
-export type PageJob = { siteScanId: string; url: string };
+export type PageJob = { siteScanId: string; url: string; locale: ReportLocale };
 
 export async function enqueuePageScans(jobs: PageJob[]): Promise<void> {
   if (!qstash) throw new Error("QStash is not configured.");

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import type { ScanResult } from "@/lib/scan/types";
 import type { ScanOptions } from "@/lib/scan/scan";
 import type { PageStatus, SiteStatus } from "@/lib/scan/site-aggregate";
+import { DEFAULT_REPORT_LOCALE, isReportLocale, type ReportLocale } from "@/lib/i18n/locale";
 
 export type { PageStatus, SiteStatus } from "@/lib/scan/site-aggregate";
 export { aggregateScore, type PageScore } from "@/lib/scan/site-aggregate";
@@ -14,11 +15,16 @@ export const CRAWL_SCAN_OPTS: ScanOptions = {
   verifyFixes: false,
 };
 
-export async function createSiteScan(rootUrl: string, urls: string[]): Promise<string> {
+export async function createSiteScan(
+  rootUrl: string,
+  urls: string[],
+  locale: ReportLocale,
+): Promise<string> {
   const site = await prisma.siteScan.create({
     data: {
       rootUrl,
       status: "running",
+      locale,
       totalPages: urls.length,
       pages: { create: urls.map((url) => ({ url })) },
     },
@@ -104,6 +110,7 @@ export type SiteScanSnapshot = {
   id: string;
   rootUrl: string;
   status: SiteStatus;
+  locale: ReportLocale;
   totalPages: number;
   scannedPages: number;
   failedPages: number;
@@ -120,6 +127,7 @@ export async function getSiteScan(id: string): Promise<SiteScanSnapshot | null> 
       id: true,
       rootUrl: true,
       status: true,
+      locale: true,
       totalPages: true,
       scannedPages: true,
       failedPages: true,
@@ -149,6 +157,7 @@ export async function getSiteScan(id: string): Promise<SiteScanSnapshot | null> 
     id: s.id,
     rootUrl: s.rootUrl,
     status: s.status as SiteStatus,
+    locale: isReportLocale(s.locale) ? s.locale : DEFAULT_REPORT_LOCALE,
     totalPages: s.totalPages,
     scannedPages: s.scannedPages,
     failedPages: s.failedPages,
