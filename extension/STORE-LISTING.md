@@ -6,7 +6,7 @@ submitted automatically.
 ## Basics
 
 - **Item name:** AccessCheck
-- **Version:** 1.4.0
+- **Version:** 1.5.0
 - **Category:** Developer Tools
 - **Default language:** English (United States)
 - **Visibility:** Public
@@ -149,6 +149,30 @@ Certifications to accept, all of which the code supports:
 > Clicking the toolbar icon runs the whole audit, including the rules, the
 > extension's own checks and the fix verification, without attaching the
 > debugger at all.
+
+## What changed in 1.5.0
+
+- Until the keyboard is checked, the verdict says the keyboard is not included
+  yet, so its counts can be compared with the web report's.
+- A keyboard check that stops early no longer lists the controls it never got
+  to as findings. The coverage line still says how many were left. A control is
+  reported as unreachable only after a full round from the first control.
+- Locate on page and Check keyboard only act on the audited tab while it is in
+  front. With another tab in front, the panel says the report is for another
+  tab instead of drawing or walking on the hidden one.
+- Every finding to fix is accounted for under the verdict: findings about the
+  whole document, such as bypass or meta-refresh, count as applying to the
+  whole page, and findings inside a shadow root get their own line.
+- The current stop in the focus path keeps its hatched ring when it meets a
+  finding.
+- The notices next to Locate on page and under the focus path stay in the page
+  while empty, so screen readers announce them when their text arrives.
+- The language menu's arrow sits clear of the border.
+- Every interface text was reviewed in both languages. English says finding,
+  mark, check and "fix tested" throughout. Portuguese describes what happened
+  instead of how the checks work, calls the tab order's stops "etapas", and no
+  longer shows axe-core messages in English where axe's own Portuguese
+  translation leaves them out.
 
 ## What changed in 1.4.0
 
