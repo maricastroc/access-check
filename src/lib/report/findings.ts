@@ -350,7 +350,7 @@ export function buildFindings(result: ScanResult): FindingView[] {
 
   const ctx = result.contexts;
   if (ctx) {
-    const mobile = `${ctx.mobile.width}px viewport`;
+    const mobile = t("context.mobileViewport", { width: ctx.mobile.width });
     for (const issue of ctx.mobile.onlyOnMobile) add(contextFinding(issue, mobile, t), mobile);
     for (const state of ctx.dynamic.states)
       for (const issue of state.newIssues) add(contextFinding(issue, state.label, t), state.label);

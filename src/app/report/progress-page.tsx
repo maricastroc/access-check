@@ -16,10 +16,20 @@ export function ProgressPage({ result }: { result: ScanResult }) {
   const projected = standingOf({ ...result.counts, critical: 0, serious: 0 });
 
   const deltas = [
-    { label: "Critical", from: result.counts.critical, to: 0, sev: "critical" as Severity },
-    { label: "Serious", from: result.counts.serious, to: 0, sev: "serious" as Severity },
     {
-      label: "Moderate",
+      label: t("severity.critical"),
+      from: result.counts.critical,
+      to: 0,
+      sev: "critical" as Severity,
+    },
+    {
+      label: t("severity.serious"),
+      from: result.counts.serious,
+      to: 0,
+      sev: "serious" as Severity,
+    },
+    {
+      label: t("severity.moderate"),
       from: result.counts.moderate,
       to: result.counts.moderate,
       sev: "moderate" as Severity,
@@ -57,7 +67,7 @@ export function ProgressPage({ result }: { result: ScanResult }) {
             <span aria-hidden className="hatch-moderate size-2.5" />
             <span className="text-[13px] font-semibold text-ink">{t("severity.moderate")}</span>
             <span className="font-cond text-[11px] tracking-[0.06em] text-moderate-text uppercase tabular-nums">
-              {result.counts.moderate} finding{result.counts.moderate === 1 ? "" : "s"}
+              {t("unit.finding", { count: result.counts.moderate })}
             </span>
           </div>
           <div className="px-4 pt-1 pb-2">
@@ -81,7 +91,7 @@ export function ProgressPage({ result }: { result: ScanResult }) {
             ))}
             {moderate.length > 4 && (
               <div className="py-2 text-[10px] text-muted">
-                + {moderate.length - 4} more moderate finding{moderate.length - 4 > 1 ? "s" : ""}
+                {t("report.moreModerate", { count: moderate.length - 4 })}
               </div>
             )}
             {moderate.length === 0 && (

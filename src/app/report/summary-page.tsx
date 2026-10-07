@@ -1,10 +1,22 @@
-import type { ScanResult } from "@/lib/scan/types";
+import type { Effort, ScanResult } from "@/lib/scan/types";
 import { wcagReadingOf } from "@/lib/report/wcag";
 import { WcagChips } from "@/components/ui";
 import { standingOf, STANDING_LABEL, STANDING_NOTE, type Standing } from "@/lib/report/standing";
 import { safeHost, sevColor, shortId } from "./shared";
 import { PageShell, SectionKicker, SectionKickerMuted } from "./primitives";
-import { translator } from "@/lib/i18n/t";
+import { translator, type MessageKey } from "@/lib/i18n/t";
+
+const EFFORT_KEY: Record<Effort, MessageKey> = {
+  Quick: "report.effort.quick",
+  Moderate: "report.effort.moderate",
+  Involved: "report.effort.involved",
+};
+
+const IMPACT_KEY: Record<"High" | "Medium" | "Low", MessageKey> = {
+  High: "report.impact.high",
+  Medium: "report.impact.medium",
+  Low: "report.impact.low",
+};
 
 const STANDING_COLOR: Record<Standing, string> = {
   blocked: sevColor.critical,
@@ -19,7 +31,7 @@ export function SummaryPage({ result }: { result: ScanResult }) {
   const wcag = wcagReadingOf(result);
   const standing = standingOf(result.counts);
   const at = result.scannedAt ? new Date(result.scannedAt) : new Date();
-  const date = new Intl.DateTimeFormat("en-US", {
+  const date = new Intl.DateTimeFormat(result.locale ?? "en", {
     month: "long",
     day: "numeric",
     year: "numeric",
@@ -28,7 +40,7 @@ export function SummaryPage({ result }: { result: ScanResult }) {
   const meta = [
     { label: t("report.auditDate"), value: date },
     { label: t("report.auditDuration"), value: `${(result.durationMs / 1000).toFixed(1)}s` },
-    { label: t("report.wcagLevelsChecked"), value: "A & AA · 2.0 / 2.1 / 2.2" },
+    { label: t("report.wcagLevelsChecked"), value: t("report.levelsValue") },
     { label: t("report.elementsChecked"), value: String(result.scannedElements) },
   ];
 
@@ -150,14 +162,17 @@ export function SummaryPage({ result }: { result: ScanResult }) {
                     )}
                   </div>
                   <div className="mt-1 text-[11.5px] text-muted">
-                    Effort {f.effort} · Impact {f.impact}
+                    {t("report.effortImpact", {
+                      effort: t(EFFORT_KEY[f.effort]),
+                      impact: t(IMPACT_KEY[f.impact]),
+                    })}
                   </div>
                 </div>
                 <span
                   className="justify-self-end px-2 py-1 font-cond text-[11px] font-medium tracking-[0.06em] uppercase"
                   style={{ color: f.impact === "High" ? sevColor.critical : sevColor.serious }}
                 >
-                  {f.impact} impact
+                  {t("report.impactTag", { impact: t(IMPACT_KEY[f.impact]) })}
                 </span>
               </div>
             ))}

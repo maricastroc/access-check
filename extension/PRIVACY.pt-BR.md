@@ -18,8 +18,8 @@ aquela aba:
 
 - **O DOM da página**: elementos, atributos, estilos computados e posições,
   para que as regras possam decidir o que passa e o que falha.
-- **Uma captura do viewport visível**: um único JPEG, mostrado com os
-  marcadores em "Sobre esta auditoria" no painel.
+- **Uma captura do viewport visível**: um único JPEG, mostrado com as
+  marcas em "Sobre esta auditoria" no painel.
 - **Seletores CSS** dos elementos a que cada problema se refere, para você
   conseguir localizá-los.
 - **Um trecho de HTML curto e abreviado** para cada ocorrência. Ele é
@@ -42,16 +42,16 @@ Ela escreve na sua página de duas formas apenas:
   byte a byte, e quebra o build se houver qualquer diferença. Sugestões que
   dependem do que a página significa nunca são aplicadas.
 - **Para mostrar onde estão os problemas.** Enquanto o relatório está aberto,
-  ela desenha marcações numeradas num contêiner próprio na raiz do documento,
+  ela desenha marcas numeradas num contêiner próprio na raiz do documento,
   sem que você precise pedir: uma para cada problema a corrigir que esteja na
   tela quando nenhum está aberto, ou os elementos do problema que você abrir.
-  Inspecionar a ordem de tabulação desenha marcadores numerados do mesmo
+  Inspecionar a ordem de tabulação desenha marcas numeradas do mesmo
   jeito. O contêiner é `aria-hidden`, não acrescenta nada à ordem de tabulação
   da página e nunca toca os elementos auditados. Só os números dele e a seta
   que aparece para um elemento fora da tela respondem a um clique: um número
   abre o seu problema, elemento ou parada no painel, e a seta rola a página até
   o elemento. Nenhum deles move o foco da página. Quando a aba passa a mostrar
-  outra página, inclusive outra rota do mesmo app, as marcações são removidas e
+  outra página, inclusive outra rota do mesmo app, as marcas são removidas e
   nada é desenhado nessa página. Elas só voltam quando a aba mostra de novo a
   página auditada, depois de voltar a ela ou recarregá-la. Tudo o que ela
   desenhou também é removido quando o
@@ -85,23 +85,23 @@ criação de perfil nem rastreamento.
 
 ## A permissão de depuração
 
-Clicar no ícone da barra nunca anexa o depurador. Ele só é anexado quando você
+Clicar no ícone da barra nunca conecta o depurador. Ele só é conectado quando você
 aperta "Verificar teclado" para seguir a ordem real de foco do teclado da
-página, o que exige pressionamentos legítimos de Tab que só o depurador do
-Chrome consegue produzir. Por isso a extensão anexa o `chrome.debugger` à aba
-**pelo tempo dessa verificação e nada mais**. Enquanto está anexado, o Chrome exibe o próprio aviso na
+página, o que exige pressionamentos reais da tecla Tab que só o depurador do
+Chrome consegue produzir. Por isso a extensão conecta o `chrome.debugger` à aba
+**pelo tempo dessa verificação e nada mais**. Enquanto está conectado, o Chrome exibe o próprio aviso na
 aba.
 
 O depurador serve para uma coisa só: enviar Tab e Shift+Tab. A página é lida
 pelo mesmo código que o resto da auditoria usa. O depurador é liberado antes de
 o relatório final ser publicado, e uma verificação automatizada do projeto
-quebra o build caso um relatório chegue a ser publicado com ele ainda anexado.
+quebra o build caso um relatório chegue a ser publicado com ele ainda conectado.
 
 ## As permissões e por que cada uma existe
 
 - **activeTab**: dá acesso apenas à aba em que você clicou, e somente depois
   desse clique. A extensão não pede acesso permanente a nenhum site.
-- **scripting**: injeta a auditoria naquela aba e desenha as marcações
+- **scripting**: injeta a auditoria naquela aba e desenha as marcas
   numeradas descritas acima enquanto o relatório está aberto.
 - **sidePanel**: mostra o relatório ao lado da página.
 - **storage**: `chrome.storage.session` para o único relatório descrito acima,

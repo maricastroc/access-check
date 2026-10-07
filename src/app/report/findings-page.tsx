@@ -1,5 +1,5 @@
 import type { ScanResult, Severity } from "@/lib/scan/types";
-import { safeHost, sevLabelKey } from "./shared";
+import { safeHost } from "./shared";
 import { GroupHeading, LegendChip, MiniHeader, PageShell, SectionKicker } from "./primitives";
 import { DetailedCard } from "./detailed-card";
 import { translator } from "@/lib/i18n/t";
@@ -54,8 +54,7 @@ export function FindingsPage({ result }: { result: ScanResult }) {
               ))}
               {hiddenCount > 0 && (
                 <p className="px-1 text-[10px] text-muted">
-                  + {hiddenCount} more {t(sevLabelKey[sev]).toLowerCase()} finding
-                  {hiddenCount > 1 ? "s" : ""} in the full report
+                  {t("report.moreInFullReport", { count: hiddenCount })}
                 </p>
               )}
             </div>

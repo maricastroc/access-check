@@ -74,7 +74,7 @@ function StageArtifact({ i, t }: { i: number; t: Translate }) {
               className="relative block px-2.5 py-1 text-[10px] font-semibold text-white"
               style={{ background: "#8fb8a8" }}
             >
-              Order now
+              {t("home.demo.order")}
             </span>
             <span className="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2">
               <Marker
@@ -354,10 +354,12 @@ function BeatButton({
   hex,
   ratio,
   tone,
+  t,
 }: {
   hex: string;
   ratio: string;
   tone: "serious" | "verified";
+  t: Translate;
 }) {
   return (
     <div>
@@ -367,7 +369,7 @@ function BeatButton({
         className="flex h-11 items-center justify-center text-[13px] font-semibold text-white"
         style={{ background: hex }}
       >
-        Order now
+        {t("home.demo.order")}
       </div>
       <div className="mt-1.5 flex items-center justify-between">
         <span className="flex items-center gap-1.5 font-mono text-[11px] text-muted">
@@ -425,7 +427,7 @@ export function SandboxSection({ t }: { t: Translate }) {
               <div>
                 <SectionKicker tone="steel">{t("home.lens.before")}</SectionKicker>
                 <div className="mt-2">
-                  <BeatButton hex={exampleFinding.fromHex} ratio="2.1:1" tone="serious" />
+                  <BeatButton hex={exampleFinding.fromHex} ratio="2.1:1" tone="serious" t={t} />
                 </div>
               </div>
               <div className="flex flex-col items-center gap-1 text-muted">
@@ -446,7 +448,7 @@ export function SandboxSection({ t }: { t: Translate }) {
                   </StatusSeal>
                 </div>
                 <div className="mt-2">
-                  <BeatButton hex={exampleFinding.toHex} ratio="4.62:1" tone="verified" />
+                  <BeatButton hex={exampleFinding.toHex} ratio="4.62:1" tone="verified" t={t} />
                 </div>
               </div>
             </div>

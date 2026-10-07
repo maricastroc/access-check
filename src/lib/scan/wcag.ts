@@ -9,8 +9,10 @@ const scNames: Record<string, MessageKey> = {
   "1.4.10": "wcag.1.4.10",
   "1.4.11": "wcag.1.4.11",
   "2.1.1": "wcag.2.1.1",
+  "2.1.2": "wcag.2.1.2",
   "2.4.1": "wcag.2.4.1",
   "2.4.2": "wcag.2.4.2",
+  "2.4.3": "wcag.2.4.3",
   "2.4.4": "wcag.2.4.4",
   "2.4.7": "wcag.2.4.7",
   "2.5.8": "wcag.2.5.8",
@@ -27,7 +29,10 @@ export function criterionFromTags(tags: string[], t: Translate): string | null {
   const major = digits[0];
   const minor = digits[1];
   const sub = digits.slice(2);
-  const sc = `${major}.${minor}.${sub}`;
+  return criterionLabel(`${major}.${minor}.${sub}`, t);
+}
+
+export function criterionLabel(sc: string, t: Translate): string {
   const key = scNames[sc];
   return key ? `WCAG ${sc} · ${t(key)}` : `WCAG ${sc}`;
 }

@@ -132,7 +132,7 @@ export function DiscoveryProgress({ host, elapsed }: { host: string; elapsed: nu
         </div>
         <p className="mt-3 text-[12.5px] text-muted">{t("site.listNote")}</p>
         <p className="sr-only" role="status" aria-live="polite">
-          Finding pages to audit on {host}.
+          {t("site.findingPagesStatus", { host })}
         </p>
       </div>
     </div>

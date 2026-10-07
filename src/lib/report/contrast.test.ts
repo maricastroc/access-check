@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { translator } from "../i18n/t";
+import { fixContrast } from "../scan/remediate";
 import { parseContrastFix, ratioPosition } from "./contrast";
 
 describe("parseContrastFix", () => {
@@ -72,6 +74,27 @@ describe("parseContrastFix", () => {
       "A cor de texto #777777 sobre #888888 alcança apenas 1.20:1 (precisa de 4.5:1). " +
       "Nem o texto nem o fundo resolvem só pela luminosidade nestas matizes.";
     expect(parseContrastFix(neither)).toMatchObject({ measured: 1.2, required: 4.5, toHex: null });
+  });
+
+  it("reads back every contrast fix the catalogs write, in both languages", () => {
+    const pairs = [
+      { fgColor: "#8fb8a8", bgColor: "#ffffff", contrastRatio: 2.1, expectedContrastRatio: 4.5 },
+      { fgColor: "#ff0000", bgColor: "#00ff00", contrastRatio: 2.91, expectedContrastRatio: 4.5 },
+      { fgColor: "#111111", bgColor: "#777777", contrastRatio: 4.22, expectedContrastRatio: 7 },
+      { fgColor: "#777777", bgColor: "#767676", contrastRatio: 1.02, expectedContrastRatio: 7 },
+    ];
+    for (const locale of ["en", "pt-BR"] as const) {
+      for (const pair of pairs) {
+        const fix = fixContrast(pair, translator(locale));
+        expect(fix, `${locale} ${pair.fgColor}`).not.toBeNull();
+        expect(parseContrastFix(fix!.text, fix!.code), `${locale}: ${fix!.text}`).toMatchObject({
+          measured: pair.contrastRatio,
+          required: pair.expectedContrastRatio,
+          fromHex: pair.fgColor,
+          bgHex: pair.bgColor,
+        });
+      }
+    }
   });
 
   it("returns null for a non-contrast fix", () => {
