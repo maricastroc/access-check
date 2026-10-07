@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { translator } from "./i18n/t";
 
 const runScan = vi.fn();
 const completePage = vi.fn();
@@ -17,6 +18,7 @@ vi.mock("@/lib/site-scans", () => ({
 const { processPagesInline, scanOnePage } = await import("./site-scan-runner");
 
 const RESULT = { title: "Example", score: 90 };
+const pt = translator("pt-BR");
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -39,13 +41,13 @@ describe("scanOnePage", () => {
   });
 
   it("keeps a scan failure's own message, already written in that locale", async () => {
-    runScan.mockRejectedValue(new ScanFailure("Não foi possível alcançar a página."));
+    runScan.mockRejectedValue(new ScanFailure(pt("scanFail.unreachable")));
 
     await scanOnePage("site_1", "https://example.com/", "pt-BR");
 
     expect(completePage).toHaveBeenCalledWith("site_1", "https://example.com/", {
       ok: false,
-      error: "Não foi possível alcançar a página.",
+      error: pt("scanFail.unreachable"),
     });
   });
 
@@ -56,7 +58,7 @@ describe("scanOnePage", () => {
 
     expect(completePage).toHaveBeenCalledWith("site_1", "https://example.com/", {
       ok: false,
-      error: "A varredura falhou.",
+      error: pt("scanFail.generic"),
     });
     expect(console.error).toHaveBeenCalledWith(expect.stringContaining("Target crashed"));
   });
