@@ -1176,13 +1176,13 @@ export const ptBR: Catalog = {
   "panel.toCheck": { one: "{count} para conferir à mão", other: "{count} para conferir à mão" },
   "panel.keyboardNotCounted": "Teclado ainda não incluído",
   "panel.notOnScreen": {
-    one: "1 problema a corrigir não tem marca na tela agora. Abra pela lista para encontrá-lo.",
+    one: "1 problema não está destacado na página. Abra-o pela lista para localizar os elementos.",
     other:
-      "{count} problemas a corrigir não têm marca na tela agora. Abra pela lista para encontrá-los.",
+      "{count} problemas não estão destacados na página. Abra-os pela lista para localizar os elementos.",
   },
   "panel.wholePage": {
-    one: "1 problema a corrigir se aplica à página inteira, por isso não tem marca.",
-    other: "{count} problemas a corrigir se aplicam à página inteira, por isso não têm marca.",
+    one: "1 problema afeta a página inteira e, por isso, não aparece destacado.",
+    other: "{count} problemas afetam a página inteira e, por isso, não aparecem destacados.",
   },
   "panel.inShadowRoot": {
     one: "1 problema a corrigir está dentro de um shadow root, que as marcas não alcançam.",
@@ -1255,7 +1255,7 @@ export const ptBR: Catalog = {
   "panel.runningNoteFocus":
     "O Chrome mostra um aviso enquanto o depurador está conectado. O depurador é liberado antes de o relatório voltar, e a página não é alterada.",
   "panel.walkDebuggerNote":
-    "Percorrer a ordem de tabulação usa o depurador do Chrome. Enquanto isso, o Chrome mostra um aviso e o DevTools não consegue se conectar a esta aba. O depurador é liberado assim que o percurso termina.",
+    "Para verificar a ordem de tabulação, o AccessCheck usa temporariamente o depurador do Chrome. Durante a verificação, o Chrome exibe um aviso e o DevTools fica indisponível nesta aba. Assim que o percurso termina, o depurador é desconectado.",
   "panel.walkNow": "Verificar teclado",
   "panel.roundChecked": {
     one: "Esta rodada verificou {count} parada.",
