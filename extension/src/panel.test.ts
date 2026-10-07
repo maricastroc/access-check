@@ -196,13 +196,13 @@ describe("the panel reuses the product's own report", () => {
       "2 findings to fix have no mark on screen right now. Open them from the list to find them.",
     );
     expect(pt("panel.notOnScreen", { count: 1 })).toBe(
-      "1 problema a corrigir não tem marca na tela agora. Abra pela lista para encontrá-lo.",
+      "1 problema não está destacado na página. Abra-o pela lista para localizar os elementos.",
     );
     expect(t("panel.wholePage", { count: 1 })).toBe(
       "1 finding to fix applies to the whole page, so it has no mark.",
     );
     expect(pt("panel.wholePage", { count: 2 })).toBe(
-      "2 problemas a corrigir se aplicam à página inteira, por isso não têm marca.",
+      "2 problemas afetam a página inteira e, por isso, não aparecem destacados.",
     );
   });
 

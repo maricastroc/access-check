@@ -35,8 +35,8 @@ describe("the translator", () => {
 
   it("agrees in Portuguese, which the English catalog cannot decide for it", () => {
     const pt = translator("pt-BR");
-    expect(pt("unit.stop", { count: 1 })).toBe("1 parada");
-    expect(pt("unit.stop", { count: 3 })).toBe("3 paradas");
+    expect(pt("unit.stop", { count: 1 })).toBe("1 etapa");
+    expect(pt("unit.stop", { count: 3 })).toBe("3 etapas");
     expect(pt("coverage.partialChecks", { count: 1 })).toBe(
       "Cobertura parcial · 1 verificação indisponível",
     );
