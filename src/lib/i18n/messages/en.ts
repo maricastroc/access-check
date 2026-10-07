@@ -688,7 +688,6 @@ export const en = {
   "home.lens.contrastStory":
     "The white text on the light-green button disappears for people with low vision, or for anyone in bright sunlight. And this is the checkout button.",
   "home.lens.sandboxNote": "Tested on a copy of the page. aurora-coffee.com was not changed.",
-  "home.form.noAccount": "No account, nothing to install, no change to the audited site",
   "home.form.exportNote": "Export as PDF or Markdown",
   "home.demo.roasted": "Roasted in Porto every Tuesday and shipped the same week.",
   "home.demo.navMenu": "Menu",
@@ -753,8 +752,7 @@ export const en = {
   "home.cta.verified": "Tested",
   "home.cta.title": "Audit a page now and see where each barrier is",
   "home.cta.body":
-    "No account, nothing to install, no change to your site. The report is ready in under half a minute and exports as PDF or Markdown.",
-  "home.form.behindLogin": "Behind a login, on localhost or on staging?",
+    "The report is ready in under half a minute and exports as PDF or Markdown.",
   "home.form.useExtension": "Audit the tab you are on with the Chrome extension",
   "home.cta.publicOnly":
     "We can only audit public pages. Private or internal addresses will be refused.",
@@ -1332,7 +1330,7 @@ export const en = {
   "chain.gap.unmeasured": "not measured",
   "chain.status.tested": "fix tested",
   "chain.status.person": "a person decides",
-  "chain.status.fixPerson": "fix needs a person",
+  "chain.status.fixPerson": "needs a person",
   "chain.status.recheck": "audit again to confirm",
   "chain.status.failed": "still fails",
   "summary.recommendations": { one: "1 recommendation", other: "{count} recommendations" },

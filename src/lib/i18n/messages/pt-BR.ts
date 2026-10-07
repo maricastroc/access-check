@@ -705,7 +705,7 @@ export const ptBR: Catalog = {
   "home.hero.title": "Localize o problema. Entenda a causa. Teste a correção.",
   "home.hero.passes": "+ verificações de teclado, viewport e movimento",
   "home.hero.body":
-    "Não é apenas um relatório. É um inspetor visual: cole o endereço de uma página e veja cada problema destacado no elemento em que foi encontrado, com a razão de contraste, o seletor CSS e uma correção testada em uma cópia da página.",
+    "Cole o endereço de uma página e veja os problemas de acessibilidade diretamente onde eles acontecem. O inspetor destaca cada elemento, mostra a razão de contraste e o seletor CSS e ainda apresenta uma correção testada em uma cópia da própria página.",
   "home.hero.lensNote":
     "Selecione um problema e a marca dele acende na captura. Clique na marca e os detalhes abrem: imagem, medição e código no mesmo lugar.",
   "home.lens.title": "Veja a barreira no elemento que a causou",
@@ -714,7 +714,6 @@ export const ptBR: Catalog = {
   "home.lens.contrastStory":
     "O texto branco no botão verde-claro some para quem tem baixa visão ou para qualquer pessoa sob sol forte. E esse é o botão de finalizar a compra.",
   "home.lens.sandboxNote": "Testado em uma cópia da página. O aurora-coffee.com não foi alterado.",
-  "home.form.noAccount": "Sem cadastro, sem instalar nada e sem alterar o site auditado",
   "home.form.exportNote": "Exporte em PDF ou Markdown",
   "home.demo.roasted": "Torrado no Porto toda terça e enviado na mesma semana.",
   "home.demo.navMenu": "Cardápio",
@@ -755,7 +754,7 @@ export const ptBR: Catalog = {
   "home.howItWorks.title": "Abrir a página, localizar o problema, testar a correção",
   "home.checks.kicker": "Verificações incluídas",
   "home.checks.title":
-    "Todas as regras automáticas, mais as verificações que um motor de regras não faz sozinho",
+    "Verificações automáticas e orientações para o que precisa de análise manual",
   "home.sandbox.kicker": "Teste em uma cópia",
   "home.sandbox.title": "Cada correção é testada em uma cópia. Seu site permanece intacto.",
   "home.sandbox.body":
@@ -779,8 +778,7 @@ export const ptBR: Catalog = {
   "home.cta.verified": "Testado",
   "home.cta.title": "Audite uma página agora e veja onde está cada barreira",
   "home.cta.body":
-    "Sem cadastro, sem instalar nada e sem alterar o seu site. O relatório fica pronto em menos de meio minuto e sai em PDF ou Markdown.",
-  "home.form.behindLogin": "Atrás de um login, no localhost ou em staging?",
+    "O relatório fica pronto em menos de meio minuto e sai em PDF ou Markdown.",
   "home.form.useExtension": "Audite a aba em que você está com a extensão do Chrome",
   "home.cta.publicOnly":
     "Só conseguimos auditar páginas públicas. Endereços privados ou internos serão recusados.",
@@ -1365,7 +1363,7 @@ export const ptBR: Catalog = {
   "chain.gap.unmeasured": "sem medida",
   "chain.status.tested": "correção testada",
   "chain.status.person": "uma pessoa decide",
-  "chain.status.fixPerson": "correção depende de uma pessoa",
+  "chain.status.fixPerson": "requer uma pessoa",
   "chain.status.recheck": "auditar de novo para confirmar",
   "chain.status.failed": "ainda falha",
   "summary.recommendations": { one: "1 recomendação", other: "{count} recomendações" },
