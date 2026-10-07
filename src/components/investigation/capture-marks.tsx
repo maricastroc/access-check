@@ -265,7 +265,7 @@ export function CaptureMarks({
     }
   } else if (layer === "path") {
     const shown = stops
-      .filter((s) => wholePath || near(s.n) || s.n === currentStop)
+      .filter((s) => wholePath || currentStop === null || near(s.n) || s.n === currentStop)
       .sort(
         (x, y) =>
           Number(y.n === currentStop) - Number(x.n === currentStop) ||
