@@ -386,16 +386,11 @@ try {
       interactive: cappedKb?.totalInteractive,
       stoppedBy: cappedKb?.stoppedBy,
       truncated: cappedKb?.truncated,
-      reach: cappedReach && { evidence: cappedReach.evidence, count: cappedReach.count },
       score: capped.deep?.result?.score,
     }),
   );
   check(cappedKb?.truncated === true, "the 260-button page did not hit the cap");
-  check(!!cappedReach, "a capped walk said nothing about the controls it never reached");
-  check(
-    cappedReach?.evidence === "heuristic",
-    `an unfinished walk claims ${cappedReach?.evidence} evidence about reach`,
-  );
+  check(!cappedReach, "a capped walk lists the controls it never got to as findings");
   const cappedScore = capped.deep?.result?.score;
   const cappedCounts = capped.deep?.result?.counts;
 
@@ -456,8 +451,8 @@ try {
     `the unfinished walk charged points: ${cappedScore} while capped, ${finishedResult?.score} once finished`,
   );
   check(
-    cappedCounts?.needsReview > (finishedResult?.counts?.needsReview ?? 0),
-    "the capped walk did not count its unverified reach apart",
+    cappedCounts?.needsReview === finishedResult?.counts?.needsReview,
+    `the capped walk counted ${cappedCounts?.needsReview} to review, the finished one ${finishedResult?.counts?.needsReview}`,
   );
 
   const many = await audit("/many");
