@@ -17,7 +17,7 @@ tab:
 
 - **The page's DOM**: elements, attributes, computed styles and positions, so
   the rules can decide what passes and what fails.
-- **A screenshot of the visible viewport**: one JPEG, shown with its markers
+- **A screenshot of the visible viewport**: one JPEG, shown with its marks
   under "About this audit" in the panel.
 - **CSS selectors** for the elements a finding refers to, so you can locate them.
 - **A short, abbreviated HTML snippet** for each occurrence. It is rebuilt from a
@@ -32,7 +32,7 @@ tab:
 It writes to your page in two ways only:
 
 - **Testing a fix.** During the audit, where a fix can be computed from measured
-  values, which in practice means a contrast colour, the extension sets that one
+  values, which in practice means a contrast color, the extension sets that one
   CSS property on the element, runs that one rule again, and puts the attribute
   back exactly as it found it. An automated check in the project compares the
   page's markup before and after, byte for byte, and fails the build on any
@@ -41,7 +41,7 @@ It writes to your page in two ways only:
   numbered marks in its own container at the document root, without being
   asked: one for each problem to fix that is on screen when none is open, or
   the elements of the problem you open. Inspecting the tab order draws numbered
-  markers the same way. The container is `aria-hidden`, adds nothing to the
+  marks the same way. The container is `aria-hidden`, adds nothing to the
   page's tab order and never touches the audited elements. Only its numbers and
   the arrow shown for an element off screen answer a click: a number opens its
   problem, element or stop in the panel, and the arrow scrolls the page to the

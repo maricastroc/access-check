@@ -120,9 +120,11 @@ describe("buildSummary tells the four kinds apart", () => {
   });
 
   it("keeps the partial caveat in every one of those states", () => {
-    expect(buildSummary(none, t, { partial: true })).toContain("not a clean bill of health");
+    expect(buildSummary(none, t, { partial: true })).toContain(
+      "doesn't mean the page is free of barriers",
+    );
     expect(buildSummary({ ...none, bestPractice: 1 }, t, { partial: true })).toContain(
-      "not a clean bill of health",
+      "doesn't mean the page is free of barriers",
     );
     expect(buildSummary({ ...none, manualReview: 2 }, t, { partial: true })).toContain(
       "2 manual-review items remain",

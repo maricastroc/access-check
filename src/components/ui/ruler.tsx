@@ -212,6 +212,7 @@ function ProgressBar({
 }
 
 function ProgressRuler({
+  t,
   elapsedMs,
   budgetMs,
   runningShare = 0.06,
@@ -225,7 +226,7 @@ function ProgressRuler({
       value={elapsedMs}
       max={budgetMs}
       runningShare={runningShare}
-      ariaLabel={label ?? `Audit progress: ${secs}s of up to ${budgetSecs}s`}
+      ariaLabel={label ?? t("ruler.progressLabel", { elapsed: secs, budget: budgetSecs })}
     />
   );
 }

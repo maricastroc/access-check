@@ -162,9 +162,9 @@ try {
           (b) => b.textContent.trim() === "Check keyboard",
         ),
       partialNote: text.includes("not a full audit"),
-      focusPathNamed: text.includes("focus path was not verified"),
+      focusPathNamed: text.includes("focus path was not checked"),
       claimsComplete: /\bcomplete audit\b|\bfull audit score\b/i.test(text),
-      notChecked: text.includes("Not checked in this build"),
+      notChecked: text.includes("Not checked in this version"),
       notCheckedItems: [...document.querySelectorAll("li")].map((li) => li.textContent),
       checksPerformed: [...document.querySelectorAll("details h3")].some((h) =>
         h.textContent.startsWith("Checks performed"),
@@ -478,7 +478,7 @@ try {
   console.log("findings not on screen:", JSON.stringify({ hiddenMarks, offScreenNotice }));
   check(hiddenMarks === 1, `the link in the closed drawer should be the one mark not shown`);
   check(
-    offScreenNotice?.startsWith("1 problem to fix has no mark on screen right now") ?? false,
+    offScreenNotice?.startsWith("1 finding to fix has no mark on screen right now") ?? false,
     `the panel does not say a finding to fix is off screen: ${offScreenNotice}`,
   );
 
@@ -509,7 +509,10 @@ try {
   );
   console.log("locating after the tab moved on:", JSON.stringify({ moved, drewOnOther }));
   check(!drewOnOther, "marks were drawn on a page that was never audited");
-  check(/moved on/.test(moved ?? ""), `Locate on page on another page answered: ${moved}`);
+  check(
+    /moved to another page/.test(moved ?? ""),
+    `Locate on page on another page answered: ${moved}`,
+  );
 
   const overlayIn = (tab) =>
     tab.evaluate(() => document.getElementById("accesscheck-overlay") !== null);
@@ -572,7 +575,7 @@ try {
       () =>
         [...document.querySelectorAll('[aria-labelledby="verdict-heading"] p')]
           .map((p) => p.textContent)
-          .find((text) => /no mark on screen right now|moved on/.test(text)) ?? null,
+          .find((text) => /no mark on screen right now|moved to another page/.test(text)) ?? null,
     );
 
   await page.goto(`${origin}/`, { waitUntil: "domcontentloaded" });
@@ -596,7 +599,7 @@ try {
   check(atAudit.drawn, "the overview was not drawn before the address changed");
   check(!elsewhere.drawn, "marks stayed on the page after its address changed");
   check(
-    /moved on/.test(elsewhere.line ?? ""),
+    /moved to another page/.test(elsewhere.line ?? ""),
     `with the tab on another address the panel said: ${elsewhere.line}`,
   );
   check(back.drawn, "the overview did not come back with the audited address");
@@ -623,7 +626,7 @@ try {
     lines: await report.evaluate(() =>
       [...document.querySelectorAll('[aria-labelledby="verdict-heading"] p')]
         .map((p) => p.textContent)
-        .filter((text) => /no mark|marks do not reach/.test(text)),
+        .filter((text) => /no mark|marks can't reach/.test(text)),
     ),
     shadowReason: await report.evaluate(async () => {
       document.querySelector('li[id="finding-wcag:button-name"] h3 > button')?.click();

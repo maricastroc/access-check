@@ -484,7 +484,7 @@ describe("what each finding lets you inspect", () => {
     )!;
 
     expect(f.occurrences[0].certainty).toBe("needs-review");
-    expect(f.desc).toContain("check them by eye");
+    expect(f.desc).toContain("check each one by eye");
   });
 
   it("keeps the count and the list of jumps in step", () => {

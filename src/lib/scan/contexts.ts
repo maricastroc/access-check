@@ -124,7 +124,7 @@ export async function collectContexts(
         seen.add(sel);
         out.push({
           selector: sel,
-          label: nameOf(el) || (kind === "details" ? "Disclosure" : "Menu"),
+          label: nameOf(el),
           kind,
           controls,
         });
@@ -220,7 +220,11 @@ export async function collectContexts(
         const issues = newIssues(baseline, state.rules, t);
         if (issues.length > 0) {
           dynamicStates.push({
-            label: `Opened “${toggle.label}”`,
+            label: t("context.opened", {
+              label:
+                toggle.label ||
+                t(toggle.kind === "details" ? "context.disclosure" : "context.menu"),
+            }),
             selector: toggle.selector,
             newIssues: issues,
           });

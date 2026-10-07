@@ -4,6 +4,7 @@ import type { EvidenceClass, Severity } from "./types";
 import type { FocusProbe, FocusReach, FocusScopePart, FocusStyle, RestingStyle } from "./dom/focus";
 import type { ElementIdentity } from "./dom/identity";
 import { severityOrder } from "./derive";
+import { criterionLabel } from "./wcag";
 import type { MessageKey, Translate } from "../i18n/t";
 
 export type KeyboardIssueId =
@@ -113,12 +114,12 @@ export type RawKeyboard = {
 };
 
 const CRITERION: Record<KeyboardIssueId, string> = {
-  "focus-not-visible": "WCAG 2.4.7 · Focus Visible",
-  "focus-indicator-unclear": "WCAG 2.4.7 · Focus Visible",
-  "focus-order": "WCAG 2.4.3 · Focus Order",
-  "keyboard-trap": "WCAG 2.1.2 · No Keyboard Trap",
-  "positive-tabindex": "WCAG 2.4.3 · Focus Order",
-  "unreachable-control": "WCAG 2.1.1 · Keyboard",
+  "focus-not-visible": "2.4.7",
+  "focus-indicator-unclear": "2.4.7",
+  "focus-order": "2.4.3",
+  "keyboard-trap": "2.1.2",
+  "positive-tabindex": "2.4.3",
+  "unreachable-control": "2.1.1",
 };
 
 const MAX_FINDING_SELECTORS = 8;
@@ -383,7 +384,7 @@ export function buildKeyboardReport(raw: RawKeyboard, t: Translate): KeyboardRep
       id: "keyboard-trap",
       severity: "critical",
       evidence: "measured",
-      criterion: CRITERION["keyboard-trap"],
+      criterion: criterionLabel(CRITERION["keyboard-trap"], t),
       title: t("keyboard.trap.title"),
       desc: t("keyboard.trap.desc"),
       fix: t("keyboard.trap.fix"),
@@ -408,7 +409,7 @@ export function buildKeyboardReport(raw: RawKeyboard, t: Translate): KeyboardRep
       id: "unreachable-control",
       severity: conclusive ? "serious" : "moderate",
       evidence: conclusive ? "measured" : "heuristic",
-      criterion: CRITERION["unreachable-control"],
+      criterion: criterionLabel(CRITERION["unreachable-control"], t),
       title: conclusive
         ? t("keyboard.unreachable.title", { count: n })
         : t("keyboard.notReached.title", { count: n }),
@@ -439,7 +440,7 @@ export function buildKeyboardReport(raw: RawKeyboard, t: Translate): KeyboardRep
       id: "focus-not-visible",
       severity: "serious",
       evidence: "measured",
-      criterion: CRITERION["focus-not-visible"],
+      criterion: criterionLabel(CRITERION["focus-not-visible"], t),
       title: t("keyboard.invisible.title", { count: n }),
       desc: t("keyboard.invisible.desc", { count: n }),
       fix: t("keyboard.invisible.fix"),
@@ -462,7 +463,7 @@ export function buildKeyboardReport(raw: RawKeyboard, t: Translate): KeyboardRep
       id: "focus-indicator-unclear",
       severity: "moderate",
       evidence: "heuristic",
-      criterion: CRITERION["focus-indicator-unclear"],
+      criterion: criterionLabel(CRITERION["focus-indicator-unclear"], t),
       title: t("keyboard.unclear.title", { count: n }),
       desc: t("keyboard.unclear.desc", { count: n }),
       fix: t("keyboard.unclear.fix"),
@@ -489,7 +490,7 @@ export function buildKeyboardReport(raw: RawKeyboard, t: Translate): KeyboardRep
       id: "focus-order",
       severity: "moderate",
       evidence: "heuristic",
-      criterion: CRITERION["focus-order"],
+      criterion: criterionLabel(CRITERION["focus-order"], t),
       title: t("keyboard.order.title", { count: inv.count }),
       desc: t("keyboard.order.desc"),
       fix: t("keyboard.order.fix"),
@@ -516,7 +517,7 @@ export function buildKeyboardReport(raw: RawKeyboard, t: Translate): KeyboardRep
       id: "positive-tabindex",
       severity: "moderate",
       evidence: "measured",
-      criterion: CRITERION["positive-tabindex"],
+      criterion: criterionLabel(CRITERION["positive-tabindex"], t),
       title: t("keyboard.tabindex.title", { count: n }),
       desc: t("keyboard.tabindex.desc"),
       fix: t("keyboard.tabindex.fix"),

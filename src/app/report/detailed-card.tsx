@@ -48,8 +48,10 @@ export function DetailedCard({
             <FieldLabel>{t("report.suggestedFix")}</FieldLabel>
             {measurement ? (
               <div className="mt-1 text-[11.5px] text-body">
-                Measured {measurement.measured.toFixed(2)}:1 · minimum AA{" "}
-                {measurement.required.toFixed(1)}:1
+                {t("report.measuredMinimum", {
+                  measured: measurement.measured.toFixed(2),
+                  required: measurement.required.toFixed(1),
+                })}
                 {measurement.fixed != null && measurement.toHex && (
                   <span className="mt-1.5 flex items-center gap-1.5">
                     {measurement.fromHex && (

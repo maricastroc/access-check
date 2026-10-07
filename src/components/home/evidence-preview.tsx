@@ -15,8 +15,10 @@ export function CapturePreview({ height = 240, t }: { height?: number; t: Transl
           AURORA
         </span>
         <div className="flex items-center gap-3.5">
-          <span className="hidden text-[10px] text-ink/70 sm:inline">Menu</span>
-          <span className="hidden text-[10px] text-ink/70 sm:inline">Beans</span>
+          <span className="hidden text-[10px] text-ink/70 sm:inline">{t("home.demo.navMenu")}</span>
+          <span className="hidden text-[10px] text-ink/70 sm:inline">
+            {t("home.demo.navBeans")}
+          </span>
           <span className="relative inline-block">
             <span
               aria-hidden
@@ -27,7 +29,7 @@ export function CapturePreview({ height = 240, t }: { height?: number; t: Transl
               className="relative block px-2 py-1 text-[9px] font-semibold text-white"
               style={{ background: "#8fb8a8" }}
             >
-              Order now
+              {t("home.demo.order")}
             </span>
             <span className="absolute top-1/2 left-0 translate-x-[-135%] -translate-y-1/2">
               <Marker n={2} state="idle" dimmed size={24} ariaLabel={t("home.lens.sharedColor")} />
@@ -38,9 +40,9 @@ export function CapturePreview({ height = 240, t }: { height?: number; t: Transl
 
       <div className="px-5 pt-4">
         <h3 className="font-sans text-[21px] leading-[1.05] font-semibold tracking-[-0.02em] text-ink">
-          Slow-roasted,
+          {t("home.demo.headline")}
           <br />
-          small batch, since 2011
+          {t("home.demo.headlineRest")}
         </h3>
         <p className="mt-2 max-w-[62%] text-[10px] leading-normal text-ink/70">
           {t("home.demo.roasted")}
@@ -58,7 +60,7 @@ export function CapturePreview({ height = 240, t }: { height?: number; t: Transl
             className="relative block px-4 py-2 text-[13px] font-semibold text-white"
             style={{ background: "#8fb8a8" }}
           >
-            Order now
+            {t("home.demo.order")}
           </span>
           <span className="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2">
             <Marker
@@ -99,7 +101,9 @@ export function HeroEvidencePreview({ t }: { t: Translate }) {
         </div>
         <p className="mt-2 text-[14.5px] font-semibold text-ink">{t(exampleFinding.title)}</p>
         <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-muted">
-          <span className="font-mono text-[11.5px] text-steel">a.hero__cta “Order now”</span>
+          <span className="font-mono text-[11.5px] text-steel">
+            a.hero__cta “{t("home.demo.order")}”
+          </span>
           <span aria-hidden className="text-border">
             ·
           </span>
