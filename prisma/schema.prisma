@@ -12,6 +12,7 @@ model SiteScan {
 
   rootUrl String
   status  String @default("running")
+  locale  String @default("en")
 
   totalPages   Int @default(0)
   scannedPages Int @default(0)

@@ -5,12 +5,13 @@ import { assertPublicUrl, BlockedUrlError } from "@/lib/scan/ssrf";
 import { createSiteScan, failSiteScan } from "@/lib/site-scans";
 import { canFanOut, enqueuePageScans } from "@/lib/qstash";
 import { log, logError } from "@/lib/observability/log";
-import { translateForRequest } from "@/lib/i18n/server";
+import { localeFromRequest, translateForRequest } from "@/lib/i18n/server";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 export async function POST(req: Request) {
+  const locale = localeFromRequest(req);
   const t = translateForRequest(req);
   let body: { url?: string };
   try {
@@ -36,15 +37,15 @@ export async function POST(req: Request) {
   }
 
   const urls = await discoverUrls(root);
-  const id = await createSiteScan(root, urls);
+  const id = await createSiteScan(root, urls, locale);
 
-  const jobs = urls.map((url) => ({ siteScanId: id, url }));
+  const jobs = urls.map((url) => ({ siteScanId: id, url, locale }));
 
   const onServerless = Boolean(process.env.VERCEL);
 
   async function runInline() {
     const { processPagesInline } = await import("@/lib/site-scan-runner");
-    void processPagesInline(id, urls);
+    void processPagesInline(id, urls, locale);
   }
 
   if (canFanOut()) {
