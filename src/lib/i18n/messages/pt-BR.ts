@@ -777,8 +777,7 @@ export const ptBR: Catalog = {
   "home.cta.located": "Localizado",
   "home.cta.verified": "Testado",
   "home.cta.title": "Audite uma página agora e veja onde está cada barreira",
-  "home.cta.body":
-    "O relatório fica pronto em menos de meio minuto e sai em PDF ou Markdown.",
+  "home.cta.body": "O relatório fica pronto em menos de meio minuto e sai em PDF ou Markdown.",
   "home.form.useExtension": "Audite a aba em que você está com a extensão do Chrome",
   "home.cta.publicOnly":
     "Só conseguimos auditar páginas públicas. Endereços privados ou internos serão recusados.",
@@ -1132,19 +1131,6 @@ export const ptBR: Catalog = {
   "keyboard.trap.occurrence":
     "O Tab foi pressionado aqui e o foco não saiu do lugar, então a verificação não pôde seguir.",
 
-  "keyboard.notReached.title": {
-    one: "{count} controle que a verificação de teclado ainda não alcançou",
-    other: "{count} controles que a verificação de teclado ainda não alcançou",
-  },
-  "keyboard.notReached.desc": {
-    one: "A verificação de teclado parou antes de chegar a este controle, então ele ainda não foi testado. Isso não significa que ele seja inalcançável.",
-    other:
-      "A verificação de teclado parou antes de chegar a estes controles, então eles ainda não foram testados. Isso não significa que sejam inalcançáveis.",
-  },
-  "keyboard.notReached.fix":
-    "Deixe a verificação de teclado terminar antes de tratar qualquer um deles como inalcançável.",
-  "keyboard.notReached.occurrence":
-    "A verificação de teclado terminou antes de o foco chegar aqui.",
   "keyboard.unreachable.title": {
     one: "{count} controle interativo não pode ser alcançado pelo teclado",
     other: "{count} controles interativos não podem ser alcançados pelo teclado",
@@ -1188,6 +1174,7 @@ export const ptBR: Catalog = {
   "panel.count.manualReview": "revisão manual",
   "panel.toFix": { one: "{count} para corrigir", other: "{count} para corrigir" },
   "panel.toCheck": { one: "{count} para conferir à mão", other: "{count} para conferir à mão" },
+  "panel.keyboardNotCounted": "Teclado ainda não incluído",
   "panel.notOnScreen": {
     one: "1 problema a corrigir não tem marca na tela agora. Abra pela lista para encontrá-lo.",
     other:

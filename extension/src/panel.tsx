@@ -252,6 +252,7 @@ function Header({
           headingId="verdict-heading"
           host={result.title}
           compact
+          checkNote={scope.focusPath === "skipped" ? t("panel.keyboardNotCounted") : undefined}
           t={t}
         >
           {notices.map((line) => (

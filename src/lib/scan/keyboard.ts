@@ -402,21 +402,17 @@ export function buildKeyboardReport(raw: RawKeyboard, t: Translate): KeyboardRep
     });
   }
 
-  if (raw.unreachable.length > 0) {
+  const walkedWholeCycle = raw.startedAtTop && raw.cycleComplete && !raw.truncated;
+  if (raw.unreachable.length > 0 && walkedWholeCycle) {
     const n = raw.unreachable.length;
-    const conclusive = raw.startedAtTop && raw.cycleComplete && !raw.truncated;
     findings.push({
       id: "unreachable-control",
-      severity: conclusive ? "serious" : "moderate",
-      evidence: conclusive ? "measured" : "heuristic",
+      severity: "serious",
+      evidence: "measured",
       criterion: criterionLabel(CRITERION["unreachable-control"], t),
-      title: conclusive
-        ? t("keyboard.unreachable.title", { count: n })
-        : t("keyboard.notReached.title", { count: n }),
-      desc: conclusive
-        ? t("keyboard.unreachable.desc", { count: n })
-        : t("keyboard.notReached.desc", { count: n }),
-      fix: conclusive ? t("keyboard.unreachable.fix") : t("keyboard.notReached.fix"),
+      title: t("keyboard.unreachable.title", { count: n }),
+      desc: t("keyboard.unreachable.desc", { count: n }),
+      fix: t("keyboard.unreachable.fix"),
       count: n,
       selectors: raw.unreachable.slice(0, MAX_FINDING_SELECTORS),
       occurrences: raw.unreachable
@@ -425,7 +421,7 @@ export function buildKeyboardReport(raw: RawKeyboard, t: Translate): KeyboardRep
           occurrenceForSelector(
             selector,
             stops,
-            conclusive ? t("keyboard.unreachable.occurrence") : t("keyboard.notReached.occurrence"),
+            t("keyboard.unreachable.occurrence"),
             "needs-review",
             raw.identities,
           ),

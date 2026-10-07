@@ -333,8 +333,7 @@ describe("buildKeyboardReport", () => {
       t,
     ).findings.find((f) => f.id === "unreachable-control");
 
-    expect(withTruncation?.evidence).toBe("heuristic");
-    expect(withTruncation?.severity).toBe("moderate");
+    expect(withTruncation).toBeUndefined();
 
     const complete = buildKeyboardReport(
       {
@@ -563,9 +562,7 @@ describe("what a walk is allowed to conclude", () => {
       t,
     );
 
-    const reach = midway.findings.find((f) => f.id === "unreachable-control");
-    expect(reach?.evidence).toBe("heuristic");
-    expect(reach?.title).toContain("hasn't reached yet");
+    expect(midway.findings.find((f) => f.id === "unreachable-control")).toBeUndefined();
     expect(midway.startedAtTop).toBe(false);
   });
 
@@ -735,24 +732,10 @@ describe("what an incomplete walk is allowed to say about reach", () => {
     focusPath: [stop(1, 10, 10)],
   };
 
-  it("no longer goes silent when the walk stopped early", () => {
-    const f = buildKeyboardReport(partial, t).findings.find((x) => x.id === "unreachable-control");
-    expect(f).toBeDefined();
-    expect(f?.count).toBe(2);
-  });
-
-  it("is born heuristic there, so it costs no points", () => {
-    const f = buildKeyboardReport(partial, t).findings.find((x) => x.id === "unreachable-control");
-    expect(f?.evidence).toBe("heuristic");
-    expect(computeScore(ownRuleViolations({ keyboard: buildKeyboardReport(partial, t) }))).toBe(
-      100,
-    );
-  });
-
-  it("says the walk ended rather than calling them unreachable", () => {
-    const f = buildKeyboardReport(partial, t).findings.find((x) => x.id === "unreachable-control");
-    expect(f?.title).toContain("hasn't reached yet");
-    expect(f?.desc).toContain("doesn't mean they can't be reached");
+  it("leaves the controls it never got to out of the findings", () => {
+    const report = buildKeyboardReport(partial, t);
+    expect(report.findings.find((x) => x.id === "unreachable-control")).toBeUndefined();
+    expect(computeScore(ownRuleViolations({ keyboard: report }))).toBe(100);
   });
 
   it("keeps the conclusive reading measured and serious", () => {
@@ -763,14 +746,14 @@ describe("what an incomplete walk is allowed to say about reach", () => {
 
     expect(complete?.evidence).toBe("measured");
     expect(complete?.severity).toBe("serious");
-    expect(complete?.title).not.toContain("hasn't reached yet");
   });
 
-  it("does not flood the report when a capped walk left many behind", () => {
+  it("does not flood the report when many controls are out of reach", () => {
     const many = Array.from({ length: 60 }, (_, i) => `#c${i}`);
-    const f = buildKeyboardReport({ ...partial, unreachable: many }, t).findings.find(
-      (x) => x.id === "unreachable-control",
-    );
+    const f = buildKeyboardReport(
+      { ...partial, truncated: false, cycleComplete: true, stoppedBy: "cycle", unreachable: many },
+      t,
+    ).findings.find((x) => x.id === "unreachable-control");
 
     expect(f?.count).toBe(60);
     expect(f?.occurrences.length).toBeLessThanOrEqual(24);
