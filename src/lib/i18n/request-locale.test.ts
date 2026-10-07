@@ -43,6 +43,6 @@ describe("locale resolution from a request", () => {
 
     expect(pt("api.internal")).not.toBe(en("api.internal"));
     expect(pt("api.internal")).toContain("Tente de novo");
-    expect(en("api.internal")).toContain("try again");
+    expect(en("api.internal")).toContain("Try again");
   });
 });

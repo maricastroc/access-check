@@ -37,7 +37,7 @@ describe("buildVerdict — never extrapolates one representative to a whole clus
     const msg = verdictMessage(v, t);
     expect(msg).toContain("The sampled element passed");
     expect(msg).toContain("other 6");
-    expect(msg).toContain("not individually verified");
+    expect(msg).toContain("not tested one by one");
     expect(msg).not.toMatch(/clears all|7 of 7|cleared/i);
   });
 
@@ -57,9 +57,9 @@ describe("buildVerdict — never extrapolates one representative to a whole clus
     expect(v.sampledCleared).toBe(2);
     expect(v.sampledFailed).toBe(2);
     const msg = verdictMessage(v, t);
-    expect(msg).toContain("Re-audited 4 of 7");
+    expect(msg).toContain("Tested 4 of 7");
     expect(msg).toContain("2 passed");
-    expect(msg).toContain("2 still flag");
+    expect(msg).toContain("2 did not");
     expect(msg).toContain("other 3");
     expect(msg).not.toMatch(/4 of 7 (occurrences )?(were )?cleared/i);
   });
@@ -85,14 +85,14 @@ describe("buildVerdict — never extrapolates one representative to a whole clus
     expect(v.fullyCovered).toBe(true);
     expect(v.sampledCleared).toBe(2);
     expect(v.sampledFailed).toBe(1);
-    expect(verdictMessage(v, t)).toContain("2 of 3 cleared");
+    expect(verdictMessage(v, t)).toContain("2 of 3 passed and 1 did not");
   });
 
   it("verified — a genuine single element", () => {
     const v = buildVerdict({ ...base, fixVerification: "verified" });
     expect(v.kind).toBe("verified");
     expect(v.fullyCovered).toBe(true);
-    expect(verdictMessage(v, t)).toBe("Applied temporarily and rechecked successfully.");
+    expect(verdictMessage(v, t)).toBe("Applied for a moment, and the rule passed.");
   });
 
   it("failed — applied but the rule still flags, with a contrast reason", () => {
@@ -114,7 +114,7 @@ describe("buildVerdict — never extrapolates one representative to a whole clus
   it("failed — a multi-element sample that only failed says the rest were not verified", () => {
     const v = buildVerdict({ ...base, elements: 5, fixGroups: [group(5, "failed")] });
     expect(v.kind).toBe("failed");
-    expect(verdictMessage(v, t)).toContain("not individually verified");
+    expect(verdictMessage(v, t)).toContain("not tested one by one");
   });
 
   it("unverifiable — a deterministic fix exists but nothing was re-audited", () => {
@@ -189,7 +189,7 @@ describe("buildVerdict — only a deterministic fix can earn Fix tested", () => 
     expect(v.kind).toBe("contextual");
     expect(v.reaudited).toBe(0);
     expect(verdictLabel(v, t)).toBeNull();
-    expect(verdictMessage(v, t)).toContain("only a person can make");
+    expect(verdictMessage(v, t)).toContain("only a person can judge");
   });
 
   it("a suggestion without apply is never certified", () => {

@@ -53,7 +53,7 @@ export function SiteCrawlView({ initial }: { initial: CrawlSnapshot }) {
 
       {snap.status === "running" && pending > 0 && (
         <p className="mt-4 text-[12.5px] text-muted" aria-live="polite">
-          {pending} page{pending > 1 ? "s" : ""} still in the queue…
+          {t("site.stillQueued", { count: pending })}
         </p>
       )}
     </CrawlShell>

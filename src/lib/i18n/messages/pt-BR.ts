@@ -16,7 +16,7 @@ export const ptBR: Catalog = {
     "O que a extensão de navegador do AccessCheck lê, e para onde isso vai.",
   "meta.title": "AccessCheck: meça, localize e rastreie cada barreira de acessibilidade",
   "meta.description":
-    "Cole um endereço da web. O AccessCheck abre a página em um navegador real, roda o axe-core (WCAG níveis A e AA) e mais as análises de teclado, celular e movimento. Cada problema volta ligado ao elemento que o causou, com uma correção já testada em uma cópia da página.",
+    "Cole um endereço da web. O AccessCheck abre a página em um navegador real, roda o axe-core (WCAG níveis A e AA) e mais as verificações de teclado, celular e movimento. Cada problema volta ligado ao elemento que o causou, com uma correção já testada em uma cópia da página.",
   "nav.skipToContent": "Pular para o conteúdo",
   "nav.howItWorks": "Como funciona",
   "nav.checks": "Verificações",
@@ -24,21 +24,21 @@ export const ptBR: Catalog = {
   "capture.stopOutside":
     "A parada {n} fica cerca de {docY}px abaixo do topo. Nenhuma captura deste relatório cobre esse ponto.",
   "capture.stopInsideScroller":
-    "A parada {n} está dentro de uma área rolável ({context}). Esta captura foi feita com essa área em repouso, então a parada não é desenhada onde a caminhada a encontrou.",
+    "A parada {n} está dentro de uma área rolável ({context}). Esta captura foi feita com essa área em repouso, então a parada não aparece onde o percurso a encontrou.",
   "capture.stopInsideScrollerPlain":
-    "A parada {n} está dentro de uma área rolável. Esta captura foi feita com essa área em repouso, então a parada não é desenhada onde a caminhada a encontrou.",
+    "A parada {n} está dentro de uma área rolável. Esta captura foi feita com essa área em repouso, então a parada não aparece onde o percurso a encontrou.",
   "capture.stopUnplaced": "A parada {n} não tinha posição mensurável na página.",
-  "capture.noStopsLanded": "Nenhuma parada do foco caiu dentro desta captura.",
-  "capture.focusHint": "Escolha uma parada no caminho de foco para acompanhá-la aqui.",
+  "capture.noStopsLanded": "Nenhuma parada do foco aparece nesta captura.",
+  "capture.focusHint": "Escolha uma parada no caminho do foco para acompanhá-la aqui.",
   "capture.regionLabel": "Captura da página a {docY}px do topo",
   "capture.backToFirst": "Voltar à primeira captura",
   "capture.regionMissedTitle": "Esta área não foi capturada",
   "capture.regionMissedTime":
-    "A auditoria ficou sem tempo antes de fotografar a página em torno de {docY}px do topo. O resto do relatório não é afetado.",
+    "A auditoria ficou sem tempo antes de capturar a página em torno de {docY}px do topo. O resto do relatório não é afetado.",
   "capture.regionMissedBytes":
-    "O relatório atingiu o peso que pode carregar antes de fotografar a página em torno de {docY}px do topo. O resto do relatório não é afetado.",
+    "O relatório atingiu o limite de tamanho antes de capturar a página em torno de {docY}px do topo. O resto do relatório não é afetado.",
   "capture.regionMissedFailed":
-    "A página não respondeu enquanto a área em torno de {docY}px do topo era fotografada. O resto do relatório não é afetado.",
+    "A página parou de responder enquanto a área em torno de {docY}px do topo era capturada. O resto do relatório não é afetado.",
   "capture.noMarkersLanded":
     "Nenhum problema está marcado nesta captura. Abra um problema e o relatório vai para a parte da página de onde ele veio.",
   "language.label": "Idioma",
@@ -49,8 +49,9 @@ export const ptBR: Catalog = {
   "api.site.rateLimited":
     "Auditorias de site demais em pouco tempo. Espere alguns minutos e tente de novo.",
   "api.site.unavailable":
-    "As auditorias de site estão temporariamente indisponíveis. Audite uma página só, ou tente mais tarde.",
-  "api.site.disabled": "As auditorias de site não estão disponíveis agora. Audite uma página só.",
+    "As auditorias de site estão temporariamente indisponíveis. Audite uma única página ou tente mais tarde.",
+  "api.site.disabled":
+    "As auditorias de site não estão disponíveis agora. Audite uma única página.",
   "audit.live.criterion": "WCAG 4.1.3 \u00b7 Mensagens de status",
   "audit.live.invalidTitle": {
     one: "{count} região dinâmica com valor inválido em aria-live",
@@ -66,15 +67,15 @@ export const ptBR: Catalog = {
       "{count} regiões dinâmicas aparecem na tela, mas estão ocultas para tecnologias assistivas",
   },
   "audit.live.hiddenDesc":
-    'A região mostra texto na tela, mas tem aria-hidden="true", então o leitor de tela é informado de que ela não existe: o que quem enxerga lê ali nunca é anunciado.',
+    'A região mostra texto na tela, mas tem aria-hidden="true". Por isso, o leitor de tela a trata como inexistente e nunca anuncia o que quem enxerga lê ali.',
   "audit.live.hiddenFix":
-    "Remova o aria-hidden da região dinâmica. Se ela precisa ficar fora da tela, use um padrão visível apenas para leitores de tela, que a mantém na árvore de acessibilidade.",
+    "Remova o aria-hidden da região dinâmica. Se ela precisar ficar fora da tela, esconda-a com um padrão visível só para leitores de tela, que a mantém na árvore de acessibilidade.",
   "audit.live.conditionalTitle": {
     one: "{count} região dinâmica começa oculta",
     other: "{count} regiões dinâmicas começam ocultas",
   },
   "audit.live.conditionalDesc":
-    'Quando a página foi lida, a região estava oculta (display:none, visibility:hidden, o atributo hidden ou aria-hidden) e ainda não mostrava nada. Isso é esperado para uma mensagem que a página revela depois de uma ação, e um role="alert" revelado assim é anunciado pela maioria dos leitores de tela. Mas um texto escrito nela enquanto continua oculta nunca é anunciado, e a leitura da página não consegue distinguir os dois casos.',
+    'Quando a página foi lida, a região estava oculta (display:none, visibility:hidden, o atributo hidden ou aria-hidden) e ainda não mostrava nada. Isso é esperado para uma mensagem que a página revela depois de uma ação, e a maioria dos leitores de tela anuncia um role="alert" revelado assim. Mas um texto escrito na região enquanto ela continua oculta nunca é anunciado, e só lendo a página não dá para distinguir os dois casos.',
   "audit.live.conditionalFix":
     "Dispare o que preenche a região, como enviar o formulário ou adicionar ao carrinho, e ouça com um leitor de tela. Se a atualização não for anunciada, mantenha a região na árvore de acessibilidade e troque o texto dela, em vez de revelar uma região oculta.",
   "audit.live.mutedTitle": {
@@ -116,20 +117,20 @@ export const ptBR: Catalog = {
     "O navegador que usamos para abrir a página parou de responder antes de a auditoria rodar.",
   "scanFail.browserSlow":
     "O navegador que usamos para abrir a página demorou demais para iniciar. Tente de novo.",
-  "scanFail.unreachable": "Não foi possível alcançar a página.",
+  "scanFail.unreachable": "Não foi possível acessar a página.",
   "scanFail.timeout": "A auditoria de acessibilidade não conseguiu terminar nesta página a tempo.",
-  "scanFail.generic": "A varredura falhou.",
+  "scanFail.generic": "A auditoria falhou.",
   "scanFail.httpError":
     "A página devolveu um erro (HTTP {status}), então não conseguimos auditá-la. Confira o endereço e tente de novo.",
   "scanFail.navigationTimeout": "A página levou mais de {seconds}s para responder.",
   "scanFail.engineMissing":
     "Não foi possível carregar o motor de auditoria na página ({path}). Compile com `npm run build:engine`. {detail}",
   "scanFail.engineVersion":
-    "O motor de auditoria na página informa a versão {found}, e este driver precisa da {needed}. Compile de novo com `npm run build:engine`.",
+    "O motor de auditoria na página informa a versão {found}, mas este driver precisa da {needed}. Compile de novo com `npm run build:engine`.",
 
   "home.lens.sharedColor": "Problema de contraste, outro elemento com a mesma cor",
   "home.lens.locatedElement": "Problema de contraste, elemento localizado",
-  "home.lens.locatedVerified": "Elemento localizado verificado",
+  "home.lens.locatedVerified": "Elemento localizado, correção testada",
   "home.example.headingSkip": "Níveis de título pulados",
 
   "api.internal": "Algo deu errado do nosso lado. Tente de novo.",
@@ -139,7 +140,7 @@ export const ptBR: Catalog = {
   "api.rateLimited": "Auditorias demais em pouco tempo. Espere cerca de um minuto e tente de novo.",
   "api.invalidAddress": "Isso não parece um endereço da web válido. Confira e tente de novo.",
   "api.tooSlow":
-    "Esta página demorou demais para terminar. Tente uma página única e mais leve em vez de uma home grande.",
+    "Esta página demorou demais para terminar. Tente uma página mais leve em vez de uma página inicial grande.",
   "api.auditFailed": "Não conseguimos auditar esta página. Tente outro endereço da web.",
 
   "report.passedChecks": "Verificações aprovadas",
@@ -150,13 +151,13 @@ export const ptBR: Catalog = {
 
   "md.reportTitle": "Relatório de acessibilidade: {name}",
   "md.url": "URL",
-  "md.elementsScanned": "Elementos analisados",
+  "md.elementsScanned": "Elementos verificados",
   "md.generated": "Gerado em",
   "md.manualOutside": {
     one: "{count} item de revisão manual não entra nesta contagem.",
     other: "{count} itens de revisão manual não entram nesta contagem.",
   },
-  "md.wcagReading": "Leitura WCAG",
+  "md.wcagReading": "Níveis da WCAG",
   "md.failsBy": "reprova em {criteria}",
   "md.noAFailures": "nenhuma falha de nível A detectada automaticamente",
   "md.noAAFailures": "nenhuma falha de nível AA detectada automaticamente",
@@ -169,9 +170,9 @@ export const ptBR: Catalog = {
   "md.howToCheck": "Como conferir",
   "md.checksPassed": "Verificações automáticas aprovadas ({count})",
   "md.footer":
-    "_As correções são aplicadas e reauditadas numa cópia da página; o site auditado não é alterado. Este veredito cobre o que uma ferramenta decide sozinha; não atesta conformidade._",
+    "_As correções são testadas em uma cópia da página, então o site auditado nunca é alterado. Este resultado cobre só o que uma ferramenta decide sozinha. Não é uma declaração de conformidade._",
   "md.bestPracticeNote": "**Boa prática** (não é um critério de sucesso da WCAG)",
-  "md.passLabel": "Análise",
+  "md.passLabel": "Verificação",
   "md.affected": "Afetados",
   "md.elementsLabel": "Elementos",
   "md.measuredLabel": "Medido",
@@ -182,12 +183,12 @@ export const ptBR: Catalog = {
   "md.setProp": "Defina `{prop}` como {hex}.",
   "md.andMore": "(mais {count})",
   "md.noFailures":
-    "Nenhuma falha detectada automaticamente nesta página. Isto é cobertura, não conformidade WCAG.",
+    "Nenhuma falha detectada automaticamente nesta página. Isso não equivale a conformidade com a WCAG.",
   "md.manualOutsideScore":
-    "O teste automatizado não conseguiu decidir estes, então confirme à mão. Eles não entram nesta contagem.",
+    "Os testes automáticos não conseguiram decidir estes itens, então confirme à mão. Eles não entram nesta contagem.",
 
   "preview.stillFlagged":
-    "O par calculado atinge o mínimo, mas a reauditoria ao vivo do elemento localizado ainda sinaliza. O fundo real provavelmente é uma imagem, um gradiente ou uma camada sobreposta, então a cor sólida que detectamos não é o fundo real.",
+    "O par calculado atinge o mínimo, mas a regra ainda sinaliza o elemento localizado quando roda de novo na página. O fundo real provavelmente é uma imagem, um gradiente ou uma camada sobreposta, e não a cor sólida que detectamos.",
   "preview.noColorReaches": "Nenhuma mudança de cor sozinha atinge o mínimo neste par de matizes.",
 
   "scanError.hint.invalidUrl": "Confira o endereço e tente de novo.",
@@ -195,13 +196,14 @@ export const ptBR: Catalog = {
   "scanError.hint.rateLimited": "Espere um momento antes de começar outra auditoria.",
   "scanError.hint.navigationTimeout":
     "O site pode estar lento, ou pode estar bloqueando navegadores automatizados.",
-  "scanError.hint.navigationFailed": "Confira o endereço, ou o site pode estar fora do ar.",
-  "scanError.hint.httpError": "O endereço pode estar errado, removido, ou atrás de um login.",
+  "scanError.hint.navigationFailed": "Confira o endereço. O site também pode estar fora do ar.",
+  "scanError.hint.httpError":
+    "O endereço pode estar errado, ou a página pode ter sido removida ou exigir login.",
   "scanError.hint.auditFailed":
-    "Esta página é excepcionalmente pesada. Tente uma página específica em vez da home.",
-  "scanError.hint.browserUnavailable": "Dê um instante e tente de novo.",
+    "Esta página é muito pesada. Tente uma página específica em vez da página inicial.",
+  "scanError.hint.browserUnavailable": "Espere um pouco e tente de novo.",
   "scanError.hint.timeout":
-    "Esta página é excepcionalmente pesada. Tente uma página específica em vez da home.",
+    "Esta página é muito pesada. Tente uma página específica em vez da página inicial.",
   "scanError.hint.interrupted": "A conexão caiu durante a auditoria. Tente de novo.",
   "scanError.hint.internal": "Algo deu errado do nosso lado. Tente de novo.",
 
@@ -209,7 +211,7 @@ export const ptBR: Catalog = {
   "scanError.message.blockedUrl": "Esse endereço não pode ser auditado.",
   "scanError.message.rateLimited": "Auditorias demais em pouco tempo. Tente de novo em um minuto.",
   "scanError.message.navigationTimeout": "A página demorou demais para responder.",
-  "scanError.message.navigationFailed": "Não conseguimos alcançar a página.",
+  "scanError.message.navigationFailed": "Não conseguimos acessar a página.",
   "scanError.message.httpError":
     "A página devolveu um erro, então não conseguimos auditá-la. Confira o endereço e tente de novo.",
   "scanError.message.auditFailed": "Não conseguimos terminar a auditoria nesta página.",
@@ -217,14 +219,14 @@ export const ptBR: Catalog = {
     "Não conseguimos iniciar o navegador usado para abrir a página. Tente de novo.",
   "scanError.message.timeout": "A auditoria ficou sem tempo nesta página.",
   "scanError.message.interrupted": "A auditoria parou antes de terminar.",
-  "scanError.message.internal": "A auditoria parou antes de conseguir terminar. Tente de novo.",
+  "scanError.message.internal": "A auditoria parou antes de terminar. Tente de novo.",
 
   "scanWarning.screenshotUnavailable": "Não deu tempo de tirar a captura de tela.",
   "scanWarning.fixDetailsSkipped":
     "Alguns problemas mostram orientação geral em vez de uma correção específica, e identificam o elemento apenas pelo seletor.",
   "scanWarning.regionsSkipped":
-    "Algumas áreas da página abaixo da primeira captura não foram fotografadas, então alguns problemas ficam sem imagem de onde estão.",
-  "scanWarning.markersSkipped": "Não foi possível posicionar os marcadores na captura.",
+    "Algumas áreas da página abaixo da primeira captura ficaram de fora, então alguns problemas ficam sem imagem de onde estão.",
+  "scanWarning.markersSkipped": "Não foi possível posicionar as marcas na captura.",
   "scanWarning.contentUnsettled": "A página ainda estava carregando quando a auditoria rodou.",
   "scanWarning.verificationSkipped":
     "Desta vez as correções não foram testadas em uma cópia da página.",
@@ -233,80 +235,82 @@ export const ptBR: Catalog = {
   "scanWarning.keyboardSkipped": "A verificação de teclado e ordem de foco foi pulada.",
   "scanWarning.lazyContentSkipped":
     "Conteúdo que só aparece ao rolar não foi carregado antes da auditoria.",
-  "scanWarning.walkChangedPage": "Teclar Tab pela página abriu conteúdo que ficou aberto.",
+  "scanWarning.walkChangedPage": "Navegar com Tab pela página abriu conteúdo que ficou aberto.",
   "scanWarning.contextsSkipped": "A verificação de celular e estados dinâmicos foi pulada.",
   "scanWarning.streamInterrupted":
     "A auditoria foi interrompida antes de todas as verificações terminarem.",
   "scanWarning.crossOriginAssets":
     "Alguns estilos e mídias vieram de outra origem e não puderam ser lidos.",
 
-  "blocked.chromePages": "O Chrome não deixa nenhuma extensão rodar nas páginas dele.",
+  "blocked.chromePages": "O Chrome não deixa nenhuma extensão rodar nas próprias páginas.",
   "blocked.extensionPage": "Esta é uma página de extensão, não uma página da web.",
   "blocked.webStore": "O Chrome bloqueia extensões na Web Store.",
-  "blocked.builtinViewer": "O visualizador embutido do Chrome não expõe uma página para auditar.",
+  "blocked.builtinViewer":
+    "O visualizador embutido do Chrome não tem uma página que a auditoria consiga ler.",
   "blocked.localFile":
-    "Arquivos locais exigem que o acesso a arquivos da extensão esteja ligado em chrome://extensions.",
+    "Para auditar arquivos locais, ative o acesso a arquivos da extensão em chrome://extensions.",
   "blocked.noAddress": "Esta aba não tem endereço que a auditoria consiga ler.",
 
   "background.wokeUp":
-    "O Chrome suspendeu a extensão antes de a auditoria terminar, então nada foi medido. Rode de novo.",
+    "O Chrome suspendeu a extensão antes de a auditoria terminar, então nada foi medido. Rode a auditoria de novo.",
   "background.pageUnreadable": "Não foi possível ler a página.",
   "background.auditEmpty": "A auditoria não devolveu nada.",
   "background.permissionLapsed":
-    "Esta aba mudou de página, então a permissão daquela aba expirou. Clique no ícone do AccessCheck na página para auditá-la de novo.",
+    "Esta aba mudou de página, e o acesso que você deu a ela expirou. Clique no ícone do AccessCheck na página para auditá-la de novo.",
   "background.otherTab":
-    "Auditar outra aba exige um clique no ícone do AccessCheck lá: é esse clique que dá acesso a ela.",
+    "Para auditar outra aba, clique no ícone do AccessCheck nela. É esse clique que dá à extensão acesso à aba.",
   "background.nothingAudited": "Nada foi auditado nesta aba ainda.",
-  "background.tabUnreachable": "Esta aba mudou de página, então não dá mais para alcançá-la daqui.",
-  "background.markupFailed": "Não foi possível marcar a página.",
+  "background.tabUnreachable":
+    "Esta aba mudou de página, então a página auditada não pode mais ser acessada daqui.",
+  "background.markupFailed": "Não foi possível desenhar as marcas na página.",
   "background.tabBehind":
     "Este relatório é de outra aba. Volte para ela para localizar os problemas na página ou verificar o teclado.",
 
   "deep.cancelled":
     "Você interrompeu, então o caminho do foco não foi percorrido. O resto deste relatório continua valendo.",
   "deep.cancelledPlain":
-    "A auditoria profunda foi cancelada, então o caminho do foco não foi percorrido.",
+    "A verificação de teclado foi cancelada, então o caminho do foco não foi percorrido.",
   "deep.alreadyAttached":
-    "Já existe um depurador anexado a esta aba, normalmente o DevTools. Feche-o e verifique o teclado de novo.",
+    "Já existe um depurador conectado a esta aba, normalmente o DevTools. Feche-o e verifique o teclado de novo.",
   "deep.notDebuggable":
     "O Chrome não permite depurar esta página, então o caminho do foco não pode ser percorrido aqui.",
-  "deep.attachRefused": "O Chrome recusou anexar o depurador: {reason}",
+  "deep.attachRefused": "O Chrome não deixou conectar o depurador: {reason}",
   "deep.tabMovedOn":
-    "A aba mudou de página enquanto o caminho do foco era percorrido, então a auditoria profunda parou.",
-  "deep.unfinished": "A auditoria profunda não conseguiu terminar: {reason}",
+    "A aba mudou de página enquanto o caminho do foco era percorrido, então a verificação de teclado parou.",
+  "deep.unfinished": "A verificação de teclado não conseguiu terminar: {reason}",
   "deep.notReleased":
-    "O Chrome não liberou o depurador. O aviso na aba pode continuar até você recarregá-la.",
+    "O Chrome não liberou o depurador. O aviso dele pode continuar na aba até você recarregá-la.",
 
   "engine.missing":
     "O motor de auditoria do AccessCheck não foi injetado nesta página. Recarregue a extensão e tente de novo.",
   "engine.versionMismatch":
-    "O motor de auditoria na página informa a versão {found}, e esta versão precisa da {needed}.",
+    "O motor de auditoria na página informa a versão {found}, mas esta versão da extensão precisa da {needed}.",
 
   "warning.keyboardSkipped":
-    'O caminho do foco não foi percorrido. Use "Verificar teclado" para enviar pressionamentos reais de Tab pela página.',
+    'O caminho do foco não foi percorrido. Use "Verificar teclado" para percorrer a página pressionando Tab.',
   "warning.keyboardFailed": "O caminho do foco não foi percorrido. {reason}",
   "warning.lazyContent":
-    "Conteúdo que só aparece quando você rola até ele não foi carregado, então nada abaixo da dobra foi lido. A auditoria expandida percorre a página antes; esta leitura não fez isso.",
+    "Conteúdo que só aparece quando você rola até ele não foi carregado, então nada abaixo da dobra foi lido. Normalmente a auditoria rola a página antes, mas desta vez não conseguiu.",
   "warning.contextsSkipped":
-    "A análise em viewport de celular precisa de emulação de viewport, indisponível nesta versão.",
+    "A verificação em viewport de celular precisa de emulação de viewport, que esta versão não tem.",
   "warning.reducedMotionSkipped":
-    "A checagem de movimento reduzido precisa de emulação de mídia, indisponível nesta versão. Tamanho de alvo e regiões dinâmicas foram verificados.",
+    "A verificação de movimento reduzido precisa de emulação de mídia, que esta versão não tem. Tamanho do alvo e regiões dinâmicas foram verificados.",
   "warning.walkChangedPage":
-    "Pressionar Tab por esta página abriu algo que ficou aberto, como um menu, um painel ou uma lista de sugestões. As regras já tinham lido a página, então auditar de novo pode dar uma leitura um pouco diferente.",
+    "Navegar com Tab por esta página abriu algo que ficou aberto, como um menu, um painel ou uma lista de sugestões. As regras já tinham lido a página, então auditar de novo pode dar um resultado um pouco diferente.",
   "warning.contentUnsettled":
-    "A página ainda estava mudando depois de seis segundos de espera, então as regras leram um alvo em movimento. Problemas de uma página que não estabilizou não são confiáveis e variam entre execuções.",
+    "A página ainda estava mudando depois de seis segundos de espera, então as regras leram um alvo em movimento. Problemas de uma página que não estabilizou não são confiáveis e podem variar entre execuções.",
   "warning.crossOrigin":
-    "{assets} nesta página {verb} de outra origem, que esta versão não tem permissão para buscar. Regras que leem esses arquivos, como a checagem de trava de orientação, aparecem como precisando de revisão em vez de aprovadas. Tudo que foi lido da própria página não é afetado.",
+    "{assets} nesta página {verb} de outra origem, que esta versão não tem permissão para buscar. Regras que leem esses arquivos, como a verificação de trava de orientação, ficam marcadas para revisão em vez de aprovadas. Tudo o que foi lido da própria página não é afetado.",
   "warning.crossOriginComes": "vem",
   "warning.crossOriginCome": "vêm",
 
   "caveat.contentUnsettled": "página ainda mudando",
   "caveat.walkChangedPage": "o percurso abriu conteúdo",
-  "caveat.crossOriginAssets": "alguns estilos ilegíveis",
+  "caveat.crossOriginAssets": "alguns estilos não lidos",
   "caveat.screenshotUnavailable": "sem captura de tela",
-  "caveat.markersSkipped": "sem marcadores na captura",
+  "caveat.markersSkipped": "sem marcas na captura",
   "caveat.fixDetailsSkipped": "detalhes da correção ausentes",
-  "caveat.streamInterrupted": "leitura interrompida",
+  "caveat.streamInterrupted": "auditoria interrompida",
 
   "coverage.partialChecks": {
     one: "Cobertura parcial · {count} verificação indisponível",
@@ -330,19 +334,19 @@ export const ptBR: Catalog = {
   },
   "focusPath.leftoverNone": "pode não ter chegado ao fim da ordem de tabulação",
   "focusPath.stoppedByCap":
-    "Parcial: o percurso atingiu seu limite de {stops} paradas, então {leftover}.",
+    "Parcial: o percurso atingiu o limite de {stops} paradas, então {leftover}.",
   "focusPath.stoppedByTimeout":
     "Parcial: o percurso ficou sem tempo depois de {stops}, então {leftover}.",
   "focusPath.stoppedByOpaque":
-    "Parcial: o foco entrou em um iframe ou num shadow root, que esta versão não consegue enxergar, então {leftover}.",
+    "Parcial: o foco entrou em um iframe ou shadow root, que esta versão não consegue enxergar, então {leftover}.",
   "focusPath.stoppedByTrap": "Parcial: o foco ficou preso na parada {stops}, então {leftover}.",
 
   "scope.stillMissing":
-    "O viewport de celular e o movimento reduzido continuam fora daqui, então esta não é uma auditoria completa.",
+    "O viewport de celular e o movimento reduzido ainda não foram verificados aqui, então esta não é uma auditoria completa.",
   "scope.focusPathPending": "Teclado ainda não verificado",
   "scope.currentTabKicker": "Esta aba",
   "scope.skippedNote":
-    "O caminho do foco não foi verificado, então nada aqui responde pelo uso com teclado. {why} {rest}",
+    "O caminho do foco não foi verificado, então nada aqui cobre o uso com teclado. {why} {rest}",
   "scope.partialBadge": "A verificação de teclado não começou no primeiro controle",
   "scope.partialNote":
     "Não foi possível levar o caminho do foco de volta ao primeiro controle, então estas {stops} paradas começam em algum ponto dentro da página, e não no início da ordem de tabulação. {rest}",
@@ -350,8 +354,7 @@ export const ptBR: Catalog = {
   "scope.truncatedNote":
     "O caminho do foco parou cedo, depois de {stops} paradas, então nada além desse ponto foi alcançado. {rest}",
   "scope.walkedBadge": "Inclui o caminho do foco do teclado",
-  "scope.walkedNote":
-    "O caminho do foco foi percorrido até o fim com pressionamentos reais de Tab. {rest}",
+  "scope.walkedNote": "O caminho do foco foi percorrido até o fim pressionando a tecla Tab. {rest}",
 
   "summary.scope": " entre as verificações que rodaram",
   "summary.bestPractice": {
@@ -363,36 +366,36 @@ export const ptBR: Catalog = {
     other: "{count} itens de revisão manual",
   },
   "summary.needsReview": {
-    one: "{count} observação que precisa de conferência humana",
-    other: "{count} observações que precisam de conferência humana",
+    one: "{count} observação para uma pessoa conferir",
+    other: "{count} observações para uma pessoa conferir",
   },
   "evidence.heuristic.title": "Por que isto não conta como falha",
   "evidence.heuristic.body":
     "É uma observação sobre como a página se comportou, não uma regra que passa ou falha, então não entra nesta contagem. O que resolveria a dúvida está na descrição acima.",
-  "md.needsHumanCheck": "Observações que precisam de conferência humana",
+  "md.needsHumanCheck": "Observações para uma pessoa conferir",
   "md.needsHumanCheckNote":
-    "Lido a partir do comportamento da página, não de uma regra que passa ou falha. Não entram nesta contagem, e cada um diz o que resolveria a dúvida.",
+    "Vêm do comportamento da página, não de uma regra que passa ou falha. Não entram nesta contagem, e cada uma diz o que resolveria a dúvida.",
   "standing.blocked": "Barreiras críticas",
   "standing.blockedNote":
     "Pelo menos uma barreira impede que quem usa tecnologia assistiva consiga passar.",
   "standing.failing": "Com falhas",
   "standing.failingNote": "Sem barreiras críticas, mas outras ainda dificultam tarefas reais.",
   "standing.gaps": "Lacunas pequenas",
-  "standing.gapsNote": "Nada sério foi encontrado automaticamente; o que restou é pequeno.",
+  "standing.gapsNote": "Nada sério foi encontrado automaticamente. O que restou é pequeno.",
   "standing.clean": "Nenhuma regra falhou",
   "standing.cleanNote":
-    "Nenhuma regra falhou. Uma ferramenta não enxerga tudo, então os itens abaixo ainda precisam de uma pessoa.",
+    "Uma ferramenta não enxerga tudo, então os itens abaixo ainda precisam de uma pessoa.",
   "standing.kicker": "Como esta página está",
   "standing.pending": "Ainda verificando",
   "standing.pendingNote":
-    "A primeira leitura chegou. Teclado, viewport de celular, menus expandidos, movimento e regiões dinâmicas ainda estão sendo verificados, e qualquer um deles pode mudar como esta página está.",
+    "Os primeiros resultados chegaram. Teclado, viewport de celular, menus expandidos, movimento e regiões dinâmicas ainda estão sendo verificados, e qualquer um deles pode mudar a avaliação desta página.",
   "standing.issueCount": {
     one: "{count} problema {severity}",
     other: "{count} problemas {severity}",
   },
-  "standing.staleTitle": "Lida por um modelo de pontuação anterior",
+  "standing.staleTitle": "Pontuado com um modelo anterior",
   "standing.staleBody":
-    "Esta leitura foi produzida antes do modelo atual, que deixa observações fora da aritmética. As contagens e a ordenação dela seguem as regras antigas. Audite a página de novo para lê-la sob o modelo atual.",
+    "Este resultado foi gerado antes do modelo de pontuação atual, que deixa as observações fora da contagem. As contagens e a ordenação seguem as regras antigas. Audite a página de novo para pontuá-la com o modelo atual.",
   "priority.kicker": "O que corrigir primeiro",
   "priority.note": "Ordenado por quanto do peso restante da página cada grupo carrega.",
   "priority.share": "{share}% do que resta",
@@ -400,15 +403,15 @@ export const ptBR: Catalog = {
     one: "em {count} elemento",
     other: "em {count} elementos",
   },
-  "priority.nothing": "Nada é cobrado desta página.",
+  "priority.nothing": "Nada pesa contra esta página.",
   "summary.remaining": {
-    one: " Resta {parts}, não contabilizado.",
-    other: " Restam {parts}, não contabilizados.",
+    one: " Resta {parts}, fora desta contagem.",
+    other: " Restam {parts}, fora desta contagem.",
   },
   "summary.critical": {
-    one: "{count} problema crítico impede algumas pessoas de avançar, então a página não atende ao nível AA da WCAG. Corrija ele primeiro.",
+    one: "{count} problema crítico impede algumas pessoas de avançar, então a página não atende ao nível AA da WCAG. Comece por ele.",
     other:
-      "{count} problemas críticos impedem algumas pessoas de avançar, então a página não atende ao nível AA da WCAG. Corrija eles primeiro.",
+      "{count} problemas críticos impedem algumas pessoas de avançar, então a página não atende ao nível AA da WCAG. Comece por eles.",
   },
   "summary.serious": {
     one: "Nenhuma barreira crítica{scope}, mas {count} problema grave ainda deixa a página mais difícil de usar para quem depende de tecnologia assistiva.",
@@ -433,11 +436,11 @@ export const ptBR: Catalog = {
     "Encontrado só neste contexto ({where}). Não falha no primeiro carregamento em desktop.",
 
   "review.generic.how":
-    "O teste automatizado não conseguiu decidir este caso, então precisa de uma pessoa para confirmar.",
+    "Os testes automáticos não conseguiram decidir este caso, então uma pessoa precisa confirmar.",
   "review.generic.s1":
     "Inspecione cada elemento afetado nas ferramentas de desenvolvedor do navegador",
-  "review.generic.s2": "Confira contra o critério de sucesso da WCAG listado aqui",
-  "review.generic.s3": "Confirme se a intenção se sustenta para quem usa leitor de tela e teclado",
+  "review.generic.s2": "Compare com o critério de sucesso da WCAG indicado aqui",
+  "review.generic.s3": "Confirme se funciona como esperado para quem usa leitor de tela e teclado",
 
   "review.contrast.how":
     "O verificador não conseguiu ler o que está atrás deste texto. Normalmente é uma imagem de fundo, um gradiente, uma camada translúcida ou um elemento sobreposto.",
@@ -451,25 +454,26 @@ export const ptBR: Catalog = {
   "review.linkInText.s1":
     "Dê ao link uma pista que não seja cor, como um sublinhado (a opção mais segura)",
   "review.linkInText.s2":
-    "Se for só cor, confirme pelo menos 3:1 de contraste contra o texto ao redor",
+    "Se for só cor, confirme pelo menos 3:1 de contraste em relação ao texto ao redor",
   "review.linkInText.s3": "Confirme uma mudança visível no hover e no foco por teclado",
 
   "review.scrollable.how":
     "Esta região rola, então quem usa teclado precisa conseguir alcançá-la e rolá-la.",
-  "review.scrollable.s1": "Tabule até a região e tente rolar com as setas",
+  "review.scrollable.s1": "Use Tab até chegar à região e tente rolar com as setas",
   "review.scrollable.s2": 'Se não for alcançável, acrescente tabindex="0" ao contêiner de rolagem',
   "review.scrollable.s3":
     "Garanta que o conteúdo interno continue alcançável em uma ordem que faça sentido",
 
   "review.nameMismatch.how":
-    "O rótulo visível e o nome acessível divergem, o que quebra quem usa controle por voz e fala o que vê.",
+    "O rótulo visível e o nome acessível são diferentes, e isso faz o controle por voz falhar para quem diz o que está vendo.",
   "review.nameMismatch.s1": "Compare o texto visível com o aria-label / aria-labelledby",
   "review.nameMismatch.s2": "Garanta que o nome acessível contenha o texto visível, na mesma ordem",
   "review.nameMismatch.s3": "Prefira remover o aria-label e deixar o texto visível ser o nome",
 
-  "review.frame.how": "Esta página embute um <iframe> que o axe não consegue enxergar.",
+  "review.frame.how": "Esta página incorpora um <iframe> que o axe não consegue enxergar.",
   "review.frame.s1": "Dê ao <iframe> um atributo title curto e descritivo",
-  "review.frame.s2": "Audite a página embutida separadamente. Ela tem a própria acessibilidade",
+  "review.frame.s2":
+    "Audite a página incorporada separadamente, já que o conteúdo dela não é verificado aqui",
 
   "review.tableHeader.how":
     "O axe não conseguiu confirmar que este cabeçalho de tabela está ligado às suas células de dados.",
@@ -485,17 +489,18 @@ export const ptBR: Catalog = {
 
   "review.orientation.how": "A página pode travar o conteúdo em uma única orientação de tela.",
   "review.orientation.s1": "Gire o dispositivo ou emulador entre retrato e paisagem",
-  "review.orientation.s2": "Confirme se conteúdo e funcionalidade sobrevivem nas duas orientações",
+  "review.orientation.s2":
+    "Confirme se o conteúdo e as funções continuam disponíveis nas duas orientações",
 
   "review.pAsHeading.how":
     "Um parágrafo está estilizado para parecer um título (negrito ou grande).",
   "review.pAsHeading.s1": "Se ele introduz uma seção, transforme em um título real, de <h1> a <h6>",
-  "review.pAsHeading.s2": "Se é só texto enfatizado, este caso pode ser dispensado com segurança",
+  "review.pAsHeading.s2": "Se for só texto em destaque, pode ignorar este caso",
 
   "review.nested.how":
     "Um controle interativo parece aninhado dentro de outro (por exemplo, um botão dentro de um link).",
   "review.nested.s1": "Confirme que não há controles focalizáveis dentro de outros controles",
-  "review.nested.s2": "Achate a marcação para que cada controle fique por conta própria",
+  "review.nested.s2": "Simplifique a marcação para que cada controle fique separado",
 
   "home.lens.frameLabel": "Captura \u00b7 escala 43%",
 
@@ -505,10 +510,10 @@ export const ptBR: Catalog = {
   "home.md.line3": "| grave    | 1 | 7 |",
   "home.md.line4": "| moderado | 2 | 2 |",
   "home.md.line5": "### Corrija primeiro",
-  "home.md.line6": "1. color-contrast \u00b7 1.4.3 \u00b7 verificada",
+  "home.md.line6": "1. color-contrast · 1.4.3 · correção testada",
 
   "focusPath.insideScroller": "dentro de uma área rolável",
-  "capture.markerHint": "Selecione um marcador para abrir o problema a que ele pertence.",
+  "capture.markerHint": "Selecione uma marca para abrir o problema dela.",
   "detail.sharedColorPair": {
     one: "{count} ocorrência tem o mesmo par de cores detectado.",
     other: "{count} ocorrências têm o mesmo par de cores detectado.",
@@ -521,19 +526,19 @@ export const ptBR: Catalog = {
   "provenance.sandboxNote":
     "As correções são aplicadas e revertidas em uma cópia, então o site auditado nunca é alterado.",
   "report.wcagDependsOn": {
-    one: "Este veredito cobre o que uma ferramenta decide sozinha. Atender à WCAG depende também do {count} item de revisão manual listado na página 3.",
+    one: "Este resultado cobre só o que uma ferramenta decide sozinha. Atender à WCAG também depende do item de revisão manual listado na página 3.",
     other:
-      "Este veredito cobre o que uma ferramenta decide sozinha. Atender à WCAG depende também dos {count} itens de revisão manual listados na página 3.",
+      "Este resultado cobre só o que uma ferramenta decide sozinha. Atender à WCAG também depende dos {count} itens de revisão manual listados na página 3.",
   },
   "home.lens.frameLabelFull":
-    "Evidência \u00b7 aurora-coffee.com \u00b7 1200 \u00d7 800 \u00b7 escala 43%",
+    "Evidências \u00b7 aurora-coffee.com \u00b7 1200 \u00d7 800 \u00b7 escala 43%",
 
   "capture.notCaptured": "Ainda não capturada",
   "capture.notAvailable": "Indisponível",
-  "capture.siteAuditNote": "A auditoria de site lê todas as páginas sem parar para fotografá-las.",
+  "capture.siteAuditNote": "A auditoria de site lê todas as páginas sem parar para capturá-las.",
   "capture.failed": "Não foi possível tirar a captura desta vez.",
   "capture.runFullNote":
-    "Os problemas desta página estão completos. Rode a auditoria completa para acrescentar a captura, os marcadores de problema e o caminho do foco.",
+    "Os problemas desta página estão completos. Rode a auditoria completa para incluir a captura, as marcas e o caminho do foco.",
   "capture.unaffected": "Os problemas desta página não são afetados. Só a captura está faltando.",
   "capture.runFull": "Rodar auditoria completa",
   "capture.tryAgain": "Tentar de novo",
@@ -548,40 +553,39 @@ export const ptBR: Catalog = {
   "phase.processing": "processando os resultados",
   "phase.finalizing": "finalizando",
   "results.scanningStatus": "Auditando {url}. No momento: {phase}.",
-  "report.roadmap.immediateTerm": "Imediato \u00b7 0\u20131 semana",
+  "report.roadmap.immediateTerm": "Imediato · em até 1 semana",
   "report.roadmap.immediateTitle": "Resolver os problemas críticos",
   "report.roadmap.immediateBody": {
-    one: "Elimine primeiro o {count} problema crítico. Ele pesa mais.",
-    other: "Elimine primeiro os {count} problemas críticos. Eles pesam mais.",
+    one: "Elimine primeiro o problema crítico. É o que mais pesa.",
+    other: "Elimine primeiro os {count} problemas críticos. São os que mais pesam.",
   },
-  "report.roadmap.shortTerm": "Curto prazo \u00b7 2\u20134 semanas",
+  "report.roadmap.shortTerm": "Curto prazo · 2 a 4 semanas",
   "report.roadmap.shortTitle": "Tratar os problemas graves",
   "report.roadmap.shortBody": {
-    one: "Trabalhe o {count} problema grave nos templates e componentes compartilhados.",
-    other: "Trabalhe os {count} problemas graves nos templates e componentes compartilhados.",
+    one: "Resolva o problema grave nos templates e componentes compartilhados.",
+    other: "Resolva os {count} problemas graves nos templates e componentes compartilhados.",
   },
-  "report.roadmap.longTerm": "Longo prazo \u00b7 1\u20133 meses",
-  "report.roadmap.longTitle": "Refinar e reauditar",
+  "report.roadmap.longTerm": "Longo prazo · 1 a 3 meses",
+  "report.roadmap.longTitle": "Refinar e auditar de novo",
   "report.roadmap.longBody":
-    "Elimine os itens moderados restantes, faça as verificações de revisão manual e rode a auditoria de novo.",
+    "Elimine os itens moderados restantes, faça a revisão manual e rode a auditoria de novo.",
   "report.noModerate": "Nenhum problema moderado.",
 
   "report.phase.preparing": "Iniciando um navegador e preparando a página.",
   "report.phase.loading": "Abrindo a página e deixando terminar de carregar.",
   "report.phase.auditing": "Rodando as verificações WCAG na página carregada.",
   "report.phase.processing":
-    "Agrupando problemas e associando-os aos pontos de verificação da WCAG.",
+    "Agrupando os problemas e associando cada um a um critério de sucesso da WCAG.",
   "report.phase.finalizing": "Pontuando e montando o relatório.",
-  "report.freshNote":
-    "O relatório é construído a partir de uma auditoria nova desta página, rodada agora.",
-  "report.buildFailed": "Não conseguimos construir o relatório. Tente de novo.",
-  "report.buildFailedTitle": "Não foi possível construir o relatório",
+  "report.freshNote": "O relatório vem de uma auditoria nova desta página, feita agora.",
+  "report.buildFailed": "Não conseguimos gerar o relatório. Tente de novo.",
+  "report.buildFailedTitle": "Não foi possível gerar o relatório",
   "report.newAudit": "Nova auditoria",
   "report.fixFirst": "Corrija primeiro",
-  "report.buildingStatus": "Construindo o relatório de {url}. {detail}",
+  "report.buildingStatus": "Gerando o relatório de {url}. {detail}",
 
   "report.wcagLevelsChecked": "Níveis WCAG verificados",
-  "report.internalScoreFooter": "Leitura automatizada · não é uma declaração de conformidade",
+  "report.internalScoreFooter": "Auditoria automática · não é uma declaração de conformidade",
   "report.pageOf": "WCAG A e AA \u00b7 Página {page} / 3",
   "report.headerTitle": "Relatório de acessibilidade \u00b7 {host}",
   "report.pagePassed": "A página passou em",
@@ -620,10 +624,10 @@ export const ptBR: Catalog = {
     "São os passos que o AccessCheck executa de fato, na ordem em que acontecem.",
   "results.partialReport": "Relatório parcial",
   "results.partialNote":
-    "Esta leitura cobre apenas o que conseguimos medir. O que ficou de fora está listado abaixo, e nada foi estimado.",
+    "Este resultado cobre só o que conseguimos medir. O que ficou de fora está listado abaixo, sem estimativas.",
 
   "home.lens.locatedOccurrence": "Ocorrência localizada",
-  "home.lens.verifiedInSandbox": "Verificado em cópia da página",
+  "home.lens.verifiedInSandbox": "Testado em uma cópia da página",
   "home.lens.measurement": "Medição",
   "home.lens.measuredLabel": "medido",
   "home.lens.minLabel": "vs. mínimo",
@@ -636,7 +640,7 @@ export const ptBR: Catalog = {
   "home.lens.before": "Antes",
   "home.lens.after": "Depois",
 
-  "stages.opening": "Abrindo a página e esperando ela estabilizar",
+  "stages.opening": "Abrindo a página e esperando que ela estabilize",
   "stages.rules": "Rodando as verificações WCAG A e AA (axe-core)",
   "stages.testingFixes": "Testando correções em uma cópia da página",
   "stages.screenshot": "Tirando a captura de tela",
@@ -666,13 +670,12 @@ export const ptBR: Catalog = {
   "site.tryAnotherAddress": "Tentar outro endereço",
   "site.auditJustThisPage": "Auditar só esta página",
   "site.listNote":
-    "Montamos a lista a partir do sitemap e dos links que conseguimos alcançar, e então auditamos cada página.",
+    "Montamos a lista a partir do sitemap e dos links que conseguimos alcançar, e depois auditamos cada página.",
 
-  "report.sandboxApplied":
-    "Aplicada e reconferida em uma cópia da página. O site auditado não foi alterado.",
+  "report.sandboxApplied": "Testada em uma cópia da página. O site auditado não foi alterado.",
   "report.whereScoreCouldGo": "Até onde esta página pode chegar",
   "report.projectionBody":
-    "Com os problemas críticos e graves resolvidos, esta página passaria a ser lida como",
+    "Com os problemas críticos e graves resolvidos, a avaliação desta página seria",
   "report.accessibilityReport": "Relatório de acessibilidade",
   "report.detailedFindings": "Problemas detalhados",
   "report.noSeriousOnPage":
@@ -681,14 +684,14 @@ export const ptBR: Catalog = {
 
   "wcagReading.notEvaluated": "Não avaliado. O AccessCheck cobre os níveis A e AA",
   "wcagReading.internalNote":
-    "Esta leitura cobre as regras que uma ferramenta decide. A WCAG também depende de verificações que nenhuma ferramenta automática resolve sozinha.",
+    "Este resultado cobre as regras que uma ferramenta consegue decidir. A conformidade com a WCAG também depende de verificações que nenhuma ferramenta automática resolve sozinha.",
   "ratio.minAA": "{value} mín. AA",
   "ratio.fixedAt": "{value} corrigido",
   "ratio.minAAWithFix": "mín. AA {required}:1 \u00b7 corrigido {fixed}:1",
   "ratio.ariaLabel": "Contraste de {found} para 1, mínimo de {required} para 1",
   "ratio.ariaLabelFixed": ", a correção alcança {fixed} para 1",
   "score.ariaLabel": "Ordenação de prioridade: {score} de 100",
-  "home.cta.notConformance": "Leitura automatizada · não é uma declaração de conformidade",
+  "home.cta.notConformance": "Auditoria automática · não é uma declaração de conformidade",
 
   "home.hero.standards": "axe-core \u00b7 WCAG 2.0 / 2.1 / 2.2 \u00b7 níveis A e AA",
   "home.footerStandards": "axe-core \u00b7 Playwright \u00b7 WCAG A e AA",
@@ -696,24 +699,29 @@ export const ptBR: Catalog = {
     "AccessCheck \u00b7 axe-core \u00b7 Playwright \u00b7 WCAG 2.0 / 2.1 / 2.2 níveis A e AA",
   "home.lens.measureFound": "a medição encontrada",
   "home.lens.exactSelector": "o seletor exato",
-  "home.lens.reauditedInCopy": "reauditada em uma cópia",
+  "home.lens.reauditedInCopy": "testada em uma cópia",
   "form.scopePage": "Página",
   "form.scopeSite": "Site",
   "home.hero.title": "Localize o problema. Entenda a causa. Teste a correção.",
-  "home.hero.passes": "+ análises de teclado, viewport e movimento",
+  "home.hero.passes": "+ verificações de teclado, viewport e movimento",
   "home.hero.body":
     "Não é apenas um relatório. É um inspetor visual: cole o endereço de uma página e veja cada problema destacado no elemento em que foi encontrado, com a razão de contraste, o seletor CSS e uma correção testada em uma cópia da página.",
   "home.hero.lensNote":
-    "Selecione um problema e o marcador dele acende na captura. Clique no marcador e os detalhes abrem: imagem, medição e código no mesmo lugar.",
+    "Selecione um problema e a marca dele acende na captura. Clique na marca e os detalhes abrem: imagem, medição e código no mesmo lugar.",
   "home.lens.title": "Veja a barreira no elemento que a causou",
   "home.lens.body":
-    "Elemento, seletor, medição e diagnóstico aparecem conectados. Ao selecionar um problema, o marcador correspondente é destacado e exibe a razão de contraste. Os demais permanecem com contorno tracejado, permitindo diferenciá-los sem depender apenas da cor.",
+    "Elemento, seletor, medição e diagnóstico aparecem conectados. Ao selecionar um problema, a marca correspondente é destacada e mostra a razão de contraste. As outras ficam com contorno tracejado, então dá para diferenciá-las sem depender só da cor.",
   "home.lens.contrastStory":
-    "O texto branco sobre o botão verde-claro tem contraste insuficiente e pode ficar ilegível para pessoas com baixa visão ou em ambientes muito iluminados. O impacto é ainda maior porque esse é o botão usado para finalizar a compra.",
+    "O texto branco no botão verde-claro some para quem tem baixa visão ou para qualquer pessoa sob sol forte. E esse é o botão de finalizar a compra.",
   "home.lens.sandboxNote": "Testado em uma cópia da página. O aurora-coffee.com não foi alterado.",
-  "home.form.noAccount": "Sem criar conta ou modificar o site auditado.",
+  "home.form.noAccount": "Sem cadastro, sem instalar nada e sem alterar o site auditado",
   "home.form.exportNote": "Exporte em PDF ou Markdown",
   "home.demo.roasted": "Torrado no Porto toda terça e enviado na mesma semana.",
+  "home.demo.navMenu": "Cardápio",
+  "home.demo.navBeans": "Grãos",
+  "home.demo.headline": "Torra lenta,",
+  "home.demo.headlineRest": "em pequenos lotes, desde 2011",
+  "home.demo.order": "Peça agora",
 
   "home.mostRecent": "Auditoria pública mais recente · como a página está",
   "home.auditSite": "Auditar site",
@@ -722,15 +730,15 @@ export const ptBR: Catalog = {
   "home.quickExamples": "Exemplos rápidos:",
   "home.stage.open": "Abrir",
   "home.stage.locate": "Localizar",
-  "home.stage.verify": "Verificar",
+  "home.stage.verify": "Testar",
   "home.stage.browserReady": "Chromium \u00b7 axe-core injetado \u00b7 página estabilizada",
   "home.axeRules.kicker": "regras do axe-core",
   "home.axeRules.note": "aprova ou reprova, sem margem para interpretação",
   "home.axeRules.countLine1": "critérios de sucesso",
   "home.axeRules.countLine2": "verificados automaticamente",
-  "home.complementary.kicker": "análises complementares",
+  "home.complementary.kicker": "verificações complementares",
   "home.complementary.note": "o que uma ferramenta não julga sozinha",
-  "home.complementary.countLine1": "análises que vão",
+  "home.complementary.countLine1": "verificações que vão",
   "home.complementary.countLine2": "além do DOM estático",
 
   "results.checksPassedLabel": "verificações automáticas aprovadas",
@@ -738,37 +746,37 @@ export const ptBR: Catalog = {
   "results.focusOnContainer": "conferir foco",
   "results.measuredNeeds": "{measured}:1 \u00b7 mínimo {required}:1",
   "results.runFullAuditNote":
-    "a auditoria completa para incluir a captura de tela, as verificações de teclado e o teste das correções.",
+    "A captura de tela, as verificações de teclado e o teste das correções vêm com a auditoria completa.",
   "results.siteAuditPassNote":
-    "Análise da auditoria de site: regras do axe e as detecções próprias deste projeto. Teclado, interface expandida e verificação de correções rodam na auditoria completa da página.",
+    "Resultado da auditoria de site: regras do axe e as verificações próprias do AccessCheck. A verificação de teclado, o conteúdo expandido e o teste das correções rodam na auditoria completa da página.",
   "wcagReading.failsBy": "Reprova em",
 
   "home.howItWorks.kicker": "Como funciona",
-  "home.howItWorks.title": "Abrir a página, localizar o problema, verificar a correção",
+  "home.howItWorks.title": "Abrir a página, localizar o problema, testar a correção",
   "home.checks.kicker": "Verificações incluídas",
   "home.checks.title":
-    "Verificações automáticas e análises complementares que exigem avaliação humana",
-  "home.sandbox.kicker": "Verificação em cópia da página",
+    "Todas as regras automáticas, mais as verificações que um motor de regras não faz sozinho",
+  "home.sandbox.kicker": "Teste em uma cópia",
   "home.sandbox.title": "Cada correção é testada em uma cópia. Seu site permanece intacto.",
   "home.sandbox.body":
-    "Aplicamos a mudança em uma cópia da página, executamos a verificação novamente e depois a desfazemos. Se o problema deixa de ser detectado, marcamos a correção como verificada. Isso não garante conformidade, e o site original nunca é alterado.",
+    "Aplicamos a mudança em uma cópia da página, rodamos a verificação de novo e depois desfazemos. Se o problema deixa de aparecer, a correção é marcada como testada. Isso não é garantia, e o site original nunca é alterado.",
   "home.sandbox.nearestPassing": "a luminosidade aprovada mais próxima, no mesmo matiz",
   "home.sandbox.measurement": "Medição de contraste \u00b7 1.4.3 AA",
   "home.sandbox.found": "encontrado \u00b7 o mínimo para texto normal é {required}:1",
   "home.export.kicker": "Exportação",
   "home.export.title": "Duas exportações, dois públicos: quem decide e quem corrige",
   "home.export.pdfFor": "para quem decide",
-  "home.export.pdfTitle": "Veredito, prioridades e impacto em linguagem simples",
+  "home.export.pdfTitle": "Avaliação, prioridades e impacto em linguagem simples",
   "home.export.pdfBody":
     "Resumo, níveis de severidade e o impacto de cada problema nas pessoas. Pronto para enviar a um cliente ou ao time de produto, sem exigir contexto técnico.",
   "home.export.mdFor": "para quem corrige",
-  "home.export.mdTitle": "Seletor, trecho e status de verificação",
+  "home.export.mdTitle": "Seletor, trecho de código e status da correção",
   "home.export.mdBody":
-    "Tabela de severidade e lista priorizada, prontas para colar em um ticket ou pull request, já com as correções verificadas marcadas.",
+    "Tabela de severidade e lista priorizada, prontas para colar em um ticket ou pull request, já com as correções testadas marcadas.",
 
   "home.cta.measured": "Medido",
   "home.cta.located": "Localizado",
-  "home.cta.verified": "Verificado",
+  "home.cta.verified": "Testado",
   "home.cta.title": "Audite uma página agora e veja onde está cada barreira",
   "home.cta.body":
     "Sem cadastro, sem instalar nada e sem alterar o seu site. O relatório fica pronto em menos de meio minuto e sai em PDF ou Markdown.",
@@ -777,7 +785,7 @@ export const ptBR: Catalog = {
   "home.cta.publicOnly":
     "Só conseguimos auditar páginas públicas. Endereços privados ou internos serão recusados.",
 
-  "home.rule.contrast": "Contraste do texto contra o fundo computado",
+  "home.rule.contrast": "Contraste do texto sobre o fundo calculado",
   "home.rule.alt": "Alternativas textuais para imagens e ícones",
   "home.rule.name": "Nome acessível para campos, botões e controles ARIA",
   "home.rule.headings": "Ordem de títulos e relações estruturais",
@@ -791,7 +799,7 @@ export const ptBR: Catalog = {
     "Percorre a página com Tab para conferir a ordem de foco, armadilhas de teclado e indicadores de foco invisíveis",
   "home.pass.context": "Contexto",
   "home.pass.contextDesc":
-    "Refaz a análise em tamanho de celular e depois de abrir menus e seções expansíveis",
+    "Verifica a página de novo em tamanho de celular e depois de abrir menus e seções expansíveis",
   "home.pass.motion": "Movimento",
   "home.pass.motionDesc":
     "Verifica se a página respeita a preferência de movimento reduzido de quem acessa",
@@ -799,7 +807,7 @@ export const ptBR: Catalog = {
   "home.pass.liveDesc": "Observa atualizações anunciadas a leitores de tela (regiões dinâmicas)",
   "home.pass.review": "Revisão",
   "home.pass.reviewDesc":
-    "Lista o que ainda depende de conferência humana, com o passo a passo para confirmar",
+    "Lista o que uma pessoa ainda precisa conferir, com o passo a passo para confirmar",
 
   "home.step1.title": "Aberta em um navegador real",
   "home.step1.body":
@@ -809,7 +817,7 @@ export const ptBR: Catalog = {
     "Razão de contraste, seletor CSS, trecho de código e posição na captura de tela. Problemas repetidos ficam agrupados, então uma correção só já resolve vários elementos.",
   "home.step3.title": "Cada correção é testada antes de ser sugerida",
   "home.step3.body":
-    "Aplicamos a mudança em uma cópia da página, rodamos a verificação de novo e marcamos o resultado como correção verificada ou como pendente de revisão.",
+    "Aplicamos a mudança em uma cópia da página, rodamos a verificação de novo e marcamos a correção como testada ou como pendente de revisão.",
 
   "home.example.title": "Texto abaixo do contraste mínimo",
   "home.example.summary":
@@ -828,13 +836,13 @@ export const ptBR: Catalog = {
   "impact.zoom":
     "Bloquear o zoom por pinça impede quem tem baixa visão de ampliar o texto, recurso do qual muita gente depende para conseguir ler no celular.",
   "impact.headingOrder":
-    "Quem usa leitor de tela navega por nível de título para percorrer a página; um nível pulado ou fora de ordem torna a estrutura enganosa e esconde onde as seções começam.",
+    "Quem usa leitor de tela navega pelos níveis de título para percorrer a página, então um nível pulado ou fora de ordem torna a estrutura enganosa e esconde onde as seções começam.",
   "impact.headingOne":
     "Sem um título de primeiro nível, quem usa leitor de tela não tem referência confiável de \u201cdo que trata esta página\u201d e não consegue pular para o conteúdo principal por título.",
   "impact.landmark":
     "As regiões de referência (landmarks) deixam quem usa leitor de tela pular direto para a navegação, o conteúdo principal ou o rodapé. Conteúdo fora delas só é alcançado lendo a página inteira em ordem.",
   "impact.list":
-    "Leitores de tela anunciam \u201clista, N itens\u201d e permitem pular; uma marcação de lista malformada perde essa contagem e a possibilidade de avançar item a item.",
+    "Leitores de tela anunciam \u201clista, N itens\u201d e permitem pular a lista. Uma marcação de lista malformada perde essa contagem e a possibilidade de avançar item a item.",
   "impact.aria":
     "ARIA incorreto ou incompleto faz a tecnologia assistiva anunciar o papel ou o estado errado, o que costuma ser pior do que não ter ARIA nenhum.",
   "impact.duplicateId":
@@ -870,7 +878,7 @@ export const ptBR: Catalog = {
   "fix.htmlLang":
     "O elemento <html> não tem atributo lang, então a tecnologia assistiva não sabe em que idioma ler. Defina o idioma principal da página.",
   "fix.documentTitle":
-    "A página não tem <title>, a primeira coisa que os leitores de tela anunciam e o rótulo que os navegadores mostram em abas e histórico. Adicione um descritivo.",
+    "A página não tem <title>, a primeira coisa que os leitores de tela anunciam e o rótulo que os navegadores mostram em abas e histórico. Adicione um título descritivo.",
   "fix.metaViewport":
     "A meta tag viewport bloqueia o zoom por pinça, do qual quem tem baixa visão depende. Remova user-scalable=no e qualquer maximum-scale abaixo de 5.",
   "fix.ariaName":
@@ -887,16 +895,16 @@ export const ptBR: Catalog = {
   "fix.imageAltNoGuess":
     'Esta imagem não tem texto alternativo. Adicione uma descrição curta se ela for significativa, ou um alt vazio ("") se for decorativa, para os leitores de tela pularem.',
   "fix.contrastWas": "(era {measured}:1, precisa de {required}:1)",
-  "fix.contrastHueKept": " A matiz continua a mesma; só a luminosidade muda.",
+  "fix.contrastHueKept": " O matiz continua o mesmo, só a luminosidade muda.",
   "fix.contrastHueShifted":
-    " (a matiz foi puxada para o neutro para atingir o contraste necessário sobre este fundo)",
+    " (o matiz foi puxado para o neutro para atingir o contraste necessário sobre este fundo)",
   "fix.contrastForeground":
-    "Troque a cor do texto {from} por {to} \u2192 {ratio}:1 contra {bg} {was}.{hueNote}",
+    "Troque a cor do texto {from} por {to} → {ratio}:1 sobre {bg} {was}.{hueNote}",
   "fix.contrastAlsoBackground": " Ou mantenha o texto e defina o fundo como {bg}.",
   "fix.contrastBackground":
-    "A cor de texto {fg} não alcança {required}:1 sobre {bg} mudando só o texto. Defina o fundo como {newBg} \u2192 {ratio}:1 {was}. A matiz do fundo continua a mesma; só a luminosidade muda.",
+    "A cor de texto {fg} não chega a {required}:1 sobre {bg} mudando só o texto. Defina o fundo como {newBg} → {ratio}:1 {was}. O matiz do fundo continua o mesmo, só a luminosidade muda.",
   "fix.contrastNeither":
-    "A cor de texto {fg} sobre {bg} alcança apenas {measured}:1 (precisa de {required}:1). Nem o texto nem o fundo resolvem só pela luminosidade nestas matizes, então escolha um par mais escuro ou mais claro.",
+    "A cor de texto {fg} sobre {bg} alcança apenas {measured}:1 (precisa de {required}:1). Nem o texto nem o fundo resolvem só pela luminosidade nesses matizes, então escolha um par mais escuro ou mais claro.",
 
   "fix.headingOne.action":
     "Adicione um <h1> que descreva o propósito principal da página, no início do conteúdo primário, antes do texto introdutório.",
@@ -905,9 +913,9 @@ export const ptBR: Catalog = {
   "fix.headingOrder.action":
     "Mude o título sinalizado para que os níveis só aumentem de um em um (h2 para h3, nunca h2 para h4). Renumere pela estrutura, não pelo tamanho visual, e use CSS para dimensionar.",
   "fix.headingOrder.caution":
-    "Nunca pule um nível para conseguir uma fonte menor; estilize o nível correto.",
+    "Nunca pule um nível para conseguir uma fonte menor. Estilize o nível correto.",
   "fix.landmark.action":
-    "Envolva o conteúdo principal num marco <main>. Mantenha a navegação do site em <nav>, a marca introdutória em <header> e as informações de fechamento em <footer>, para que cada parte da página fique dentro de um marco.",
+    "Coloque o conteúdo principal dentro de um <main>. Mantenha a navegação do site em <nav>, a marca e a apresentação em <header> e as informações finais em <footer>, para que cada parte da página fique dentro de uma região de referência.",
   "fix.list.action":
     "Garanta que todo <li> seja filho direto de um <ul> ou <ol> (e que nada além de <li> fique diretamente dentro deles). Não simule listas com <div>s e marcadores.",
   "fix.duplicateId.action":
@@ -917,19 +925,19 @@ export const ptBR: Catalog = {
   "fix.focusVisible.action":
     "Dê aos elementos interativos um estilo de foco claramente visível. Estilize :focus-visible em vez de remover contornos. Nunca use outline: none sem uma substituição.",
   "fix.focusVisible.caution":
-    "Não dependa só de mudança de cor; mantenha um contorno ou box-shadow visível.",
+    "Não dependa só de mudança de cor. Mantenha um contorno ou box-shadow visível.",
   "fix.focusOrder.action":
-    "Coloque os elementos no DOM na ordem em que as pessoas devem tabular por eles, e remova valores positivos de tabindex para que o foco siga a ordem do código.",
+    "Coloque os elementos no DOM na ordem em que as pessoas devem percorrê-los com Tab, e remova valores positivos de tabindex para que o foco siga a ordem do código.",
   "fix.keyboardTrap.action":
-    "Garanta que o foco consiga sair do componente com Tab / Shift+Tab (e Esc para diálogos). Gerencie o foco em JS para que ele volte a um lugar sensato quando o componente fechar.",
+    "Garanta que o foco consiga sair do componente com Tab / Shift+Tab (e Esc para diálogos). Gerencie o foco em JS para que ele volte a um lugar que faça sentido quando o componente fechar.",
   "fix.tabindex.action":
     'Remova valores de tabindex maiores que 0. Use tabindex="0" para tornar um controle personalizado focalizável, ou -1 para focá-lo por código. Nunca use números positivos.',
   "fix.reachable.action":
-    'Faça de cada controle um elemento focalizável nativo: use <button>/<a> em vez de uma <div> clicável, ou acrescente tabindex="0" e trate os eventos de teclado ao controle personalizado.',
+    'Faça de cada controle um elemento focalizável nativo: use <button>/<a> em vez de uma <div> clicável, ou acrescente tabindex="0" e eventos de teclado ao controle personalizado.',
   "fix.targetSize.action":
-    "Dê ao alvo pelo menos 24\u00d724px de área de toque (44\u00d744 é mais seguro em telas sensíveis), ou deixe espaçamento suficiente ao redor. Preencha o controle em vez de só aumentar um ícone.",
+    "Dê ao alvo pelo menos 24×24px de área de toque (44×44 é mais seguro em telas sensíveis ao toque), ou deixe espaço suficiente ao redor. Aumente a área do controle com padding em vez de só aumentar um ícone.",
   "fix.motion.action":
-    "Coloque as animações não essenciais dentro de uma consulta prefers-reduced-motion, para que sejam suprimidas para quem pediu menos movimento.",
+    "Coloque as animações não essenciais dentro de uma media query prefers-reduced-motion, para desligá-las para quem pediu menos movimento.",
   "fix.live.action":
     'Anuncie atualizações dinâmicas por uma região dinâmica: coloque o texto de status em um elemento com aria-live="polite" (ou role="status"), e os erros em aria-live="assertive".',
 
@@ -938,7 +946,7 @@ export const ptBR: Catalog = {
   "marker.context":
     "Encontrado em outro contexto (tamanho de celular ou um estado aberto), então não está na captura de desktop.",
   "marker.keyboard":
-    "Veio da análise de teclado, então aparece no caminho do foco em vez de como marcador de problema.",
+    "Veio da verificação de teclado, então aparece no caminho do foco em vez de virar uma marca.",
   "marker.docLevel":
     "Aplica-se ao documento inteiro ou à estrutura da página, não a um único elemento posicionado.",
   "marker.shadowRoot":
@@ -980,25 +988,25 @@ export const ptBR: Catalog = {
     ". É apenas uma projeção, não uma aprovação na WCAG. Atender à WCAG depende também dos itens moderados e da revisão manual.",
   "report.recommendations": "Recomendações",
   "report.wcagDisclaimer":
-    "O AccessCheck roda o axe-core contra os níveis A e AA da WCAG (2.0, 2.1 e 2.2). O teste automático cobre apenas parte dos critérios da WCAG; o restante exige a revisão de uma pessoa, muitas vezes com leitor de tela ou outra tecnologia assistiva. O nível AAA não é verificado, e este relatório não é uma declaração de conformidade.",
+    "O AccessCheck roda o axe-core com as regras dos níveis A e AA da WCAG (2.0, 2.1 e 2.2). Os testes automáticos cobrem só parte dos critérios da WCAG. O restante exige a revisão de uma pessoa, muitas vezes com leitor de tela ou outra tecnologia assistiva. O nível AAA não é verificado, e este relatório não é uma declaração de conformidade.",
   "report.findingsIntro":
-    "Cada problema aparece agrupado por severidade e associado ao critério de sucesso A/AA da WCAG, com o impacto nas pessoas, a medição quando existe e uma correção reauditada em uma cópia da página.",
+    "Cada problema aparece agrupado por severidade e associado ao critério de sucesso A/AA da WCAG, com o impacto nas pessoas, a medição quando existe e uma correção testada em uma cópia da página.",
 
   "site.theSite": "o site",
   "site.notFound": "Auditoria de site não encontrada.",
   "context.recheckShort": "Confira este elemento de novo no contexto em que ele falhou.",
   "context.recheckLong":
-    "Confira este elemento de novo no contexto em que ele falhou; o motor não testou uma correção aqui.",
+    "Confira este elemento de novo no contexto em que ele falhou. Nenhuma correção foi testada aqui.",
 
   "wcagReading.noA": "Nenhuma falha de nível A detectada automaticamente",
   "wcagReading.noAA": "Nenhuma falha de nível AA detectada automaticamente",
   "provenance.title": "Procedência",
   "provenance.complementary":
-    "Passagens complementares: teclado, viewport de celular, UI expandida, movimento, regiões dinâmicas.",
+    "Verificações complementares: teclado, viewport de celular, interface expandida, movimento, regiões dinâmicas.",
   "stepper.previous": "Ocorrência anterior",
   "stepper.next": "Próxima ocorrência",
   "stepper.position": "Ocorrência {at} de {total}",
-  "seal.verified": "Correção testada: aplicada temporariamente e verificada novamente com sucesso",
+  "seal.verified": "Correção testada: aplicada por um instante, e a regra passou",
   "seal.needsReview": "Precisa de revisão: a sugestão sozinha não resolve",
 
   "site.score": "Nota do site",
@@ -1021,7 +1029,7 @@ export const ptBR: Catalog = {
   "detail.sampleText": "Texto de exemplo",
   "detail.verifiedOnElement": "Correção testada neste elemento",
   "detail.verifiedOnElementNote":
-    "Passa no WCAG AA: aplicada a este elemento por um instante e verificada novamente",
+    "Passa no nível AA da WCAG: aplicada a este elemento por um instante e verificada de novo",
   "detail.calculatedNote":
     "Chegaria a {ratio}:1, calculado a partir das cores detectadas, sem teste na página",
   "detail.rule": "Regra",
@@ -1029,7 +1037,7 @@ export const ptBR: Catalog = {
   "detail.humanDecision":
     "A mudança certa depende da estrutura da página, então confirme no contexto.",
   "detail.sandboxNote":
-    "As correções são aplicadas e revertidas em uma cópia da página. {host} não foi alterado.",
+    "As correções são testadas em uma cópia da página. {host} não foi alterado.",
   "detail.pageNote":
     "A mudança foi aplicada nesta página por um instante e depois desfeita, deixando tudo como estava.",
 
@@ -1037,34 +1045,33 @@ export const ptBR: Catalog = {
   "verdict.label.needsReview": "Precisa de revisão",
 
   "verdict.others": {
-    one: "A outra {count} ocorrência compartilha a mesma sugestão, mas não foi verificada individualmente.",
-    other:
-      "As outras {count} ocorrências compartilham a mesma sugestão, mas não foram verificadas individualmente.",
+    one: "A outra ocorrência tem a mesma sugestão, mas não foi testada individualmente.",
+    other: "As outras {count} ocorrências têm a mesma sugestão, mas não foram testadas uma a uma.",
   },
   "verdict.verifiedShared":
-    "Aplicada temporariamente a cada uma das {count} ocorrências e verificada novamente com sucesso.",
-  "verdict.verifiedSingle": "Aplicada temporariamente e verificada novamente com sucesso.",
+    "Aplicada por um instante em cada uma das {count} ocorrências, e a regra passou em todas.",
+  "verdict.verifiedSingle": "Aplicada por um instante, e a regra passou.",
   "verdict.partial":
-    "A mudança foi aplicada em cada ocorrência e reauditada, depois desfeita: {cleared} de {total} passaram e {failed} continuam falhando. Revise as que continuam.",
+    "Testada em cada ocorrência e depois desfeita: {cleared} de {total} passaram e {failed} não. Revise as que continuam falhando.",
   "verdict.sampledOne":
     "O elemento representativo passou quando a mudança sugerida foi aplicada e a regra rodou de novo. {others}",
   "verdict.sampledMany":
-    "Reauditadas {reaudited} de {total} ocorrências com a mudança aplicada (uma representante por correção sugerida), depois desfeita: {cleared} passaram{failedTail}. {others}",
-  "verdict.sampledFailedTail": " e {failed} continuam falhando",
+    "Testadas {reaudited} de {total} ocorrências, uma para cada correção sugerida, e depois a mudança foi desfeita: {cleared} passaram{failedTail}. {others}",
+  "verdict.sampledFailedTail": " e {failed} não",
   "verdict.failedSubjectSingle": "Este elemento",
   "verdict.failedSubjectSampled": "O elemento representativo",
   "verdict.failedMeasured":
-    "{subject} continua falhando depois da mudança sugerida: a nova cor chega a {ratio}:1 contra o fundo detectado, mas a regra ainda sinaliza. O fundo real pode ser uma imagem, um gradiente ou uma camada sobreposta.{tail}",
+    "{subject} continua falhando depois da mudança sugerida: a nova cor chega a {ratio}:1 sobre o fundo detectado, mas a regra ainda sinaliza. O fundo real pode ser uma imagem, um gradiente ou uma camada sobreposta.{tail}",
   "verdict.failedPlain":
-    "{subject} continua falhando com a mudança aplicada. Revise esse caso manualmente.{tail}",
+    "{subject} continua falhando com a mudança aplicada. Revise esse caso à mão.{tail}",
   "verdict.unverifiable":
-    "Não deu para testar esta correção na página, porque o elemento sumiu ou o tempo acabou. Confira manualmente.",
+    "Não deu para testar esta correção na página, porque o elemento sumiu ou o tempo acabou. Confira à mão.",
   "verdict.contextual":
-    "Esta sugestão resolve a regra, mas se ela diz a coisa certa para esta página é um julgamento que só uma pessoa pode fazer.",
+    "Esta sugestão resolve a regra, mas só uma pessoa pode julgar se ela diz a coisa certa para esta página.",
   "verdict.noAutoFix":
     "Nenhuma correção automática se aplica aqui. A mudança certa depende da página, então precisa de uma pessoa.",
   "verdict.bestPractice":
-    "Boa prática, não um critério de sucesso da WCAG. Vale corrigir, mas não altera a leitura WCAG.",
+    "Boa prática, não um critério de sucesso da WCAG. Vale corrigir, mas não entra no resultado da WCAG.",
   "verdict.complementary": "Corrija e audite de novo para confirmar.",
 
   "keyboard.region.offscreen": "fora do viewport visível",
@@ -1091,8 +1098,8 @@ export const ptBR: Catalog = {
     "Dê a ele um estilo :focus-visible visível, como outline: 2px solid com outline-offset: 2px, em vez de remover o contorno.",
 
   "keyboard.unclear.title": {
-    one: "{count} indicador de foco precisa de conferência humana",
-    other: "{count} indicadores de foco precisam de conferência humana",
+    one: "{count} indicador de foco precisa ser conferido por uma pessoa",
+    other: "{count} indicadores de foco precisam ser conferidos por uma pessoa",
   },
   "keyboard.unclear.desc": {
     one: "O foco chegou a este elemento, mas ele mesmo não mudou. Algo em volta pode ter mudado, então confira visualmente.",
@@ -1159,7 +1166,7 @@ export const ptBR: Catalog = {
     other: "A ordem de foco sai de sequência {count} vezes",
   },
   "keyboard.order.desc":
-    "A ordem do Tab não segue a ordem em que a página é lida, então o foco volta para trás ou para cima. Se cada salto é um problema depende da ordem que a página pretende, então confira visualmente.",
+    "A ordem do Tab não segue a ordem em que a página é lida, então o foco volta para trás ou para cima. Cada salto só é um problema se fugir da ordem pensada para a página, então confira cada um visualmente.",
   "keyboard.order.fix":
     "Faça a ordem do DOM acompanhar a ordem visual e evite reordenar com CSS (order, row-reverse, posicionamento absoluto) ou com tabindex positivo.",
 
@@ -1219,7 +1226,7 @@ export const ptBR: Catalog = {
   "panel.selector": "Seletor",
   "panel.html": "HTML",
   "panel.abbreviated":
-    "Abreviado com … , e atributos que podem carregar o que você digitou ficam de fora. Serve como evidência, não como código para colar de volta.",
+    "Abreviado com …, e atributos que podem conter o que você digitou ficam de fora. É evidência, não código para colar de volta.",
   "panel.locating": "Procurando…",
   "panel.locate": "Localizar na página",
 
@@ -1234,18 +1241,17 @@ export const ptBR: Catalog = {
   "panel.group.recommend": "Recomendações",
   "panel.howToCheck": "Como conferir",
   "panel.readingLanguage":
-    "Esta leitura foi gerada em {language}. Audite a página de novo para recebê-la neste idioma.",
+    "Este resultado está em {language}. Audite a página de novo para vê-lo neste idioma.",
   "panel.noFailures": "Nenhuma das verificações desta versão encontrou falhas.",
 
   "panel.checksPerformed": "Verificações executadas",
-  "panel.check.primed":
-    "Percorreu a página antes, para que o conteúdo que só aparece ao rolar fosse lido",
+  "panel.check.primed": "Rolou a página antes, para ler o conteúdo que só aparece com a rolagem",
   "panel.check.axe": "axe-core, WCAG A e AA (2.0, 2.1, 2.2) mais boas práticas",
   "panel.check.targetSize": "Tamanho do alvo (WCAG 2.5.8)",
   "panel.check.liveRegions": "Regiões dinâmicas (WCAG 4.1.3)",
   "panel.check.screenshot": "Captura do viewport visível",
-  "panel.check.focusPath": "Caminho do foco com pressionamentos reais de Tab",
-  "panel.check.focusPathStopped": "Caminho do foco com pressionamentos reais de Tab (parou cedo)",
+  "panel.check.focusPath": "Caminho do foco percorrido com Tab",
+  "panel.check.focusPathStopped": "Caminho do foco percorrido com Tab (parou cedo)",
 
   "panel.mark.stop": "parada",
 
@@ -1257,22 +1263,22 @@ export const ptBR: Catalog = {
   "panel.showComplete": "Mostrar o caminho completo",
   "panel.exitInspection": "Sair",
   "panel.drawingAll":
-    "Todas as paradas estão desenhadas. A atual fica destacada; as outras, esmaecidas.",
+    "Todas as paradas estão desenhadas. A atual fica destacada e as outras ficam esmaecidas.",
   "panel.drawingWindow":
-    "Desenhando a parada atual e {neighbours} de cada lado, para a página seguir legível.",
-  "panel.walkingFocusPath": "Percorrendo o caminho de foco",
+    "Desenhando a parada atual e {neighbours} de cada lado, para a página continuar legível.",
+  "panel.walkingFocusPath": "Percorrendo o caminho do foco",
   "panel.runningNoteFocus":
-    "O Chrome mostra o próprio aviso enquanto o depurador está conectado. Ele é liberado antes do relatório voltar, e a página não é modificada.",
+    "O Chrome mostra um aviso enquanto o depurador está conectado. O depurador é liberado antes de o relatório voltar, e a página não é alterada.",
   "panel.walkDebuggerNote":
-    "Percorrer a ordem de tabulação precisa do depurador do Chrome, então o Chrome vai mostrar o próprio aviso e o DevTools não consegue se conectar a esta aba enquanto isso. Ele é liberado assim que a caminhada termina.",
+    "Percorrer a ordem de tabulação usa o depurador do Chrome. Enquanto isso, o Chrome mostra um aviso e o DevTools não consegue se conectar a esta aba. O depurador é liberado assim que o percurso termina.",
   "panel.walkNow": "Verificar teclado",
   "panel.roundChecked": {
     one: "Esta rodada verificou {count} parada.",
     other: "Esta rodada verificou {count} paradas.",
   },
   "panel.roundProblems": {
-    one: "{count} problema de teclado está na fila.",
-    other: "{count} problemas de teclado estão na fila.",
+    one: "{count} problema de teclado entrou na lista.",
+    other: "{count} problemas de teclado entraram na lista.",
   },
   "panel.roundNoProblems": "Nenhum problema de teclado encontrado até agora.",
   "panel.showKeyboardProblems": "Mostrar problemas de teclado",
@@ -1287,44 +1293,44 @@ export const ptBR: Catalog = {
   "panel.coverageLimitations": "Limites da cobertura",
   "panel.notChecked": "Não verificado nesta versão",
   "panel.notCheckedNote":
-    "Uma leitura desta versão nunca atesta que a página está livre de barreiras.",
+    "Um resultado desta versão nunca significa que a página está livre de barreiras.",
   "panel.auditAgain": "Auditar esta aba de novo",
   "panel.reaudit": "Auditar de novo",
   "panel.aboutAudit": "Sobre esta auditoria",
 
   "panel.idleTitle": "Nada auditado ainda",
   "panel.idleBody":
-    "Clique no ícone do AccessCheck na barra de ferramentas para auditar a página em que você está. A auditoria roda as regras e depois percorre o caminho do foco, o que anexa o depurador do Chrome nesse passo. Nada sai do seu navegador.",
+    "Clique no ícone do AccessCheck na barra de ferramentas para auditar a página em que você está. Com o relatório pronto, você também pode verificar o teclado, o que usa o depurador do Chrome. Nada sai do seu navegador.",
   "panel.unsupportedKicker": "Sem suporte aqui",
   "panel.unsupportedTitle": "Esta página não pode ser auditada",
   "panel.errorKicker": "A auditoria falhou",
   "panel.errorTitle": "A auditoria não conseguiu terminar",
   "panel.tryAgain": "Tentar de novo",
 
-  "panel.pageUnreachable": "Não foi possível alcançar a página daqui.",
+  "panel.pageUnreachable": "Não foi possível acessar a página daqui.",
   "panel.elementGone":
-    "Esse elemento não está mais na página: o DOM mudou desde que a auditoria rodou.",
+    "Esse elemento não está mais na página. O DOM mudou depois que a auditoria rodou.",
   "panel.someStopsGone":
     "{missing} de {total} paradas não estão mais na página, então não puderam ser desenhadas.",
   "panel.someStopsOffScreen":
-    "{offScreen} de {total} paradas estão fora do viewport agora, então só o resto foi desenhado.",
+    "{offScreen} de {total} paradas estão fora do viewport agora, então só as outras foram desenhadas.",
   "chain.investigation": "Problema {n}",
   "chain.located": "Localizado",
   "chain.measured": "Medido",
   "chain.evidence": "Evidência",
   "chain.change": "Mudança",
   "chain.decide": "Uma pessoa decide",
-  "chain.end.tested": "Verificado",
+  "chain.end.tested": "Correção testada",
   "chain.end.failed": "Ainda falha com a mudança",
   "chain.end.person": "Uma pessoa decide",
-  "chain.end.fixPerson": "A correção pede uma pessoa",
+  "chain.end.fixPerson": "A correção depende de uma pessoa",
   "chain.end.recheck": "Confirme com uma nova auditoria",
-  "chain.end.untested": "Não verificado",
-  "chain.testedOnCopy": "Testado numa cópia da página.",
-  "chain.testedOnPage": "Testado nesta página e depois desfeito.",
+  "chain.end.untested": "Correção não testada",
+  "chain.testedOnCopy": "Testada em uma cópia da página.",
+  "chain.testedOnPage": "Testada nesta página e depois desfeita.",
   "chain.notRemeasured":
     "Este elemento recebe a mudança testada em outro, mas não foi medido de novo.",
-  "chain.howVerified": "Como foi verificado",
+  "chain.howVerified": "Como foi testado",
   "chain.heardAs": "Leitores de tela dizem",
   "chain.role.button": "botão",
   "chain.role.link": "link",
@@ -1345,8 +1351,8 @@ export const ptBR: Catalog = {
   "chain.occurrences": "Ocorrências",
   "chain.occurrenceAria": "Ocorrência {tag}: {label}",
   "chain.unlisted": {
-    one: "Mais 1 elemento tem o mesmo problema, mas não aparece um a um.",
-    other: "Mais {count} elementos têm o mesmo problema, mas não aparecem um a um.",
+    one: "Mais 1 elemento tem o mesmo problema, mas não aparece separadamente na lista.",
+    other: "Mais {count} elementos têm o mesmo problema, mas não aparecem separadamente na lista.",
   },
   "chain.closeUp": "Detalhe de {label}",
   "chain.offAbove": "Acima do que a página mostra agora",
@@ -1359,8 +1365,8 @@ export const ptBR: Catalog = {
   "chain.gap.unmeasured": "sem medida",
   "chain.status.tested": "correção testada",
   "chain.status.person": "uma pessoa decide",
-  "chain.status.fixPerson": "correção pede uma pessoa",
-  "chain.status.recheck": "reauditar para confirmar",
+  "chain.status.fixPerson": "correção depende de uma pessoa",
+  "chain.status.recheck": "auditar de novo para confirmar",
   "chain.status.failed": "ainda falha",
   "summary.recommendations": { one: "1 recomendação", other: "{count} recomendações" },
   "summary.passed": { one: "1 regra passou", other: "{count} regras passaram" },
@@ -1381,4 +1387,41 @@ export const ptBR: Catalog = {
   },
   "focusPath.related": "Problema {tag}",
   "focusPath.stopNoFocus": "nada mostra o foco",
+  "unit.finding": { one: "{count} problema", other: "{count} problemas" },
+  "wcag.2.1.2": "Sem bloqueio do teclado",
+  "wcag.2.4.3": "Ordem do foco",
+  "context.opened": "com “{label}” aberto",
+  "context.disclosure": "Seção expansível",
+  "context.menu": "Menu",
+  "context.mobileViewport": "viewport de {width}px",
+  "report.levelsValue": "A e AA · 2.0 / 2.1 / 2.2",
+  "report.effortImpact": "Esforço: {effort} · Impacto: {impact}",
+  "report.impactTag": "Impacto {impact}",
+  "report.effort.quick": "baixo",
+  "report.effort.moderate": "médio",
+  "report.effort.involved": "alto",
+  "report.impact.high": "alto",
+  "report.impact.medium": "médio",
+  "report.impact.low": "baixo",
+  "report.moreModerate": {
+    one: "+ {count} problema moderado",
+    other: "+ {count} problemas moderados",
+  },
+  "report.moreInFullReport": "+ {count} no relatório completo",
+  "report.measuredMinimum": "Medido {measured}:1 · mínimo AA {required}:1",
+  "site.auditingProgress": "Auditando {done} de {total}",
+  "site.done": { one: "Concluída · {count} página", other: "Concluída · {count} páginas" },
+  "site.scoreLabel": "Nota do site: {score} de 100",
+  "site.pagesAudited": { one: "página auditada", other: "páginas auditadas" },
+  "site.pagesFailed": { one: "{count} página falhou", other: "{count} páginas falharam" },
+  "site.pageScoreLabel": "Nota {score} de 100",
+  "site.pageWaiting": "Aguardando…",
+  "site.pageAuditing": "Auditando…",
+  "site.openReport": "Abrir o relatório de {path}",
+  "site.stillQueued": {
+    one: "{count} página ainda na fila…",
+    other: "{count} páginas ainda na fila…",
+  },
+  "site.findingPagesStatus": "Procurando páginas para auditar em {host}.",
+  "ruler.progressLabel": "Andamento da auditoria: {elapsed}s de até {budget}s",
 };

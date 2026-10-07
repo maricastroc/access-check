@@ -1285,8 +1285,8 @@ try {
     const notice = button.parentElement.querySelector('[role="status"]');
     return {
       at,
-      said: document.body.textContent.includes("no longer in the page"),
-      besideTheButton: /no longer in the page/.test(notice?.textContent ?? ""),
+      said: document.body.textContent.includes("no longer on the page"),
+      besideTheButton: /no longer on the page/.test(notice?.textContent ?? ""),
     };
   });
   console.log("locating something that was removed:", JSON.stringify(gone));
@@ -1400,7 +1400,7 @@ try {
       `after ${how}, the report of ${walked.reportFor} took the stops of another page: ${JSON.stringify(walked.stops)}`,
     );
     check(
-      /moved on/.test(walked.deepError ?? ""),
+      /moved to another page/.test(walked.deepError ?? ""),
       `after ${how}, the keyboard check said: ${walked.deepError}`,
     );
   }

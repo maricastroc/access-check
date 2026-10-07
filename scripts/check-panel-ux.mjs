@@ -178,7 +178,7 @@ try {
     const opened = () => rows().findIndex((r) => r.getAttribute("aria-expanded") === "true");
     rows()[0]?.click();
     await new Promise((r) => setTimeout(r, 120));
-    const controls = ["Locate on page", "Previous problem", "Next problem"]
+    const controls = ["Locate on page", "Previous finding", "Next finding"]
       .map(byText)
       .filter((b) => b && !b.disabled);
     const ringless = controls
@@ -192,14 +192,14 @@ try {
       })
       .map((b) => b.textContent.trim());
     const total = rows().length;
-    const firstPrevious = byText("Previous problem")?.disabled ?? null;
-    byText("Next problem")?.focus();
+    const firstPrevious = byText("Previous finding")?.disabled ?? null;
+    byText("Next finding")?.focus();
     document.activeElement.click();
     await new Promise((r) => setTimeout(r, 150));
     const afterNext = opened();
     const focusedRow = rows().indexOf(document.activeElement);
-    while (byText("Next problem") && !byText("Next problem").disabled) {
-      byText("Next problem").click();
+    while (byText("Next finding") && !byText("Next finding").disabled) {
+      byText("Next finding").click();
       await new Promise((r) => setTimeout(r, 60));
     }
     return {
@@ -209,18 +209,18 @@ try {
       afterNext,
       focusedRow,
       last: opened(),
-      lastNextDisabled: byText("Next problem")?.disabled ?? null,
+      lastNextDisabled: byText("Next finding")?.disabled ?? null,
     };
   });
   console.log("stepping between problems:", JSON.stringify(stepping));
   check(stepping.ringless.length === 0, `no focus ring on: ${stepping.ringless.join(", ")}`);
   check(stepping.total > 1, `the several-problem fixture produced ${stepping.total}`);
   if (stepping.total > 1) {
-    check(stepping.firstPrevious === true, "Previous problem is live on the first problem");
-    check(stepping.afterNext === 1, `Next problem opened problem ${stepping.afterNext + 1}`);
-    check(stepping.focusedRow === 1, "Next problem did not move focus to the problem it opened");
-    check(stepping.last === stepping.total - 1, "Next problem never reached the last problem");
-    check(stepping.lastNextDisabled === true, "Next problem is live on the last problem");
+    check(stepping.firstPrevious === true, "Previous finding is live on the first finding");
+    check(stepping.afterNext === 1, `Next finding opened finding ${stepping.afterNext + 1}`);
+    check(stepping.focusedRow === 1, "Next finding did not move focus to the finding it opened");
+    check(stepping.last === stepping.total - 1, "Next finding never reached the last finding");
+    check(stepping.lastNextDisabled === true, "Next finding is live on the last finding");
   }
 
   const groups = await severalPanel.evaluate(async () => {
@@ -381,7 +381,7 @@ try {
       `${moved.label} moved the keyboard check on screen from ${moved.boxBefore}px to ${moved.boxAfter}px`,
     );
     check(
-      /^This round checked \d+ stops?\. \d+ keyboard problems? (is|are) in the queue\./.test(
+      /^This round checked \d+ stops?\. \d+ keyboard findings? (was|were) added to the list\./.test(
         moved.said ?? "",
       ),
       `${moved.label} said nothing about what the round did: ${moved.said}`,
@@ -399,7 +399,7 @@ try {
   const shown = await keepPlace.evaluate(async () => {
     window.scrollTo(0, 0);
     const button = [...document.querySelectorAll("button")].find(
-      (b) => b.textContent.trim() === "Show keyboard problems",
+      (b) => b.textContent.trim() === "Show keyboard findings",
     );
     if (!button) return { button: false };
     button.click();
@@ -415,9 +415,9 @@ try {
   });
   console.log("showing the keyboard problems:", JSON.stringify(shown));
   check(shown.button, "a round that found keyboard problems offers no way to them");
-  check(!!shown.kind, "Show keyboard problems opened something other than a keyboard problem");
-  check(shown.focused, "Show keyboard problems did not move focus to the problem");
-  check(shown.inView, "Show keyboard problems left the problem out of view");
+  check(!!shown.kind, "Show keyboard findings opened something other than a keyboard finding");
+  check(shown.focused, "Show keyboard findings did not move focus to the finding");
+  check(shown.inView, "Show keyboard findings left the finding out of view");
   await keepPlace.close();
 
   await audit("/many");

@@ -138,8 +138,8 @@ describe("a reading produced by an older model", () => {
       result({ violations: [violation("color-contrast", "serious", 3)] }),
     );
 
-    expect(stale).toContain("earlier scoring model");
-    expect(fresh).not.toContain("earlier scoring model");
+    expect(stale).toContain("Scored with an earlier model");
+    expect(fresh).not.toContain("Scored with an earlier model");
   });
 
   it("leads the export with the standing, not with a number out of a hundred", () => {

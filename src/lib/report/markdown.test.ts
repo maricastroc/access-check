@@ -58,11 +58,11 @@ describe("buildReportMarkdown", () => {
     expect(md).toContain("**AAA:** not evaluated");
   });
 
-  it("keeps sandbox language, the real measurement, and never extrapolates the sample", () => {
+  it("says fixes are tested on a copy, keeps the real measurement, and never extrapolates the sample", () => {
     expect(md).toContain("**Fix tested.**");
-    expect(md).toContain("sandbox copy");
-    expect(md).toContain("not individually verified");
-    expect(md).toContain("the audited site is not altered");
+    expect(md).toContain("tested on a copy of the page");
+    expect(md).toContain("not tested one by one");
+    expect(md).toContain("the audited site is never changed");
     expect(md).toMatch(/2\.10:1 · minimum AA 4\.5:1 · fix reaches 4\.62:1/);
     expect(md.toLowerCase()).not.toContain("clears all");
     expect(md.toLowerCase()).not.toMatch(/of 7 (occurrences )?(were )?cleared/);

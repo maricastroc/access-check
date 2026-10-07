@@ -149,7 +149,7 @@ const openFinding = (page, pattern) =>
     const section = row?.closest("li")?.querySelector("section");
     if (!section) return null;
     const verdict = [...section.querySelectorAll("details")].find((d) =>
-      /How this was verified/.test(d.querySelector("summary")?.textContent ?? ""),
+      /How this was tested/.test(d.querySelector("summary")?.textContent ?? ""),
     );
     const details = [...section.querySelectorAll("details")].find((d) =>
       /^Details$/.test(d.querySelector("summary")?.textContent.trim() ?? ""),
@@ -356,7 +356,7 @@ try {
     const connector = await page.evaluate(() => Boolean(document.querySelector("svg.fixed path")));
     console.log("an opened finding:", JSON.stringify({ contrast, onContrast, altText, onAlt }));
     check(
-      contrast?.stations.join(" > ") === "Located > Measured > Change > Verified",
+      contrast?.stations.join(" > ") === "Located > Measured > Change > Fix tested",
       `the contrast chain reads ${contrast?.stations.join(" > ")}`,
     );
     check(contrast?.end === "tested", `the contrast chain ends ${contrast?.end}`);
@@ -458,7 +458,7 @@ try {
   check(/3200px/.test(missed.legend), `the missed region kept another label: ${missed.legend}`);
   check(!missed.image, "a missed region still shows a screenshot underneath");
   check(/was not captured/i.test(missed.panel), "the missed region says nothing");
-  check(/weight/i.test(missed.panel), "the missed region does not say why");
+  check(/size limit/i.test(missed.panel), "the missed region does not say why");
   check(missed.back, "a missed region offers no way back to the first capture");
   await context.close();
 

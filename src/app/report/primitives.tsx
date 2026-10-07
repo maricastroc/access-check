@@ -91,7 +91,7 @@ export function GroupHeading({ sev, count, t }: { sev: Severity; count: number; 
         className="px-2 py-0.5 font-cond text-[10px] font-medium tracking-[0.08em] uppercase"
         style={{ color: sevColor[sev] }}
       >
-        {count} finding{count > 1 ? "s" : ""}
+        {t("unit.finding", { count })}
       </span>
       <span aria-hidden className="h-px flex-1 bg-hairline" />
     </div>

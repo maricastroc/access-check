@@ -29,10 +29,10 @@ describe("Markdown exports follow the report locale", () => {
 
     expect(md).toContain("# Relatório de acessibilidade:");
     expect(md).toContain("Como esta página está");
-    expect(md).toContain("## Leitura WCAG");
+    expect(md).toContain("## Níveis da WCAG");
     expect(md).not.toContain("Accessibility report");
     expect(md).not.toContain("Where this page stands");
-    expect(md).not.toContain("WCAG reading");
+    expect(md).not.toContain("WCAG levels");
   });
 
   it("keeps the English report untouched", () => {
@@ -40,7 +40,7 @@ describe("Markdown exports follow the report locale", () => {
 
     expect(md).toContain("# Accessibility report:");
     expect(md).toContain("Where this page stands");
-    expect(md).toContain("## WCAG reading");
+    expect(md).toContain("## WCAG levels");
     expect(md).not.toContain("Relatório");
   });
 

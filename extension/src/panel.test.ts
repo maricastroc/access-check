@@ -193,13 +193,13 @@ describe("the panel reuses the product's own report", () => {
     expect(overlay).toContain("viewTotal = focus === null ? marks.length : null;");
     expect(overlay).toContain("post({ type: OVERLAY_VIEW, shown, total: viewTotal });");
     expect(t("panel.notOnScreen", { count: 2 })).toBe(
-      "2 problems to fix have no mark on screen right now. Open them from the list to find them.",
+      "2 findings to fix have no mark on screen right now. Open them from the list to find them.",
     );
     expect(pt("panel.notOnScreen", { count: 1 })).toBe(
       "1 problema a corrigir não tem marca na tela agora. Abra pela lista para encontrá-lo.",
     );
     expect(t("panel.wholePage", { count: 1 })).toBe(
-      "1 problem to fix applies to the whole page, so it has no mark.",
+      "1 finding to fix applies to the whole page, so it has no mark.",
     );
     expect(pt("panel.wholePage", { count: 2 })).toBe(
       "2 problemas a corrigir se aplicam à página inteira, por isso não têm marca.",
@@ -553,7 +553,7 @@ describe("how much of the audit is behind the number", () => {
     expect(scope.kicker).toBe("This tab");
     expect(scope.lead).toBe("Keyboard not checked yet");
     expect(scope.focusPath).toBe("skipped");
-    expect(scope.note).toContain("not verified");
+    expect(scope.note).toContain("not checked");
     expect(scope.note).toContain("Check keyboard");
   });
 
@@ -598,7 +598,7 @@ describe("how much of the audit is behind the number", () => {
 
   it("says so plainly when nothing was skipped", () => {
     expect(auditScope(result({ keyboard: report(), warnings: [] }), t).summary).toBe(
-      "Every check this build runs completed",
+      "Every check in this version completed",
     );
   });
 
@@ -720,7 +720,7 @@ describe("the panel is an inspector, not a squeezed report", () => {
     expect(keyboard).toContain("onClick={onShowKeyboard}");
     expect(keyboard).toContain("const outcome = error ? null : round;");
     expect(t("panel.roundChecked", { count: 200 })).toBe("This round checked 200 stops.");
-    expect(pt("panel.roundProblems", { count: 1 })).toBe("1 problema de teclado está na fila.");
+    expect(pt("panel.roundProblems", { count: 1 })).toBe("1 problema de teclado entrou na lista.");
   });
 
   it("opens a problem inside a closed group when asked to show it", () => {

@@ -37,10 +37,10 @@ export function ProgressHeader({ snap }: { snap: CrawlSnapshot }) {
           {running && <FontAwesomeIcon icon={faSpinner} aria-hidden className="animate-spin" />}
           <span className="tabular-nums">
             {running
-              ? `Auditing ${settled} of ${snap.totalPages}`
+              ? t("site.auditingProgress", { done: settled, total: snap.totalPages })
               : snap.status === "failed"
                 ? t("site.auditFailed")
-                : `Done · ${snap.totalPages} page${snap.totalPages === 1 ? "" : "s"}`}
+                : t("site.done", { count: snap.totalPages })}
           </span>
         </p>
       </div>
@@ -105,14 +105,14 @@ export function SiteSummary({
           deductions={[]}
           height={26}
           ticks
-          label={`Site score ${score ?? 0} out of 100`}
+          label={t("site.scoreLabel", { score: score ?? 0 })}
         />
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] text-body">
         <span>
-          <span className="font-semibold text-ink tabular-nums">{done.length}</span> page
-          {done.length === 1 ? "" : "s"} audited
+          <span className="font-semibold text-ink tabular-nums">{done.length}</span>{" "}
+          {t("site.pagesAudited", { count: done.length })}
         </span>
         {found.length === 0 && done.length > 0 && (
           <span className="flex items-center gap-1.5">
@@ -148,7 +148,7 @@ export function SiteSummary({
               ·
             </span>
             <StatusPill tone="critical">
-              {snap.failedPages} page{snap.failedPages === 1 ? "" : "s"} failed
+              {t("site.pagesFailed", { count: snap.failedPages })}
             </StatusPill>
           </span>
         )}
@@ -157,7 +157,7 @@ export function SiteSummary({
   );
 }
 
-function StatusSquare({ page }: { page: CrawlPage }) {
+function StatusSquare({ page, t }: { page: CrawlPage; t: Translate }) {
   if (page.status === "done" && page.score !== null) {
     return (
       <span
@@ -165,7 +165,7 @@ function StatusSquare({ page }: { page: CrawlPage }) {
           "flex size-9 shrink-0 items-center justify-center font-cond text-[16px] font-semibold text-surface tabular-nums",
           scoreTone(page.score),
         )}
-        aria-label={`Score ${page.score} out of 100`}
+        aria-label={t("site.pageScoreLabel", { score: page.score })}
       >
         {page.score}
       </span>
@@ -241,9 +241,9 @@ export function PageRow({
     page.status === "failed"
       ? page.error || t("site.pageFailed")
       : page.status === "pending"
-        ? "Waiting…"
+        ? t("site.pageWaiting")
         : page.status === "running"
-          ? "Auditing…"
+          ? t("site.pageAuditing")
           : page.title || page.url;
   const secondaryLang = page.status === "failed" && page.error ? langAttrs(locale, ui) : {};
 
@@ -258,7 +258,7 @@ export function PageRow({
             : "border-hairline bg-surface",
       )}
     >
-      <StatusSquare page={page} />
+      <StatusSquare page={page} t={t} />
 
       <div className="min-w-0 flex-1">
         <span className="block truncate font-mono text-[13px] font-medium text-ink">
@@ -297,7 +297,7 @@ export function PageRow({
     <li className="group">
       <Link
         href={`/results?url=${encodeURIComponent(page.url)}&site=${siteId}`}
-        aria-label={`Open report for ${pagePath(page.url)}`}
+        aria-label={t("site.openReport", { path: pagePath(page.url) })}
       >
         {inner}
       </Link>
