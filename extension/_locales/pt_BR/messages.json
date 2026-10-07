@@ -4,7 +4,7 @@
     "description": "Extension name shown in Chrome and on the Web Store listing."
   },
   "extDescription": {
-    "message": "Veja os problemas de acessibilidade da aba atual: o que falhou, onde está e o caminho real do foco do teclado.",
+    "message": "Veja os problemas de acessibilidade da aba atual: o que falhou, onde está e a ordem real de tabulação.",
     "description": "Store listing summary. The Web Store caps this at 132 characters."
   },
   "actionTitle": {
