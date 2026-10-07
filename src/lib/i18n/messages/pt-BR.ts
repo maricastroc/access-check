@@ -839,7 +839,7 @@ export const ptBR: Catalog = {
   "impact.landmark":
     "As regiões de referência (landmarks) deixam quem usa leitor de tela pular direto para a navegação, o conteúdo principal ou o rodapé. Conteúdo fora delas só é alcançado lendo a página inteira em ordem.",
   "impact.list":
-    "Leitores de tela anunciam \u201clista, N itens\u201d e permitem pular a lista. Uma marcação de lista malformada perde essa contagem e a possibilidade de avançar item a item.",
+    "Leitores de tela informam quantos itens há em uma lista e permitem navegar entre eles. Quando a estrutura da lista está incorreta, essas informações e opções de navegação podem ser perdidas.",
   "impact.aria":
     "ARIA incorreto ou incompleto faz a tecnologia assistiva anunciar o papel ou o estado errado, o que costuma ser pior do que não ter ARIA nenhum.",
   "impact.duplicateId":
@@ -857,7 +857,7 @@ export const ptBR: Catalog = {
   "impact.reachable":
     "Estes controles não são alcançáveis por teclado, então quem não usa mouse simplesmente não consegue operá-los.",
   "impact.targetSize":
-    "Alvos de toque pequenos são difíceis de acertar para pessoas com limitações motoras ou de destreza, e para qualquer pessoa em um ônibus em movimento ou com dedos maiores.",
+    "Alvos de toque pequenos são mais difíceis de acionar, especialmente para pessoas com dificuldade de coordenação motora, dedos maiores ou que estejam usando o dispositivo em movimento.",
   "impact.motion":
     "Quem ativou \u201creduzir movimento\u201d (muitas vezes porque animação provoca náusea ou vertigem) continua recebendo movimento que pediu ao sistema para suprimir.",
   "impact.live":
@@ -1051,7 +1051,7 @@ export const ptBR: Catalog = {
   "verdict.partial":
     "Testada em cada ocorrência e depois desfeita: {cleared} de {total} passaram e {failed} não. Revise as que continuam falhando.",
   "verdict.sampledOne":
-    "O elemento representativo passou quando a mudança sugerida foi aplicada e a regra rodou de novo. {others}",
+    "A correção sugerida foi aplicada a um dos elementos e, após uma nova verificação, o problema não foi mais identificado. {others}",
   "verdict.sampledMany":
     "Testadas {reaudited} de {total} ocorrências, uma para cada correção sugerida, e depois a mudança foi desfeita: {cleared} passaram{failedTail}. {others}",
   "verdict.sampledFailedTail": " e {failed} não",
