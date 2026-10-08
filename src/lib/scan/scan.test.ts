@@ -4,7 +4,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { runScan, ScanFailure } from "./scan";
 import { scoredViolations } from "./scored";
 import { closeSharedBrowser, getBrowserExecutor, setBrowserExecutor } from "./browser";
-import type { Browser, BrowserContext } from "playwright-core";
+import { translator } from "../i18n/t";
+import type { Browser, BrowserContext, CDPSession } from "playwright-core";
 
 const TALL_BODY = Array.from(
   { length: 4000 },
@@ -435,6 +436,21 @@ describe("runScan (integration — real browser)", () => {
   }, 60_000);
 });
 
+const bindThrough = (target: object, prop: string | symbol, receiver: unknown) => {
+  const value = Reflect.get(target, prop, receiver);
+  return typeof value === "function" ? value.bind(target) : value;
+};
+
+function withContexts(browser: Browser, wrap: (context: BrowserContext) => BrowserContext) {
+  return new Proxy(browser, {
+    get(target, prop, receiver) {
+      if (prop !== "newContext") return bindThrough(target, prop, receiver);
+      return async (...args: unknown[]) =>
+        wrap(await (target.newContext as (...a: unknown[]) => Promise<BrowserContext>)(...args));
+    },
+  });
+}
+
 describe("runScan (budget, degradation and resilience)", () => {
   it("recycles the browser and retries once when the page cannot be created", async () => {
     await closeSharedBrowser();
@@ -508,8 +524,148 @@ describe("runScan (budget, degradation and resilience)", () => {
     });
 
     try {
-      await expect(runScan(`${base}/clean`)).rejects.toThrow(/has been closed/);
+      const err = await runScan(`${base}/clean`).catch((e: unknown) => e);
+      expect(err).toBeInstanceOf(ScanFailure);
+      expect((err as ScanFailure).code).toBe("browser-unavailable");
+      expect(String((err as ScanFailure).cause)).toMatch(/has been closed/);
       expect(launches).toBe(2);
+    } finally {
+      setBrowserExecutor(real);
+      await closeSharedBrowser();
+    }
+  }, 60_000);
+
+  it("names the browser, in the reader's language, when no session can be opened", async () => {
+    await closeSharedBrowser();
+    const real = getBrowserExecutor();
+    let launches = 0;
+
+    setBrowserExecutor({
+      async launch() {
+        launches += 1;
+        const browser = await real.launch();
+        return withContexts(
+          browser,
+          (context) =>
+            new Proxy(context, {
+              get(ctx, key, ref) {
+                if (key !== "newPage") return bindThrough(ctx, key, ref);
+                return async () => {
+                  throw new Error(
+                    "browserContext.newPage: Target page, context or browser has been closed",
+                  );
+                };
+              },
+            }),
+        );
+      },
+    });
+
+    try {
+      let timings: Record<string, number> = {};
+      const err = await runScan(`${base}/clean`, {
+        locale: "pt-BR",
+        onTimings: (t) => {
+          timings = t;
+        },
+      }).catch((e: unknown) => e);
+
+      expect(err).toBeInstanceOf(ScanFailure);
+      expect((err as ScanFailure).code).toBe("browser-unavailable");
+      expect((err as ScanFailure).message).toBe(translator("pt-BR")("scanFail.browserUnavailable"));
+      expect(String((err as ScanFailure).cause)).toMatch(/newPage/);
+      expect(launches).toBe(2);
+      expect(timings.browserRecycled).toBe(1);
+      expect(timings.memFreeMb).toBeGreaterThan(0);
+    } finally {
+      setBrowserExecutor(real);
+      await closeSharedBrowser();
+    }
+  }, 60_000);
+
+  it("retires the browser after axe overruns, so the next scan opens a fresh one", async () => {
+    await closeSharedBrowser();
+    const real = getBrowserExecutor();
+    const launched: Browser[] = [];
+
+    setBrowserExecutor({
+      async launch() {
+        const browser = await real.launch();
+        launched.push(browser);
+        if (launched.length > 1) return browser;
+
+        const stallAxe = (session: CDPSession) =>
+          new Proxy(session, {
+            get(cdp, name, own) {
+              if (name !== "send") return bindThrough(cdp, name, own);
+              return (method: string, params?: { functionDeclaration?: string }) =>
+                method === "Runtime.callFunctionOn" &&
+                params?.functionDeclaration?.includes("runAxe")
+                  ? new Promise(() => undefined)
+                  : (cdp.send as (m: string, p?: unknown) => Promise<unknown>)(method, params);
+            },
+          });
+
+        return withContexts(browser, (context) => {
+          const hooked: BrowserContext = new Proxy(context, {
+            get(ctx, key, ref) {
+              if (key === "newCDPSession") {
+                return async (...args: unknown[]) =>
+                  stallAxe(
+                    await (ctx.newCDPSession as (...a: unknown[]) => Promise<CDPSession>)(...args),
+                  );
+              }
+              if (key === "newPage") {
+                return async () =>
+                  new Proxy(await ctx.newPage(), {
+                    get(page, name, own) {
+                      if (name === "context") return () => hooked;
+                      return bindThrough(page, name, own);
+                    },
+                  });
+              }
+              return bindThrough(ctx, key, ref);
+            },
+          });
+          return hooked;
+        });
+      },
+    });
+
+    const quick = {
+      screenshot: false,
+      keyboard: false,
+      contexts: false,
+      audits: false,
+      verifyFixes: false,
+    };
+
+    try {
+      let stuckTimings: Record<string, number> = {};
+      const err = await runScan(`${base}/clean`, {
+        ...quick,
+        budgetMs: 8_000,
+        onTimings: (t) => {
+          stuckTimings = t;
+        },
+      }).catch((e: unknown) => e);
+
+      expect((err as ScanFailure).code).toBe("audit-failed");
+      expect(stuckTimings.browserRetired).toBe(1);
+
+      let nextTimings: Record<string, number> = {};
+      const result = await runScan(`${base}/clean`, {
+        ...quick,
+        onTimings: (t) => {
+          nextTimings = t;
+        },
+      });
+
+      expect(result.title).toBe("Clean fixture");
+      expect(launched).toHaveLength(2);
+      expect(launched[0].isConnected()).toBe(false);
+      expect(nextTimings.browserRecycled).toBeUndefined();
+      expect(nextTimings.browserRetired).toBeUndefined();
     } finally {
       setBrowserExecutor(real);
       await closeSharedBrowser();

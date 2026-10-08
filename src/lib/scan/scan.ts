@@ -1,6 +1,13 @@
 import path from "path";
 import type { BrowserContext, Page } from "playwright-core";
-import { acquireBrowser, closeSharedBrowser } from "./browser";
+import {
+  browserHealth,
+  CLOSE_GRACE_MS,
+  closeSharedBrowser,
+  leaseBrowser,
+  settlesWithin,
+  type BrowserLease,
+} from "./browser";
 import { type ElementInfo } from "./remediate";
 import { collectKeyboard, type FocusStop, type KeyboardReport } from "./keyboard";
 import { collectContexts, type ContextReport } from "./contexts";
@@ -79,6 +86,7 @@ const FINALIZE_RESERVE_MS = 2_500;
 const FINALIZE_RESERVE_SHARE = 0.1;
 const SESSION_MAX_MS = 18_000;
 const RETRY_FLOOR_MS = 12_000;
+const LEAVES_BROWSER_CLEAN = new Set<ScanErrorCode>(["http-error", "navigation-failed"]);
 const EXPIRED = Symbol("expired");
 
 const AXE_PATH = path.join(process.cwd(), "node_modules/axe-core/axe.min.js");
@@ -116,8 +124,9 @@ export class ScanFailure extends Error {
   constructor(
     message: string,
     readonly code: ScanErrorCode,
+    options?: ErrorOptions,
   ) {
-    super(message);
+    super(message, options);
     this.name = "ScanFailure";
   }
 }
@@ -381,23 +390,26 @@ export async function runScan(rawUrl: string, opts: ScanOptions = {}): Promise<S
   const timings: Record<string, number> = {};
   const locale = opts.locale ?? DEFAULT_REPORT_LOCALE;
 
-  const unavailable = () =>
-    new ScanFailure(translator(locale)("scanFail.browserUnavailable"), "browser-unavailable");
+  const unavailable = (cause: unknown) =>
+    new ScanFailure(translator(locale)("scanFail.browserUnavailable"), "browser-unavailable", {
+      cause: cause instanceof SessionOpenError ? cause.cause : cause,
+    });
 
   try {
     try {
       return await runScanAttempt(rawUrl, opts, budget, timings);
     } catch (err) {
-      if (err instanceof SessionOpenError) throw err.cause;
+      if (err instanceof SessionOpenError) throw unavailable(err);
       if (!isBrowserGone(err)) throw err;
       await closeSharedBrowser().catch(() => noop());
-      if (!budget.allows(RETRY_FLOOR_MS)) throw unavailable();
+      if (!budget.allows(RETRY_FLOOR_MS)) throw unavailable(err);
       timings.browserRestarted = (timings.browserRestarted ?? 0) + 1;
       try {
         return await runScanAttempt(rawUrl, opts, budget, timings);
       } catch (retryErr) {
-        if (retryErr instanceof SessionOpenError) throw retryErr.cause;
-        if (isBrowserGone(retryErr)) throw unavailable();
+        if (retryErr instanceof SessionOpenError || isBrowserGone(retryErr)) {
+          throw unavailable(retryErr);
+        }
         throw retryErr;
       }
     }
@@ -451,9 +463,14 @@ async function runScanAttempt(
 
   phase("preparing");
 
-  const openSession = async (): Promise<{ context: BrowserContext; page: Page }> => {
+  const openSession = async (): Promise<{
+    context: BrowserContext;
+    page: Page;
+    lease: BrowserLease;
+  }> => {
     for (let attempt = 1; ; attempt++) {
       let context: BrowserContext | undefined;
+      let lease: BrowserLease | undefined;
       const allowance = Math.max(3_000, budget.slice(SESSION_MAX_MS));
       let timer: ReturnType<typeof setTimeout> | undefined;
       const expiry = new Promise<typeof EXPIRED>((resolve) => {
@@ -461,23 +478,28 @@ async function runScanAttempt(
       });
       try {
         const attempted = (async () => {
-          const browser = await track("browserLaunch", () => acquireBrowser());
+          lease = await track("browserLaunch", () => leaseBrowser());
+          const { browser } = lease;
           context = await track("contextCreate", () => browser.newContext(CONTEXT_OPTIONS));
           if (blockPrivateHosts) await installNetworkGuard(context);
           const page = await track("pageCreate", () => context!.newPage());
-          return { context, page };
+          return { context, page, lease };
         })();
         attempted.catch(() => noop());
 
         const opened = await Promise.race([attempted, expiry]);
         if (opened !== EXPIRED) return opened;
 
-        await context?.close().catch(() => noop());
+        void attempted.then(
+          (late) => late.lease.release(true),
+          () => lease?.release(true),
+        );
         await closeSharedBrowser().catch(() => noop());
         throw new ScanFailure(translator(locale)("scanFail.browserSlow"), "browser-unavailable");
       } catch (err) {
         if (err instanceof ScanFailure) throw err;
-        await context?.close().catch(() => noop());
+        if (attempt === 1) Object.assign(timings, await browserHealth().catch(() => ({})));
+        lease?.release(true);
         await closeSharedBrowser().catch(() => noop());
         if (attempt >= 2) throw err;
         timings.browserRecycled = (timings.browserRecycled ?? 0) + 1;
@@ -487,9 +509,10 @@ async function runScanAttempt(
     }
   };
 
-  const { context, page } = await openSession().catch((err: unknown) => {
+  const { context, page, lease } = await openSession().catch((err: unknown) => {
     throw err instanceof ScanFailure ? err : new SessionOpenError(err);
   });
+  let retire = false;
 
   try {
     phase("loading");
@@ -877,8 +900,18 @@ async function runScanAttempt(
       partial: policy.partial,
       warnings: policy.warnings().length > 0 ? policy.warnings() : undefined,
     };
+  } catch (err) {
+    retire = !(err instanceof ScanFailure && LEAVES_BROWSER_CLEAN.has(err.code));
+    throw err;
   } finally {
     timings.total = Date.now() - startedAt;
-    await context.close().catch(() => noop());
+    retire ||= policy.timedOut;
+    const closing = context.close().catch(() => noop());
+    if (retire || !(await settlesWithin(closing, CLOSE_GRACE_MS))) {
+      timings.browserRetired = 1;
+      lease.release(true);
+    } else {
+      lease.release();
+    }
   }
 }

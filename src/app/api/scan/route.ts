@@ -190,7 +190,12 @@ export async function POST(req: Request) {
       const code: ScanErrorCode = error instanceof ScanFailure ? error.code : "internal";
       const message = error instanceof ScanFailure ? error.message : t("api.auditFailed");
       send({ type: "error", error: message, code });
-      log("error", { code, detail: error instanceof Error ? error.message : String(error) });
+      const cause = error instanceof Error ? error.cause : undefined;
+      log("error", {
+        code,
+        detail: error instanceof Error ? error.message : String(error),
+        ...(cause ? { cause: cause instanceof Error ? cause.message : String(cause) } : {}),
+      });
     } finally {
       if (timer) clearTimeout(timer);
     }

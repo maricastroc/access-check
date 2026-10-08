@@ -87,6 +87,24 @@ describe("ScanPolicy allowances", () => {
     expect(policy.canRun("keyboard")).toBe(false);
   });
 
+  it("waits for a settling page only as long as axe can still run in full", () => {
+    const { policy, advance } = makePolicy(40_000, 2_500, 6_000);
+    expect(policy.allowance("prime")).toBe(2_500);
+    expect(policy.allowance("content-ready")).toBe(6_000);
+
+    advance(9_000);
+    expect(policy.allowance("content-ready")).toBe(2_500);
+    advance(2_500);
+    expect(policy.allowance("axe")).toBe(20_000);
+  });
+
+  it("still gives the waits their minimum when axe cannot run in full", () => {
+    const { policy, advance } = makePolicy(40_000, 2_500, 6_000);
+    advance(14_000);
+    expect(policy.allowance("prime")).toBe(STAGES.prime.minMs);
+    expect(policy.allowance("content-ready")).toBe(STAGES["content-ready"].minMs);
+  });
+
   it("never proposes a negative allowance", () => {
     const { policy, advance } = makePolicy(5_000, 1_000, 2_000);
     advance(99_000);
@@ -142,7 +160,19 @@ describe("ScanPolicy degradation", () => {
     expect(stuck.timedOut).toBe(true);
     expect(stuck.value).toBeNull();
     expect(slow.warnings().map((w) => w.code)).toEqual(["screenshot-unavailable"]);
+    expect(policy.timedOut).toBe(false);
+    expect(slow.timedOut).toBe(true);
   }, 20_000);
+
+  it("does not count a stage skipped for lack of budget as timed out", async () => {
+    const { policy, advance } = makePolicy(10_000);
+    policy.releaseAssemblyReserve();
+    advance(9_900);
+    await policy.run("keyboard", async () => "done", "fallback");
+
+    expect(policy.wasSkipped("keyboard")).toBe(true);
+    expect(policy.timedOut).toBe(false);
+  });
 
   it("marks the report partial only for stages that change the audit", () => {
     const presentation = new ScanPolicy(new Budget(1_000, 0), TEXT);
