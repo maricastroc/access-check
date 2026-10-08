@@ -25,17 +25,19 @@ export type StageSpec = {
   minMs: number;
   warning?: ScanWarningCode;
   affectsReport?: boolean;
+  yieldsTo?: StageId;
 };
 
 export const STAGES: Record<StageId, StageSpec> = {
   navigation: { tier: "essential", maxMs: 15_000, minMs: 3_000 },
-  prime: { tier: "assembly", maxMs: 2_500, minMs: 1_200 },
+  prime: { tier: "assembly", maxMs: 2_500, minMs: 1_200, yieldsTo: "axe" },
   "content-ready": {
     tier: "essential",
     maxMs: 6_000,
     minMs: 600,
     warning: "content-unsettled",
     affectsReport: true,
+    yieldsTo: "axe",
   },
   axe: { tier: "essential", maxMs: 20_000, minMs: 500 },
   "element-info": {
@@ -110,6 +112,7 @@ export type StageOutcome<T> = {
 export class ScanPolicy {
   private readonly emitted = new Map<ScanWarningCode, ScanWarning>();
   private readonly skipped = new Set<StageId>();
+  private readonly expired = new Set<StageId>();
   private assemblyHeld = true;
 
   constructor(
@@ -124,8 +127,13 @@ export class ScanPolicy {
 
   allowance(id: StageId): number {
     const spec = STAGES[id];
-    const held = spec.tier === "essential" && this.assemblyHeld ? this.assemblyReserveMs : 0;
-    return Math.max(0, Math.min(spec.maxMs, this.budget.spendable() - held));
+    const reserve = this.assemblyHeld ? this.assemblyReserveMs : 0;
+    const held = spec.tier === "essential" ? reserve : 0;
+    const open = Math.max(0, Math.min(spec.maxMs, this.budget.spendable() - held));
+    if (!spec.yieldsTo) return open;
+
+    const ahead = reserve + STAGES[spec.yieldsTo].maxMs;
+    return Math.min(open, Math.max(spec.minMs, this.budget.spendable() - ahead));
   }
 
   canRun(id: StageId): boolean {
@@ -144,7 +152,10 @@ export class ScanPolicy {
     }
 
     const { value, timedOut } = await withBudget(() => fn(allowance), allowance, fallback);
-    if (timedOut) this.skip(id);
+    if (timedOut) {
+      this.expired.add(id);
+      this.skip(id);
+    }
     return { value, ran: !timedOut, skipped: false, timedOut } as StageOutcome<T>;
   }
 
@@ -157,6 +168,10 @@ export class ScanPolicy {
   warn(code: ScanWarningCode): void {
     if (this.emitted.has(code)) return;
     this.emitted.set(code, { code, message: this.text[code] });
+  }
+
+  get timedOut(): boolean {
+    return this.expired.size > 0;
   }
 
   wasSkipped(id: StageId): boolean {
