@@ -15,7 +15,7 @@ const GLYPH: Record<SealStatus, string> = {
 
 const CLS: Record<SealStatus, string> = {
   verified: "border border-solid border-verified bg-verified/[0.08] text-verified",
-  "needs-review": "border border-dashed border-moderate-text text-moderate-text",
+  "needs-review": "border border-dashed border-steel text-steel",
 };
 
 export function StatusSeal({
