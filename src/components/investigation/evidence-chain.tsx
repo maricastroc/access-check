@@ -124,8 +124,11 @@ function Located({
       {name && <p className="text-[15.5px] leading-snug break-words text-ink">“{name}”</p>}
       <p
         className={cn(
-          "font-mono break-words",
-          name ? "mt-1 text-[13px] text-muted" : "text-[14.5px] text-ink",
+          "font-mono",
+          name || !identity
+            ? "text-[13px] wrap-anywhere text-muted"
+            : "text-[14.5px] break-words text-ink",
+          name && "mt-1",
         )}
       >
         {code}

@@ -73,7 +73,7 @@ export function Summary({
         >
           {label}
         </span>
-        <span className="flex flex-wrap gap-1" role="list" aria-label={t("summary.index")}>
+        <span className="flex flex-wrap gap-1.5" role="list" aria-label={t("summary.index")}>
           {list.map((f) => (
             <span role="listitem" key={f.id}>
               <button
@@ -85,7 +85,7 @@ export function Summary({
                 onMouseLeave={() => onHover?.(null)}
                 onFocus={() => onHover?.(f.id)}
                 onBlur={() => onHover?.(null)}
-                className="flex min-h-6 min-w-6 cursor-pointer items-center justify-center"
+                className="ac-focus-tight flex min-h-6 min-w-6 cursor-pointer items-center justify-center"
               >
                 <Tag n={f.n} sev={sevOf(f)} size={big ? 24 : 22} selected={f.id === selectedId} />
               </button>

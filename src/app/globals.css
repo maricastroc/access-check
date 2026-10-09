@@ -257,6 +257,10 @@ details[open] > summary .ac-chev {
   inset: 3px;
 }
 
+.ac-instrument .ac-focus-tight:focus-visible::after {
+  inset: -3px;
+}
+
 .ac-instrument :where(input, select, textarea):focus-visible {
   outline: 3px solid var(--color-ink);
   outline-offset: 2px;

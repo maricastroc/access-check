@@ -457,7 +457,7 @@ export function CodeChange({ removed, added }: { removed?: string | null; added:
           <span aria-hidden className="text-critical">
             −
           </span>
-          <del className="break-all decoration-critical">{removed}</del>
+          <del className="wrap-anywhere decoration-critical">{removed}</del>
         </div>
       )}
       {added.split("\n").map((line, i) => (
@@ -465,7 +465,7 @@ export function CodeChange({ removed, added }: { removed?: string | null; added:
           <span aria-hidden className="text-verified">
             +
           </span>
-          <ins className="break-all whitespace-pre-wrap no-underline">{line}</ins>
+          <ins className="wrap-anywhere whitespace-pre-wrap no-underline">{line}</ins>
         </div>
       ))}
     </div>

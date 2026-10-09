@@ -39,7 +39,7 @@ export function OccurrenceNav({
               aria-pressed={i === index}
               aria-label={t("chain.occurrenceAria", { tag, label })}
               onClick={() => onPick(i)}
-              className="flex min-h-6 min-w-6 cursor-pointer items-center justify-center"
+              className="ac-focus-tight flex min-h-6 min-w-6 cursor-pointer items-center justify-center"
             >
               <Tag n={tag} sev={sev} size={24} quiet={i !== index} selected={i === index} />
             </button>

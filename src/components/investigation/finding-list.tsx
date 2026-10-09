@@ -119,8 +119,9 @@ export function FindingList({
         data-kind={f.kind}
         className={cn(
           "scroll-mt-24",
-          open && "bg-surface",
-          !open && hoveredId === f.id && "bg-surface/70",
+          open &&
+            "bg-surface shadow-[inset_0_1px_0_var(--color-hairline),inset_0_-1px_0_var(--color-hairline)]",
+          !open && hoveredId === f.id && "bg-ink/[0.035]",
         )}
         {...rowAttrs}
       >
@@ -136,7 +137,7 @@ export function FindingList({
               "grid-cols-[auto_minmax(0,1fr)]",
               pad,
               compact ? (open ? "pt-3 pb-3" : "py-4") : open ? "pt-3.5 pb-3" : "py-4",
-              !open && "hover:bg-surface/70",
+              !open && "transition-colors hover:bg-ink/[0.035]",
             )}
           >
             <span className={cn("relative", open ? "self-stretch" : "pt-px")}>

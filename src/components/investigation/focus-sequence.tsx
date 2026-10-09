@@ -70,7 +70,7 @@ export function FocusSequence({
                   alert ? t("marks.stopWithFinding", { stop: name, tag: alert.tag }) : name
                 }
                 onClick={() => onPick(s.n)}
-                className="flex min-h-6 min-w-6 cursor-pointer items-center justify-center"
+                className="ac-focus-tight flex min-h-6 min-w-6 cursor-pointer items-center justify-center"
               >
                 <span
                   data-sev={alert?.sev}
