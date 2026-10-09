@@ -90,7 +90,7 @@ function Located({
   if (!occ) {
     return (
       <>
-        <p className="text-[14.5px] leading-normal break-words text-ink-2">
+        <p className="text-[15px] leading-normal break-words text-ink-2">
           {finding.noMarkerReason || t("marker.docLevel")}
         </p>
         {extra}
@@ -121,23 +121,23 @@ function Located({
 
   return (
     <>
-      {name && <p className="text-[15.5px] leading-snug break-words text-ink">“{name}”</p>}
+      {name && <p className="text-[15px] leading-snug break-words text-ink">“{name}”</p>}
       <p
         className={cn(
           "font-mono",
           name || !identity
-            ? "text-[13px] wrap-anywhere text-muted"
-            : "text-[14.5px] break-words text-ink",
+            ? "text-[12.5px] wrap-anywhere text-muted"
+            : "text-[15px] break-words text-ink",
           name && "mt-1",
         )}
       >
         {code}
       </p>
       {occ.reason && occ.keyboard && finding.ruleId !== "focus-not-visible" && (
-        <p className="mt-1.5 text-[14.5px] leading-normal break-words text-ink-2">{occ.reason}</p>
+        <p className="mt-1.5 text-[15px] leading-normal break-words text-ink-2">{occ.reason}</p>
       )}
       {occ.keyboard && occ.certainty === "needs-review" && (
-        <p className="mt-1.5 text-[13px] leading-normal text-review-text">
+        <p className="mt-1.5 text-[13.5px] leading-normal text-review-text">
           {t("panel.geometryUnsure")}
         </p>
       )}
@@ -152,7 +152,7 @@ function Located({
         )}
       />
       {unlisted > 0 && occurrences.length > 0 && (
-        <p className="mt-2 text-[13px] text-muted">{t("chain.unlisted", { count: unlisted })}</p>
+        <p className="mt-2 text-[13.5px] text-muted">{t("chain.unlisted", { count: unlisted })}</p>
       )}
       {extra}
     </>
@@ -238,7 +238,7 @@ function Evidence({
         <p className="mt-2 text-[13.5px] leading-normal text-muted">{t("verdict.bestPractice")}</p>
       )}
       {f.contexts.length > 0 && (
-        <p className="mt-2 text-[13px] text-muted">
+        <p className="mt-2 text-[13.5px] text-muted">
           {t("panel.alsoFailsIn", { contexts: f.contexts.join(", ") })}
         </p>
       )}
@@ -391,7 +391,7 @@ function Decide({ finding: f, t }: { finding: FindingView; t: Translate }) {
   return (
     <>
       <p className="text-[13.5px] font-semibold text-ink-2">{t("panel.howToCheck")}</p>
-      <ol className="mt-1.5 list-decimal space-y-1.5 pl-5 text-[14.5px] leading-normal text-ink-2 marker:text-muted">
+      <ol className="mt-1.5 list-decimal space-y-1.5 pl-5 text-[15px] leading-normal text-ink-2 marker:text-muted">
         {guide.steps.map((step) => (
           <li key={step}>{step}</li>
         ))}
@@ -429,7 +429,7 @@ function Verdict({
             </span>
           </p>
         )}
-        <p className="mt-1 text-[14.5px] leading-normal text-ink-2">
+        <p className="mt-1 text-[15px] leading-normal text-ink-2">
           {chain.end === "tested" && reading && reading.verification !== "verified"
             ? t("chain.notRemeasured")
             : chain.end === "tested"
@@ -441,8 +441,8 @@ function Verdict({
             <span aria-hidden className="ac-chev" />
             {t("chain.howVerified")}
           </summary>
-          <p className="mt-2 text-[14px] leading-normal text-ink-2">{message}</p>
-          <p className="mt-1.5 text-[13px] leading-normal text-muted">
+          <p className="mt-2 text-[15px] leading-normal text-ink-2">{message}</p>
+          <p className="mt-1.5 text-[12.5px] leading-normal text-muted">
             {testedOn === "page" ? t("detail.pageNote") : t("detail.sandboxNote", { host })}
           </p>
         </details>

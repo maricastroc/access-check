@@ -31,8 +31,8 @@ export function AboutAudit({
     <details className="border-t border-border bg-canvas">
       <summary className="mx-auto flex w-full max-w-[1560px] cursor-pointer list-none flex-wrap items-baseline gap-x-2 gap-y-0.5 px-4 py-3.5 sm:px-6">
         <span aria-hidden className="ac-chev text-muted" />
-        <h2 className="shrink-0 text-[14px] font-semibold text-ink">{t("panel.aboutAudit")}</h2>
-        <span className="text-[13px] text-muted">{state}</span>
+        <h2 className="shrink-0 text-[15px] font-semibold text-ink">{t("panel.aboutAudit")}</h2>
+        <span className="text-[13.5px] text-muted">{state}</span>
       </summary>
 
       <div className="mx-auto grid w-full max-w-[1560px] grid-cols-1 gap-6 px-4 pb-6 sm:px-6 lg:grid-cols-3">
@@ -54,7 +54,7 @@ export function AboutAudit({
               </div>
             </div>
           ) : (
-            <p className="mt-2 text-[13px] leading-normal text-body">{t("coverage.complete")}</p>
+            <p className="mt-2 text-[13.5px] leading-normal text-body">{t("coverage.complete")}</p>
           )}
           {stale && (
             <div className="mt-3">

@@ -68,7 +68,7 @@ export function Summary({
             "tracking-[-0.01em] tabular-nums",
             big
               ? cn("font-bold", compact ? "text-[19px]" : "text-[21px]")
-              : "text-[16px] font-semibold",
+              : "text-[15px] font-semibold",
           )}
         >
           {label}
@@ -113,7 +113,7 @@ export function Summary({
       <p
         className={cn(
           "max-w-[46ch] leading-normal text-ink-2",
-          compact ? "mt-1.5 text-[14px]" : "mt-2.5 text-[15px]",
+          compact ? "mt-1.5 text-[15px]" : "mt-2.5 text-[15px]",
         )}
       >
         {t(STANDING_NOTE[standing])}

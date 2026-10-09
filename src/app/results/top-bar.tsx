@@ -105,8 +105,8 @@ export function TopBar({
             </Button>
           )}
           {result && (
-            <div className="hidden min-w-0 items-baseline gap-3 text-[13px] text-muted lg:flex">
-              <span className="truncate font-mono text-[14px] font-semibold text-ink">
+            <div className="hidden min-w-0 items-baseline gap-3 text-[13.5px] text-muted lg:flex">
+              <span className="truncate font-mono text-[13.5px] font-semibold text-ink">
                 {result.finalUrl}
               </span>
               {pending ? (

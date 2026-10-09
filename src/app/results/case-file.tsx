@@ -65,7 +65,9 @@ export function CaseSummary({
         >
           <WcagChips t={t} model={wcag} className="mt-4" />
           {!scoringIsCurrent(result) && (
-            <p className="mt-3 text-[13px] font-semibold text-steel">{t("standing.staleTitle")}</p>
+            <p className="mt-3 text-[13.5px] font-semibold text-steel">
+              {t("standing.staleTitle")}
+            </p>
           )}
         </Summary>
       )}
@@ -170,10 +172,10 @@ export function CaseFile({
 
       {coverage && stops.length > 0 && (
         <section aria-labelledby="focus-heading" className={cn("pt-4 pb-8", pad)}>
-          <h2 id="focus-heading" className="text-[14px] font-semibold text-ink-2">
+          <h2 id="focus-heading" className="text-[15px] font-semibold text-ink-2">
             {t("panel.focusPath")}
           </h2>
-          <p className="mt-1.5 text-[14px] leading-normal text-ink-2">{coverage.line}</p>
+          <p className="mt-1.5 text-[15px] leading-normal text-ink-2">{coverage.line}</p>
           {coverage.notes.map((note) => (
             <p key={note} className="mt-1.5 text-[13.5px] leading-normal text-steel">
               {note}

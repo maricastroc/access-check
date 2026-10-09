@@ -29,7 +29,7 @@ export function StageList({ stages, current }: { stages: readonly string[]; curr
           <li
             key={label}
             className={cn(
-              "flex items-center gap-2.5 py-2 text-[13px]",
+              "flex items-center gap-2.5 py-2 text-[13.5px]",
               i > 0 && "border-t border-hairline",
               state === "done" && "text-body",
               state === "active" && "font-semibold text-ink",

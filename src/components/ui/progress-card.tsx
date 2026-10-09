@@ -42,7 +42,7 @@ export function ProgressCard({
       <div className="border border-border bg-surface p-6">
         <div className="flex items-baseline gap-2">
           <span className="font-cond text-[28px] leading-none text-ink tabular-nums">{secs}s</span>
-          <span className="text-[13px] text-muted">{t("site.upTo", { seconds: budget })}</span>
+          <span className="text-[13.5px] text-muted">{t("site.upTo", { seconds: budget })}</span>
           <span className="ml-auto truncate font-mono text-[12.5px] text-muted">{target}</span>
         </div>
         <div className="mt-3">

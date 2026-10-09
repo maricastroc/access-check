@@ -57,7 +57,7 @@ export function FocusSequence({
           return (
             <li key={s.n} className="flex items-center">
               {gap && (
-                <span aria-hidden className="px-1.5 text-[13px] text-muted">
+                <span aria-hidden className="px-1.5 text-[13.5px] text-muted">
                   …
                 </span>
               )}
@@ -113,10 +113,7 @@ export function FocusSequence({
           </button>
         </span>
         {here && (
-          <p
-            aria-live="polite"
-            className={cn("min-w-0 text-ink", compact ? "text-[13.5px]" : "text-[14px]")}
-          >
+          <p aria-live="polite" className="min-w-0 text-[13.5px] text-ink">
             <span className="font-semibold">
               {t("panel.stopOf", { at: at + 1, total: stops.length })}
             </span>

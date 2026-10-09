@@ -63,7 +63,7 @@ export function OccurrenceNav({
         <span aria-hidden>←</span>
       </button>
       <Tag n={occurrenceTag(n, index, total)} sev={sev} size={24} selected />
-      <span aria-live="polite" className="text-[13px] text-muted tabular-nums">
+      <span aria-live="polite" className="text-[13.5px] text-muted tabular-nums">
         {t("stepper.position", { at: index + 1, total })}
         <span className="sr-only">
           , {occurrenceTag(n, index, total)}, {labels[index]}

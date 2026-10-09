@@ -80,13 +80,13 @@ const STAGE_AT: Record<AuditTask, Partial<Record<AuditStage, number>>> = {
 };
 
 const PRIMARY_BUTTON =
-  "w-full min-h-10 cursor-pointer bg-ink px-3 py-2 text-[14px] font-semibold text-surface hover:bg-ink-2 disabled:cursor-default disabled:bg-band disabled:text-muted";
+  "w-full min-h-10 cursor-pointer bg-ink px-3 py-2 text-[13.5px] font-semibold text-surface hover:bg-ink-2 disabled:cursor-default disabled:bg-band disabled:text-muted";
 
 const SECONDARY_BUTTON =
-  "w-full min-h-10 cursor-pointer border border-ink bg-surface px-3 py-2 text-[14px] font-semibold text-ink hover:bg-band";
+  "w-full min-h-10 cursor-pointer border border-ink bg-surface px-3 py-2 text-[13.5px] font-semibold text-ink hover:bg-band";
 
 const QUIET_BUTTON =
-  "min-h-8 cursor-pointer border border-border bg-surface px-2.5 text-[13px] font-semibold text-ink hover:border-ink disabled:cursor-default disabled:text-disabled";
+  "min-h-8 cursor-pointer border border-border bg-surface px-2.5 text-[13.5px] font-semibold text-ink hover:border-ink disabled:cursor-default disabled:text-disabled";
 
 const NEIGHBOURS = 2;
 const NEARBY_OCCURRENCES = 24;
@@ -114,7 +114,7 @@ function send(message: PanelMessage): Promise<unknown> {
 function LanguageChoice({ preference }: { preference: LocalePreference }) {
   return (
     <div className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-hairline px-3 pt-4">
-      <label htmlFor="panel-language" className="shrink-0 text-[13px] font-semibold text-ink-2">
+      <label htmlFor="panel-language" className="shrink-0 text-[13.5px] font-semibold text-ink-2">
         {t("language.label")}
       </label>
       <span className="relative ml-auto inline-flex max-w-full min-w-0">
@@ -127,7 +127,7 @@ function LanguageChoice({ preference }: { preference: LocalePreference }) {
               .then(markLanguageChanged)
               .then(() => location.reload());
           }}
-          className="min-h-8 max-w-full min-w-0 cursor-pointer appearance-none border border-border bg-surface pr-9 pl-3 text-[13px] text-ink"
+          className="min-h-8 max-w-full min-w-0 cursor-pointer appearance-none border border-border bg-surface pr-9 pl-3 text-[13.5px] text-ink"
         >
           <option value={FOLLOW_BROWSER}>{t("language.followBrowser")}</option>
           {REPORT_LOCALES.map((option) => (
@@ -186,7 +186,7 @@ function StickyBar({
   const layout = title ? "truncate" : "flex items-center gap-2";
   return (
     <div className="sticky top-0 z-30 flex min-h-12 flex-wrap items-center gap-x-2 gap-y-1.5 border-b border-hairline bg-canvas px-3 py-2">
-      <h1 className={`min-w-0 flex-1 text-[14px] font-semibold text-ink ${layout}`}>
+      <h1 className={`min-w-0 flex-1 text-[13.5px] font-semibold text-ink ${layout}`}>
         {title ?? (
           <>
             <BrandMark size={16} />
@@ -208,7 +208,7 @@ function StickyBar({
         <button
           type="button"
           onClick={onTop}
-          className="flex min-h-8 shrink-0 cursor-pointer items-center gap-1.5 px-1.5 text-[13px] font-semibold text-ink hover:underline"
+          className="flex min-h-8 shrink-0 cursor-pointer items-center gap-1.5 px-1.5 text-[13.5px] font-semibold text-ink hover:underline"
         >
           <StandingMark standing={standing} size={12} />
           <span className="max-[359px]:sr-only">{t(STANDING_LABEL[standing])}</span>
@@ -264,7 +264,7 @@ function Header({
           t={t}
         >
           {notices.map((line) => (
-            <p key={line} className="mt-3 text-[13px] leading-normal text-steel">
+            <p key={line} className="mt-3 text-[13.5px] leading-normal text-steel">
               {line}
             </p>
           ))}
@@ -282,7 +282,7 @@ function Header({
           {!scoringIsCurrent(result) && (
             <div className="mt-3 border-l-2 border-dashed border-border pl-3">
               <h3 className="text-[13.5px] font-semibold text-ink-2">{t("standing.staleTitle")}</h3>
-              <p className="mt-0.5 text-[13px] leading-normal text-ink-2">
+              <p className="mt-0.5 text-[13.5px] leading-normal text-ink-2">
                 {t("standing.staleBody")}
               </p>
             </div>
@@ -358,7 +358,7 @@ function KeyboardCheck({
       )}
       {pending && (
         <>
-          <p id="walk-debugger-note" className="mt-1.5 text-[13px] leading-normal text-ink-2">
+          <p id="walk-debugger-note" className="mt-1.5 text-[13.5px] leading-normal text-ink-2">
             {t("panel.walkDebuggerNote")}
           </p>
           <button
@@ -381,7 +381,7 @@ function KeyboardCheck({
           >
             {t("panel.continueWalk")}
           </button>
-          <p id="continue-walk-note" className="mt-1.5 text-[13px] leading-normal text-muted">
+          <p id="continue-walk-note" className="mt-1.5 text-[13.5px] leading-normal text-muted">
             {t("panel.continueWalkNote", { stops })}
           </p>
         </>
@@ -403,8 +403,8 @@ function Collapsed({
     <details className="mt-6 border-t border-hairline px-3 py-3">
       <summary className="flex cursor-pointer flex-wrap items-baseline gap-x-2 gap-y-0.5">
         <span aria-hidden className="ac-chev text-ink-2" />
-        <h2 className="text-[14px] font-semibold text-ink">{title}</h2>
-        {note && <span className="text-[13px] text-muted">{note}</span>}
+        <h2 className="text-[15px] font-semibold text-ink">{title}</h2>
+        {note && <span className="text-[13.5px] text-muted">{note}</span>}
       </summary>
       <div className="mt-3">{children}</div>
     </details>
@@ -431,7 +431,7 @@ function ChecksPerformed({ result }: { result: ScanResult }) {
       <h3 id="about-checks" className="text-[13.5px] font-semibold text-ink-2">
         {t("panel.checksPerformed")} · {ran.length}
       </h3>
-      <ul className="mt-1.5 list-disc space-y-1 pl-4 text-[13px] leading-normal text-ink-2 marker:text-muted">
+      <ul className="mt-1.5 list-disc space-y-1 pl-4 text-[13.5px] leading-normal text-ink-2 marker:text-muted">
         {ran.map((item) => (
           <li key={item}>{item}</li>
         ))}
@@ -462,7 +462,7 @@ function Capture({ result, findings }: { result: ScanResult; findings: FindingVi
       <h3 id="about-screenshot" className="text-[13.5px] font-semibold text-ink-2">
         {t("panel.screenshot")}
       </h3>
-      <p className="mt-0.5 text-[13px] text-muted">
+      <p className="mt-0.5 text-[13.5px] text-muted">
         {marked > 0 ? t("panel.evidenceNoteMarked", { count: marked }) : t("panel.evidenceNote")}
       </p>
       <div className="relative mt-2.5 border border-hairline">
@@ -507,7 +507,7 @@ function OnPage({
       <button type="button" className={PRIMARY_BUTTON} disabled={busy} onClick={onLocate}>
         {busy ? t("panel.locating") : t("panel.locate")}
       </button>
-      <p role="status" className="mt-2 text-[13px] leading-normal text-steel empty:mt-0">
+      <p role="status" className="mt-2 text-[13.5px] leading-normal text-steel empty:mt-0">
         {notice}
       </p>
     </div>
@@ -525,7 +525,7 @@ function ReadingLanguage({
 
   return (
     <div className="mx-3 mt-3 border-l-2 border-steel pl-3">
-      <p lang={UI_LOCALE} className="text-[13px] leading-normal text-ink-2">
+      <p lang={UI_LOCALE} className="text-[13.5px] leading-normal text-ink-2">
         {t("panel.readingLanguage", { language: NATIVE_NAME[locale] })}
       </p>
       <button type="button" onClick={onReaudit} className={`${QUIET_BUTTON} mt-2`}>
@@ -650,14 +650,14 @@ function FocusPath({
 
   return (
     <section className="mt-4 border-t border-hairline px-3 pt-4" aria-labelledby="focus-heading">
-      <h2 id="focus-heading" className="text-[14px] font-semibold text-ink">
+      <h2 id="focus-heading" className="text-[15px] font-semibold text-ink">
         {t("panel.focusPath")}
       </h2>
 
       <p className="mt-1.5 text-[13.5px] leading-normal text-ink-2">{lines.line}</p>
 
       {lines.notes.map((note) => (
-        <p key={note} className="mt-1.5 text-[13px] leading-normal text-steel">
+        <p key={note} className="mt-1.5 text-[13.5px] leading-normal text-steel">
           {note}
         </p>
       ))}
@@ -693,7 +693,7 @@ function FocusPath({
           </div>
         ))}
 
-      <p role="status" className="mt-2 text-[13px] leading-normal text-steel empty:mt-0">
+      <p role="status" className="mt-2 text-[13.5px] leading-normal text-steel empty:mt-0">
         {notice}
       </p>
     </section>
@@ -1089,7 +1089,7 @@ function Message({
       <StickyBar />
       <div className="px-3 pt-5">
         <h2 className="text-[17px] font-bold text-ink">{title}</h2>
-        <p className="mt-1.5 text-[14px] leading-normal text-ink-2">{body}</p>
+        <p className="mt-1.5 text-[15px] leading-normal text-ink-2">{body}</p>
         {children}
       </div>
     </>

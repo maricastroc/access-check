@@ -50,3 +50,36 @@ describe("corners stay square across the site", () => {
     expect(source.match(ROUNDED) ?? []).toEqual([]);
   });
 });
+
+const INSTRUMENT = [
+  ...sources(join(root, "components/investigation")),
+  ...sources(join(root, "app/results")),
+  join(root, "components/ui/scan-stages.tsx"),
+  join(root, "components/ui/warning-list.tsx"),
+  join(root, "../extension/src/panel.tsx"),
+];
+const TEXT_SCALE = new Set([
+  "12.5",
+  "13.5",
+  "15",
+  "16",
+  "17",
+  "18",
+  "19",
+  "21",
+  "22",
+  "24",
+  "30",
+  "32",
+  "40",
+]);
+
+describe("the instrument keeps to one text scale", () => {
+  it.each(INSTRUMENT.map((path) => [path.slice(root.length), path]))("%s", (_, path) => {
+    const source = readFileSync(path, "utf8");
+    const off = [...source.matchAll(/text-\[(\d+(?:\.\d+)?)px\]/g)]
+      .map((m) => m[1])
+      .filter((size) => !TEXT_SCALE.has(size));
+    expect([...new Set(off)]).toEqual([]);
+  });
+});

@@ -61,7 +61,7 @@ function Status({ f, t }: { f: FindingView; t: Translate }) {
   const key = statusKey(f);
   if (!end || !key) return null;
   return (
-    <span className="inline-flex min-w-0 items-center gap-1.5 text-[13px] text-ink-2">
+    <span className="inline-flex min-w-0 items-center gap-1.5 text-[13.5px] text-ink-2">
       <NodeGlyph kind="end" sev={sevOf(f)} end={end} />
       {t(key)}
     </span>
@@ -173,7 +173,7 @@ export function FindingList({
                   <span
                     className={cn(
                       "mt-1.5 block leading-normal font-normal break-words text-ink-2",
-                      compact ? "text-[14px]" : "text-[15px]",
+                      "text-[15px]",
                     )}
                   >
                     {f.impact}
@@ -212,7 +212,7 @@ export function FindingList({
     <div className="flex flex-col pb-6">
       {groups.map(({ group, findings }) => {
         const heading = (
-          <span className="text-[14px] font-semibold text-ink-2">
+          <span className="text-[13.5px] font-semibold text-ink-2">
             {t(GROUP_TITLE[group])}{" "}
             <span className="ml-1 font-normal text-muted tabular-nums">{findings.length}</span>
           </span>
@@ -231,7 +231,7 @@ export function FindingList({
                 {heading}
               </h2>
               {findings.length === 0 ? (
-                <p className={cn("pb-3 text-[14.5px] leading-normal text-ink-2", pad)}>{empty}</p>
+                <p className={cn("pb-3 text-[15px] leading-normal text-ink-2", pad)}>{empty}</p>
               ) : (
                 list
               )}
