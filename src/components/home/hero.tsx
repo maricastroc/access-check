@@ -3,6 +3,7 @@ import { SectionKicker, WcagReading } from "@/components/ui";
 import { UrlForm } from "./url-form";
 import { HeroEvidencePreview } from "./evidence-preview";
 import { DemoSummary } from "./demo";
+import { QUICK_EXAMPLES } from "./content";
 import type { Translate } from "@/lib/i18n/t";
 
 export function Hero({ t }: { t: Translate }) {
@@ -28,7 +29,7 @@ export function Hero({ t }: { t: Translate }) {
               {t("home.hero.body")}
             </p>
             <div className="mt-6">
-              <UrlForm examples={["news.ycombinator.com", "lrb.co.uk", "kinfolk.com"]} />
+              <UrlForm examples={QUICK_EXAMPLES} />
             </div>
           </div>
 

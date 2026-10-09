@@ -1,6 +1,6 @@
 import { SectionKicker } from "@/components/ui";
 import { NodeGlyph } from "@/components/investigation";
-import { axeRules, complementaryPasses, exampleFinding, steps } from "./content";
+import { QUICK_EXAMPLES, axeRules, complementaryPasses, exampleFinding, steps } from "./content";
 import { UrlForm } from "./url-form";
 import {
   DEMO_SELECTOR,
@@ -335,7 +335,7 @@ export function FinalCta({ t }: { t: Translate }) {
             </p>
           </div>
           <div>
-            <UrlForm accent examples={["news.ycombinator.com", "lrb.co.uk", "kinfolk.com"]} />
+            <UrlForm accent examples={QUICK_EXAMPLES} />
             <p className="mt-3 text-[13px] text-disabled">{t("home.cta.publicOnly")}</p>
           </div>
         </div>

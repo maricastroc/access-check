@@ -1,5 +1,7 @@
 import type { MessageKey } from "@/lib/i18n/t";
 
+export const QUICK_EXAMPLES = ["www.headphonesty.com", "www.buzzfeed.com", "noosfera.com.br"];
+
 export const CHROME_WEB_STORE_URL =
   "https://chromewebstore.google.com/detail/accesscheck/odhbdcnojfgjbkbfajidablhibhhckgf";
 
