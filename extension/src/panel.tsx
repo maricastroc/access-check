@@ -546,7 +546,7 @@ function findingMarks(f: FindingView, occurrences: Occurrence[], current: number
       tag: occurrenceTag(f.n, o.index, total),
       tone,
       quiet: o.index !== current,
-      ring: f.ruleId === "focus-not-visible",
+      ring: f.ruleId === "focus-not-visible" && Math.abs(o.index - current) <= 1,
       label: describeElement(o.selector, o.identity ?? undefined, t).label,
       pick: `${FINDING_KEY}${f.id}:${o.index}`,
     }));
