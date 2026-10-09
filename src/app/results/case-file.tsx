@@ -65,9 +65,7 @@ export function CaseSummary({
         >
           <WcagChips t={t} model={wcag} className="mt-4" />
           {!scoringIsCurrent(result) && (
-            <p className="mt-3 text-[13px] font-semibold text-moderate-text">
-              {t("standing.staleTitle")}
-            </p>
+            <p className="mt-3 text-[13px] font-semibold text-steel">{t("standing.staleTitle")}</p>
           )}
         </Summary>
       )}
@@ -177,7 +175,7 @@ export function CaseFile({
           </h2>
           <p className="mt-1.5 text-[14px] leading-normal text-ink-2">{coverage.line}</p>
           {coverage.notes.map((note) => (
-            <p key={note} className="mt-1.5 text-[13.5px] leading-normal text-moderate-text">
+            <p key={note} className="mt-1.5 text-[13.5px] leading-normal text-steel">
               {note}
             </p>
           ))}

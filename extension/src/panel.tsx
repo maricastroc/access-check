@@ -256,7 +256,7 @@ function Header({
           t={t}
         >
           {notices.map((line) => (
-            <p key={line} className="mt-3 text-[13px] leading-normal text-moderate-text">
+            <p key={line} className="mt-3 text-[13px] leading-normal text-steel">
               {line}
             </p>
           ))}
@@ -339,7 +339,7 @@ function KeyboardCheck({
         </div>
       )}
       {(pending || cut || started) && (
-        <p className="text-[13.5px] leading-normal font-semibold text-moderate-text">
+        <p className="text-[13.5px] leading-normal font-semibold text-steel">
           {pending ? scope.lead : scope.badge}
         </p>
       )}
@@ -499,7 +499,7 @@ function OnPage({
       <button type="button" className={PRIMARY_BUTTON} disabled={busy} onClick={onLocate}>
         {busy ? t("panel.locating") : t("panel.locate")}
       </button>
-      <p role="status" className="mt-2 text-[13px] leading-normal text-moderate-text empty:mt-0">
+      <p role="status" className="mt-2 text-[13px] leading-normal text-steel empty:mt-0">
         {notice}
       </p>
     </div>
@@ -516,7 +516,7 @@ function ReadingLanguage({
   if (!locale || locale === UI_LOCALE) return null;
 
   return (
-    <div className="mx-3 mt-3 border-l-2 border-moderate pl-3">
+    <div className="mx-3 mt-3 border-l-2 border-steel pl-3">
       <p lang={UI_LOCALE} className="text-[13px] leading-normal text-ink-2">
         {t("panel.readingLanguage", { language: NATIVE_NAME[locale] })}
       </p>
@@ -649,7 +649,7 @@ function FocusPath({
       <p className="mt-1.5 text-[13.5px] leading-normal text-ink-2">{lines.line}</p>
 
       {lines.notes.map((note) => (
-        <p key={note} className="mt-1.5 text-[13px] leading-normal text-moderate-text">
+        <p key={note} className="mt-1.5 text-[13px] leading-normal text-steel">
           {note}
         </p>
       ))}
@@ -685,7 +685,7 @@ function FocusPath({
           </div>
         ))}
 
-      <p role="status" className="mt-2 text-[13px] leading-normal text-moderate-text empty:mt-0">
+      <p role="status" className="mt-2 text-[13px] leading-normal text-steel empty:mt-0">
         {notice}
       </p>
     </section>

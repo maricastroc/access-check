@@ -1040,7 +1040,7 @@ try {
     const hatch = panel.locator(selector).first();
     const sev = await hatch.evaluate((el) => {
       const probe = document.createElement("canvas").getContext("2d");
-      probe.fillStyle = getComputedStyle(el).getPropertyValue("--sev").trim();
+      probe.fillStyle = getComputedStyle(el).getPropertyValue("--sev-ink").trim();
       return probe.fillStyle;
     });
     const [r, g, b] = [1, 3, 5].map((i) => parseInt(sev.slice(i, i + 2), 16));
