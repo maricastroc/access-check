@@ -1354,8 +1354,6 @@ export const ptBR: Catalog = {
   "chain.gap.ring": "nada mostra o foco",
   "chain.gap.unmeasured": "sem medida",
   "chain.status.tested": "correção testada",
-  "chain.status.person": "precisa de revisão manual",
-  "chain.status.fixPerson": "requer revisão manual",
   "chain.status.recheck": "auditar de novo para confirmar",
   "chain.status.failed": "ainda falha",
   "summary.recommendations": { one: "1 recomendação", other: "{count} recomendações" },

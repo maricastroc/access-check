@@ -1318,8 +1318,6 @@ export const en = {
   "chain.gap.ring": "nothing shows focus",
   "chain.gap.unmeasured": "not measured",
   "chain.status.tested": "fix tested",
-  "chain.status.person": "a person decides",
-  "chain.status.fixPerson": "needs a person",
   "chain.status.recheck": "audit again to confirm",
   "chain.status.failed": "still fails",
   "summary.recommendations": { one: "1 recommendation", other: "{count} recommendations" },

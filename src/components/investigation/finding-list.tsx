@@ -21,7 +21,6 @@ const GROUP_TITLE: Record<QueueGroup, MessageKey> = {
 const STATUS: Partial<Record<ThreadEnd, MessageKey>> = {
   tested: "chain.status.tested",
   failed: "chain.status.failed",
-  person: "chain.status.person",
   recheck: "chain.status.recheck",
 };
 
@@ -54,9 +53,7 @@ export function labelOf(f: FindingView, t: Translate): string {
 
 function statusKey(f: FindingView): MessageKey | null {
   const end = threadEnd(f);
-  if (!end) return null;
-  if (end === "person" && f.kind !== "manual-review") return "chain.status.fixPerson";
-  return STATUS[end] ?? null;
+  return end ? (STATUS[end] ?? null) : null;
 }
 
 function Status({ f, t }: { f: FindingView; t: Translate }) {
@@ -195,16 +192,11 @@ export function FindingList({
                       </>
                     )}
                   {aside?.(f)}
-                  {compact && statusKey(f) && (
-                    <span className="ml-auto pl-3">
-                      <Status f={f} t={t} />
-                    </span>
-                  )}
                 </span>
               )}
             </span>
-            {!open && !compact && (
-              <span className="col-start-2 pt-1.75">
+            {!open && statusKey(f) && (
+              <span className="col-start-2 pt-1.5">
                 <Status f={f} t={t} />
               </span>
             )}
