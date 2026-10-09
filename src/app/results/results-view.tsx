@@ -291,7 +291,7 @@ export function ResultsView({
               <>
                 <div className="grid grid-cols-[minmax(0,1fr)_400px] items-start xl:grid-cols-[minmax(0,1fr)_clamp(420px,30vw,500px)]">
                   {surface(false)}
-                  <div id="case-file" className="min-w-0 border-l border-hairline bg-canvas">
+                  <div id="case-file" className="min-w-0 bg-canvas">
                     <CaseFile
                       result={result}
                       groups={view.groups}

@@ -11,7 +11,7 @@ const variantClasses: Record<ButtonVariant, string> = {
   primary:
     "bg-ink text-surface hover:bg-ink-2 disabled:bg-canvas disabled:text-disabled disabled:border disabled:border-hairline",
   dark: "bg-ink text-surface hover:bg-ink-2 disabled:bg-canvas disabled:text-disabled",
-  accent: "bg-serious text-surface hover:brightness-110 disabled:bg-canvas disabled:text-disabled",
+  accent: "bg-accent text-surface hover:brightness-110 disabled:bg-canvas disabled:text-disabled",
   secondary:
     "border border-border bg-surface text-ink hover:bg-band disabled:border-hairline disabled:bg-canvas disabled:text-disabled",
   tertiary: "text-steel hover:underline disabled:text-disabled disabled:no-underline",

@@ -2,7 +2,7 @@ import { chargeable } from "@/lib/scan/evidence";
 import { violationsBehindScore } from "@/lib/scan/scored";
 import { standingOf, STANDING_LABEL } from "@/lib/report/standing";
 import type { ScanResult, Severity } from "@/lib/scan/types";
-import { safeHost, sevColor } from "./shared";
+import { safeHost, sevColor, sevInk } from "./shared";
 import { MiniHeader, PageShell, SectionKicker, SectionKickerMuted } from "./primitives";
 import { translator } from "@/lib/i18n/t";
 
@@ -39,18 +39,21 @@ export function ProgressPage({ result }: { result: ScanResult }) {
   const recs = [
     {
       color: sevColor.critical,
+      ink: sevInk.critical,
       term: t("report.roadmap.immediateTerm"),
       title: t("report.roadmap.immediateTitle"),
       body: t("report.roadmap.immediateBody", { count: result.counts.critical }),
     },
     {
       color: sevColor.serious,
+      ink: sevInk.serious,
       term: t("report.roadmap.shortTerm"),
       title: t("report.roadmap.shortTitle"),
       body: t("report.roadmap.shortBody", { count: result.counts.serious }),
     },
     {
       color: "var(--color-steel)",
+      ink: "var(--color-steel)",
       term: t("report.roadmap.longTerm"),
       title: t("report.roadmap.longTitle"),
       body: t("report.roadmap.longBody"),
@@ -205,7 +208,7 @@ export function ProgressPage({ result }: { result: ScanResult }) {
               <span aria-hidden className="inline-block h-1 w-6" style={{ background: r.color }} />
               <div
                 className="mt-2.5 font-cond text-[9.5px] font-medium tracking-[0.12em] uppercase"
-                style={{ color: r.color }}
+                style={{ color: r.ink }}
               >
                 {r.term}
               </div>

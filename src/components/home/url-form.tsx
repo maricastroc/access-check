@@ -133,7 +133,7 @@ export function UrlForm({ accent = false, examples }: { accent?: boolean; exampl
           onClick={() => go(value, scope)}
           className={cn(
             "inline-flex h-16.5 shrink-0 cursor-pointer items-center justify-center gap-3 px-8 text-[16.5px] font-semibold text-surface transition-colors",
-            accent ? "bg-serious hover:brightness-110" : "bg-ink hover:bg-ink-2",
+            accent ? "bg-accent hover:brightness-110" : "bg-ink hover:bg-ink-2",
           )}
         >
           {scope === "site" ? t("home.auditSite") : t("home.auditPage")}

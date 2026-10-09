@@ -16,7 +16,7 @@ const toneClasses: Record<BadgeTone, string> = {
   brand: "border-border bg-surface text-steel",
   verified: "border-verified/40 bg-surface text-verified",
   success: "border-verified/40 bg-surface text-verified",
-  serious: "border-serious/40 bg-surface text-serious",
+  serious: "border-serious/40 bg-surface text-serious-text",
   moderate: "border-moderate/40 bg-surface text-moderate-text",
 };
 

@@ -31,7 +31,7 @@ export function Hero({ t }: { t: Translate }) {
               <span aria-hidden className="h-4 w-px bg-hairline" />
               <span className="text-[13px] text-muted">{t("home.hero.passes")}</span>
             </div>
-            <h1 className="mt-5 font-sans text-[42px] leading-[1.05] font-semibold tracking-tight text-ink">
+            <h1 className="mt-5 font-sans text-[42px] leading-[1.05] font-semibold tracking-[-0.03em] text-ink">
               {t("home.hero.title")}
             </h1>
             <p className="mt-4 max-w-[52ch] text-[17px] leading-normal text-body">
@@ -48,10 +48,11 @@ export function Hero({ t }: { t: Translate }) {
           </div>
         </div>
 
-        <div className="mt-12 grid grid-cols-1 gap-12 border border-border bg-surface p-6 lg:grid-cols-[minmax(0,1fr)_420px]">
+        <div className="mt-12 grid grid-cols-1 gap-12 border border-hairline bg-surface p-6 lg:grid-cols-[minmax(0,1fr)_420px]">
           <div>
-            <span aria-hidden className="mb-2.5 block h-0.75 w-10 bg-steel" />
-            <SectionKicker>{t("home.mostRecent")}</SectionKicker>
+            <SectionKicker variant="section" tone="steel">
+              {t("home.mostRecent")}
+            </SectionKicker>
             <p
               className="mt-1 font-cond text-[48px] leading-[1.02]"
               style={{ color: STANDING_TONE[exampleScore.standing] }}
@@ -62,7 +63,7 @@ export function Hero({ t }: { t: Translate }) {
               {t(STANDING_NOTE[exampleScore.standing])}
             </p>
             <div className="mt-3.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[13px] text-body">
-              <span className="font-semibold text-serious">
+              <span className="font-semibold text-serious-text">
                 {t("standing.issueCount", {
                   count: exampleScore.serious,
                   severity: t("severity.serious").toLowerCase(),
@@ -89,7 +90,9 @@ export function Hero({ t }: { t: Translate }) {
               {t(exampleSummary)}
             </p>
             <div className="mt-5 max-w-115 border-t border-hairline pt-4">
-              <SectionKicker>{t("priority.kicker")}</SectionKicker>
+              <SectionKicker variant="section" tone="steel">
+                {t("priority.kicker")}
+              </SectionKicker>
               <p className="mt-1 mb-2.5 text-[12.5px] leading-normal text-muted">
                 {t("priority.note")}
               </p>

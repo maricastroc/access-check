@@ -62,6 +62,11 @@ const TONE: Record<OverlayTone, string> = {
   path: PALETTE.path,
 };
 
+const ON_TONE: Partial<Record<OverlayTone, string>> = {
+  serious: INK,
+  moderate: INK,
+};
+
 const FILLED = new Set<OverlayTone>(["critical", "serious", "moderate", "path"]);
 
 const STYLE = `
@@ -96,7 +101,7 @@ const STYLE = `
   height: 20px; min-width: 20px; padding: 0 5px; margin: 0; border: 0;
   font: 600 12.5px/1 "Atkinson Hyperlegible Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-variant-numeric: tabular-nums; letter-spacing: 0; white-space: nowrap;
-  color: #fff; background: var(--tone);
+  color: var(--on, #fff); background: var(--tone);
   box-shadow: 0 0 0 1.5px ${HALO}, 0 0 0 2.5px ${SHADE};
   pointer-events: none; user-select: none; -webkit-user-select: none;
 }
@@ -275,7 +280,7 @@ function tagFor(mark: OverlayMark, current: boolean): HTMLElement {
   else if (!FILLED.has(mark.tone)) classes.push("outline");
   el.className = classes.join(" ");
   el.textContent = mark.tag;
-  css(el, { "--tone": TONE[mark.tone] });
+  css(el, { "--tone": TONE[mark.tone], "--on": ON_TONE[mark.tone] ?? "#fff" });
   if (mark.alert) {
     el.dataset.alert = mark.alert;
     css(el, { "--alert": TONE[mark.alert] });

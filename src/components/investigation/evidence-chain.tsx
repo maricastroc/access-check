@@ -170,7 +170,7 @@ function Contrast({
     <div>
       <p className="flex flex-wrap items-baseline gap-x-3">
         <span
-          className="font-mono text-[30px] leading-none font-semibold tracking-[-0.02em] text-(--sev)"
+          className="font-mono text-[30px] leading-none font-semibold tracking-[-0.02em] text-(--sev-ink)"
           data-sev={sev}
         >
           {reading.measured.toFixed(2)}:1

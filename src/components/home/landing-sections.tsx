@@ -23,8 +23,9 @@ function SectionHead({
 }) {
   return (
     <div className={className}>
-      <span aria-hidden className="mb-2.5 block h-0.75 w-10 bg-steel" />
-      <SectionKicker>{kicker}</SectionKicker>
+      <SectionKicker variant="section" tone="steel">
+        {kicker}
+      </SectionKicker>
       <h2 className="mt-1.5 max-w-[18ch] text-[30px] leading-[1.08] font-semibold tracking-[-0.02em] text-ink">
         {title}
       </h2>
@@ -76,7 +77,7 @@ function StageArtifact({ i, t }: { i: number; t: Translate }) {
             >
               {t("home.demo.order")}
             </span>
-            <span className="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2">
+            <span className="absolute top-1/2 right-0 translate-x-[calc(100%+10px)] -translate-y-1/2">
               <Marker
                 n={1}
                 state="selected"
@@ -116,8 +117,7 @@ export function HowItWorks({ t }: { t: Translate }) {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <SectionHead kicker={t("home.howItWorks.kicker")} title={t("home.howItWorks.title")} />
           <p className="font-cond text-[15px] tracking-[0.04em] text-muted">
-            <span className="text-serious">{t("home.stage.open")}</span> →{" "}
-            <span className="text-serious">{t("home.stage.locate")}</span> →{" "}
+            {t("home.stage.open")} → {t("home.stage.locate")} →{" "}
             <span className="text-verified">{t("home.stage.verify")}</span>
           </p>
         </div>
@@ -125,27 +125,24 @@ export function HowItWorks({ t }: { t: Translate }) {
         <div className="relative mt-9">
           <div
             aria-hidden
-            className="absolute top-10.5 right-[16.6%] left-[16.6%] hidden h-px bg-serious/50 md:block"
+            className="absolute top-10.5 right-[16.6%] left-[16.6%] hidden h-px bg-border md:block"
           />
           <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
             {steps.map((s, i) => {
-              const tone = s.tone === "verified" ? "var(--color-verified)" : "var(--color-serious)";
+              const tone = s.tone === "verified" ? "var(--color-verified)" : "var(--color-ink)";
               return (
-                <div
-                  key={s.n}
-                  className="relative flex flex-col border border-border bg-surface p-5"
-                >
+                <div key={s.n} className="relative flex flex-col bg-surface p-5">
                   {i > 0 && (
                     <>
                       <span
                         aria-hidden
-                        className="absolute top-8 -left-3.25 hidden font-cond text-[17px] leading-none text-serious md:block"
+                        className="absolute top-8 -left-3.25 hidden font-cond text-[17px] leading-none text-rule md:block"
                       >
                         →
                       </span>
                       <span
                         aria-hidden
-                        className="absolute -top-3.75 left-1/2 -translate-x-1/2 font-cond text-[17px] leading-none text-serious md:hidden"
+                        className="absolute -top-3.75 left-1/2 -translate-x-1/2 font-cond text-[17px] leading-none text-rule md:hidden"
                       >
                         ↓
                       </span>
@@ -182,8 +179,8 @@ export function ChecksIncluded({ t }: { t: Translate }) {
         <SectionHead kicker={t("home.checks.kicker")} title={t("home.checks.title")} />
 
         <div className="mt-9 grid grid-cols-1 md:grid-cols-2">
-          <div className="border border-ink bg-surface">
-            <div className="flex items-baseline justify-between border-b border-ink px-5 py-3">
+          <div className="border border-border bg-surface">
+            <div className="flex items-baseline justify-between border-b border-hairline px-5 py-3">
               <SectionKicker tone="steel">{t("home.axeRules.kicker")}</SectionKicker>
               <span className="text-[12px] text-muted">{t("home.axeRules.note")}</span>
             </div>
@@ -207,8 +204,8 @@ export function ChecksIncluded({ t }: { t: Translate }) {
             </ul>
           </div>
 
-          <div className="border border-ink bg-band md:border-l-0">
-            <div className="flex items-baseline justify-between border-b border-ink px-5 py-3">
+          <div className="border border-border bg-band md:border-l-0">
+            <div className="flex items-baseline justify-between border-b border-hairline px-5 py-3">
               <SectionKicker tone="steel">{t("home.complementary.kicker")}</SectionKicker>
               <span className="text-[12px] text-muted">{t("home.complementary.note")}</span>
             </div>
@@ -245,7 +242,6 @@ export function EvidenceLensSection({ t }: { t: Translate }) {
       <div className="mx-auto w-full max-w-300 px-6 py-16">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-end">
           <div>
-            <span aria-hidden className="mb-3 block h-0.75 w-10 bg-steel" />
             <h2 className="text-[34px] leading-[1.08] font-semibold tracking-[-0.02em] text-ink">
               {t("home.lens.title")}
             </h2>
@@ -278,7 +274,7 @@ export function EvidenceLensSection({ t }: { t: Translate }) {
             </div>
 
             <div className="mt-3 flex items-center gap-2">
-              <span className="font-cond text-[11px] tracking-widest text-serious uppercase">
+              <span className="font-cond text-[11px] tracking-widest text-serious-text uppercase">
                 {t("severity.serious")}
               </span>
               <span className="ml-auto font-mono text-[12px] text-steel">1.4.3 AA</span>
@@ -335,7 +331,7 @@ export function EvidenceLensSection({ t }: { t: Translate }) {
 
         <div className="mt-4 flex flex-wrap gap-x-8 gap-y-1.5 text-[13px] text-muted">
           <span>
-            <span className="font-cond text-serious">2.1:1</span> {t("home.lens.measureFound")}
+            <span className="font-cond text-serious-text">2.1:1</span> {t("home.lens.measureFound")}
           </span>
           <span>
             <span className="font-mono text-steel">a.hero__cta</span> {t("home.lens.exactSelector")}
@@ -377,7 +373,9 @@ function BeatButton({
         </span>
         <span
           className="font-cond text-[15px] font-semibold"
-          style={{ color: tone === "verified" ? "var(--color-verified)" : "var(--color-serious)" }}
+          style={{
+            color: tone === "verified" ? "var(--color-verified)" : "var(--color-serious-text)",
+          }}
         >
           {ratio}
         </span>
@@ -388,7 +386,7 @@ function BeatButton({
 
 export function SandboxSection({ t }: { t: Translate }) {
   return (
-    <section className="bg-canvas">
+    <section className="bg-band">
       <div className="mx-auto w-full max-w-300 px-6 py-16">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] lg:items-end">
           <SectionHead kicker={t("home.sandbox.kicker")} title={t("home.sandbox.title")} />
@@ -397,8 +395,8 @@ export function SandboxSection({ t }: { t: Translate }) {
           </p>
         </div>
 
-        <div className="mt-8 border border-ink bg-surface">
-          <div className="flex items-center justify-between border-b border-ink px-4 py-2.5">
+        <div className="mt-8 border border-border bg-surface">
+          <div className="flex items-center justify-between border-b border-hairline px-4 py-2.5">
             <SectionKicker>{t("home.sandbox.measurement")}</SectionKicker>
             <span className="font-mono text-[12px] text-steel">a.hero__cta</span>
           </div>
@@ -486,7 +484,7 @@ function MiniPdf({ t }: { t: Translate }) {
       <div className="mt-3 space-y-1.5">
         <div className="border-l-2 border-serious bg-band px-2 py-1">
           <div className="flex items-center justify-between text-[9px]">
-            <span className="font-cond tracking-[0.08em] text-serious uppercase">
+            <span className="font-cond tracking-[0.08em] text-serious-text uppercase">
               {t("severity.serious")}
             </span>
             <span className="font-mono text-steel">1.4.3</span>
@@ -509,7 +507,7 @@ function MiniPdf({ t }: { t: Translate }) {
 
 export function ExportSection({ t }: { t: Translate }) {
   return (
-    <section className="bg-band">
+    <section className="bg-canvas">
       <div className="mx-auto w-full max-w-300 px-6 py-12">
         <SectionHead kicker={t("home.export.kicker")} title={t("home.export.title")} />
 

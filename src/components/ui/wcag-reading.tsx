@@ -11,10 +11,10 @@ function LevelSquare({ level, fill, size = 20 }: { level: string; fill: Fill; si
       className={cn(
         "inline-flex shrink-0 items-center justify-center font-cond text-[11px] font-semibold",
         fill === "clean" && "bg-ink text-surface",
-        fill === "fails" && "hatch-serious text-surface",
+        fill === "fails" && "bg-serious text-ink ring-1 ring-serious-text ring-inset",
         fill === "hollow" && "border border-border text-muted",
       )}
-      style={{ width: size, height: size }}
+      style={{ width: size + 12, height: size }}
     >
       {level}
     </span>
@@ -30,7 +30,7 @@ export function WcagReading({ model, t }: { model: WcagReadingModel; t: Translat
   const aaFill: Fill = model.aa.fails ? "fails" : "clean";
 
   return (
-    <div className="border border-border bg-surface p-5">
+    <div className="bg-code p-5">
       <ul>
         <li className="flex items-start gap-3 pb-3">
           <LevelSquare level="A" fill={aFill} />
@@ -84,13 +84,13 @@ export function WcagChips({
   t: Translate;
 }) {
   const chip = (level: string, fill: Fill, text: string) => (
-    <span className="inline-flex items-center gap-2 border border-border bg-surface px-2.5 py-1.5">
+    <span className="inline-flex items-center gap-2 py-0.5">
       <LevelSquare level={level} fill={fill} size={16} />
       <span className="text-[12.5px] text-body">{text}</span>
     </span>
   );
   return (
-    <div className={cn("flex flex-wrap gap-2", className)}>
+    <div className={cn("flex flex-wrap gap-x-5 gap-y-1.5", className)}>
       {chip(
         "A",
         model.a.fails ? "fails" : "clean",

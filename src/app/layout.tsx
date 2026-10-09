@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Atkinson_Hyperlegible_Mono, Atkinson_Hyperlegible_Next } from "next/font/google";
+import { IBM_Plex_Mono, Schibsted_Grotesk } from "next/font/google";
 import { config } from "@fortawesome/fontawesome-svg-core";
 import "@fortawesome/fontawesome-svg-core/styles.css";
 import "./globals.css";
@@ -9,14 +9,15 @@ import { translator } from "@/lib/i18n/t";
 
 config.autoAddCss = false;
 
-const atkinson = Atkinson_Hyperlegible_Next({
-  variable: "--font-atkinson",
+const schibsted = Schibsted_Grotesk({
+  variable: "--font-ui",
   subsets: ["latin", "latin-ext"],
   display: "swap",
 });
 
-const atkinsonMono = Atkinson_Hyperlegible_Mono({
-  variable: "--font-atkinson-mono",
+const plexMono = IBM_Plex_Mono({
+  variable: "--font-code",
+  weight: ["400", "500", "600"],
   subsets: ["latin", "latin-ext"],
   display: "swap",
 });
@@ -43,10 +44,7 @@ export default async function RootLayout({
   const t = translator(locale);
 
   return (
-    <html
-      lang={locale}
-      className={`${atkinson.variable} ${atkinsonMono.variable} h-full antialiased`}
-    >
+    <html lang={locale} className={`${schibsted.variable} ${plexMono.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col bg-canvas font-sans text-ink">
         <a
           href="#main"

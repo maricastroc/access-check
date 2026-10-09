@@ -21,7 +21,7 @@ export const STANDING_NOTE: Record<Standing, MessageKey> = {
 export const STANDING_TONE: Record<Standing, string> = {
   blocked: "var(--color-critical)",
   failing: "var(--color-serious)",
-  gaps: "var(--color-moderate)",
+  gaps: "var(--color-moderate-text)",
   clean: "var(--color-verified)",
 };
 
