@@ -95,6 +95,49 @@ describe("enrichViolations carries the fix confidence", () => {
   });
 });
 
+function contrastAt(selector: string, fgColor: string, contrastRatio: number) {
+  return {
+    target: [selector],
+    any: [
+      {
+        id: "color-contrast",
+        data: { fgColor, bgColor: "#ffffff", contrastRatio, expectedContrastRatio: "4.5:1" },
+      },
+    ],
+  };
+}
+
+describe("enrichViolations leads with the largest fix group", () => {
+  it("so every surface quotes the same element and the same measurement", () => {
+    const [contrast] = enrichViolations(
+      [
+        rule("color-contrast", [
+          contrastAt(".kicker", "#1596cc", 3.35),
+          contrastAt(".signup", "#a09a8a", 2.88),
+          contrastAt(".byline", "#a09a8a", 2.88),
+        ]),
+      ],
+      {},
+      t,
+    );
+    attachFixGroups([contrast]);
+
+    expect(contrast.v.where).toBe(".signup");
+    expect(contrast.v.fixGroups?.[0].selectors).toEqual([".signup", ".byline"]);
+    expect(contrast.v.fix).toBe(contrast.v.fixGroups?.[0].text);
+    expect(contrast.v.fixCode).toBe(contrast.v.fixGroups?.[0].code);
+  });
+
+  it("keeps the first node when no node has a concrete fix", () => {
+    const [region] = enrichViolations(
+      [rule("region", [{ target: ["header"] }, { target: ["footer"] }])],
+      {},
+      t,
+    );
+    expect(region.v.where).toBe("header");
+  });
+});
+
 describe("planVerification", () => {
   it("sends only deterministic transformations to the verifier", () => {
     const { ops, clusters } = planVerification(enrichedPage(), 40);
