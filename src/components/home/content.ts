@@ -28,11 +28,11 @@ export const complementaryPasses: Pass[] = [
   { label: "home.pass.review", desc: "home.pass.reviewDesc" },
 ];
 
-export type Step = { n: string; title: MessageKey; body: MessageKey; tone: "serious" | "verified" };
+export type Step = { n: string; title: MessageKey; body: MessageKey; tone: "ink" | "verified" };
 
 export const steps: Step[] = [
-  { n: "01", title: "home.step1.title", body: "home.step1.body", tone: "serious" },
-  { n: "02", title: "home.step2.title", body: "home.step2.body", tone: "serious" },
+  { n: "01", title: "home.step1.title", body: "home.step1.body", tone: "ink" },
+  { n: "02", title: "home.step2.title", body: "home.step2.body", tone: "ink" },
   { n: "03", title: "home.step3.title", body: "home.step3.body", tone: "verified" },
 ];
 

@@ -9,6 +9,12 @@ export const sevColor: Record<Severity, string> = {
   moderate: "var(--color-moderate)",
   minor: "var(--color-muted)",
 };
+export const sevInk: Record<Severity, string> = {
+  critical: "var(--color-critical-text)",
+  serious: "var(--color-serious-text)",
+  moderate: "var(--color-moderate-text)",
+  minor: "var(--color-muted)",
+};
 export const sevLabelKey: Record<Severity, MessageKey> = {
   critical: "severity.critical",
   serious: "severity.serious",

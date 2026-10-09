@@ -135,10 +135,10 @@ export function FindingList({
             onClick={() => onToggle(f.id)}
             {...hover}
             className={cn(
-              "ac-focus-inset grid w-full cursor-pointer items-start gap-x-3.5 text-left",
-              compact ? "grid-cols-[auto_minmax(0,1fr)]" : "grid-cols-[auto_minmax(0,1fr)_auto]",
+              "ac-focus-inset grid w-full cursor-pointer items-start gap-x-3.5 text-left tracking-[-0.01em]",
+              "grid-cols-[auto_minmax(0,1fr)]",
               pad,
-              compact ? (open ? "pt-3 pb-3" : "py-3") : open ? "pt-3.5 pb-3" : "py-3.5",
+              compact ? (open ? "pt-3 pb-3" : "py-4") : open ? "pt-3.5 pb-3" : "py-4",
               !open && "hover:bg-surface/70",
             )}
           >
@@ -204,7 +204,7 @@ export function FindingList({
               )}
             </span>
             {!open && !compact && (
-              <span className="pt-1">
+              <span className="col-start-2 pt-1.75">
                 <Status f={f} t={t} />
               </span>
             )}

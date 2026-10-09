@@ -52,8 +52,9 @@
 }
 
 :root {
-  --font-atkinson: "Atkinson Hyperlegible Next";
-  --font-atkinson-mono: "Atkinson Hyperlegible Mono";
+  --font-ui: "Atkinson Hyperlegible Next";
+  --font-code: "Atkinson Hyperlegible Mono";
+  --font-weight-semibold: 600;
 }
 
 body {

@@ -22,6 +22,7 @@ const WHITE = "#ffffff";
 const color = (name: PaletteToken | typeof WHITE) => (name === WHITE ? WHITE : theme[name]);
 
 const TEXT = 4.5;
+const LARGE = 3;
 const MARK = 3;
 
 const CHECKS: [string, PaletteToken | typeof WHITE, PaletteToken, number][] = [
@@ -41,12 +42,13 @@ const CHECKS: [string, PaletteToken | typeof WHITE, PaletteToken, number][] = [
   ["steel on surface", "steel", "surface", TEXT],
   ["surface on ink", "surface", "ink", TEXT],
   ["white on critical", WHITE, "critical", TEXT],
-  ["white on serious", WHITE, "serious", TEXT],
-  ["white on moderate", WHITE, "moderate", TEXT],
+  ["ink on serious", "ink", "serious", TEXT],
+  ["ink on moderate", "ink", "moderate", TEXT],
+  ["white on accent", WHITE, "accent", TEXT],
   ["white on path", WHITE, "path", TEXT],
   ["white on verified", WHITE, "verified", TEXT],
   ["critical on surface", "critical", "surface", TEXT],
-  ["serious on surface", "serious", "surface", TEXT],
+  ["serious large text on surface", "serious", "surface", LARGE],
   ["moderate-text on surface", "moderate-text", "surface", TEXT],
   ["moderate-text on canvas", "moderate-text", "canvas", TEXT],
   ["critical-text on canvas", "critical-text", "canvas", TEXT],
@@ -62,7 +64,7 @@ const CHECKS: [string, PaletteToken | typeof WHITE, PaletteToken, number][] = [
   ["ink focus and brackets on booth", "ink", "booth", MARK],
   ["critical mark on canvas", "critical", "canvas", MARK],
   ["serious mark on canvas", "serious", "canvas", MARK],
-  ["moderate mark on canvas", "moderate", "canvas", MARK],
+  ["moderate mark edge on canvas", "moderate-text", "canvas", MARK],
   ["review mark on canvas", "review", "canvas", MARK],
   ["verified glyph on canvas", "verified", "canvas", MARK],
   ["path line on surface", "path", "surface", MARK],
@@ -86,7 +88,7 @@ describe("the palette keeps WCAG contrast where the product uses it", () => {
     expect(contrastRatio(rgb(color(fg)), rgb(color(bg)))).toBeGreaterThanOrEqual(need);
   });
 
-  it("checks all forty-two uses", () => {
-    expect(CHECKS).toHaveLength(42);
+  it("checks all forty-three uses", () => {
+    expect(CHECKS).toHaveLength(43);
   });
 });

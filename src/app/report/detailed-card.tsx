@@ -5,7 +5,7 @@ import { describeElement } from "@/lib/report/identity";
 import { toFixStatus } from "@/lib/report/severity";
 import { certifiedVerification, fixConfidenceOf } from "@/lib/scan/confidence";
 import { ColorSwatch, StatusSeal } from "@/components/ui";
-import { sevColor, sevLabelKey } from "./shared";
+import { sevColor, sevInk, sevLabelKey } from "./shared";
 import { FieldLabel } from "./primitives";
 import type { Translate } from "@/lib/i18n/t";
 
@@ -33,7 +33,7 @@ export function DetailedCard({
             <span className="text-[15px] font-semibold text-ink">{v.title}</span>
             <span
               className="px-1.5 py-0.5 font-cond text-[10px] font-medium tracking-[0.08em] uppercase"
-              style={{ color: sevColor[v.severity] }}
+              style={{ color: sevInk[v.severity] }}
             >
               {t(sevLabelKey[v.severity])}
             </span>

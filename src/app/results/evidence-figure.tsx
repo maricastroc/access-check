@@ -61,7 +61,7 @@ export function evidenceFigure(
           <span
             aria-hidden
             data-sev="serious"
-            className="ac-hatch inline-block h-2.5 w-6 border border-(--sev) align-middle"
+            className="ac-hatch inline-block h-2.5 w-6 border border-(--sev-ink) align-middle"
           />
         </p>
       </div>

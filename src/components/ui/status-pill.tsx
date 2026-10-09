@@ -15,7 +15,7 @@ export type StatusTone =
 const toneText: Record<StatusTone, string> = {
   verified: "text-verified",
   success: "text-verified",
-  serious: "text-serious",
+  serious: "text-serious-text",
   moderate: "text-moderate-text",
   warning: "text-moderate-text",
   critical: "text-critical",

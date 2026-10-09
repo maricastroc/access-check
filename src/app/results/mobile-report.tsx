@@ -186,14 +186,19 @@ export function MobileReport({
       />
 
       <div className="fixed inset-x-0 bottom-0 z-30 flex gap-2 border-t border-hairline bg-surface px-4 py-2.5">
-        <Button variant="secondary" size="md" onClick={onMarkdown} className="flex-1">
+        <Button
+          variant="secondary"
+          size="md"
+          onClick={onMarkdown}
+          className="flex-1 px-2.5 tracking-[-0.01em]"
+        >
           {t("results.exportMarkdown")}
         </Button>
         <Button
           href={`/report?url=${encodeURIComponent(result.finalUrl)}`}
           variant="primary"
           size="md"
-          className="flex-1"
+          className="flex-1 px-2.5 tracking-[-0.01em]"
         >
           {t("results.exportPdf")}
         </Button>

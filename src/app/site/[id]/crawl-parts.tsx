@@ -13,9 +13,9 @@ import { langAttrs, type ReportLocale } from "@/lib/i18n/locale";
 import { useLocale, useT } from "@/lib/i18n/provider";
 
 function scoreTone(score: number): string {
-  if (score >= 90) return "bg-verified";
-  if (score >= 70) return "bg-moderate";
-  return "bg-critical";
+  if (score >= 90) return "bg-verified text-surface";
+  if (score >= 70) return "bg-moderate text-ink ring-1 ring-moderate-text ring-inset";
+  return "bg-critical text-surface";
 }
 
 export function ProgressHeader({ snap }: { snap: CrawlSnapshot }) {
@@ -162,7 +162,7 @@ function StatusSquare({ page, t }: { page: CrawlPage; t: Translate }) {
     return (
       <span
         className={cn(
-          "flex size-9 shrink-0 items-center justify-center font-cond text-[16px] font-semibold text-surface tabular-nums",
+          "flex size-9 shrink-0 items-center justify-center font-cond text-[16px] font-semibold tabular-nums",
           scoreTone(page.score),
         )}
         aria-label={t("site.pageScoreLabel", { score: page.score })}

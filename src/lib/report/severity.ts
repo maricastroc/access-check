@@ -26,8 +26,8 @@ export const severityColorVar: Record<Severity, string> = {
 };
 
 export const severityTextVar: Record<Severity, string> = {
-  critical: "var(--color-critical)",
-  serious: "var(--color-serious)",
+  critical: "var(--color-critical-text)",
+  serious: "var(--color-serious-text)",
   moderate: "var(--color-moderate-text)",
   minor: "var(--color-muted)",
 };

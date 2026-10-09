@@ -21,7 +21,7 @@ export function StandingMark({ standing, size = 16 }: { standing: Standing; size
       data-sev={STANDING_SEV[standing]}
       style={{ width: size, height: size }}
       className={cn(
-        "block shrink-0 border-2 border-(--sev)",
+        "block shrink-0 border-2 border-(--sev-ink)",
         standing === "clean" ? "bg-verified" : "ac-hatch",
       )}
     />

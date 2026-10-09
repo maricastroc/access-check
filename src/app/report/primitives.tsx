@@ -1,6 +1,6 @@
 import type { Severity } from "@/lib/scan/types";
 import { BrandMark } from "@/components/ui";
-import { sevColor, sevLabelKey } from "./shared";
+import { sevColor, sevInk, sevLabelKey } from "./shared";
 import type { Translate } from "@/lib/i18n/t";
 
 export function SectionKicker({ children }: { children: React.ReactNode }) {
@@ -89,7 +89,7 @@ export function GroupHeading({ sev, count, t }: { sev: Severity; count: number; 
       <span className="text-[13px] font-semibold text-ink">{t(sevLabelKey[sev])}</span>
       <span
         className="px-2 py-0.5 font-cond text-[10px] font-medium tracking-[0.08em] uppercase"
-        style={{ color: sevColor[sev] }}
+        style={{ color: sevInk[sev] }}
       >
         {t("unit.finding", { count })}
       </span>

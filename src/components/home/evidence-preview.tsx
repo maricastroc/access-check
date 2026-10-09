@@ -19,7 +19,7 @@ export function CapturePreview({ height = 240, t }: { height?: number; t: Transl
           <span className="hidden text-[10px] text-ink/70 sm:inline">
             {t("home.demo.navBeans")}
           </span>
-          <span className="relative inline-block">
+          <span className="relative ml-6.5 inline-block">
             <span
               aria-hidden
               className="absolute -inset-1 border border-dashed"
@@ -62,7 +62,7 @@ export function CapturePreview({ height = 240, t }: { height?: number; t: Transl
           >
             {t("home.demo.order")}
           </span>
-          <span className="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2">
+          <span className="absolute top-1/2 right-0 translate-x-[calc(100%+10px)] -translate-y-1/2">
             <Marker
               n={1}
               state="selected"
@@ -94,27 +94,23 @@ export function HeroEvidencePreview({ t }: { t: Translate }) {
           >
             1
           </span>
-          <span className="font-cond text-[11px] tracking-widest text-serious uppercase">
+          <span className="font-cond text-[11px] tracking-widest text-serious-text uppercase">
             {t("severity.serious")}
           </span>
           <span className="ml-auto font-mono text-[12px] text-steel">1.4.3 AA</span>
         </div>
         <p className="mt-2 text-[14.5px] font-semibold text-ink">{t(exampleFinding.title)}</p>
-        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-muted">
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-muted">
           <span className="font-mono text-[11.5px] text-steel">
             a.hero__cta “{t("home.demo.order")}”
           </span>
-          <span aria-hidden className="text-border">
-            ·
-          </span>
           <span>
             {t("home.lens.measuredLabel")}{" "}
-            <span className="font-cond text-serious">{exampleFinding.measured.toFixed(1)}:1</span>{" "}
+            <span className="font-cond text-serious-text">
+              {exampleFinding.measured.toFixed(1)}:1
+            </span>{" "}
             {t("home.lens.minLabel")}{" "}
             <span className="font-cond text-ink">{exampleFinding.required.toFixed(1)}:1</span>
-          </span>
-          <span aria-hidden className="text-border">
-            ·
           </span>
           <span>{t("home.lens.shareThisColor", { count: exampleFinding.elements })}</span>
         </div>

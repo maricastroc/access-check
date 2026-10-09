@@ -4,6 +4,7 @@ import { cn } from "@/lib/cn";
 type SectionKickerProps = {
   children: ReactNode;
   tone?: "muted" | "steel" | "ink" | "band";
+  variant?: "label" | "section";
   as?: "span" | "div" | "h2" | "h3" | "h4";
   className?: string;
   id?: string;
@@ -19,6 +20,7 @@ const toneClass = {
 export function SectionKicker({
   children,
   tone = "muted",
+  variant = "label",
   as: Tag = "span",
   className,
   id,
@@ -27,7 +29,9 @@ export function SectionKicker({
     <Tag
       id={id}
       className={cn(
-        "font-cond text-[11px] font-medium tracking-[0.12em] uppercase",
+        variant === "section"
+          ? "font-cond text-[14px] font-semibold"
+          : "font-cond text-[11px] font-medium tracking-[0.12em] uppercase",
         toneClass[tone],
         className,
       )}

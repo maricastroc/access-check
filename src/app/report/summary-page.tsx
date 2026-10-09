@@ -2,7 +2,7 @@ import type { Effort, ScanResult } from "@/lib/scan/types";
 import { wcagReadingOf } from "@/lib/report/wcag";
 import { WcagChips } from "@/components/ui";
 import { standingOf, STANDING_LABEL, STANDING_NOTE, type Standing } from "@/lib/report/standing";
-import { safeHost, sevColor, shortId } from "./shared";
+import { safeHost, sevColor, sevInk, shortId } from "./shared";
 import { PageShell, SectionKicker, SectionKickerMuted } from "./primitives";
 import { translator, type MessageKey } from "@/lib/i18n/t";
 
@@ -21,7 +21,7 @@ const IMPACT_KEY: Record<"High" | "Medium" | "Low", MessageKey> = {
 const STANDING_COLOR: Record<Standing, string> = {
   blocked: sevColor.critical,
   failing: sevColor.serious,
-  gaps: sevColor.moderate,
+  gaps: sevInk.moderate,
   clean: "var(--color-verified)",
 };
 
@@ -170,7 +170,7 @@ export function SummaryPage({ result }: { result: ScanResult }) {
                 </div>
                 <span
                   className="justify-self-end px-2 py-1 font-cond text-[11px] font-medium tracking-[0.06em] uppercase"
-                  style={{ color: f.impact === "High" ? sevColor.critical : sevColor.serious }}
+                  style={{ color: f.impact === "High" ? sevInk.critical : sevInk.serious }}
                 >
                   {t("report.impactTag", { impact: t(IMPACT_KEY[f.impact]) })}
                 </span>

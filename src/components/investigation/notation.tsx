@@ -40,7 +40,10 @@ export function Tag({
 }) {
   const filled = !quiet && ["critical", "serious", "moderate"].includes(sev);
   const circle = shape === "circle";
-  const shadows = [onPage ? ON_PAGE : null, selected ? RING : null].filter(Boolean).join(", ");
+  const edge = filled && !circle ? "inset 0 0 0 1px var(--sev-ink)" : null;
+  const shadows = [edge, onPage ? ON_PAGE : null, selected ? RING : null]
+    .filter(Boolean)
+    .join(", ");
 
   const style: CSSProperties = {
     height: size,
@@ -61,7 +64,7 @@ export function Tag({
             ? "rounded-full border-[1.5px] border-path bg-surface px-1 text-path"
             : "rounded-full bg-path px-1 text-white"
           : "px-[5px]",
-        !circle && filled && "bg-(--sev) text-white",
+        !circle && filled && "bg-(--sev) text-(--sev-on)",
         !circle && quiet && "border border-ink-2 bg-surface text-ink-2",
         !circle &&
           !quiet &&
@@ -174,7 +177,7 @@ export function GhostRing({ box, gap = 4 }: { box: Box; gap?: number }) {
         }}
       />
       <span
-        className="absolute border-[1.5px] border-dashed border-(--sev)"
+        className="absolute border-[1.5px] border-dashed border-(--sev-ink)"
         style={{ inset: -gap, outline: "1px solid var(--color-halo)" }}
       />
     </span>
@@ -262,7 +265,7 @@ export function NodeGlyph({
         aria-hidden
         data-sev={sev}
         className={cn(
-          "block size-4 border-[1.5px] border-(--sev) bg-surface",
+          "block size-4 border-[1.5px] border-(--sev-ink) bg-surface",
           unmeasured ? "border-dashed" : "ac-hatch",
         )}
       />
@@ -328,11 +331,11 @@ export function RatioGauge({
         {required} {neededLabel}
       </span>
       <span
-        className="absolute top-[12px] h-[21px] w-0.5 -translate-x-1/2 bg-(--sev)"
+        className="absolute top-[12px] h-[21px] w-0.5 -translate-x-1/2 bg-(--sev-ink)"
         style={{ left: `${from}%` }}
       />
       <span
-        className="absolute top-0 font-mono text-[13px] leading-[14px] font-semibold whitespace-nowrap text-(--sev)"
+        className="absolute top-0 font-mono text-[13px] leading-[14px] font-semibold whitespace-nowrap text-(--sev-ink)"
         style={{ right: `calc(${100 - from}% + 5px)` }}
       >
         {measured.toFixed(2)}
@@ -346,7 +349,7 @@ export function NameSlot({ sev }: { sev: Sev }) {
     <span
       aria-hidden
       data-sev={sev}
-      className="ac-hatch inline-block h-[1.05em] w-[7ch] border-[1.5px] border-(--sev) align-[-0.18em]"
+      className="ac-hatch inline-block h-[1.05em] w-[7ch] border-[1.5px] border-(--sev-ink) align-[-0.18em]"
     />
   );
 }
@@ -428,7 +431,7 @@ export function TextSample({
           <span
             className={cn(
               "font-mono font-semibold",
-              tone === "tested" ? "text-verified" : "text-serious",
+              tone === "tested" ? "text-verified" : "text-serious-text",
             )}
           >
             {ratio.toFixed(2)}:1
