@@ -1,0 +1,44 @@
+/* fonts: family=Newsreader:opsz,wght@6..72,300..700&family=Atkinson+Hyperlegible+Next:wght@200..800&family=Red+Hat+Mono:wght@300..700 */
+:root {
+  --font-sans: "Atkinson Hyperlegible Next", ui-sans-serif, system-ui, sans-serif;
+  --font-cond: "Atkinson Hyperlegible Next", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Red Hat Mono", ui-monospace, Menlo, monospace;
+  --default-font-family: "Atkinson Hyperlegible Next", ui-sans-serif, system-ui, sans-serif;
+  --default-mono-font-family: "Red Hat Mono", ui-monospace, Menlo, monospace;
+  --font-display: "Newsreader", Georgia, serif;
+  --color-canvas: #faf8f6;
+  --color-surface: #ffffff;
+  --color-band: #f2e8e1;
+  --color-code: #f5eeea;
+  --color-booth: #e6ddd6;
+  --color-ink: #1a2133;
+  --color-ink-2: #333a4c;
+  --color-body: #3e4454;
+  --color-muted: #545866;
+  --color-disabled: #8d9099;
+  --color-hairline: #ebe2db;
+  --color-border: #d1c4ba;
+  --color-rule: #877b71;
+  --color-critical: #cb2a1e;
+  --color-critical-text: #c2271c;
+  --color-critical-hatch: #f1a197;
+  --color-serious: #b8480f;
+  --color-serious-text: #a8410d;
+  --color-serious-hatch: #f0b07c;
+  --color-moderate: #8a6400;
+  --color-moderate-text: #705100;
+  --color-moderate-hatch: #e6c867;
+  --color-verified: #0b7645;
+  --color-review: #7550d8;
+  --color-review-text: #6c49cc;
+  --color-path: #2f5fd0;
+  --color-steel: #3d5a7a;
+  --color-halo: rgba(255, 255, 255, 0.94);
+}
+body { font-family: var(--font-sans); }
+:is(h1, h2, p, span, div)[class*="text-[3"]:not(.font-mono),
+:is(h1, h2, p, span, div)[class*="text-[4"]:not(.font-mono) {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}

@@ -1,0 +1,40 @@
+/* fonts: family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&family=DM+Mono:wght@300;400;500 */
+:root {
+  --font-sans: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-cond: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, Menlo, monospace;
+  --default-font-family: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --default-mono-font-family: "DM Mono", ui-monospace, Menlo, monospace;
+  --color-canvas: #f5f6f2;
+  --color-surface: #fffffd;
+  --color-band: #e5eadd;
+  --color-code: #edf0e7;
+  --color-booth: #d8ded0;
+  --color-ink: #1f1f4b;
+  --color-ink-2: #383862;
+  --color-body: #42425f;
+  --color-muted: #54556a;
+  --color-disabled: #8e8f9c;
+  --color-hairline: #dfe4d8;
+  --color-border: #c1c9b7;
+  --color-rule: #7b8372;
+  --color-critical: #cf281d;
+  --color-critical-text: #c4251b;
+  --color-critical-hatch: #f3a096;
+  --color-serious: #c24f00;
+  --color-serious-text: #ad4600;
+  --color-serious-hatch: #f7b16c;
+  --color-moderate: #8b6800;
+  --color-moderate-text: #6f5300;
+  --color-moderate-hatch: #e8c75c;
+  --color-verified: #0b7645;
+  --color-review: #7f46d6;
+  --color-review-text: #7440c8;
+  --color-path: #2d5fe0;
+  --color-steel: #45468c;
+  --color-halo: rgba(255, 255, 255, 0.94);
+}
+body { font-family: var(--font-sans); }
+body { font-variation-settings: "wdth" 94; }
+:is(h1, h2) { font-variation-settings: "wdth" 90; }
+.fixed.bottom-0 button { padding-inline: 10px; letter-spacing: -0.01em; }

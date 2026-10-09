@@ -1,0 +1,39 @@
+/* fonts: family=Commissioner:wght,FLAR,VOLM@100..900,0..100,0..100&family=Azeret+Mono:wght@300..700 */
+:root {
+  --font-sans: "Commissioner", ui-sans-serif, system-ui, sans-serif;
+  --font-cond: "Commissioner", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Azeret Mono", ui-monospace, Menlo, monospace;
+  --default-font-family: "Commissioner", ui-sans-serif, system-ui, sans-serif;
+  --default-mono-font-family: "Azeret Mono", ui-monospace, Menlo, monospace;
+  --color-canvas: #f2f5f5;
+  --color-surface: #ffffff;
+  --color-band: #ddeaea;
+  --color-code: #e7efef;
+  --color-booth: #d2dede;
+  --color-ink: #0e2f3a;
+  --color-ink-2: #23434d;
+  --color-body: #314e58;
+  --color-muted: #465e66;
+  --color-disabled: #83959a;
+  --color-hairline: #d6e1e1;
+  --color-border: #b1c3c3;
+  --color-rule: #6a7e7e;
+  --color-critical: #c41e3a;
+  --color-critical-text: #b81c37;
+  --color-critical-hatch: #f09aab;
+  --color-serious: #c84d10;
+  --color-serious-text: #b2430e;
+  --color-serious-hatch: #f5ad7e;
+  --color-moderate: #8a6800;
+  --color-moderate-text: #6f5400;
+  --color-moderate-hatch: #e7c85e;
+  --color-verified: #0b7645;
+  --color-review: #7a4bd6;
+  --color-review-text: #6f44c8;
+  --color-path: #1f5fd8;
+  --color-steel: #1d5e6c;
+  --color-halo: rgba(255, 255, 255, 0.94);
+}
+body { font-family: var(--font-sans); }
+:is(h1, h2) { font-variation-settings: "FLAR" 40, "VOLM" 0; }
+.fixed.bottom-0 button { padding-inline: 10px; letter-spacing: -0.01em; }

@@ -1,0 +1,41 @@
+/* fonts: family=Schibsted+Grotesk:wght@400..800&family=IBM+Plex+Mono:wght@400;500;600 */
+:root {
+  --font-sans: "Schibsted Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-cond: "Schibsted Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --default-font-family: "Schibsted Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --default-mono-font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --font-weight-semibold: 570;
+  --color-canvas: #f6f5f1;
+  --color-surface: #fffefc;
+  --color-band: #e9edf5;
+  --color-code: #eef1f6;
+  --color-booth: #dde2eb;
+  --color-ink: #131c45;
+  --color-ink-2: #2c3659;
+  --color-body: #384263;
+  --color-muted: #4e566e;
+  --color-disabled: #868b9b;
+  --color-hairline: #e0e3ea;
+  --color-border: #c2c8d5;
+  --color-rule: #78809a;
+  --color-critical: #d3211a;
+  --color-critical-text: #c81f19;
+  --color-critical-hatch: #f4a096;
+  --color-serious: #bf4900;
+  --color-serious-text: #b04300;
+  --color-serious-hatch: #f6ae6a;
+  --color-moderate: #8f6600;
+  --color-moderate-text: #735200;
+  --color-moderate-hatch: #e9c65c;
+  --color-verified: #007843;
+  --color-review: #7b48e0;
+  --color-review-text: #7043d4;
+  --color-path: #2a5fe6;
+  --color-steel: #2b4c88;
+  --color-halo: rgba(255, 255, 255, 0.94);
+}
+body { font-family: var(--font-sans); }
+h1 { letter-spacing: -0.03em; }
+li[data-finding] h3 { letter-spacing: -0.01em; }
+.fixed.bottom-0 button { padding-inline: 10px; letter-spacing: -0.01em; }

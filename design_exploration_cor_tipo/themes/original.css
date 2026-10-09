@@ -1,0 +1,36 @@
+:root {
+  --font-sans: var(--font-atkinson), ui-sans-serif, system-ui, sans-serif;
+  --font-cond: var(--font-atkinson), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-atkinson-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --default-font-family: var(--font-atkinson), ui-sans-serif, system-ui, sans-serif;
+  --default-mono-font-family: var(--font-atkinson-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --color-canvas: #f6eedd;
+  --color-surface: #fffcf4;
+  --color-band: #efe4cd;
+  --color-code: #f2e9d6;
+  --color-booth: #e9d7b4;
+  --color-ink: #151f47;
+  --color-ink-2: #2f3a5c;
+  --color-body: #3d4766;
+  --color-muted: #525a70;
+  --color-disabled: #8c8f99;
+  --color-hairline: #e6d9bf;
+  --color-border: #cfbf9c;
+  --color-rule: #8e7f63;
+  --color-critical: #da2218;
+  --color-critical-text: #d12117;
+  --color-critical-hatch: #f39a8f;
+  --color-serious: #bf4900;
+  --color-serious-text: #b84600;
+  --color-serious-hatch: #f6ae6a;
+  --color-moderate: #916800;
+  --color-moderate-text: #7a5800;
+  --color-moderate-hatch: #e8c55a;
+  --color-verified: #008046;
+  --color-review: #824ee9;
+  --color-review-text: #7d4be0;
+  --color-path: #2c64f2;
+  --color-steel: #2d5486;
+  --color-halo: rgba(255, 255, 255, 0.94);
+}
+body { font-family: var(--font-sans); }
