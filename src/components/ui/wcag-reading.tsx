@@ -34,7 +34,7 @@ export function WcagReading({ model, t }: { model: WcagReadingModel; t: Translat
       <ul>
         <li className="flex items-start gap-3 pb-3">
           <LevelSquare level="A" fill={aFill} />
-          <p className="text-[14px] leading-snug text-body">
+          <p className="text-[15px] leading-snug text-body">
             {model.a.fails ? (
               <>
                 {t("wcagReading.failsBy")}{" "}
@@ -49,7 +49,7 @@ export function WcagReading({ model, t }: { model: WcagReadingModel; t: Translat
         </li>
         <li className="flex items-start gap-3 border-t border-hairline py-3">
           <LevelSquare level="AA" fill={aaFill} />
-          <p className="text-[14px] leading-snug text-body">
+          <p className="text-[15px] leading-snug text-body">
             {model.aa.fails ? (
               <>
                 {t("wcagReading.failsBy")}{" "}
@@ -64,10 +64,10 @@ export function WcagReading({ model, t }: { model: WcagReadingModel; t: Translat
         </li>
         <li className="flex items-start gap-3 border-t border-hairline pt-3">
           <LevelSquare level="AAA" fill="hollow" />
-          <p className="text-[14px] leading-snug text-muted">{t("wcagReading.notEvaluated")}</p>
+          <p className="text-[15px] leading-snug text-muted">{t("wcagReading.notEvaluated")}</p>
         </li>
       </ul>
-      <p className="mt-4 border-t border-hairline pt-3 text-[13px] leading-normal text-muted">
+      <p className="mt-4 border-t border-hairline pt-3 text-[13.5px] leading-normal text-muted">
         {t("wcagReading.internalNote")}
       </p>
     </div>

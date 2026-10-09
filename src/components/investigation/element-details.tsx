@@ -24,7 +24,7 @@ export function CopyButton({ label, value, t }: { label: string; value: string; 
           () => setState("failed"),
         )
       }
-      className="min-h-8 cursor-pointer border border-border bg-surface px-2.5 text-[13px] font-semibold text-ink hover:border-ink"
+      className="min-h-8 cursor-pointer border border-border bg-surface px-2.5 text-[13.5px] font-semibold text-ink hover:border-ink"
     >
       <span aria-live="polite">
         {state === "done" ? t("panel.copied") : state === "failed" ? t("panel.copyFailed") : label}
@@ -52,7 +52,7 @@ export function ElementDetails({
         <h4 className="text-[13.5px] font-semibold text-ink-2">{t("panel.details")}</h4>
       </summary>
 
-      <dl className="mt-3 space-y-2.5 text-[13px] leading-normal">
+      <dl className="mt-3 space-y-2.5 text-[13.5px] leading-normal">
         {occ && (
           <div>
             <dt className="text-muted">{t("panel.selector")}</dt>
@@ -70,7 +70,7 @@ export function ElementDetails({
           <div>
             <dt className="text-muted">{t("panel.html")}</dt>
             <dd className="mt-1">
-              <pre className="max-h-40 overflow-auto bg-code p-2 font-mono text-[12px] break-all whitespace-pre-wrap text-ink">
+              <pre className="max-h-40 overflow-auto bg-code p-2 font-mono text-[12.5px] break-all whitespace-pre-wrap text-ink">
                 {occ.html}
               </pre>
               {truncated && (

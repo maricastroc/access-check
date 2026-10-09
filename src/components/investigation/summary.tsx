@@ -40,7 +40,6 @@ export function Summary({
   host,
   t,
   compact = false,
-  checkNote,
   children,
 }: {
   standing: Standing;
@@ -54,7 +53,6 @@ export function Summary({
   host: string;
   t: Translate;
   compact?: boolean;
-  checkNote?: string;
   children?: ReactNode;
 }) {
   const of = (g: QueueGroup) => groups.find((x) => x.group === g)?.findings ?? [];
@@ -70,12 +68,12 @@ export function Summary({
             "tracking-[-0.01em] tabular-nums",
             big
               ? cn("font-bold", compact ? "text-[19px]" : "text-[21px]")
-              : "text-[16px] font-semibold",
+              : "text-[15px] font-semibold",
           )}
         >
           {label}
         </span>
-        <span className="flex flex-wrap gap-1" role="list" aria-label={t("summary.index")}>
+        <span className="flex flex-wrap gap-1.5" role="list" aria-label={t("summary.index")}>
           {list.map((f) => (
             <span role="listitem" key={f.id}>
               <button
@@ -87,7 +85,7 @@ export function Summary({
                 onMouseLeave={() => onHover?.(null)}
                 onFocus={() => onHover?.(f.id)}
                 onBlur={() => onHover?.(null)}
-                className="flex min-h-6 min-w-6 cursor-pointer items-center justify-center"
+                className="ac-focus-tight flex min-h-6 min-w-6 cursor-pointer items-center justify-center"
               >
                 <Tag n={f.n} sev={sevOf(f)} size={big ? 24 : 22} selected={f.id === selectedId} />
               </button>
@@ -115,7 +113,7 @@ export function Summary({
       <p
         className={cn(
           "max-w-[46ch] leading-normal text-ink-2",
-          compact ? "mt-1.5 text-[14px]" : "mt-2.5 text-[15px]",
+          compact ? "mt-1.5 text-[15px]" : "mt-2.5 text-[15px]",
         )}
       >
         {t(STANDING_NOTE[standing])}
@@ -124,7 +122,6 @@ export function Summary({
         <div className={cn("space-y-2", compact ? "mt-4" : "mt-6")}>
           {line(t("panel.toFix", { count: toFix.length }), toFix, true)}
           {line(t("panel.toCheck", { count: toCheck.length }), toCheck, false)}
-          {checkNote && <p className="text-[13px] text-muted">{checkNote}</p>}
         </div>
       )}
       <p className="mt-3 text-[13.5px] text-muted">

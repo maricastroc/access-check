@@ -108,8 +108,8 @@ function Absent({
     <div className="hatch-outside flex aspect-[3/2] w-full items-center justify-center px-6">
       <div className="w-full max-w-105 bg-surface p-5">
         <h3 className="text-[15px] font-semibold text-ink">{title}</h3>
-        <p className="mt-2 text-[14px] leading-normal text-ink-2">{body}</p>
-        {note && <p className="mt-1.5 text-[13px] leading-normal text-muted">{note}</p>}
+        <p className="mt-2 text-[15px] leading-normal text-ink-2">{body}</p>
+        {note && <p className="mt-1.5 text-[13.5px] leading-normal text-muted">{note}</p>}
         {action && <div className="mt-4">{action}</div>}
       </div>
     </div>

@@ -349,7 +349,7 @@ try {
 
   {
     const { page, context } = await open(1440);
-    const contrast = await openFinding(page, "contrast ratio");
+    const contrast = await openFinding(page, "minimum contrast");
     const onContrast = await marksOn(page);
     const altText = await openFinding(page, "alternative text");
     const onAlt = await marksOn(page);

@@ -160,6 +160,7 @@ export async function auditActiveDocument(context: AuditContext = {}): Promise<S
     incomplete,
     bestPractice,
     passed: axe.passes.map((p) => p.help),
+    passedRules: axe.passes.map((p) => p.id),
     markers,
     identities,
     audits,

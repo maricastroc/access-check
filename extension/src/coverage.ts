@@ -83,13 +83,12 @@ export function auditScope(result: ScanResult, t: Translate): AuditScope {
   const rest = t("scope.stillMissing");
 
   if (!walked) {
-    const why = (result.warnings ?? []).find((w) => w.code === "keyboard-skipped")?.message;
     return {
       kicker: t("scope.currentTabKicker"),
       lead: t("scope.focusPathPending"),
       summary: coverageSummary(result, t),
       badge: null,
-      note: t("scope.skippedNote", { why: why ?? "", rest }),
+      note: t("scope.skippedNote", { rest }),
       focusPath: "skipped",
     };
   }

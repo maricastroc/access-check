@@ -21,6 +21,7 @@ import { certifiedVerification, fixConfidenceOf, groupConfidenceOf } from "@/lib
 import { translator, type MessageKey, type Translate } from "../i18n/t";
 import { fixGuidance, humanImpact, markerReason, type Guidance } from "./guidance";
 import { unplacedAs } from "./occurrences";
+import { ruleCheck, ruleTitle } from "./titles";
 
 export type FindingKind =
   | "wcag"
@@ -119,7 +120,7 @@ function wcagFinding(
     isWcag: true,
     severity: v.severity,
     passLabel: null,
-    title: v.title,
+    title: ruleTitle(v.id, t) ?? v.title,
     criterionSc: sc,
     criterionName: name,
     elements: v.nodes,
@@ -235,7 +236,7 @@ function contextFinding(issue: ContextIssue, where: string, t: Translate): Omit<
     isWcag: true,
     severity: issue.severity,
     passLabel: t("finding.kind.context"),
-    title: issue.title,
+    title: ruleTitle(issue.id, t) ?? issue.title,
     criterionSc: sc,
     criterionName: name,
     elements: issue.nodes,
@@ -271,7 +272,7 @@ function bestPracticeFindings(result: ScanResult, t: Translate): Omit<FindingVie
       isWcag: false,
       severity: null,
       passLabel: t("finding.kind.bestPractice"),
-      title: bp.title,
+      title: ruleTitle(bp.id, t) ?? bp.title,
       criterionSc: null,
       criterionName: null,
       elements: bp.nodes,
@@ -388,7 +389,7 @@ export function reviewFindings(result: ScanResult): FindingView[] {
       isWcag: true,
       severity: null,
       passLabel: t("finding.kind.manualReview"),
-      title: inc.title,
+      title: ruleCheck(inc.id, t) ?? inc.title,
       criterionSc: sc,
       criterionName: name,
       elements: inc.nodes,

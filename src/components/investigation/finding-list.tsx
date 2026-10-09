@@ -21,7 +21,6 @@ const GROUP_TITLE: Record<QueueGroup, MessageKey> = {
 const STATUS: Partial<Record<ThreadEnd, MessageKey>> = {
   tested: "chain.status.tested",
   failed: "chain.status.failed",
-  person: "chain.status.person",
   recheck: "chain.status.recheck",
 };
 
@@ -54,9 +53,7 @@ export function labelOf(f: FindingView, t: Translate): string {
 
 function statusKey(f: FindingView): MessageKey | null {
   const end = threadEnd(f);
-  if (!end) return null;
-  if (end === "person" && f.kind !== "manual-review") return "chain.status.fixPerson";
-  return STATUS[end] ?? null;
+  return end ? (STATUS[end] ?? null) : null;
 }
 
 function Status({ f, t }: { f: FindingView; t: Translate }) {
@@ -64,7 +61,7 @@ function Status({ f, t }: { f: FindingView; t: Translate }) {
   const key = statusKey(f);
   if (!end || !key) return null;
   return (
-    <span className="inline-flex min-w-0 items-center gap-1.5 text-[13px] text-ink-2">
+    <span className="inline-flex min-w-0 items-center gap-1.5 text-[13.5px] text-ink-2">
       <NodeGlyph kind="end" sev={sevOf(f)} end={end} />
       {t(key)}
     </span>
@@ -122,8 +119,9 @@ export function FindingList({
         data-kind={f.kind}
         className={cn(
           "scroll-mt-24",
-          open && "bg-surface",
-          !open && hoveredId === f.id && "bg-surface/70",
+          open &&
+            "bg-surface shadow-[inset_0_1px_0_var(--color-hairline),inset_0_-1px_0_var(--color-hairline)]",
+          !open && hoveredId === f.id && "bg-ink/[0.035]",
         )}
         {...rowAttrs}
       >
@@ -139,7 +137,7 @@ export function FindingList({
               "grid-cols-[auto_minmax(0,1fr)]",
               pad,
               compact ? (open ? "pt-3 pb-3" : "py-4") : open ? "pt-3.5 pb-3" : "py-4",
-              !open && "hover:bg-surface/70",
+              !open && "transition-colors hover:bg-ink/[0.035]",
             )}
           >
             <span className={cn("relative", open ? "self-stretch" : "pt-px")}>
@@ -175,7 +173,7 @@ export function FindingList({
                   <span
                     className={cn(
                       "mt-1.5 block leading-normal font-normal break-words text-ink-2",
-                      compact ? "text-[14px]" : "text-[15px]",
+                      "text-[15px]",
                     )}
                   >
                     {f.impact}
@@ -195,16 +193,11 @@ export function FindingList({
                       </>
                     )}
                   {aside?.(f)}
-                  {compact && statusKey(f) && (
-                    <span className="ml-auto pl-3">
-                      <Status f={f} t={t} />
-                    </span>
-                  )}
                 </span>
               )}
             </span>
-            {!open && !compact && (
-              <span className="col-start-2 pt-1.75">
+            {!open && statusKey(f) && (
+              <span className="col-start-2 pt-1.5">
                 <Status f={f} t={t} />
               </span>
             )}
@@ -219,7 +212,7 @@ export function FindingList({
     <div className="flex flex-col pb-6">
       {groups.map(({ group, findings }) => {
         const heading = (
-          <span className="text-[14px] font-semibold text-ink-2">
+          <span className="text-[13.5px] font-semibold text-ink-2">
             {t(GROUP_TITLE[group])}{" "}
             <span className="ml-1 font-normal text-muted tabular-nums">{findings.length}</span>
           </span>
@@ -238,7 +231,7 @@ export function FindingList({
                 {heading}
               </h2>
               {findings.length === 0 ? (
-                <p className={cn("pb-3 text-[14.5px] leading-normal text-ink-2", pad)}>{empty}</p>
+                <p className={cn("pb-3 text-[15px] leading-normal text-ink-2", pad)}>{empty}</p>
               ) : (
                 list
               )}

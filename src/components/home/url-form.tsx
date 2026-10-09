@@ -27,21 +27,27 @@ export function UrlField({
   const t = useT();
   const height = size === "lg" ? "h-[66px]" : size === "sm" ? "h-[52px]" : "h-[56px]";
   const errorId = useId();
+  const shown = value.replace(/^\s*https:\/\//i, "");
+  const ownScheme = /^\s*[a-z][a-z\d+.-]*:\/\//i.test(shown);
 
   return (
     <div>
       <div
         className={cn(
-          "flex w-full items-center gap-3 border-[1.5px] bg-surface px-3.5",
+          "ac-field flex w-full items-center gap-3 border-[1.5px] bg-surface px-3.5",
           height,
           error ? "border-critical" : "border-ink",
         )}
       >
-        <span className="shrink-0 font-mono text-[14.5px] text-muted">https://</span>
-        <span aria-hidden className="h-6 w-px bg-hairline" />
+        {!ownScheme && (
+          <>
+            <span className="shrink-0 font-mono text-[14.5px] text-muted">https://</span>
+            <span aria-hidden className="h-6 w-px bg-hairline" />
+          </>
+        )}
         <input
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
+          value={shown}
+          onChange={(e) => onChange(e.target.value.replace(/^\s*https:\/\//i, ""))}
           onKeyDown={(e) => {
             if (e.key === "Enter" && onSubmit) {
               e.preventDefault();
@@ -53,7 +59,7 @@ export function UrlField({
           aria-describedby={error ? errorId : undefined}
           placeholder={placeholder}
           autoFocus={autoFocus}
-          className="min-w-0 flex-1 bg-transparent font-mono text-[16px] text-ink placeholder:text-muted focus:outline-none"
+          className="min-w-0 flex-1 bg-transparent font-mono text-[16px] text-ink placeholder:text-muted"
         />
       </div>
       {error && (

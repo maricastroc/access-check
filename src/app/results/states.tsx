@@ -60,10 +60,10 @@ export function ErrorState({
           >
             <FontAwesomeIcon icon={faXmark} className="text-xs" />
           </span>
-          <h2 className="text-[16px] font-semibold text-ink">{t("results.couldNotOpen")}</h2>
+          <h2 className="text-[17px] font-semibold text-ink">{t("results.couldNotOpen")}</h2>
         </div>
-        <p className="mt-3 text-[14px] leading-normal text-body">{message}</p>
-        {hint && <p className="mt-1.5 text-[13px] text-muted">{hint}</p>}
+        <p className="mt-3 text-[15px] leading-normal text-body">{message}</p>
+        {hint && <p className="mt-1.5 text-[13.5px] text-muted">{hint}</p>}
         <form
           onSubmit={(e) => {
             e.preventDefault();

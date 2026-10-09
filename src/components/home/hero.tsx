@@ -1,18 +1,10 @@
-import type { ScoreBreakdown } from "@/lib/report/score";
 import type { WcagReadingModel } from "@/lib/report/wcag";
-import { PriorityList, SectionKicker, WcagReading } from "@/components/ui";
-import { STANDING_LABEL, STANDING_NOTE, STANDING_TONE } from "@/lib/report/standing";
+import { SectionKicker, WcagReading } from "@/components/ui";
 import { UrlForm } from "./url-form";
 import { HeroEvidencePreview } from "./evidence-preview";
-import { exampleScore, exampleSummary } from "./content";
+import { DemoSummary } from "./demo";
+import { QUICK_EXAMPLES } from "./content";
 import type { Translate } from "@/lib/i18n/t";
-
-const breakdown: ScoreBreakdown = {
-  base: 100,
-  score: exampleScore.score,
-  totalDeduction: 100 - exampleScore.score,
-  deductions: exampleScore.deductions,
-};
 
 export function Hero({ t }: { t: Translate }) {
   const wcag: WcagReadingModel = {
@@ -26,10 +18,9 @@ export function Hero({ t }: { t: Translate }) {
       <div className="mx-auto w-full max-w-300 px-6">
         <div className="grid grid-cols-1 gap-x-14 gap-y-10 pt-14 lg:grid-cols-[minmax(0,1fr)_520px] lg:items-start lg:gap-x-20">
           <div>
-            <div className="flex flex-wrap items-center gap-3">
+            <div>
               <SectionKicker tone="steel">{t("home.hero.standards")}</SectionKicker>
-              <span aria-hidden className="h-4 w-px bg-hairline" />
-              <span className="text-[13px] text-muted">{t("home.hero.passes")}</span>
+              <p className="mt-1 text-[13px] text-muted">{t("home.hero.passes")}</p>
             </div>
             <h1 className="mt-5 font-sans text-[42px] leading-[1.05] font-semibold tracking-[-0.03em] text-ink">
               {t("home.hero.title")}
@@ -38,7 +29,7 @@ export function Hero({ t }: { t: Translate }) {
               {t("home.hero.body")}
             </p>
             <div className="mt-6">
-              <UrlForm examples={["news.ycombinator.com", "lrb.co.uk", "kinfolk.com"]} />
+              <UrlForm examples={QUICK_EXAMPLES} />
             </div>
           </div>
 
@@ -53,50 +44,8 @@ export function Hero({ t }: { t: Translate }) {
             <SectionKicker variant="section" tone="steel">
               {t("home.mostRecent")}
             </SectionKicker>
-            <p
-              className="mt-1 font-cond text-[48px] leading-[1.02]"
-              style={{ color: STANDING_TONE[exampleScore.standing] }}
-            >
-              {t(STANDING_LABEL[exampleScore.standing])}
-            </p>
-            <p className="mt-1 max-w-[48ch] text-[14px] leading-normal text-body">
-              {t(STANDING_NOTE[exampleScore.standing])}
-            </p>
-            <div className="mt-3.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[13px] text-body">
-              <span className="font-semibold text-serious-text">
-                {t("standing.issueCount", {
-                  count: exampleScore.serious,
-                  severity: t("severity.serious").toLowerCase(),
-                })}
-              </span>
-              <span aria-hidden className="text-border">
-                ·
-              </span>
-              <span className="font-semibold text-moderate-text">
-                {t("standing.issueCount", {
-                  count: exampleScore.moderate,
-                  severity: t("severity.moderate").toLowerCase(),
-                })}
-              </span>
-              <span aria-hidden className="text-border">
-                ·
-              </span>
-              <span>
-                <span className="font-semibold text-ink tabular-nums">{exampleScore.passed}</span>{" "}
-                {t("report.passedLabel").toLowerCase()}
-              </span>
-            </div>
-            <p className="mt-3 max-w-[48ch] text-[14px] leading-normal text-body">
-              {t(exampleSummary)}
-            </p>
-            <div className="mt-5 max-w-115 border-t border-hairline pt-4">
-              <SectionKicker variant="section" tone="steel">
-                {t("priority.kicker")}
-              </SectionKicker>
-              <p className="mt-1 mb-2.5 text-[12.5px] leading-normal text-muted">
-                {t("priority.note")}
-              </p>
-              <PriorityList breakdown={breakdown} t={t} />
+            <div className="mt-4">
+              <DemoSummary />
             </div>
           </div>
           <WcagReading t={t} model={wcag} />

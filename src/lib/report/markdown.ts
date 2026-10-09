@@ -6,6 +6,7 @@ import { wcagReadingOf } from "./wcag";
 import { standingOf, STANDING_LABEL, STANDING_NOTE, scoringIsCurrent } from "./standing";
 import { verdictLabel, verdictMessage } from "./verdict";
 import { translator, type Translate } from "../i18n/t";
+import { passedChecks, ruleCheck } from "./titles";
 
 function host(url: string): string {
   try {
@@ -145,7 +146,7 @@ export function buildReportMarkdown(result: ScanResult): string {
     out.push(t("md.manualOutsideScore"));
     out.push("");
     for (const inc of result.incomplete) {
-      out.push(`### ${inc.title}`);
+      out.push(`### ${ruleCheck(inc.id, t) ?? inc.title}`);
       out.push("");
       out.push(`- **WCAG:** ${inc.criterion}`);
       if (inc.selectors.length > 0) {
@@ -164,10 +165,11 @@ export function buildReportMarkdown(result: ScanResult): string {
     }
   }
 
-  if (result.passed.length > 0) {
-    out.push(`## ${t("md.checksPassed", { count: result.passed.length })}`);
+  const passed = passedChecks(result, t);
+  if (passed.length > 0) {
+    out.push(`## ${t("md.checksPassed", { count: passed.length })}`);
     out.push("");
-    for (const p of result.passed) out.push(`- ${p}`);
+    for (const p of passed) out.push(`- ${p}`);
     out.push("");
   }
 

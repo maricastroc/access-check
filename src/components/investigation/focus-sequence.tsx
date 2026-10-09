@@ -19,7 +19,6 @@ export function FocusSequence({
   related = [],
   status,
   t,
-  compact = false,
 }: {
   stops: Pick<FocusStop, "n" | "label" | "focusVisible" | "focusIndicator" | "rect">[];
   current: number | null;
@@ -30,7 +29,6 @@ export function FocusSequence({
   related?: RelatedFinding[];
   status?: ReactNode;
   t: Translate;
-  compact?: boolean;
 }) {
   const at = stops.findIndex((s) => s.n === current);
   const here = at >= 0 ? stops[at] : null;
@@ -57,7 +55,7 @@ export function FocusSequence({
           return (
             <li key={s.n} className="flex items-center">
               {gap && (
-                <span aria-hidden className="px-1.5 text-[13px] text-muted">
+                <span aria-hidden className="px-1.5 text-[13.5px] text-muted">
                   …
                 </span>
               )}
@@ -70,7 +68,7 @@ export function FocusSequence({
                   alert ? t("marks.stopWithFinding", { stop: name, tag: alert.tag }) : name
                 }
                 onClick={() => onPick(s.n)}
-                className="flex min-h-6 min-w-6 cursor-pointer items-center justify-center"
+                className="ac-focus-tight flex min-h-6 min-w-6 cursor-pointer items-center justify-center"
               >
                 <span
                   data-sev={alert?.sev}
@@ -113,10 +111,7 @@ export function FocusSequence({
           </button>
         </span>
         {here && (
-          <p
-            aria-live="polite"
-            className={cn("min-w-0 text-ink", compact ? "text-[13.5px]" : "text-[14px]")}
-          >
+          <p aria-live="polite" className="min-w-0 text-[13.5px] text-ink">
             <span className="font-semibold">
               {t("panel.stopOf", { at: at + 1, total: stops.length })}
             </span>

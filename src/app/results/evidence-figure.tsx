@@ -27,7 +27,7 @@ export function evidenceFigure(
     return (
       <div className="mb-1 flex flex-wrap items-end gap-3">
         <figure>
-          <figcaption className="mb-1 text-[13px] text-muted">{t("chain.atRest")}</figcaption>
+          <figcaption className="mb-1 text-[13.5px] text-muted">{t("chain.atRest")}</figcaption>
           <Crop
             src={image}
             page={SCAN_VIEWPORT}
@@ -42,7 +42,7 @@ export function evidenceFigure(
           =
         </span>
         <figure>
-          <figcaption className="mb-1 text-[13px] text-muted">{t("chain.withFocus")}</figcaption>
+          <figcaption className="mb-1 text-[13.5px] text-muted">{t("chain.withFocus")}</figcaption>
           <Crop
             src={image}
             page={SCAN_VIEWPORT}
@@ -55,7 +55,7 @@ export function evidenceFigure(
             {(inner) => <GhostRing box={inner} gap={5} />}
           </Crop>
         </figure>
-        <p className="basis-full text-[13px] text-ink-2">
+        <p className="basis-full text-[13.5px] text-ink-2">
           <span className="font-semibold text-ink">{t("chain.noDifference")}.</span>{" "}
           {t("chain.ringShould")}:{" "}
           <span

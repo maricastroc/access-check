@@ -91,7 +91,7 @@ export function usePageAudit({
           apply(fresh);
         } catch (e) {
           setError(e instanceof Error ? e.message : fallbackError);
-          setErrorHint(e instanceof ScanStreamError ? scanErrorHint(e.code, t) : "");
+          setErrorHint(e instanceof ScanStreamError ? scanErrorHint(e.code, t, e.message) : "");
           setStreaming(false);
           setStatus("error");
         }
