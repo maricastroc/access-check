@@ -263,6 +263,16 @@ details[open] > summary .ac-chev {
   box-shadow: 0 0 0 6px var(--color-halo);
 }
 
+.ac-field:has(input:focus-visible) {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+}
+
+.ac-field input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
 .ac-draw {
   stroke-dasharray: var(--len, 2000);
   stroke-dashoffset: var(--len, 2000);
@@ -335,6 +345,9 @@ details[open] > summary .ac-chev {
   }
   .ac-instrument :where(a, button, summary, [tabindex]):focus-visible::after {
     display: none;
+  }
+  .ac-field:has(input:focus-visible) {
+    outline-color: Highlight;
   }
 }
 
