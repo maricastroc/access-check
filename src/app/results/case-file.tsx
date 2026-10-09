@@ -190,7 +190,6 @@ export function CaseFile({
               whole={focus.whole}
               onWhole={focus.onWhole}
               related={focus.related}
-              compact={compact}
               t={t}
             />
           </div>

@@ -677,7 +677,6 @@ function FocusPath({
               whole={complete}
               onWhole={onComplete}
               related={related}
-              compact
               t={t}
               status={
                 <p className="text-[12.5px] leading-normal text-muted">

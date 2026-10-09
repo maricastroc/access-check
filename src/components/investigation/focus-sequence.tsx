@@ -19,7 +19,6 @@ export function FocusSequence({
   related = [],
   status,
   t,
-  compact = false,
 }: {
   stops: Pick<FocusStop, "n" | "label" | "focusVisible" | "focusIndicator" | "rect">[];
   current: number | null;
@@ -30,7 +29,6 @@ export function FocusSequence({
   related?: RelatedFinding[];
   status?: ReactNode;
   t: Translate;
-  compact?: boolean;
 }) {
   const at = stops.findIndex((s) => s.n === current);
   const here = at >= 0 ? stops[at] : null;
