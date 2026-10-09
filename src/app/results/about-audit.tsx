@@ -2,6 +2,7 @@ import type { ScanResult } from "@/lib/scan/types";
 import { scoringIsCurrent } from "@/lib/report/standing";
 import { StaleScoringNotice } from "./summary-band";
 import { Button, ProvenancePanel, SectionKicker, WarningList } from "@/components/ui";
+import { passedChecks } from "@/lib/report/titles";
 import { useT } from "@/lib/i18n/provider";
 
 export function AboutAudit({
@@ -67,7 +68,7 @@ export function AboutAudit({
             {result.counts.passed} {t("results.checksPassedLabel")}
           </SectionKicker>
           <ul className="mt-2.5 flex flex-col gap-1.5 text-[12.5px] text-body">
-            {result.passed.map((p, i) => (
+            {passedChecks(result, t).map((p, i) => (
               <li key={i} className="flex gap-2">
                 <span aria-hidden className="text-verified">
                   ✓

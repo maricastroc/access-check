@@ -4,6 +4,7 @@ import { WcagChips } from "@/components/ui";
 import { standingOf, STANDING_LABEL, STANDING_NOTE, type Standing } from "@/lib/report/standing";
 import { safeHost, sevColor, sevInk, shortId } from "./shared";
 import { PageShell, SectionKicker, SectionKickerMuted } from "./primitives";
+import { ruleTitle } from "@/lib/report/titles";
 import { translator, type MessageKey } from "@/lib/i18n/t";
 
 const EFFORT_KEY: Record<Effort, MessageKey> = {
@@ -63,7 +64,7 @@ export function SummaryPage({ result }: { result: ScanResult }) {
 
   const fixes = result.fixFirst.map((f) => {
     const v = result.violations.find((x) => x.title === f.title);
-    return { ...f, criterion: v?.criterion };
+    return { ...f, title: (v && ruleTitle(v.id, t)) ?? f.title, criterion: v?.criterion };
   });
 
   return (

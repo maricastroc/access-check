@@ -1242,7 +1242,7 @@ describe("the panel reads as a document, not a stack of boxes", () => {
     expect(details).toMatch(/<pre[\s\S]{0,200}overflow-auto[\s\S]{0,120}break-all/);
     const located = between(chain, "function Located(", "function Contrast(");
     expect(located).toContain("break-words");
-    expect(chain).toMatch(/break-words text-ink-2">\{f\.desc\}/);
+    expect(chain).toMatch(/break-words text-ink-2">\{note\}/);
   });
 
   it("labels each part of the element instead of running them together", () => {

@@ -151,6 +151,7 @@ export type ScanResult = {
   incomplete: ScanIncomplete[];
   bestPractice: ScanBestPractice[];
   passed: string[];
+  passedRules?: string[];
   markers: ScanMarker[];
   identities?: Record<string, ElementIdentity>;
   regions?: ScanRegion[];

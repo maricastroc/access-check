@@ -2,6 +2,8 @@ import type { ElementIdentity } from "@/lib/scan/dom/identity";
 import type { ScanResult } from "@/lib/scan/types";
 import { parseContrastFix } from "@/lib/report/contrast";
 import { describeElement } from "@/lib/report/identity";
+import { humanImpact } from "@/lib/report/guidance";
+import { ruleTitle } from "@/lib/report/titles";
 import { toFixStatus } from "@/lib/report/severity";
 import { certifiedVerification, fixConfidenceOf } from "@/lib/scan/confidence";
 import { ColorSwatch, StatusSeal } from "@/components/ui";
@@ -30,7 +32,9 @@ export function DetailedCard({
       <div className="grid grid-cols-[1fr_1.7in]">
         <div className="border-r border-hairline p-4">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[15px] font-semibold text-ink">{v.title}</span>
+            <span className="text-[15px] font-semibold text-ink">
+              {ruleTitle(v.id, t) ?? v.title}
+            </span>
             <span
               className="px-1.5 py-0.5 font-cond text-[10px] font-medium tracking-[0.08em] uppercase"
               style={{ color: sevInk[v.severity] }}
@@ -42,7 +46,7 @@ export function DetailedCard({
             </span>
           </div>
 
-          <p className="mt-2 text-[11.5px] leading-[1.45] text-body">{v.desc}</p>
+          <p className="mt-2 text-[11.5px] leading-[1.45] text-body">{humanImpact(v.id, t)}</p>
 
           <div className="mt-2.5">
             <FieldLabel>{t("report.suggestedFix")}</FieldLabel>

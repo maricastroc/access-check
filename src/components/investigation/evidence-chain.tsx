@@ -7,6 +7,7 @@ import { describeElement } from "@/lib/report/identity";
 import { verdictMessage } from "@/lib/report/verdict";
 import { SC_LEVEL } from "@/lib/report/wcag";
 import { reviewGuidance } from "@/lib/scan/review";
+import { ruleCheck } from "@/lib/report/titles";
 import { translator, type MessageKey, type Translate } from "@/lib/i18n/t";
 import { REPORT_LOCALES } from "@/lib/i18n/locale";
 import { cn } from "@/lib/cn";
@@ -292,9 +293,17 @@ function Evidence({
     );
   }
 
+  const check = f.kind === "wcag" || f.kind === "best-practice" ? ruleCheck(f.ruleId, t) : null;
+  const note =
+    f.kind === "manual-review"
+      ? reviewGuidance(f.ruleId, t).how
+      : check
+        ? t("chain.automatedCheck", { check })
+        : f.desc;
+
   return (
     <>
-      <p className="text-[15px] leading-normal break-words text-ink-2">{f.desc}</p>
+      <p className="text-[15px] leading-normal break-words text-ink-2">{note}</p>
       {notes}
     </>
   );
@@ -379,8 +388,7 @@ function Decide({ finding: f, t }: { finding: FindingView; t: Translate }) {
   return (
     <>
       <p className="text-[13.5px] font-semibold text-ink-2">{t("panel.howToCheck")}</p>
-      <p className="mt-1 text-[15px] leading-normal break-words text-ink">{guide.how}</p>
-      <ol className="mt-2.5 list-decimal space-y-1.5 pl-5 text-[14.5px] leading-normal text-ink-2 marker:text-muted">
+      <ol className="mt-1.5 list-decimal space-y-1.5 pl-5 text-[14.5px] leading-normal text-ink-2 marker:text-muted">
         {guide.steps.map((step) => (
           <li key={step}>{step}</li>
         ))}

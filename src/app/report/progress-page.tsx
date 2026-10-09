@@ -2,6 +2,7 @@ import { chargeable } from "@/lib/scan/evidence";
 import { violationsBehindScore } from "@/lib/scan/scored";
 import { standingOf, STANDING_LABEL } from "@/lib/report/standing";
 import type { ScanResult, Severity } from "@/lib/scan/types";
+import { passedChecks, ruleTitle } from "@/lib/report/titles";
 import { safeHost, sevColor, sevInk } from "./shared";
 import { MiniHeader, PageShell, SectionKicker, SectionKickerMuted } from "./primitives";
 import { translator } from "@/lib/i18n/t";
@@ -82,7 +83,9 @@ export function ProgressPage({ result }: { result: ScanResult }) {
                 }`}
               >
                 <div className="min-w-0 pr-2">
-                  <div className="truncate text-[12px] font-semibold text-ink">{v.title}</div>
+                  <div className="truncate text-[12px] font-semibold text-ink">
+                    {ruleTitle(v.id, t) ?? v.title}
+                  </div>
                   <div className="mt-px truncate text-[10px] text-muted">
                     {v.criterion.split(" · ")[1] ?? v.criterion}
                   </div>
@@ -112,14 +115,16 @@ export function ProgressPage({ result }: { result: ScanResult }) {
             </span>
           </div>
           <div className="grid grid-cols-2 gap-x-3 gap-y-2 p-4">
-            {result.passed.slice(0, 10).map((p, i) => (
-              <span key={`${p}-${i}`} className="flex items-start gap-1.5 text-[11px] text-body">
-                <span aria-hidden className="mt-0.5 shrink-0 font-cond text-[10px] text-verified">
-                  ✓
+            {passedChecks(result, t)
+              .slice(0, 10)
+              .map((p, i) => (
+                <span key={`${p}-${i}`} className="flex items-start gap-1.5 text-[11px] text-body">
+                  <span aria-hidden className="mt-0.5 shrink-0 font-cond text-[10px] text-verified">
+                    ✓
+                  </span>
+                  <span className="leading-snug wrap-break-word">{p}</span>
                 </span>
-                <span className="leading-snug wrap-break-word">{p}</span>
-              </span>
-            ))}
+              ))}
           </div>
         </div>
       </div>
