@@ -40,7 +40,6 @@ export function Summary({
   host,
   t,
   compact = false,
-  checkNote,
   children,
 }: {
   standing: Standing;
@@ -54,7 +53,6 @@ export function Summary({
   host: string;
   t: Translate;
   compact?: boolean;
-  checkNote?: string;
   children?: ReactNode;
 }) {
   const of = (g: QueueGroup) => groups.find((x) => x.group === g)?.findings ?? [];
@@ -124,7 +122,6 @@ export function Summary({
         <div className={cn("space-y-2", compact ? "mt-4" : "mt-6")}>
           {line(t("panel.toFix", { count: toFix.length }), toFix, true)}
           {line(t("panel.toCheck", { count: toCheck.length }), toCheck, false)}
-          {checkNote && <p className="text-[13px] text-muted">{checkNote}</p>}
         </div>
       )}
       <p className="mt-3 text-[13.5px] text-muted">

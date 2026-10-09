@@ -17,6 +17,10 @@ export const ptBR: Catalog = {
   "meta.title": "AccessCheck: meça, localize e rastreie cada barreira de acessibilidade",
   "meta.description":
     "Cole um endereço da web. O AccessCheck abre a página em um navegador real, executa o axe-core (WCAG níveis A e AA) e mais as verificações de teclado, celular e movimento. Cada problema volta ligado ao elemento que o causou, com uma correção já testada em uma cópia da página.",
+  "notFound.metaTitle": "Página não encontrada · AccessCheck",
+  "notFound.title": "Esta página não existe",
+  "notFound.body": "O endereço pode estar digitado errado, ou a página mudou de lugar.",
+  "notFound.home": "Ir para a página inicial",
   "nav.skipToContent": "Pular para o conteúdo",
   "nav.howItWorks": "Como funciona",
   "nav.checks": "Verificações",
@@ -212,8 +216,7 @@ export const ptBR: Catalog = {
   "scanError.message.rateLimited": "Auditorias demais em pouco tempo. Tente de novo em um minuto.",
   "scanError.message.navigationTimeout": "A página demorou demais para responder.",
   "scanError.message.navigationFailed": "Não conseguimos acessar a página.",
-  "scanError.message.httpError":
-    "A página devolveu um erro, então não conseguimos auditá-la. Confira o endereço e tente de novo.",
+  "scanError.message.httpError": "A página devolveu um erro, então não conseguimos auditá-la.",
   "scanError.message.auditFailed": "Não conseguimos terminar a auditoria nesta página.",
   "scanError.message.browserUnavailable":
     "Não conseguimos iniciar o navegador usado para abrir a página. Tente de novo.",
@@ -342,12 +345,11 @@ export const ptBR: Catalog = {
     "Parcial: o foco entrou em um iframe ou shadow root, que esta versão não consegue enxergar, então {leftover}.",
   "focusPath.stoppedByTrap": "Parcial: o foco ficou preso na etapa {stops}, então {leftover}.",
 
-  "scope.stillMissing":
-    "A visualização em celular e a preferência por movimento reduzido ainda não foram verificadas aqui, então esta não é uma auditoria completa.",
-  "scope.focusPathPending": "Teclado ainda não verificado",
+  "scope.stillMissing": "Esta não é uma auditoria completa.",
+  "scope.focusPathPending": "Teclado ainda não verificado, por isso fora da contagem",
   "scope.currentTabKicker": "Esta aba",
   "scope.skippedNote":
-    "A ordem de tabulação não foi verificada, então este resultado não cobre o uso com teclado. {why} {rest}",
+    "A ordem de tabulação não foi verificada, então este resultado não cobre o uso com teclado. {rest}",
   "scope.partialBadge": "A verificação de teclado não começou no primeiro controle",
   "scope.partialNote":
     "Não foi possível voltar ao primeiro controle, então estas {stops} etapas começam no meio da página, e não no início da ordem de tabulação. {rest}",
@@ -385,7 +387,7 @@ export const ptBR: Catalog = {
   "standing.gapsNote": "Nada sério foi encontrado automaticamente. O que restou é pequeno.",
   "standing.clean": "Nenhum problema detectado automaticamente",
   "standing.cleanNote":
-    "Nem tudo pode ser verificado automaticamente. Os itens abaixo ainda precisam de revisão manual.",
+    "Uma ferramenta não vê tudo. Teste a página também com teclado e leitor de tela.",
   "standing.kicker": "Como esta página está",
   "standing.pending": "Ainda verificando",
   "standing.pendingNote":
@@ -1178,7 +1180,6 @@ export const ptBR: Catalog = {
   "panel.count.manualReview": "revisão manual",
   "panel.toFix": { one: "{count} para corrigir", other: "{count} para corrigir" },
   "panel.toCheck": { one: "{count} para conferir à mão", other: "{count} para conferir à mão" },
-  "panel.keyboardNotCounted": "Teclado ainda não incluído",
   "panel.notOnScreen": {
     one: "1 problema não está destacado na página. Abra-o pela lista para localizar os elementos.",
     other:
@@ -1289,11 +1290,10 @@ export const ptBR: Catalog = {
   "panel.aboutAudit": "Sobre esta auditoria",
 
   "panel.idleTitle": "Nada auditado ainda",
+  "panel.auditThisTab": "Auditar esta aba",
   "panel.idleBody":
-    "Clique no ícone do AccessCheck na barra de ferramentas para auditar a página em que você está. Com o relatório pronto, você também pode verificar o teclado, o que usa o depurador do Chrome. Nada sai do seu navegador.",
-  "panel.unsupportedKicker": "Sem suporte aqui",
+    "Audite a página da aba em que você está. Com o relatório pronto, você também pode verificar o teclado, o que usa o depurador do Chrome. Nada sai do seu navegador.",
   "panel.unsupportedTitle": "Esta página não pode ser auditada",
-  "panel.errorKicker": "A auditoria falhou",
   "panel.errorTitle": "A auditoria não conseguiu terminar",
   "panel.tryAgain": "Tentar de novo",
 

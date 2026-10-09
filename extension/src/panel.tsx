@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { BrandMark } from "../../src/components/ui/brand-mark";
 import { StageList } from "../../src/components/ui/scan-stages";
 import { WarningList } from "../../src/components/ui/warning-list";
 import {
@@ -176,15 +177,23 @@ function StickyBar({
   onReaudit,
   busy = false,
 }: {
-  title: string;
+  title?: string;
   standing?: Standing;
   onTop?: () => void;
   onReaudit?: () => void;
   busy?: boolean;
 }) {
+  const layout = title ? "truncate" : "flex items-center gap-2";
   return (
-    <div className="sticky top-0 z-30 flex flex-wrap items-center gap-x-2 gap-y-1.5 border-b border-hairline bg-canvas px-3 py-2">
-      <h1 className="min-w-0 flex-1 truncate text-[14px] font-semibold text-ink">{title}</h1>
+    <div className="sticky top-0 z-30 flex min-h-12 flex-wrap items-center gap-x-2 gap-y-1.5 border-b border-hairline bg-canvas px-3 py-2">
+      <h1 className={`min-w-0 flex-1 text-[14px] font-semibold text-ink ${layout}`}>
+        {title ?? (
+          <>
+            <BrandMark size={16} />
+            AccessCheck
+          </>
+        )}
+      </h1>
       {onReaudit && (
         <button
           type="button"
@@ -252,7 +261,6 @@ function Header({
           headingId="verdict-heading"
           host={result.title}
           compact
-          checkNote={scope.focusPath === "skipped" ? t("panel.keyboardNotCounted") : undefined}
           t={t}
         >
           {notices.map((line) => (
@@ -698,9 +706,12 @@ function Running({ url, task, stage }: { url: string; task: AuditTask; stage: Au
 
   return (
     <>
-      <StickyBar title={task === "audit" ? t("panel.auditingTab") : t("panel.walkingFocusPath")} />
-      <div className="px-3 pt-3">
-        <p className="truncate font-mono text-[12.5px] text-muted">{url}</p>
+      <StickyBar />
+      <div className="px-3 pt-5">
+        <h2 className="text-[17px] font-bold text-ink">
+          {task === "audit" ? t("panel.auditingTab") : t("panel.walkingFocusPath")}
+        </h2>
+        <p className="mt-1 truncate font-mono text-[12.5px] text-muted">{url}</p>
         <div className="mt-4">
           <StageList stages={stages} current={current} />
         </div>
@@ -801,6 +812,7 @@ function Report({
   const [wasWalking, setWasWalking] = useState(walking !== null);
   const latest = useRef(0);
   const drawn = useRef<"overview" | "finding" | "path" | null>(null);
+  const [verdictShown, setVerdictShown] = useState(true);
   const scope = auditScope(result, t);
   const stops = result.keyboard?.focusPath.length ?? 0;
 
@@ -950,11 +962,21 @@ function Report({
     settle();
   }, [inv.selectedId, walking, overview]);
 
+  useEffect(() => {
+    const heading = document.getElementById("verdict-heading");
+    if (!heading) return;
+    const watch = new IntersectionObserver(([entry]) => setVerdictShown(entry.isIntersecting), {
+      rootMargin: "-48px 0px 0px 0px",
+    });
+    watch.observe(heading);
+    return () => watch.disconnect();
+  }, []);
+
   return (
     <>
       <StickyBar
         title={result.title}
-        standing={standingOf(result.counts)}
+        standing={verdictShown ? undefined : standingOf(result.counts)}
         onTop={() => window.scrollTo({ top: 0, behavior: "instant" })}
         onReaudit={onReaudit}
         busy={walking !== null}
@@ -1054,19 +1076,17 @@ function Report({
 }
 
 function Message({
-  kicker,
   title,
   body,
   children,
 }: {
-  kicker: string;
   title: string;
   body: string;
   children?: React.ReactNode;
 }) {
   return (
     <>
-      <StickyBar title={kicker} />
+      <StickyBar />
       <div className="px-3 pt-5">
         <h2 className="text-[17px] font-bold text-ink">{title}</h2>
         <p className="mt-1.5 text-[14px] leading-normal text-ink-2">{body}</p>
@@ -1146,7 +1166,15 @@ function Panel({
       </div>
 
       {state.kind === "idle" && (
-        <Message kicker="AccessCheck" title={t("panel.idleTitle")} body={t("panel.idleBody")} />
+        <Message title={t("panel.idleTitle")} body={t("panel.idleBody")}>
+          <button
+            type="button"
+            onClick={() => void send({ type: "panel:audit" })}
+            className={`${PRIMARY_BUTTON} mt-4`}
+          >
+            {t("panel.auditThisTab")}
+          </button>
+        </Message>
       )}
 
       {state.kind === "running" && !shown && (
@@ -1154,15 +1182,11 @@ function Panel({
       )}
 
       {state.kind === "unsupported" && (
-        <Message
-          kicker={t("panel.unsupportedKicker")}
-          title={t("panel.unsupportedTitle")}
-          body={t(state.reason)}
-        />
+        <Message title={t("panel.unsupportedTitle")} body={t(state.reason)} />
       )}
 
       {state.kind === "error" && (
-        <Message kicker={t("panel.errorKicker")} title={t("panel.errorTitle")} body={state.message}>
+        <Message title={t("panel.errorTitle")} body={state.message}>
           {state.recoverable && (
             <button
               type="button"

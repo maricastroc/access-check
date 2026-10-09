@@ -551,10 +551,10 @@ describe("how much of the audit is behind the number", () => {
     const scope = auditScope(result(), t);
 
     expect(scope.kicker).toBe("This tab");
-    expect(scope.lead).toBe("Keyboard not checked yet");
+    expect(scope.lead).toBe("Keyboard not checked yet, so it isn't in the count");
     expect(scope.focusPath).toBe("skipped");
     expect(scope.note).toContain("not checked");
-    expect(scope.note).toContain("Check keyboard");
+    expect(scope.note).not.toContain("Check keyboard");
   });
 
   it("never calls a reading complete, even with the focus path walked", () => {
@@ -694,13 +694,14 @@ describe("the panel is an inspector, not a squeezed report", () => {
     expect(pt("panel.toCheck", { count: 1 })).toBe("1 para conferir à mão");
   });
 
-  it("says the work line leaves the keyboard out until the walk runs", () => {
-    const header = between(panel, "function Header(", "function KeyboardCheck(");
-    expect(header).toContain(
-      'checkNote={scope.focusPath === "skipped" ? t("panel.keyboardNotCounted") : undefined}',
+  it("says the work line leaves the keyboard out until the walk runs, once", () => {
+    const keyboard = between(panel, "function KeyboardCheck(", "function Collapsed(");
+    expect(keyboard).toContain("{pending ? scope.lead : scope.badge}");
+    expect(t("scope.focusPathPending")).toBe("Keyboard not checked yet, so it isn't in the count");
+    expect(pt("scope.focusPathPending")).toBe(
+      "Teclado ainda não verificado, por isso fora da contagem",
     );
-    expect(summary.indexOf("{checkNote")).toBeGreaterThan(summary.indexOf('t("panel.toCheck"'));
-    expect(pt("panel.keyboardNotCounted")).toBe("Teclado ainda não incluído");
+    expect(summary).not.toContain("checkNote");
   });
 
   it("offers the keyboard check where the reading says it is missing", () => {

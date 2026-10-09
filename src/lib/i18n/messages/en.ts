@@ -13,6 +13,10 @@ export const en = {
   "meta.title": "AccessCheck: measure, locate and trace every accessibility barrier",
   "meta.description":
     "Paste a web address. AccessCheck opens the page in a real browser, runs axe-core (WCAG levels A and AA) plus keyboard, mobile and motion checks, and returns each finding tied to the element that caused it, with a fix tested on a copy of the page.",
+  "notFound.metaTitle": "Page not found · AccessCheck",
+  "notFound.title": "This page doesn't exist",
+  "notFound.body": "The address may be mistyped, or the page may have moved.",
+  "notFound.home": "Go to the home page",
   "nav.skipToContent": "Skip to content",
   "nav.howItWorks": "How it works",
   "nav.checks": "Checks",
@@ -201,8 +205,7 @@ export const en = {
   "scanError.message.rateLimited": "Too many audits in a short time. Try again in a minute.",
   "scanError.message.navigationTimeout": "The page took too long to respond.",
   "scanError.message.navigationFailed": "We couldn't reach the page.",
-  "scanError.message.httpError":
-    "The page returned an error, so we couldn't audit it. Check the address and try again.",
+  "scanError.message.httpError": "The page returned an error, so we couldn't audit it.",
   "scanError.message.auditFailed": "We couldn't finish the audit on this page.",
   "scanError.message.browserUnavailable":
     "We couldn't start the browser used to open the page. Try again.",
@@ -323,12 +326,11 @@ export const en = {
     "Partial: focus moved into an iframe or a shadow root, which this version can't see into, so {leftover}.",
   "focusPath.stoppedByTrap": "Partial: focus was trapped at stop {stops}, so {leftover}.",
 
-  "scope.stillMissing":
-    "The mobile viewport and reduced motion are still not checked here, so this is not a full audit.",
-  "scope.focusPathPending": "Keyboard not checked yet",
+  "scope.stillMissing": "This is not a full audit.",
+  "scope.focusPathPending": "Keyboard not checked yet, so it isn't in the count",
   "scope.currentTabKicker": "This tab",
   "scope.skippedNote":
-    "The focus path was not checked, so nothing here covers keyboard use. {why} {rest}",
+    "The focus path was not checked, so nothing here covers keyboard use. {rest}",
   "scope.partialBadge": "Keyboard check did not start at the first control",
   "scope.partialNote":
     "The focus path could not be taken back to the first control, so these {stops} stops start somewhere inside the page rather than at the beginning of the tab order. {rest}",
@@ -365,7 +367,8 @@ export const en = {
   "standing.gaps": "Minor gaps",
   "standing.gapsNote": "Nothing serious was found automatically. What's left is small.",
   "standing.clean": "No rule failed",
-  "standing.cleanNote": "A tool can't see everything, so the items below still need a person.",
+  "standing.cleanNote":
+    "A tool can't see everything. Try the page with a keyboard and a screen reader too.",
   "standing.kicker": "Where this page stands",
   "standing.pending": "Still checking",
   "standing.pendingNote":
@@ -1143,7 +1146,6 @@ export const en = {
   "panel.count.manualReview": "manual review",
   "panel.toFix": { one: "{count} to fix", other: "{count} to fix" },
   "panel.toCheck": { one: "{count} to check by hand", other: "{count} to check by hand" },
-  "panel.keyboardNotCounted": "Keyboard not included yet",
   "panel.notOnScreen": {
     one: "1 finding to fix has no mark on screen right now. Open it from the list to find it.",
     other:
@@ -1252,11 +1254,10 @@ export const en = {
   "panel.aboutAudit": "About this audit",
 
   "panel.idleTitle": "Nothing audited yet",
+  "panel.auditThisTab": "Audit this tab",
   "panel.idleBody":
-    "Click the AccessCheck icon in the toolbar to audit the page you're on. Once the report is ready, you can also check the keyboard, which uses Chrome's debugger. Nothing leaves your browser.",
-  "panel.unsupportedKicker": "Not supported here",
+    "Audit the page in the tab you're on. Once the report is ready, you can also check the keyboard, which uses Chrome's debugger. Nothing leaves your browser.",
   "panel.unsupportedTitle": "This page cannot be audited",
-  "panel.errorKicker": "Audit failed",
   "panel.errorTitle": "The audit could not finish",
   "panel.tryAgain": "Try again",
 

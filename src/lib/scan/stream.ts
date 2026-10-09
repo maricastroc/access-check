@@ -45,7 +45,8 @@ const MESSAGE_KEY: Record<ScanErrorCode, MessageKey> = {
   internal: "scanError.message.internal",
 };
 
-export function scanErrorHint(code: ScanErrorCode, t: Translate): string {
+export function scanErrorHint(code: ScanErrorCode, t: Translate, message?: string): string {
+  if (message && message !== fallbackMessage(code, t)) return "";
   return t(HINT_KEY[code]);
 }
 
