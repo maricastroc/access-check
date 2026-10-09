@@ -42,7 +42,7 @@
 A tool that measures contrast shouldn't have questionable contrast of its own, so the landing page is audited with the same engine on every change.
 
 <p align="center">
-  <img width="3118" height="1950" alt="AccessCheck's own capture of its landing page during a self-audit" src="https://github.com/user-attachments/assets/a7fd85e0-e1e7-41fc-a092-409784c087b6" width="800" />
+  <img width="3118" height="1950" alt="AccessCheck's own capture of its landing page during a self-audit" src="https://github.com/user-attachments/assets/435bc7cf-8a52-46b1-958e-060a483b8e9e" width="800" />
 
 </p>
 
