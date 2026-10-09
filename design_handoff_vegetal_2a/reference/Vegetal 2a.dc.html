@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Spline+Sans+Mono:wght@300..700&display=swap">
+<style>html,body{margin:0;background:#DAD8D3}</style>
+</helmet>
+<div style="--bg:#F1F2EE;--surface:#F9F9F6;--band:#EAECE7;--code:#E8EAE5;--booth:#EAECE7;--booth-pattern:none;--booth-pattern-size:auto;--case-bg:#F1F2EE;--top-bg:#F1F2EE;--top-border:1px solid #DFE1DB;--ink:#202428;--ink2:#474D53;--body:#474D53;--muted:#5F656B;--disabled:#A3A7A2;--hair:#DFE1DB;--border:#C5C8C1;--rule:#878B84;--halo:rgba(249,249,246,0.94);--crit:#B0442A;--crit-t:#A13C24;--ser:#9C5A1E;--ser-t:#8A4E17;--mod:#7A6B1C;--mod-t:#685A14;--ver:#3A6E4A;--rev:#625590;--rev-t:#574B83;--path:#2B5F8C;--steel:#3D5468;--on-sev:#FFFFFF;--on-path:#FFFFFF;--accent:#B0442A;--pat-critical:repeating-linear-gradient(45deg,#B0442A 0 1px,transparent 1px 4px);--pat-serious:repeating-linear-gradient(45deg,#9C5A1E 0 1px,transparent 1px 5.5px);--pat-moderate:repeating-linear-gradient(45deg,#7A6B1C 0 1px,transparent 1px 7px);--pat-review:repeating-linear-gradient(45deg,#625590 0 1px,transparent 1px 6px);--pat-none:repeating-linear-gradient(45deg,#474D53 0 1px,transparent 1px 7px);--gauge-gap-serious:transparent;--lvl-fail:transparent;--lvl-fail-fg:#8A4E17;--lvl-fail-border:1px solid #9C5A1E;--f-ui:'Archivo',ui-sans-serif,sans-serif;--f-display:'Archivo',sans-serif;--fs-display:110%;--w-display:300;--s-display:32px;--t-display:-0.015em;--f-brand:'Archivo',sans-serif;--fs-brand:106%;--w-brand:560;--t-brand:-0.01em;--f-mono:'Spline Sans Mono',ui-monospace,monospace;--fs-tag:100%;--f-tag:'Spline Sans Mono',monospace;--w-tag:500;--f-num:'Spline Sans Mono',monospace;--fs-num:100%;--w-num:300;--s-ratio:30px;--t-ratio:-0.04em;--w-strong:560;--w-mono:500;--w-btn:500;--f-count:'Archivo',sans-serif;--fs-count:106%;--w-count:450;--f-title:'Archivo',sans-serif;--fs-title:104%;--w-title:480;--s-title:18.5px;--t-title:-0.012em;--kick-s:12.5px;--kick-w:560;--kick-tt:none;--kick-t:0.005em;--kick-fs:100%;--legend-s:12.5px;--legend-tt:none;--legend-t:0;--legend-fs:100%;--st-s:12.5px;--st-tt:none;--st-t:0.005em;--st-fs:100%;--r-btn:0;--r-tag:0;--r-seg:0;--btn-border:#C5C8C1;--btn-bg:transparent;--btn-hover:rgba(32,36,40,0.04);--btnp-bg:transparent;--btnp-fg:#202428;--btnp-border:#202428;--btnp-bw:1px;--btnp-hover:rgba(32,36,40,0.05);--seg-border:0;--seg-bg:transparent;--seg-ind-bg:#202428;--seg-sel-fg:#202428;--seg-w:450;--row-open:transparent;--row-hover:rgba(32,36,40,0.025);--row-open-line:#DFE1DB;--thread-w:1px;--thread-c:rgba(32,36,40,0.38);--chip-border:1px solid #DFE1DB;--chip-bg:transparent;--cap-outline:1px solid rgba(32,36,40,0.2);--cap-shadow:none;--ins-bg:rgba(58,110,74,0.07);--focus:#202428;--ring:0 0 0 2px #F1F2EE,0 0 0 3px #202428;--tag-halo:0 0 0 2px rgba(249,249,246,0.94);--glyph-change:#202428;--glyph-bg:#F1F2EE;--conn:#202428;--lh-display:1.04;--s-count:20px;--reg:block;--tag-quiet:#878B84;width:1440px;height:1000px">
+  <dc-import name="AccessCheck Results" direction="v2a" slow="{{ slow }}" reduced="{{ reduced }}" hint-size="1440px,1000px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1000},&quot;slow&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;reduced&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() { return { slow: !!this.props.slow, reduced: !!this.props.reduced }; }
+}
+</script>
+</body>
+</html>

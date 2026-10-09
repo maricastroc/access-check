@@ -1,0 +1,125 @@
+/*
+  AccessCheck · Vegetal 2a ("Fio")
+  Trechos para src/app/globals.css. Substitua os blocos equivalentes; o resto do arquivo fica como está.
+  Toda cor sólida aqui precisa existir também em src/lib/palette.ts com o mesmo valor (palette.test.ts compara os dois).
+*/
+
+/* 1. @theme: substitui o bloco inteiro */
+@theme {
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-cond: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-spline-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --color-canvas: #f1f2ee;
+  --color-surface: #f9f9f6;
+  --color-band: #eaece7;
+  --color-code: #e8eae5;
+  --color-booth: #eaece7;
+
+  --color-ink: #202428;
+  --color-ink-2: #474d53;
+  --color-body: #474d53;
+  --color-muted: #5f656b;
+  --color-disabled: #a3a7a2;
+
+  --color-hairline: #dfe1db;
+  --color-border: #c5c8c1;
+  --color-rule: #878b84;
+  --color-halo: rgba(249, 249, 246, 0.94);
+
+  --color-critical: #b0442a;
+  --color-critical-text: #a13c24;
+  --color-critical-hatch: #e7cbc2;
+  --color-serious: #9c5a1e;
+  --color-serious-text: #8a4e17;
+  --color-serious-hatch: #e6d3bf;
+  --color-moderate: #7a6b1c;
+  --color-moderate-text: #685a14;
+  --color-moderate-hatch: #e1dcbd;
+  --color-verified: #3a6e4a;
+  --color-review: #625590;
+  --color-review-text: #574b83;
+  --color-path: #2b5f8c;
+  --color-steel: #3d5468;
+
+  --radius-none: 0px;
+  --radius-sm: 2px;
+
+  --shadow-selected: 0 2px 12px color-mix(in srgb, var(--color-ink) 10%, transparent);
+  --shadow-marker: 0 4px 12px color-mix(in srgb, var(--color-ink) 28%, transparent);
+  --shadow-board: 0 14px 40px color-mix(in srgb, var(--color-ink) 14%, transparent);
+
+  --ease-vegetal: cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+/* 2. Hachuras de duas cores (status-pill, report/progress-page, ruler, landing): traço de 1px a 45°, fundo claro */
+.hatch-serious {
+  background: repeating-linear-gradient(45deg, var(--color-serious) 0 1px, var(--color-serious-hatch) 1px 4px);
+}
+.hatch-moderate {
+  background: repeating-linear-gradient(45deg, var(--color-moderate) 0 1px, var(--color-moderate-hatch) 1px 4px);
+}
+.hatch-critical {
+  background: repeating-linear-gradient(45deg, var(--color-critical) 0 1px, var(--color-critical-hatch) 1px 3.5px);
+}
+
+/* 3. Hachura de severidade (.ac-hatch): 45°, fio de 1px; o passo é o que diferencia as severidades */
+[data-sev="critical"] { --sev: var(--color-critical); --hatch-w: 1px; --hatch-step: 4px; }
+[data-sev="serious"] { --sev: var(--color-serious); --hatch-w: 1px; --hatch-step: 5.5px; }
+[data-sev="moderate"] { --sev: var(--color-moderate); --hatch-w: 1px; --hatch-step: 7px; }
+[data-sev="minor"],
+[data-sev="none"] { --sev: var(--color-ink-2); --hatch-w: 1px; --hatch-step: 7px; }
+[data-sev="review"] { --sev: var(--color-review); --hatch-w: 1px; --hatch-step: 6px; }
+
+.ac-hatch {
+  background-image: repeating-linear-gradient(45deg, var(--sev) 0 var(--hatch-w), transparent var(--hatch-w) var(--hatch-step));
+}
+
+/* 4. Foco: anel simples de 2px no lugar dos cantos de mira (.ac-instrument ...::after sai). Manter o bloco forced-colors. */
+:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+}
+.ac-instrument :where(a, button, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+}
+.ac-instrument .ac-focus-inset:focus-visible {
+  outline-offset: -3px;
+}
+.ac-instrument :where(input, select, textarea):focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px var(--color-halo);
+}
+.ac-instrument label:has(input:focus-visible) {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+}
+
+/* 5. Movimento: uma curva só, 300ms como base, deslocamento máximo de 2px */
+.ac-draw {
+  stroke-dasharray: var(--len, 2000);
+  stroke-dashoffset: var(--len, 2000);
+  animation: ac-draw 360ms var(--ease-vegetal) forwards;
+}
+.ac-appear { animation: ac-appear 180ms ease-out both; }
+.ac-acquire { animation: ac-appear 140ms ease-out both; }
+.ac-travel {
+  transition:
+    left 300ms var(--ease-vegetal),
+    top 300ms var(--ease-vegetal),
+    width 300ms var(--ease-vegetal),
+    height 300ms var(--ease-vegetal);
+}
+.ac-rise { animation: ac-rise 300ms var(--ease-vegetal) both; }
+.ac-extend-x { transform-origin: center; animation: ac-extend-x 220ms var(--ease-vegetal) both; }
+.ac-extend-y { transform-origin: center; animation: ac-extend-y 220ms var(--ease-vegetal) both; }
+
+@keyframes ac-draw { to { stroke-dashoffset: 0; } }
+@keyframes ac-appear { from { opacity: 0; } }
+@keyframes ac-rise { from { opacity: 0; transform: translateY(2px); } }
+@keyframes ac-extend-x { from { transform: scaleX(0); } }
+@keyframes ac-extend-y { from { transform: scaleY(0); } }
+
+/* O bloco @media (prefers-reduced-motion: reduce) existente continua valendo e cobre tudo acima. */

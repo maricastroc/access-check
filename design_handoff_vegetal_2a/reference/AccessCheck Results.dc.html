@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@200..800&family=Atkinson+Hyperlegible+Next:wght@200..800&family=Archivo:wdth,wght@62..125,100..900&family=Martian+Mono:wdth,wght@75..112.5,100..800&family=Geologica:wght,CRSV,SHRP@100..900,0..1,0..100&family=Azeret+Mono:wght@300..700&family=Schibsted+Grotesk:ital,wght@0,400..900;1,400..900&family=Fragment+Mono:ital@0;1&family=Cormorant+Garamond:wght@300..700&family=Lora:ital,wght@0,400..700;1,400..700&family=Spline+Sans+Mono:wght@300..700&family=Red+Hat+Display:wght@300..900&family=Red+Hat+Text:wght@300..700&family=Red+Hat+Mono:wght@300..700&display=swap">
+<style>
+[data-ac] *,[data-ac] *::before,[data-ac] *::after{box-sizing:border-box}
+[data-ac] button{font:inherit;color:inherit;letter-spacing:inherit}
+[data-ac] :focus{outline:none}
+[data-ac] :focus-visible{outline:var(--focus-w,2px) solid var(--focus);outline-offset:var(--focus-off,2px)}
+[data-ac] label:has(input:focus-visible){outline:2px solid var(--focus);outline-offset:2px}
+[data-ac] ::selection{background:color-mix(in srgb,var(--focus) 22%,transparent)}
+[data-ac] [data-scroll]{scrollbar-width:thin;scrollbar-color:transparent transparent}
+[data-ac] [data-scroll]:hover{scrollbar-color:color-mix(in srgb,var(--ink) 22%,transparent) transparent}
+[data-ac][data-dir="atual"] :where(a,button,[tabindex]){position:relative}
+[data-ac][data-dir="atual"] :is(a,button,[tabindex]):focus-visible{outline:none}
+[data-ac][data-dir="atual"] :is(a,button,[tabindex]):focus-visible::after{content:"";position:absolute;inset:-6px;pointer-events:none;z-index:5;--arm:35%;--bar:3px;background:linear-gradient(#151f47,#151f47) top left/var(--arm) var(--bar),linear-gradient(#151f47,#151f47) top left/var(--bar) var(--arm),linear-gradient(#151f47,#151f47) top right/var(--arm) var(--bar),linear-gradient(#151f47,#151f47) top right/var(--bar) var(--arm),linear-gradient(#151f47,#151f47) bottom left/var(--arm) var(--bar),linear-gradient(#151f47,#151f47) bottom left/var(--bar) var(--arm),linear-gradient(#151f47,#151f47) bottom right/var(--arm) var(--bar),linear-gradient(#151f47,#151f47) bottom right/var(--bar) var(--arm);background-repeat:no-repeat;filter:drop-shadow(0 0 1px rgba(255,255,255,.94)) drop-shadow(0 0 1px rgba(255,255,255,.94))}
+[data-ac][data-reduced="true"] *,[data-ac][data-reduced="true"] *::after{transition:none!important}
+@media (prefers-reduced-motion:reduce){[data-ac] *,[data-ac] *::before,[data-ac] *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style>
+</helmet>
+<div data-ac="1" data-dir="{{ dir }}" data-reduced="{{ reducedAttr }}" ref="{{ rootRef }}" style="position:relative;width:1440px;height:1000px;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-variation-settings:var(--fvs-ui);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;text-align:left">
+<div style="{{ moVar }}">
+
+<header data-topbar="1" style="position:absolute;left:0;top:0;right:0;z-index:30;display:flex;height:56px;align-items:center;gap:16px;padding:0 20px;background:var(--top-bg);border-bottom:var(--top-border)">
+  <div style="display:flex;min-width:0;align-items:baseline;gap:16px">
+    <a href="#" onClick="{{ noop }}" style="display:flex;flex-shrink:0;align-items:baseline;gap:10px;color:var(--ink);text-decoration:none">
+      <svg width="21" height="23" viewBox="0 0 43 47.31" aria-hidden="true" style="align-self:center;fill:none;stroke:var(--brand,var(--ink));stroke-linecap:round"><path d="M35.52,11.91c-6.09-7.85-17.38-9.27-25.23-3.19S1.02,26.1,7.11,33.95c6.09,7.85,17.38,9.27,25.23,3.19,1.19-.92,2.26-2,3.19-3.19" style="stroke-width:6.67px;stroke-miterlimit:2.32"></path><path d="M14.99,32.21l6.38-18.56,6.38,18.56" style="stroke-width:5.8px;stroke-linejoin:round"></path></svg>
+      <span style="font-family:var(--f-brand);font-stretch:var(--fs-brand);font-variation-settings:var(--fvs-brand);font-size:var(--s-brand,18px);font-weight:var(--w-brand);letter-spacing:var(--t-brand)">AccessCheck</span>
+    </a>
+    <div style="display:flex;min-width:0;align-items:baseline;gap:12px;font-size:13px;color:var(--muted)">
+      <span style="font-family:var(--f-mono);font-stretch:var(--fs-tag);font-size:14px;font-weight:var(--w-mono);color:var(--ink);white-space:nowrap">https://northwind.example/</span>
+      <span aria-hidden="true" style="color:var(--border)">·</span>
+      <time datetime="2026-09-20T12:00:00Z" style="white-space:nowrap">Auditada em 20 de set. de 2026, 09:00</time>
+    </div>
+  </div>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+    <button type="button" aria-label="Auditar esta página de novo" onClick="{{ noop }}" style="display:inline-flex;height:36px;align-items:center;justify-content:center;gap:8px;padding:0 16px;font-family:var(--f-btn,var(--f-ui));font-size:var(--s-btn,13.5px);font-weight:var(--w-btn);border:1px solid var(--btn-border);background:var(--btn-bg);color:var(--ink);border-radius:var(--r-btn);cursor:pointer;transition:background-color calc(140ms * var(--mo,1)) ease" style-hover="background:var(--btn-hover)">
+      <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" style="display:block;fill:none;stroke:currentColor;stroke-width:2.25px;stroke-linecap:round;stroke-linejoin:round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path></svg>
+      <span>Auditar de novo</span>
+    </button>
+    <button type="button" onClick="{{ noop }}" style="display:inline-flex;height:36px;align-items:center;justify-content:center;padding:0 16px;font-family:var(--f-btn,var(--f-ui));font-size:var(--s-btn,13.5px);font-weight:var(--w-btn);border:1px solid var(--btn-border);background:var(--btn-bg);color:var(--ink);border-radius:var(--r-btn);cursor:pointer;transition:background-color calc(140ms * var(--mo,1)) ease" style-hover="background:var(--btn-hover)">Exportar Markdown</button>
+    <button type="button" onClick="{{ noop }}" style="display:inline-flex;height:36px;align-items:center;justify-content:center;padding:0 16px;font-family:var(--f-btn,var(--f-ui));font-size:var(--s-btn,13.5px);font-weight:var(--w-btn);border:var(--btnp-bw,1px) solid var(--btnp-border);background:var(--btnp-bg);color:var(--btnp-fg);border-radius:var(--r-btn);cursor:pointer;transition:background-color calc(140ms * var(--mo,1)) ease" style-hover="background:var(--btnp-hover)">Exportar PDF</button>
+  </div>
+</header>
+
+<main style="position:absolute;left:0;top:56px;right:0;bottom:0;display:grid;grid-template-columns:minmax(0,1fr) 432px">
+
+  <section aria-labelledby="{{ ids.legend }}" style="position:relative;display:flex;min-width:0;height:944px;flex-direction:column;background:var(--booth);background-image:var(--booth-pattern);background-size:var(--booth-pattern-size,auto);background-position:40px 68px">
+    <div style="display:flex;min-height:48px;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 16px;padding:8px 20px 0">
+      <h2 id="{{ ids.legend }}" style="margin:0;font-family:var(--legend-f,var(--f-ui));font-stretch:var(--legend-fs);font-size:var(--legend-s,13.5px);font-weight:var(--w-strong);letter-spacing:var(--legend-t);text-transform:var(--legend-tt);color:var(--ink2)">Captura · 1200 × 800</h2>
+      <div>
+        <fieldset style="display:flex;align-items:center;gap:10px;margin:0;padding:0;border:0;min-width:0">
+          <legend style="float:left;padding:0;font-size:13.5px;color:var(--ink2)">Marcas</legend>
+          <span ref="{{ segRef }}" style="position:relative;display:flex;padding:2px;border:var(--seg-border);background:var(--seg-bg);border-radius:var(--r-seg)">
+            <span aria-hidden="true" style="{{ segInd }}"></span>
+            <sc-for list="{{ layers }}" as="o" hint-placeholder-count="3">
+              <label data-seg="{{ o.id }}" style="{{ o.style }}">
+                <input type="radio" name="{{ radioName }}" value="{{ o.id }}" checked="{{ o.checked }}" onChange="{{ o.onChange }}" style="position:absolute;width:1px;height:1px;margin:0;opacity:0;pointer-events:none">
+                {{ o.label }}
+              </label>
+            </sc-for>
+          </span>
+        </fieldset>
+      </div>
+    </div>
+
+    <div data-scroll="1" ref="{{ capRef }}" onScroll="{{ onScroll }}" style="min-height:0;flex:1;overflow:auto;padding:20px 72px 32px 40px">
+      <figure data-fig="1" style="position:relative;width:896px;height:597px;margin:0">
+        <div aria-hidden="true" style="display:var(--rulers,none);position:absolute;left:0;right:0;top:calc(100% + 6px);height:11px;border-top:1px solid var(--rule);background:linear-gradient(90deg,var(--rule) 1px,transparent 1px) 0 0/74.6667px 11px repeat-x,linear-gradient(90deg,var(--border) 1px,transparent 1px) 0 0/18.6667px 4px repeat-x"><span style="position:absolute;left:3px;top:2px;font-family:var(--f-mono);font-size:8.5px;line-height:9px;color:var(--muted);font-variant-numeric:tabular-nums">0</span><span style="position:absolute;left:152.33339999999998px;top:2px;font-family:var(--f-mono);font-size:8.5px;line-height:9px;color:var(--muted);font-variant-numeric:tabular-nums">200</span><span style="position:absolute;left:301.66679999999997px;top:2px;font-family:var(--f-mono);font-size:8.5px;line-height:9px;color:var(--muted);font-variant-numeric:tabular-nums">400</span><span style="position:absolute;left:451.0002px;top:2px;font-family:var(--f-mono);font-size:8.5px;line-height:9px;color:var(--muted);font-variant-numeric:tabular-nums">600</span><span style="position:absolute;left:600.3335999999999px;top:2px;font-family:var(--f-mono);font-size:8.5px;line-height:9px;color:var(--muted);font-variant-numeric:tabular-nums">800</span><span style="position:absolute;left:749.6669999999999px;top:2px;font-family:var(--f-mono);font-size:8.5px;line-height:9px;color:var(--muted);font-variant-numeric:tabular-nums">1000</span><span style="{{ proj.top }}"></span></div>
+        <div aria-hidden="true" style="display:var(--rulers,none);position:absolute;top:0;bottom:0;left:calc(100% + 6px);width:11px;border-left:1px solid var(--rule);background:linear-gradient(180deg,var(--rule) 1px,transparent 1px) 0 0/11px 74.6667px repeat-y,linear-gradient(180deg,var(--border) 1px,transparent 1px) 0 0/4px 18.6667px repeat-y"><span style="{{ proj.left }}"></span></div>
+          <span aria-hidden="true" style="display:var(--reg,none);position:absolute;left:-20px;top:0;width:12px;height:1px;background:var(--rule)"></span>
+          <span aria-hidden="true" style="display:var(--reg,none);position:absolute;left:0;top:-20px;width:1px;height:12px;background:var(--rule)"></span>
+          <span aria-hidden="true" style="display:var(--reg,none);position:absolute;left:calc(100% + 8px);top:0;width:12px;height:1px;background:var(--rule)"></span>
+          <span aria-hidden="true" style="display:var(--reg,none);position:absolute;left:calc(100% - 1px);top:-20px;width:1px;height:12px;background:var(--rule)"></span>
+          <span aria-hidden="true" style="display:var(--reg,none);position:absolute;left:-20px;top:calc(100% - 1px);width:12px;height:1px;background:var(--rule)"></span>
+          <span aria-hidden="true" style="display:var(--reg,none);position:absolute;left:0;top:calc(100% + 8px);width:1px;height:12px;background:var(--rule)"></span>
+          <span aria-hidden="true" style="display:var(--reg,none);position:absolute;left:calc(100% + 8px);top:calc(100% - 1px);width:12px;height:1px;background:var(--rule)"></span>
+          <span aria-hidden="true" style="display:var(--reg,none);position:absolute;left:calc(100% - 1px);top:calc(100% + 8px);width:1px;height:12px;background:var(--rule)"></span>
+        <div role="img" aria-label="Captura de tela de northwind.example" style="position:absolute;inset:0;overflow:hidden;outline:var(--cap-outline);box-shadow:var(--cap-shadow);background:#fffdf7">
+          <div data-np="1" aria-hidden="true" style="position:absolute;left:0;top:0;width:1200px;height:800px;overflow:hidden;transform:scale(0.746667);transform-origin:0 0;pointer-events:none;background:#fffdf7;color:#1d1b16;font:16px/1.55 ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;font-variation-settings:normal;letter-spacing:0;font-stretch:100%">
+            <div style="display:flex;align-items:center;gap:20px;padding:12px 28px;background:#14342b;color:#f4efe2">
+              <strong style="font-size:18px;letter-spacing:-.01em">Northwind Books</strong>
+              <div style="display:flex;gap:18px;margin-left:8px">
+                <span data-t="nav1" style="font-size:14.5px">Catalogue</span>
+                <span data-t="nav2" style="font-size:14.5px">Offers</span>
+                <span data-t="nav3" style="font-size:14.5px">Events</span>
+              </div>
+              <span style="margin-left:auto;display:flex;align-items:center;gap:10px">
+                <span data-t="search" style="display:block;width:170px;padding:7px 10px;font-size:14px;line-height:18px;border:1px solid #2f5b4c;background:#0f281f;color:#7f9a8e">Search titles</span>
+                <span data-t="cart" style="display:inline-flex;width:34px;height:34px;align-items:center;justify-content:center;border:1px solid #2f5b4c;background:#0f281f"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M6 8h12l-1 12H7L6 8zm3 0a3 3 0 0 1 6 0" style="fill:none;stroke:#f4efe2;stroke-width:2px"></path></svg></span>
+              </span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 300px;gap:28px;align-items:center;padding:26px 28px 22px;background:linear-gradient(180deg,#f8f1de,#fffdf7);border-bottom:1px solid #e8dfc7">
+              <div data-t="hero">
+                <div data-t="h1" style="max-width:15ch;margin:0 0 10px;font-size:31px;line-height:1.08;font-weight:700;letter-spacing:-.02em">Books chosen by people who read them.</div>
+                <div data-t="heroP" style="max-width:42ch;margin:0 0 18px;font-size:16.5px;color:#4a463c">Every title on this shelf was picked and written up by a bookseller who finished it first.</div>
+                <span style="display:flex;align-items:center;gap:10px">
+                  <span data-t="cta1" style="padding:10px 18px;font-size:15px;border:1px solid #14342b;background:#14342b;color:#f4efe2">Browse staff picks</span>
+                  <span data-t="cta2" style="padding:10px 18px;font-size:15px;border:1px solid #14342b;color:#14342b">Gift a membership</span>
+                </span>
+              </div>
+              <div>
+                <img src="assets/northwind/shelf.svg" alt="" style="display:block;width:300px;height:170px;object-fit:cover;border:1px solid #e8dfc7">
+                <div style="display:flex;justify-content:center;gap:6px;margin-top:10px">
+                  <span data-t="dot1" style="display:block;width:10px;height:10px;border:1px solid #14342b;border-radius:50%;background:#14342b"></span>
+                  <span data-t="dot2" style="display:block;width:10px;height:10px;border:1px solid #14342b;border-radius:50%"></span>
+                  <span data-t="dot3" style="display:block;width:10px;height:10px;border:1px solid #14342b;border-radius:50%"></span>
+                </div>
+              </div>
+            </div>
+            <div style="padding:22px 28px 8px">
+              <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px">
+                <span style="display:block">
+                  <span data-t="h3" style="display:block;margin:0 0 2px;font-size:20px;font-weight:700;letter-spacing:-.01em">This month on the table</span>
+                  <span data-t="sub" style="display:block;color:#a09a8a">Twelve titles, restocked weekly.</span>
+                </span>
+                <span data-t="sort" style="display:inline-flex;align-items:center;gap:26px;padding:7px 10px;font-size:14px;line-height:18px;border:1px solid #cfc3a3;background:#fff;color:#1d1b16">Most loved<span style="font-size:10px">▼</span></span>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:16px 0 4px">
+                <div style="padding:14px;border:1px solid #e8dfc7;background:#fff">
+                  <span style="position:relative;display:block">
+                    <img data-t="cover1" src="assets/northwind/the-salt-path.svg" alt="" style="display:block;width:100%;height:146px;object-fit:cover;object-position:top;border:1px solid #efe7d3">
+                    <span data-t="save1" style="position:absolute;top:8px;right:8px;display:inline-flex;width:32px;height:32px;align-items:center;justify-content:center;background:#fffdf7;border:1px solid #e8dfc7"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" style="fill:none;stroke:#14342b;stroke-width:2px"></path></svg></span>
+                  </span>
+                  <span style="display:block;margin:12px 0 2px;font-size:15px;line-height:1.3;font-weight:700">The Salt Path</span>
+                  <span data-t="by1" style="display:block;margin:0 0 8px;font-size:13px;color:#a09a8a">Raynor Winn</span>
+                  <span style="display:block;margin:0 0 4px;font-size:13px;letter-spacing:1px;color:#c4622d">★★★★☆</span>
+                  <span style="font-size:15px;font-weight:600">£9.99</span>
+                  <span data-t="buy1" style="display:block;margin-top:10px;padding:8px;font-size:14px;text-align:center;border:1px solid #14342b;background:#14342b;color:#f4efe2">Add to basket</span>
+                </div>
+                <div style="padding:14px;border:1px solid #e8dfc7;background:#fff">
+                  <span style="position:relative;display:block">
+                    <img data-t="cover2" src="assets/northwind/piranesi.svg" alt="" style="display:block;width:100%;height:146px;object-fit:cover;object-position:top;border:1px solid #efe7d3">
+                    <span data-t="save2" style="position:absolute;top:8px;right:8px;display:inline-flex;width:32px;height:32px;align-items:center;justify-content:center;background:#fffdf7;border:1px solid #e8dfc7"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" style="fill:none;stroke:#14342b;stroke-width:2px"></path></svg></span>
+                  </span>
+                  <span style="display:block;margin:12px 0 2px;font-size:15px;line-height:1.3;font-weight:700">Piranesi</span>
+                  <span data-t="by2" style="display:block;margin:0 0 8px;font-size:13px;color:#a09a8a">Susanna Clarke</span>
+                  <span style="display:block;margin:0 0 4px;font-size:13px;letter-spacing:1px;color:#c4622d">★★★★★</span>
+                  <span style="font-size:15px;font-weight:600">£8.50</span>
+                  <span data-t="buy2" style="display:block;margin-top:10px;padding:8px;font-size:14px;text-align:center;border:1px solid #14342b;background:#14342b;color:#f4efe2">Add to basket</span>
+                </div>
+                <div style="padding:14px;border:1px solid #e8dfc7;background:#fff">
+                  <span style="position:relative;display:block">
+                    <img data-t="cover3" src="assets/northwind/small-things-like-these.svg" alt="" style="display:block;width:100%;height:146px;object-fit:cover;object-position:top;border:1px solid #efe7d3">
+                    <span data-t="save3" style="position:absolute;top:8px;right:8px;display:inline-flex;width:32px;height:32px;align-items:center;justify-content:center;background:#fffdf7;border:1px solid #e8dfc7"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" style="fill:none;stroke:#14342b;stroke-width:2px"></path></svg></span>
+                  </span>
+                  <span style="display:block;margin:12px 0 2px;font-size:15px;line-height:1.3;font-weight:700">Small Things Like These</span>
+                  <span data-t="by3" style="display:block;margin:0 0 8px;font-size:13px;color:#a09a8a">Claire Keegan</span>
+                  <span style="display:block;margin:0 0 4px;font-size:13px;letter-spacing:1px;color:#c4622d">★★★★☆</span>
+                  <span style="font-size:15px;font-weight:600">£7.25</span>
+                  <span data-t="buy3" style="display:block;margin-top:10px;padding:8px;font-size:14px;text-align:center;border:1px solid #14342b;background:#14342b;color:#f4efe2">Add to basket</span>
+                </div>
+              </div>
+              <div style="display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px;margin:26px 0 8px;padding:20px;background:#14342b;color:#f4efe2">
+                <span style="display:block"><span style="display:block;margin:0 0 2px;font-size:17px;font-weight:700">The Thursday letter</span><span style="display:block;font-size:13.5px;color:#8fa79b">One bookseller, one book, every week.</span></span>
+                <span style="margin-left:auto;display:flex;align-items:center;gap:10px"><span style="display:block;font-size:13px">Email</span><span data-t="email" style="display:block;width:230px;padding:9px 11px;font-size:14.5px;line-height:18px;border:1px solid #2f5b4c;background:#0f281f;color:#7f9a8e">you@example.com</span></span>
+                <span data-t="subscribe" style="padding:10px 18px;font-size:15px;border:1px solid #c4622d;background:#c4622d;color:#fffdf7">Subscribe</span>
+              </div>
+            </div>
+          </div>
+          <div aria-hidden="true" style="{{ spot }}"></div>
+        </div>
+
+        <div data-overlay="1" style="position:absolute;inset:0;pointer-events:none">
+          <sc-for list="{{ loci }}" as="l" hint-placeholder-count="0">
+            <span aria-hidden="true" style="{{ l.wrap }}"><sc-for list="{{ l.parts }}" as="p"><span data-p="{{ p.p }}" style="{{ p.style }}">{{ p.text }}</span></sc-for></span>
+          </sc-for>
+          <sc-for list="{{ cur }}" as="l" hint-placeholder-count="0">
+            <span aria-hidden="true" data-locus-cur="1" data-anchor="locus" style="{{ l.wrap }}"><sc-for list="{{ l.parts }}" as="p"><span data-p="{{ p.p }}" style="{{ p.style }}">{{ p.text }}</span></sc-for></span>
+          </sc-for>
+          <svg aria-hidden="true" width="896" height="597" style="position:absolute;inset:0;overflow:visible">
+            <path d="{{ path.whole }}" style="{{ path.wholeStyle }}"></path>
+            <path d="{{ path.segs }}" style="fill:none;stroke:var(--halo);stroke-width:4px"></path>
+            <path d="{{ path.segs }}" style="fill:none;stroke:var(--path);stroke-width:2px"></path>
+            <path d="{{ path.chev }}" style="fill:none;stroke:var(--path);stroke-width:2px;stroke-linecap:round;stroke-linejoin:round"></path>
+          </svg>
+          <div role="{{ marksRole }}" aria-label="{{ marksLabel }}" onKeyDown="{{ onMarksKey }}">
+            <sc-for list="{{ marks }}" as="m" hint-placeholder-count="0">
+              <button type="button" data-markf="{{ m.fi }}" tabindex="{{ m.tabIndex }}" aria-hidden="{{ m.hidden }}" aria-label="{{ m.aria }}" aria-pressed="{{ m.pressed }}" onClick="{{ m.onClick }}" onFocus="{{ m.onFocus }}" onBlur="{{ m.onBlur }}" onMouseEnter="{{ m.onEnter }}" onMouseLeave="{{ m.onLeave }}" style="{{ m.style }}"><span style="{{ m.inner }}">{{ m.text }}</span></button>
+            </sc-for>
+          </div>
+        </div>
+      </figure>
+      <sc-if value="{{ caption.show }}" hint-placeholder-val="{{ false }}">
+        <p role="status" style="max-width:70ch;margin:12px 0 0;font-size:13.5px;line-height:1.5;color:var(--ink)">{{ caption.text }}</p>
+      </sc-if>
+    </div>
+  </section>
+
+  <div data-scroll="1" ref="{{ caseRef }}" onScroll="{{ onScroll }}" style="position:relative;min-width:0;height:944px;overflow:auto;border-left:1px solid var(--hair);background:var(--case-bg);box-shadow:var(--case-shadow,none)">
+
+    <div aria-live="polite" style="padding:32px 24px 16px">
+      <h1 style="display:flex;align-items:center;gap:10px;margin:0;font-family:var(--f-display);font-stretch:var(--fs-display);font-variation-settings:var(--fvs-display);font-size:var(--s-display);font-weight:var(--w-display);letter-spacing:var(--t-display);line-height:var(--lh-display,1.05);color:var(--ink)">
+        <span aria-hidden="true" style="display:block;flex-shrink:0;width:20px;height:20px;border:var(--sm-bw,2px) solid var(--crit);background:var(--pat-critical),var(--bg);border-radius:var(--r-mark,0)"></span>
+        <span><span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">northwind.example: </span>Barreiras críticas</span>
+      </h1>
+      <p style="max-width:46ch;margin:10px 0 0;font-size:15px;line-height:1.5;color:var(--ink2)">Pelo menos uma barreira impede que quem usa tecnologia assistiva consiga passar.</p>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:24px;border-top:var(--sum-rule,0);padding-top:var(--sum-pad,0)">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px">
+          <span style="font-family:var(--f-count,var(--f-ui));font-stretch:var(--fs-count);font-size:var(--s-count,21px);font-weight:var(--w-count,700);letter-spacing:-0.01em;font-variant-numeric:tabular-nums;color:var(--ink)">7 para corrigir</span>
+          <span role="list" aria-label="Índice dos problemas" style="display:flex;flex-wrap:wrap;gap:4px">
+            <sc-for list="{{ fixTags }}" as="t" hint-placeholder-count="7">
+              <span role="listitem" style="display:flex"><button type="button" aria-label="{{ t.aria }}" aria-current="{{ t.current }}" onClick="{{ t.onClick }}" onMouseEnter="{{ t.onEnter }}" onMouseLeave="{{ t.onLeave }}" onFocus="{{ t.onEnter }}" onBlur="{{ t.onLeave }}" style="display:flex;min-width:24px;min-height:24px;align-items:center;justify-content:center;padding:0;border:0;background:transparent;cursor:pointer"><span style="{{ t.style }}">{{ t.n }}</span></button></span>
+            </sc-for>
+          </span>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px">
+          <span style="font-family:var(--f-count,var(--f-ui));font-stretch:var(--fs-count);font-size:16px;font-weight:var(--w-strong);letter-spacing:-0.01em;font-variant-numeric:tabular-nums;color:var(--ink)">1 para conferir à mão</span>
+          <span role="list" aria-label="Índice dos itens para conferir" style="display:flex;flex-wrap:wrap;gap:4px">
+            <sc-for list="{{ checkTags }}" as="t" hint-placeholder-count="1">
+              <span role="listitem" style="display:flex"><button type="button" aria-label="{{ t.aria }}" aria-current="{{ t.current }}" onClick="{{ t.onClick }}" onMouseEnter="{{ t.onEnter }}" onMouseLeave="{{ t.onLeave }}" onFocus="{{ t.onEnter }}" onBlur="{{ t.onLeave }}" style="display:flex;min-width:24px;min-height:24px;align-items:center;justify-content:center;padding:0;border:0;background:transparent;cursor:pointer"><span style="{{ t.style }}">{{ t.n }}</span></button></span>
+            </sc-for>
+          </span>
+        </div>
+      </div>
+      <p style="margin:12px 0 0;font-size:13.5px;color:var(--muted)">2 recomendações · 35 verificações aprovadas</p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;border-top:var(--sum-rule,0);padding-top:var(--sum-pad,0)">
+        <span style="display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border:var(--chip-border);background:var(--chip-bg);border-radius:var(--r-chip,0)"><span aria-hidden="true" style="display:inline-flex;width:16px;height:16px;flex-shrink:0;align-items:center;justify-content:center;font-family:var(--lvl-f,var(--f-ui));font-stretch:var(--kick-fs);font-size:11px;font-weight:600;background:var(--lvl-fail);color:var(--lvl-fail-fg);border:var(--lvl-fail-border,0)">A</span><span style="font-size:12.5px;color:var(--body)">reprova em 1.1.1</span></span>
+        <span style="display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border:var(--chip-border);background:var(--chip-bg);border-radius:var(--r-chip,0)"><span aria-hidden="true" style="display:inline-flex;width:16px;height:16px;flex-shrink:0;align-items:center;justify-content:center;font-family:var(--lvl-f,var(--f-ui));font-stretch:var(--kick-fs);font-size:10px;font-weight:600;background:var(--lvl-fail);color:var(--lvl-fail-fg);border:var(--lvl-fail-border,0)">AA</span><span style="font-size:12.5px;color:var(--body)">reprova em 1.4.3</span></span>
+        <span style="display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border:var(--chip-border);background:var(--chip-bg);border-radius:var(--r-chip,0)"><span aria-hidden="true" style="display:inline-flex;width:16px;height:16px;flex-shrink:0;align-items:center;justify-content:center;font-family:var(--lvl-f,var(--f-ui));font-stretch:var(--kick-fs);font-size:8.5px;font-weight:600;border:1px solid var(--border);color:var(--muted)">AAA</span><span style="font-size:12.5px;color:var(--body)">não avaliado</span></span>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;padding-bottom:24px">
+      <sc-for list="{{ items }}" as="it" hint-placeholder-count="10">
+        <sc-if value="{{ it.isFixHead }}" hint-placeholder-val="{{ false }}">
+          <h2 style="margin:8px 0 0;padding:8px 24px"><span style="font-family:var(--kick-f,var(--f-ui));font-stretch:var(--kick-fs);font-size:var(--kick-s);font-weight:var(--kick-w);text-transform:var(--kick-tt);letter-spacing:var(--kick-t);color:var(--ink2)">{{ it.label }}<span style="margin-left:6px;font-weight:400;font-variant-numeric:tabular-nums;color:var(--muted)">{{ it.count }}</span></span></h2>
+        </sc-if>
+        <sc-if value="{{ it.isToggleHead }}" hint-placeholder-val="{{ false }}">
+          <h2 style="margin:20px 0 0;padding:0"><button type="button" aria-expanded="{{ it.open }}" onClick="{{ it.onToggle }}" style="display:flex;width:100%;align-items:center;gap:6px;padding:8px 24px;border:0;background:transparent;text-align:left;cursor:pointer"><span aria-hidden="true" style="{{ it.chev }}"></span><span style="font-family:var(--kick-f,var(--f-ui));font-stretch:var(--kick-fs);font-size:var(--kick-s);font-weight:var(--kick-w);text-transform:var(--kick-tt);letter-spacing:var(--kick-t);color:var(--ink2)">{{ it.label }}<span style="margin-left:6px;font-weight:400;font-variant-numeric:tabular-nums;color:var(--muted)">{{ it.count }}</span></span></button></h2>
+        </sc-if>
+        <sc-if value="{{ it.isRow }}" hint-placeholder-val="{{ false }}">
+          <div id="{{ it.domId }}" data-row="{{ it.id }}" data-group="{{ it.group }}" style="{{ it.liStyle }}">
+            <h3 style="margin:0">
+              <button type="button" aria-expanded="{{ it.open }}" aria-controls="{{ it.controls }}" onClick="{{ it.onToggle }}" onMouseEnter="{{ it.onEnter }}" onMouseLeave="{{ it.onLeave }}" onFocus="{{ it.onEnter }}" onBlur="{{ it.onLeave }}" style="{{ it.btnStyle }}">
+                <span style="{{ it.tagWrap }}"><span style="{{ it.tagStyle }}">{{ it.n }}</span><sc-if value="{{ it.open }}"><span aria-hidden="true" data-thread="1" style="{{ it.threadStyle }}"></span></sc-if></span>
+                <span style="min-width:0">
+                  <span style="{{ it.titleStyle }}">{{ it.title }}</span>
+                  <sc-if value="{{ it.open }}" hint-placeholder-val="{{ false }}">
+                    <span style="display:block;margin-top:4px;font-size:13.5px;font-weight:var(--w-strong);color:var(--ink2)">{{ it.label }}</span>
+                    <span style="display:block;margin-top:6px;font-size:15px;line-height:1.5;font-weight:400;color:var(--ink2);text-wrap:pretty">{{ it.impact }}</span>
+                  </sc-if>
+                  <sc-if value="{{ it.closed }}" hint-placeholder-val="{{ true }}">
+                    <span style="display:flex;flex-wrap:wrap;align-items:center;gap:0 6px;margin-top:2px;font-size:13.5px;font-weight:400;color:var(--muted)"><span style="font-weight:var(--w-strong);color:var(--ink2)">{{ it.label }}</span><span aria-hidden="true">·</span><span style="{{ it.gapStyle }}">{{ it.gap }}</span><sc-if value="{{ it.extra }}"><span aria-hidden="true">·</span><span>{{ it.extra }}</span></sc-if></span>
+                  </sc-if>
+                </span>
+                <sc-if value="{{ it.showStatus }}" hint-placeholder-val="{{ false }}">
+                  <span style="padding-top:4px"><span style="display:inline-flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap;color:var(--ink2)"><span aria-hidden="true" style="{{ it.sg.outer }}"><span style="{{ it.sg.inner }}"></span><sc-if value="{{ it.sg.check }}"><svg width="18" height="18" viewBox="0 0 18 18" style="position:absolute;left:0;top:0"><path d="M5.4 9.15 L7.95 11.85 L12.9 6.3" style="fill:none;stroke:#fff;stroke-width:2.1px;stroke-linecap:round;stroke-linejoin:round"></path></svg></sc-if></span>{{ it.statusText }}</span></span>
+                </sc-if>
+              </button>
+            </h3>
+            <sc-if value="{{ it.open }}" hint-placeholder-val="{{ false }}">
+              <section id="{{ it.controls }}" data-chain="{{ it.id }}" aria-label="{{ it.chainLabel }}" style="padding:0 24px 20px;overflow:hidden">
+                <ol style="position:relative;margin:0;padding:0;list-style:none">
+                  <sc-for list="{{ it.stations }}" as="s">
+                    <li data-st="1" style="{{ s.liStyle }}">
+                      <sc-if value="{{ s.thread }}"><span aria-hidden="true" data-thread="1" style="{{ s.threadStyle }}"></span></sc-if>
+                      <span data-anchor="{{ s.anchor }}" style="position:absolute;top:0;left:4px;display:flex;width:22px;height:22px;align-items:center;justify-content:center"><span aria-hidden="true" style="{{ s.g.outer }}"><span style="{{ s.g.inner }}"></span><sc-if value="{{ s.g.check }}"><svg width="18" height="18" viewBox="0 0 18 18" style="position:absolute;left:0;top:0"><path d="M5.4 9.15 L7.95 11.85 L12.9 6.3" style="fill:none;stroke:#fff;stroke-width:2.1px;stroke-linecap:round;stroke-linejoin:round"></path></svg></sc-if></span></span>
+                      <h4 style="display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:0 12px;margin:0;font-size:13.5px;line-height:22px">
+                        <span style="font-family:var(--st-f,var(--f-ui));font-stretch:var(--st-fs);font-size:var(--st-s,13.5px);font-weight:var(--w-strong);text-transform:var(--st-tt);letter-spacing:var(--st-t);color:var(--ink2)">{{ s.label }}</span>
+                        <sc-if value="{{ s.meta }}"><span style="font-size:12.5px;font-weight:400;font-style:var(--i-num);color:var(--muted)">{{ s.meta }}</span></sc-if>
+                      </h4>
+                      <div data-st-body="1" style="margin-top:8px">
+                        <sc-for list="{{ s.blocks }}" as="b">
+                          <div style="{{ b.wrap }}">
+                            <sc-if value="{{ b.isQuote }}"><p style="margin:0;font-size:15.5px;line-height:1.375;color:var(--ink);overflow-wrap:anywhere">“{{ b.text }}”</p></sc-if>
+                            <sc-if value="{{ b.isText }}"><p style="{{ b.style }}">{{ b.text }}</p></sc-if>
+                            <sc-if value="{{ b.isOcc }}">
+                              <div role="group" aria-label="Ocorrências" style="display:flex;flex-wrap:wrap;align-items:center;gap:6px">
+                                <sc-for list="{{ b.chips }}" as="c"><button type="button" aria-pressed="{{ c.pressed }}" aria-label="{{ c.aria }}" onClick="{{ c.onClick }}" style="display:flex;min-width:24px;min-height:24px;align-items:center;justify-content:center;padding:0;border:0;background:transparent;cursor:pointer"><span style="{{ c.style }}">{{ c.text }}</span></button></sc-for>
+                              </div>
+                            </sc-if>
+                            <sc-if value="{{ b.isRatio }}">
+                              <p style="display:flex;flex-wrap:wrap;align-items:baseline;gap:0 12px;margin:0"><span style="font-family:var(--f-num);font-stretch:var(--fs-num);font-variation-settings:var(--fvs-num);font-style:var(--i-num);font-size:var(--s-ratio);line-height:1;font-weight:var(--w-num);letter-spacing:var(--t-ratio);font-variant-numeric:tabular-nums;color:var(--ser)">{{ b.value }}</span><span style="font-size:15px;color:var(--ink2)">{{ b.needed }}</span></p>
+                            </sc-if>
+                            <sc-if value="{{ b.isGauge }}">
+                              <div aria-hidden="true" style="position:relative;height:58px">
+                                <span style="position:absolute;left:0;right:0;top:32px;height:1px;background:var(--ink2)"></span>
+                                <sc-for list="{{ b.g.ticks }}" as="k"><span style="{{ k.style }}"></span></sc-for>
+                                <span style="{{ b.g.gap }}"></span>
+                                <sc-if value="{{ b.g.arrows }}"><span style="{{ b.g.dimLine }}"></span><span style="{{ b.g.arrowL }}"></span><span style="{{ b.g.arrowR }}"></span><span style="{{ b.g.dimLabel }}">{{ b.g.dimText }}</span></sc-if>
+                                <span style="{{ b.g.req }}"></span>
+                                <span style="{{ b.g.reqLabel }}">{{ b.g.reqText }}</span>
+                                <span style="{{ b.g.mea }}"></span>
+                                <span style="{{ b.g.meaLabel }}">{{ b.g.meaText }}</span>
+                              </div>
+                            </sc-if>
+                            <sc-if value="{{ b.isSample }}">
+                              <figure style="min-width:0;margin:0">
+                                <div role="img" aria-label="{{ b.aria }}" style="{{ b.box }}"><p style="margin:0;min-width:0;font-family:var(--f-ui);font-size:15px;line-height:1.375;overflow-wrap:anywhere">{{ b.text }}</p></div>
+                                <figcaption style="display:flex;flex-wrap:wrap;align-items:center;gap:2px 8px;margin-top:6px;font-size:13px;color:var(--muted)"><span style="font-weight:var(--w-strong);color:var(--ink2)">{{ b.caption }}</span><sc-if value="{{ b.showRatio }}"><span style="{{ b.ratioStyle }}">{{ b.ratio }}</span></sc-if><span style="display:flex;align-items:center;gap:6px;margin-left:auto;font-family:var(--f-mono);font-stretch:var(--fs-tag)"><span style="{{ b.fgSw }}"></span>{{ b.fg }}<span aria-hidden="true">/</span><span style="{{ b.bgSw }}"></span>{{ b.bg }}</span></figcaption>
+                              </figure>
+                            </sc-if>
+                            <sc-if value="{{ b.isCode }}">
+                              <div style="overflow-x:auto;padding:4px 0;background:var(--code);font-family:var(--f-mono);font-stretch:var(--fs-tag);font-size:13.5px;line-height:24px;border-radius:var(--r-code,0)">
+                                <sc-if value="{{ b.removed }}"><div style="display:flex;gap:8px;padding:0 12px;color:var(--ink2)"><span aria-hidden="true" style="color:var(--crit)">−</span><del style="overflow-wrap:anywhere;text-decoration-color:var(--crit)">{{ b.removed }}</del></div></sc-if>
+                                <sc-for list="{{ b.added }}" as="ln"><div style="display:flex;gap:8px;padding:0 12px;background:var(--ins-bg);color:var(--ink)"><span aria-hidden="true" style="color:var(--ver)">+</span><ins style="text-decoration:none;white-space:pre-wrap;overflow-wrap:anywhere">{{ ln.t }}</ins></div></sc-for>
+                              </div>
+                            </sc-if>
+                            <sc-if value="{{ b.isHeard }}">
+                              <div><p style="margin:0;font-size:13px;color:var(--muted)">{{ b.label }}</p><p style="margin:4px 0 0;font-family:var(--f-mono);font-stretch:var(--fs-tag);font-size:16px;line-height:28px;color:var(--ink);overflow-wrap:anywhere">“<sc-if value="{{ b.name }}"><span style="font-weight:var(--w-mono);color:var(--ver)">{{ b.name }}</span></sc-if><sc-if value="{{ b.noName }}"><span aria-hidden="true" style="{{ b.slot }}"></span><span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">sem nome</span></sc-if>”, {{ b.role }}</p></div>
+                            </sc-if>
+                            <sc-if value="{{ b.isSteps }}">
+                              <p style="margin:0;font-size:13.5px;font-weight:var(--w-strong);color:var(--ink2)">Como conferir</p>
+                              <p style="margin:4px 0 0;font-size:15px;line-height:1.5;color:var(--ink)">{{ b.how }}</p>
+                              <ol style="margin:10px 0 0;padding-left:20px;font-size:14.5px;line-height:1.5;color:var(--ink2)"><sc-for list="{{ b.steps }}" as="x"><li style="margin-top:6px">{{ x.t }}</li></sc-for></ol>
+                            </sc-if>
+                            <sc-if value="{{ b.isVRatio }}">
+                              <p style="display:flex;flex-wrap:wrap;align-items:baseline;gap:0 12px;margin:0"><span style="font-family:var(--f-num);font-stretch:var(--fs-num);font-variation-settings:var(--fvs-num);font-style:var(--i-num);font-size:var(--s-vratio,22px);line-height:1;font-weight:var(--w-vnum,var(--w-num));font-variant-numeric:tabular-nums;color:var(--ver)">{{ b.value }}</span><span style="font-size:15px;color:var(--ink2)">{{ b.passes }}</span></p>
+                              <p style="margin:4px 0 0;font-size:14.5px;line-height:1.5;color:var(--ink2)">{{ b.note }}</p>
+                            </sc-if>
+                            <sc-if value="{{ b.isHow }}">
+                              <button type="button" aria-expanded="{{ b.open }}" onClick="{{ b.onToggle }}" style="display:flex;width:fit-content;align-items:center;gap:6px;padding:0;border:0;background:transparent;font-size:13.5px;font-weight:var(--w-strong);color:var(--ink2);cursor:pointer"><span aria-hidden="true" style="{{ b.chev }}"></span>Como foi testado</button>
+                              <sc-if value="{{ b.open }}"><div data-disc="how" style="overflow:hidden"><p style="margin:0;padding-top:8px;font-size:14px;line-height:1.5;color:var(--ink2)">{{ b.message }}</p><p style="margin:6px 0 0;font-size:13px;line-height:1.5;color:var(--muted)">{{ b.note }}</p></div></sc-if>
+                            </sc-if>
+                          </div>
+                        </sc-for>
+                      </div>
+                    </li>
+                  </sc-for>
+                </ol>
+
+                <div style="margin-top:20px;padding-left:44px">
+                  <button type="button" aria-expanded="{{ it.det.open }}" onClick="{{ it.det.onToggle }}" style="display:flex;width:fit-content;align-items:center;gap:6px;padding:0;border:0;background:transparent;cursor:pointer"><span aria-hidden="true" style="{{ it.det.chev }}"></span><span style="font-size:13.5px;font-weight:var(--w-strong);color:var(--ink2)">Detalhes</span></button>
+                  <sc-if value="{{ it.det.open }}" hint-placeholder-val="{{ false }}">
+                    <div data-disc="details" style="overflow:hidden">
+                      <dl style="display:flex;flex-direction:column;gap:10px;margin:0;padding-top:12px;font-size:13px;line-height:1.5">
+                        <div><dt style="color:var(--muted)">Seletor</dt><dd style="margin:2px 0 0;font-family:var(--f-mono);font-stretch:var(--fs-tag);overflow-wrap:anywhere;color:var(--steel)">{{ it.det.selector }}</dd></div>
+                        <div><dt style="color:var(--muted)">Regra</dt><dd style="margin:2px 0 0;overflow-wrap:anywhere;color:var(--ink2)"><code style="font-family:var(--f-mono);font-stretch:var(--fs-tag);color:var(--steel)">{{ it.det.rule }}</code> · {{ it.det.crit }}</dd></div>
+                        <div><dt style="color:var(--muted)">HTML</dt><dd style="margin:4px 0 0"><pre style="max-height:160px;margin:0;overflow:auto;padding:8px;background:var(--code);font-family:var(--f-mono);font-stretch:var(--fs-tag);font-size:12px;white-space:pre-wrap;word-break:break-all;color:var(--ink)">{{ it.det.html }}</pre></dd></div>
+                        <sc-if value="{{ it.det.measured }}"><div><dt style="color:var(--muted)">Medido</dt><dd style="margin:2px 0 0;color:var(--ink2)">{{ it.det.measured }}</dd></div></sc-if>
+                        <div><dt style="color:var(--muted)">Posição</dt><dd style="margin:2px 0 0;font-variant-numeric:tabular-nums;color:var(--ink2)">{{ it.det.rect }}</dd></div>
+                      </dl>
+                      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px">
+                        <button type="button" aria-label="Copiar seletor" onClick="{{ it.det.copySel }}" style="{{ it.det.selStyle }}" style-hover="border-color:var(--ink)"><span aria-live="polite">{{ it.det.selLabel }}</span></button>
+                        <button type="button" aria-label="Copiar HTML" onClick="{{ it.det.copyHtml }}" style="{{ it.det.htmlStyle }}" style-hover="border-color:var(--ink)"><span aria-live="polite">{{ it.det.htmlLabel }}</span></button>
+                      </div>
+                    </div>
+                  </sc-if>
+                </div>
+
+                <nav aria-label="Navegação entre problemas" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-top:20px;padding-left:44px;font-size:13.5px">
+                  <button type="button" disabled="{{ it.nav.noPrev }}" onClick="{{ it.nav.prev }}" style="{{ it.nav.prevStyle }}"><span aria-hidden="true">←</span>Problema anterior</button>
+                  <button type="button" disabled="{{ it.nav.noNext }}" onClick="{{ it.nav.next }}" style="{{ it.nav.nextStyle }}">Próximo problema<span aria-hidden="true">→</span></button>
+                </nav>
+              </section>
+            </sc-if>
+          </div>
+        </sc-if>
+      </sc-for>
+    </div>
+
+    <section aria-labelledby="{{ ids.focus }}" style="padding:16px 24px 32px">
+      <h2 id="{{ ids.focus }}" style="margin:0;font-family:var(--kick-f,var(--f-ui));font-stretch:var(--kick-fs);font-size:var(--kick-s);font-weight:var(--kick-w);text-transform:var(--kick-tt);letter-spacing:var(--kick-t);color:var(--ink2)">Caminho do foco</h2>
+      <p style="margin:6px 0 0;font-size:14px;line-height:1.5;color:var(--ink2)">O Tab percorreu a página inteira e voltou ao início. Em 2 etapas nada mostra onde o foco está.</p>
+      <div style="margin-top:12px">
+        <p style="margin:0;font-size:13.5px;color:var(--muted)">19 etapas, na ordem em que o Tab as alcança</p>
+        <ol style="display:flex;flex-wrap:wrap;align-items:center;row-gap:10px;margin:10px 0 0;padding:0;list-style:none">
+          <sc-for list="{{ seq }}" as="q" hint-placeholder-count="19">
+            <li style="display:flex;align-items:center"><sc-if value="{{ q.link }}"><span aria-hidden="true" style="display:block;width:10px;height:2px;background:var(--path)"></span></sc-if><button type="button" data-stop="{{ q.n }}" aria-current="{{ q.current }}" aria-label="{{ q.aria }}" onClick="{{ q.onClick }}" style="display:flex;min-width:24px;min-height:24px;align-items:center;justify-content:center;padding:0;border:0;background:transparent;cursor:pointer"><span style="{{ q.wrap }}"><span style="{{ q.style }}">{{ q.n }}</span></span></button></li>
+          </sc-for>
+        </ol>
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:12px">
+          <span style="display:flex;gap:4px">
+            <button type="button" aria-label="Etapa anterior" onClick="{{ stepPrev }}" style="display:flex;width:32px;height:32px;align-items:center;justify-content:center;border:1px solid var(--border);background:var(--btn-bg);font-size:15px;color:var(--ink);border-radius:var(--r-btn);cursor:pointer" style-hover="border-color:var(--ink)"><span aria-hidden="true">←</span></button>
+            <button type="button" aria-label="Próxima etapa" onClick="{{ stepNext }}" style="display:flex;width:32px;height:32px;align-items:center;justify-content:center;border:1px solid var(--border);background:var(--btn-bg);font-size:15px;color:var(--ink);border-radius:var(--r-btn);cursor:pointer" style-hover="border-color:var(--ink)"><span aria-hidden="true">→</span></button>
+          </span>
+          <sc-if value="{{ here.show }}" hint-placeholder-val="{{ false }}">
+            <p aria-live="polite" style="min-width:0;margin:0;font-size:14px;color:var(--ink)"><span style="font-weight:var(--w-strong)">{{ here.pos }}</span><sc-if value="{{ here.label }}"><span style="color:var(--ink2)"> · “{{ here.label }}”</span></sc-if><sc-if value="{{ here.noFocus }}"><span style="color:var(--ser-t)"> · nada mostra o foco</span></sc-if></p>
+          </sc-if>
+        </div>
+        <sc-if value="{{ here.hasLinks }}" hint-placeholder-val="{{ false }}">
+          <p style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 0"><sc-for list="{{ here.links }}" as="lk"><button type="button" onClick="{{ lk.onClick }}" style="padding:0;border:0;background:transparent;font-size:13.5px;font-weight:var(--w-strong);color:var(--ink);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px;cursor:pointer" style-hover="text-decoration-thickness:2px">{{ lk.text }}</button></sc-for></p>
+        </sc-if>
+        <label style="display:flex;width:fit-content;align-items:center;gap:8px;margin-top:12px;font-size:13.5px;color:var(--ink2);cursor:pointer"><input type="checkbox" checked="{{ whole }}" onChange="{{ onWhole }}" style="width:16px;height:16px;margin:0;accent-color:var(--ink)">Mostrar o caminho completo</label>
+      </div>
+    </section>
+  </div>
+</main>
+
+<svg aria-hidden="true" width="1440" height="1000" style="position:absolute;left:0;top:0;z-index:20;pointer-events:none;overflow:hidden;clip-path:inset(56px 0 0 0)">
+  <path d="{{ conn.page }}" style="{{ conn.pageStyle }}"></path>
+  <path d="{{ conn.d }}" style="{{ conn.haloStyle }}"></path>
+  <path data-conn="main" d="{{ conn.d }}" style="{{ conn.style }}"></path>
+  <path d="{{ conn.arrow }}" style="{{ conn.arrowStyle }}"></path>
+  <circle cx="{{ conn.dx }}" cy="{{ conn.dy }}" r="2.5" style="{{ conn.dotStyle }}"></circle>
+</svg>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1000},&quot;direction&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;atual&quot;,&quot;tecnico&quot;,&quot;escura&quot;,&quot;nautica&quot;,&quot;classical&quot;,&quot;v2a&quot;,&quot;v2b&quot;,&quot;v2c&quot;],&quot;default&quot;:&quot;atual&quot;,&quot;tsType&quot;:&quot;'atual'|'tecnico'|'escura'|'nautica'|'classical'|'v2a'|'v2b'|'v2c'&quot;},&quot;slow&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;reduced&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const FW = 896, FH = 597.33;
+const SV = { critical: 'var(--crit)', serious: 'var(--ser)', moderate: 'var(--mod)', review: 'var(--rev)', none: 'var(--ink2)' };
+const SVT = { critical: 'var(--crit-t)', serious: 'var(--ser-t)', moderate: 'var(--mod-t)', review: 'var(--rev-t)', none: 'var(--ink)' };
+const CFG = {
+  atual: { faithful: true, tag: 'fill', fill: ['critical', 'serious', 'moderate'], stop: 'circle', locus: 'corners', seg: 'fill', open: 200, rise: 4, stagger: 0, ease: 'ease-out', travel: 280, tEase: 'cubic-bezier(0.2,0.7,0.2,1)', conn: 'draw', connDur: 260, connW: 2, connHalo: true, connDot: false, thread: false, tagTravel: false },
+  tecnico: { tag: 'balloon', fill: ['critical'], stop: 'square', locus: 'dimension', seg: 'underline', open: 240, rise: 0, stagger: 45, ease: 'cubic-bezier(0.2,0.7,0.2,1)', travel: 260, tEase: 'cubic-bezier(0.2,0.7,0.2,1)', conn: 'draw', connDur: 320, connW: 1, connHalo: true, connDot: true, thread: true, tagTravel: true },
+  escura: { tag: 'slide', fill: ['critical'], stop: 'circle', locus: 'spot', seg: 'pill', open: 280, rise: 0, stagger: 32, ease: 'cubic-bezier(0.25,0.1,0.25,1)', travel: 380, tEase: 'cubic-bezier(0.45,0,0.2,1)', conn: 'fade', connDur: 260, connW: 1, connHalo: false, connDot: false, thread: false, tagTravel: true },
+  nautica: { tag: 'chart', fill: ['critical'], stop: 'circle', locus: 'danger', seg: 'box', open: 260, rise: 3, stagger: 40, ease: 'cubic-bezier(0.33,0,0.15,1)', travel: 320, tEase: 'cubic-bezier(0.33,0,0.15,1)', conn: 'draw', connDur: 380, connW: 1.5, connHalo: true, connDot: true, thread: true, tagTravel: true },
+  classical: { tag: 'tint', fill: [], stop: 'circle', locus: 'photo', seg: 'underline', open: 260, rise: 3, stagger: 50, ease: 'ease-out', travel: 280, tEase: 'cubic-bezier(0.25,0.1,0.25,1)', conn: 'fade', connDur: 220, connW: 1, connHalo: false, connDot: false, thread: false, tagTravel: true },
+  v2a: { family: 'tecnico', tag: 'balloon', fill: ['critical'], stop: 'square', locus: 'dimension', seg: 'underline', sz: { row: 22, open: 28, sum: 22, check: 20, page: 18, quiet: 15, chip: 22, stop: 18, stopNow: 24 }, stroke: 1, dim: { ext: 7, extOp: 0.4, labelBg: false, tint: 0, edge: true }, open: 300, rise: 2, stagger: 40, ease: 'cubic-bezier(0.25,0.1,0.25,1)', travel: 300, tEase: 'cubic-bezier(0.25,0.1,0.25,1)', conn: 'draw', connDur: 360, connW: 1, connOp: 0.7, connHalo: true, connDot: true, thread: true, tagTravel: true },
+  v2b: { family: 'tecnico', tag: 'balloon', fill: ['critical'], stop: 'square', locus: 'dimension', seg: 'underline', sz: { row: 24, open: 30, sum: 24, check: 22, page: 19, quiet: 16, chip: 24, stop: 20, stopNow: 26 }, stroke: 1.25, dim: { ext: 12, extOp: 0.85, labelBg: true, tint: 0.035, edge: true }, tween: true, open: 240, rise: 0, stagger: 45, ease: 'cubic-bezier(0.2,0.7,0.2,1)', travel: 260, tEase: 'cubic-bezier(0.2,0.7,0.2,1)', conn: 'draw', connDur: 300, connW: 1, connHalo: true, connDot: true, thread: true, tagTravel: true },
+  v2c: { family: 'tecnico', tag: 'balloon', fill: ['critical'], stop: 'square', locus: 'dimension', seg: 'underline', sz: { row: 24, open: 30, sum: 24, check: 22, page: 20, quiet: 16, chip: 24, stop: 20, stopNow: 26 }, stroke: 1.5, dim: { ext: 9, extOp: 0.6, labelBg: true, tint: 0.03, edge: true }, rulers: true, open: 320, rise: 2, stagger: 36, ease: 'cubic-bezier(0.16,1,0.3,1)', travel: 340, tEase: 'cubic-bezier(0.16,1,0.3,1)', conn: 'draw', connDur: 340, connW: 1, connHalo: true, connDot: true, thread: true, tagTravel: true },
+};
+const DEF_SZ = { row: 24, open: 30, sum: 24, check: 22, page: 20, quiet: 17, chip: 24, stop: 20, stopNow: 26 };
+const IMP = {
+  contrast: 'Pessoas com baixa visão ou sensibilidade reduzida ao contraste podem não conseguir ler este texto, principalmente em telas de baixa qualidade ou sob luz forte.',
+  alt: 'Quando uma imagem importante não tem alternativa textual, quem usa leitor de tela pode ouvir apenas o nome do arquivo ou não receber nenhuma informação sobre ela.',
+  name: 'Quem usa leitor de tela ouve só o tipo do elemento (“link”, “botão”, “campo”), sem saber para que ele serve, e não consegue decidir se deve acioná-lo.',
+  focus: 'Quem enxerga e navega por teclado perde a noção de onde está na página quando o indicador de foco some, e não sabe qual controle está prestes a acionar.',
+  target: 'Alvos de toque pequenos são mais difíceis de acionar, especialmente para pessoas com dificuldade de coordenação motora, dedos maiores ou que estejam usando o dispositivo em movimento.',
+  landmark: 'As regiões de referência (landmarks) permitem que quem usa leitor de tela vá direto para a navegação, o conteúdo principal ou o rodapé. Sem essas regiões, pode ser necessário percorrer muito mais conteúdo para chegar à área desejada.',
+  heading: 'Quem usa leitor de tela costuma navegar pelos títulos para entender a página. Um nível pulado ou fora de ordem passa uma estrutura errada e dificulta saber onde cada seção começa.',
+};
+const PLACEHOLDER_NOTE = 'Nenhuma correção automática se aplica aqui. A mudança certa depende da página, então precisa de revisão manual.';
+const CONTEXTUAL = 'Esta sugestão resolve o problema identificado, mas precisa de revisão manual para confirmar se o texto faz sentido nesta página.';
+const RECHECK = 'Corrija e audite de novo para confirmar.';
+const F = [
+  { id: 'f1', n: 1, group: 'fix', sev: 'critical', label: 'Crítico', kind: 'crítico', title: 'Botões devem ter texto discernível', gap: 'sem nome', status: 'person', statusText: 'requer revisão manual', crit: 'WCAG 4.1.2 A', critName: '4.1.2 Nome, função, valor', rule: 'button-name', impact: IMP.name, type: 'name', role: 'botão', action: 'Dê ao botão um nome acessível. Como ele só tem um ícone, use aria-label.', code: 'aria-label="Descreva o controle"', named: null,
+    occ: [{ t: 'cart', name: null, el: 'button.cart', ctx: 'em <header>', selector: 'header > span.spacer > button.cart', html: '<button class="cart"><svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18">…</svg></button>' }] },
+  { id: 'f2', n: 2, group: 'fix', sev: 'critical', label: 'Crítico', kind: 'crítico', title: 'Imagens devem ter texto alternativo', gap: 'sem alt', status: 'person', statusText: 'requer revisão manual', crit: 'WCAG 1.1.1 A', critName: '1.1.1 Conteúdo não textual', rule: 'image-alt', impact: IMP.alt, type: 'name', role: 'imagem', action: 'Adicione um atributo alt que descreva a imagem.', code: 'alt="Capa de Piranesi"', named: 'Capa de Piranesi',
+    occ: [{ t: 'cover2', name: null, el: 'img[src*="piranesi.svg"]', ctx: 'em <main>', selector: 'main > div.grid > div.card:nth-child(2) img', html: '<img src="/covers/piranesi.svg">' }] },
+  { id: 'f3', n: 3, group: 'fix', sev: 'critical', label: 'Crítico', kind: 'crítico', title: 'Elementos select devem ter um nome acessível', gap: 'sem nome', status: 'person', statusText: 'requer revisão manual', crit: 'WCAG 4.1.2 A', critName: '4.1.2 Nome, função, valor', rule: 'select-name', impact: IMP.name, type: 'name', role: 'campo', action: 'Associe um rótulo ao campo, com <label for> ou aria-label.', code: 'aria-label="Ordenar por"', named: 'Ordenar por',
+    occ: [{ t: 'sort', name: null, el: 'select.sort', ctx: 'em <main>', selector: 'main > div.row > select.sort', html: '<select class="sort">\n  <option>Most loved</option>\n  <option>Newest</option>\n  …\n</select>' }] },
+  { id: 'f4', n: 4, group: 'fix', sev: 'serious', label: 'Grave', kind: 'grave', title: 'Os elementos devem ter contraste de cor suficiente', gap: '2.75:1 · mínimo 4.5:1', extra: '4 elementos', status: 'tested', statusText: 'correção testada', crit: 'WCAG 1.4.3 AA', critName: '1.4.3 Contraste (mínimo)', rule: 'color-contrast', impact: IMP.contrast, type: 'contrast', fix: '#7b7566',
+    occ: [
+      { t: 'sub', name: 'Twelve titles, restocked weekly.', el: 'p.muted', ctx: 'em <main>', selector: 'main > div.row > span > p.muted', html: '<p class="muted">Twelve titles, restocked weekly.</p>', ratio: 2.75, fixed: 4.51, fg: '#a09a8a', bg: '#fffdf7' },
+      { t: 'by1', name: 'Raynor Winn', el: 'p.by.muted 1 de 3', ctx: 'em <main>', selector: 'main > div.grid > div.card:nth-child(1) > p.by', html: '<p class="by muted">Raynor Winn</p>', ratio: 2.81, fixed: 4.59, fg: '#a09a8a', bg: '#ffffff' },
+      { t: 'by2', name: 'Susanna Clarke', el: 'p.by.muted 2 de 3', ctx: 'em <main>', selector: 'main > div.grid > div.card:nth-child(2) > p.by', html: '<p class="by muted">Susanna Clarke</p>', ratio: 2.81, fixed: 4.59, fg: '#a09a8a', bg: '#ffffff' },
+      { t: 'by3', name: 'Claire Keegan', el: 'p.by.muted 3 de 3', ctx: 'em <main>', selector: 'main > div.grid > div.card:nth-child(3) > p.by', html: '<p class="by muted">Claire Keegan</p>', ratio: 2.81, fixed: 4.59, fg: '#a09a8a', bg: '#ffffff' },
+    ] },
+  { id: 'f5', n: 5, group: 'fix', sev: 'serious', label: 'Grave', kind: 'grave', title: 'Links devem ter texto discernível', gap: 'sem nome', status: 'person', statusText: 'requer revisão manual', crit: 'WCAG 2.4.4 A', critName: '2.4.4 Finalidade do link (em contexto)', rule: 'link-name', impact: IMP.name, type: 'name', role: 'link', action: 'Dê ao link um nome acessível. Como ele só tem um ícone, use aria-label.', code: 'aria-label="Descreva o controle"', named: null,
+    occ: [1, 2, 3].map(i => ({ t: 'save' + i, name: null, el: `a.save ${i} de 3`, ctx: 'em <main>', selector: `main > div.grid > div.card:nth-child(${i}) a.save`, html: `<a class="save" href="/wishlist/${['the-salt-path', 'piranesi', 'small-things-like-these'][i - 1]}"><svg aria-hidden="true">…</svg></a>` })) },
+  { id: 'f6', n: 6, group: 'fix', sev: 'serious', label: 'Grave', kind: 'grave', title: 'Sem indicador de foco visível em 2 elementos', gap: 'nada mostra o foco', status: 'recheck', statusText: 'auditar de novo para confirmar', crit: 'WCAG 2.4.7 AA', critName: '2.4.7 Foco visível', rule: 'focus-not-visible', impact: IMP.focus, type: 'focus', keyboard: true, action: 'Dê ao elemento um estilo de foco visível.', code: 'a.plain:focus-visible,\nbutton.plain:focus-visible {\n  outline: 2px solid currentColor;\n  outline-offset: 2px;\n}',
+    occ: [
+      { t: 'nav2', name: 'Offers', el: 'a.plain', ctx: 'em <header>', stop: 2, reason: 'O foco chegou a este elemento e nada mudou na tela.', measured: 'sem outline (none, 0px).', selector: 'header > nav > a.plain', html: '<a href="/offers" class="plain">Offers</a>' },
+      { t: 'cta2', name: 'Gift a membership', el: 'button.ghost.plain', ctx: 'em <body>', stop: 7, reason: 'O foco chegou a este elemento e nada mudou na tela.', measured: 'sem outline (none, 0px).', selector: 'div.hero span.cta > button.ghost.plain', html: '<button class="ghost plain">Gift a membership</button>' },
+    ] },
+  { id: 'f7', n: 7, group: 'fix', sev: 'serious', label: 'Grave', kind: 'grave', title: 'Alvos de toque devem ter 24px ou deixar espaço suficiente ao redor', gap: '3 elementos', status: null, crit: 'WCAG 2.5.8 AA', critName: '2.5.8 Tamanho do alvo (mínimo)', rule: 'target-size', impact: IMP.target, type: 'target', desc: '10×10px, a 6px do alvo vizinho. O mínimo é 24×24px, ou espaço livre equivalente ao redor.', action: 'Aumente a área de toque sem mudar o desenho: um padding transparente basta.', code: '.dot {\n  width: 24px;\n  height: 24px;\n  background-clip: content-box;\n  padding: 7px;\n}',
+    occ: [1, 2, 3].map(i => ({ t: 'dot' + i, name: 'Slide ' + i, el: `button.dot ${i} de 3`, ctx: 'em <body>', selector: `div.hero figure div.dots > button.dot:nth-child(${i})`, html: `<button class="dot" aria-label="Slide ${i}"${i === 1 ? ' aria-current="true"' : ''}></button>` })) },
+  { id: 'f8', n: 8, group: 'check', sev: 'review', label: 'Revisão manual', kind: 'revisão manual', title: 'Os elementos devem ter contraste de cor suficiente', gap: 'sem medida', status: 'person', statusText: 'precisa de revisão manual', crit: 'WCAG 1.4.3 AA', critName: '1.4.3 Contraste (mínimo)', rule: 'color-contrast', impact: IMP.contrast, type: 'review', desc: 'O texto está sobre um gradiente, então a cor do fundo não pôde ser lida com segurança.',
+    how: 'Não foi possível identificar automaticamente o fundo deste texto. Normalmente é uma imagem de fundo, um gradiente, uma camada translúcida ou um elemento sobreposto.',
+    steps: ['Olhe o texto sobre o fundo real, já renderizado', 'Colete as cores do texto e do fundo com um conta-gotas', 'Confirme pelo menos 4,5:1 (3:1 para texto grande, ou seja, 24px ou mais, ou 18,66px em negrito ou mais)'],
+    occ: [{ t: 'heroP', name: 'Every title on this shelf was picked and written up by a bookseller who finished it first.', el: 'div.hero p', ctx: 'em <body>', selector: 'body > div.hero > div > p', html: '<p>Every title on this shelf was picked and written up by a bookseller who finished it first.</p>' }] },
+  { id: 'r1', n: 9, group: 'recommend', sev: 'none', label: 'Boas práticas', kind: 'boa prática', title: 'Todo o conteúdo da página deve estar contido em landmarks', gap: '1 elemento', status: null, crit: null, rule: 'region', impact: IMP.landmark, type: 'bp', desc: 'O destaque do topo fica fora de qualquer região de referência.', action: 'Envolva o conteúdo em uma região, como <main>.', code: '<main>\n  <div class="hero">…</div>\n</main>',
+    occ: [{ t: 'hero', name: null, el: 'div.hero', ctx: 'em <body>', selector: 'body > div.hero', html: '<div class="hero">…</div>' }] },
+  { id: 'r2', n: 10, group: 'recommend', sev: 'none', label: 'Boas práticas', kind: 'boa prática', title: 'Os níveis de título devem aumentar de um em um', gap: '1 elemento', status: null, crit: null, rule: 'heading-order', impact: IMP.heading, type: 'bp', desc: 'O título salta de h1 para h3.', action: 'Use h2 para o título desta seção.', code: '<h2>This month on the table</h2>',
+    occ: [{ t: 'h3', name: 'This month on the table', el: 'h3', ctx: 'em <main>', selector: 'main > div.row > span > h3', html: '<h3>This month on the table</h3>' }] },
+];
+const FB = Object.fromEntries(F.map(f => [f.id, f]));
+const STOPS = [
+  { n: 1, t: 'nav1', label: 'Catalogue', vis: true }, { n: 2, t: 'nav2', label: 'Offers', vis: false }, { n: 3, t: 'nav3', label: 'Events', vis: true },
+  { n: 4, t: 'search', label: 'Search the catalogue', vis: true }, { n: 5, t: 'cart', label: '', vis: true }, { n: 6, t: 'cta1', label: 'Browse staff picks', vis: true },
+  { n: 7, t: 'cta2', label: 'Gift a membership', vis: false }, { n: 8, t: 'dot1', label: 'Slide 1', vis: true }, { n: 9, t: 'dot2', label: 'Slide 2', vis: true },
+  { n: 10, t: 'dot3', label: 'Slide 3', vis: true }, { n: 11, t: 'sort', label: 'Most loved', vis: true }, { n: 12, t: 'save1', label: '', vis: true },
+  { n: 13, t: 'buy1', label: 'Add to basket', vis: true }, { n: 14, t: 'save2', label: '', vis: true }, { n: 15, t: 'buy2', label: 'Add to basket', vis: true },
+  { n: 16, t: 'save3', label: '', vis: true }, { n: 17, t: 'buy3', label: 'Add to basket', vis: true }, { n: 18, t: 'email', label: 'Email', vis: true },
+  { n: 19, t: 'subscribe', label: 'Subscribe', vis: true },
+];
+const ALERTS = { 2: [['f6', 0]], 7: [['f6', 1]], 5: [['f1', 0]], 8: [['f7', 0]], 9: [['f7', 1]], 10: [['f7', 2]], 11: [['f3', 0]], 12: [['f5', 0]], 14: [['f5', 1]], 16: [['f5', 2]] };
+const tagOf = (f, i) => (f.occ.length > 1 ? `${f.n}·${i + 1}` : `${f.n}`);
+const GAP = 3, MARGIN = 18;
+function tagDims(text, size, circle) { const font = size <= 18 ? 11.5 : size >= 26 ? 14 : 12.5; return { w: Math.max(size, Math.ceil(String(text).length * font * 0.62 + (circle ? 8 : 10))), h: size }; }
+function clash(a, b) { return a.x < b.x + b.w + GAP && b.x < a.x + a.w + GAP && a.y < b.y + b.h + GAP && b.y < a.y + a.h + GAP; }
+function place(items) {
+  const taken = [], out = new Map();
+  for (const it of items) {
+    const { w, h } = tagDims(it.text, it.size, it.circle); const a = it.anchor, i = it.inset;
+    const c = it.circle
+      ? [{ x: a.x - i - w, y: a.y - i - h, w, h }, { x: a.x - i, y: a.y - i - h - 2, w, h }, { x: a.x - i - w - 2, y: a.y - i, w, h }, { x: a.x - i - w, y: a.y + a.h + i, w, h }, { x: a.x - w / 2, y: a.y - h / 2, w, h }]
+      : [{ x: a.x - i, y: a.y - i - h - 2, w, h }, { x: a.x - i, y: a.y + a.h + i + 2, w, h }, { x: a.x - i - w - 2, y: a.y - i, w, h }, ...(it.yields ? [] : [1, -1, 2, -2, 3].map(k => ({ x: a.x - i + k * (w + GAP), y: a.y - i - h - 2, w, h })))];
+    const fits = r => r.y >= -MARGIN && r.y + r.h <= FH + MARGIN && r.x >= -MARGIN && r.x + r.w <= FW + i;
+    const free = c.find(r => fits(r) && !taken.some(o => clash(r, o)));
+    const ch = free || (it.yields ? null : (c.find(fits) || c[0]));
+    if (!ch) continue;
+    const r = { ...ch, x: Math.min(Math.max(ch.x, -MARGIN), FW + i - ch.w) };
+    taken.push(r); if (it.own) taken.push(it.own); out.set(it.key, r);
+  }
+  return out;
+}
+const cornersBg = (ink, arm, bar) => { const g = `linear-gradient(${ink},${ink})`; return [`${g} top left / ${arm} ${bar}px`, `${g} top left / ${bar}px ${arm}`, `${g} top right / ${arm} ${bar}px`, `${g} top right / ${bar}px ${arm}`, `${g} bottom left / ${arm} ${bar}px`, `${g} bottom left / ${bar}px ${arm}`, `${g} bottom right / ${arm} ${bar}px`, `${g} bottom right / ${bar}px ${arm}`].map(x => x + ' no-repeat').join(', '); };
+const SR = { position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' };
+
+class Component extends DCLogic {
+  state = { sel: 'f4', occ: 0, hover: null, layer: 'findings', stop: null, whole: false, groups: { check: false, recommend: false }, details: false, how: false, copied: null, boxes: null, seg: null, conn: null, active: 0, origin: 'init' };
+  rootRef = React.createRef(); caseRef = React.createRef(); capRef = React.createRef(); segRef = React.createRef();
+
+  get dir() { return CFG[this.props.direction] ? this.props.direction : 'atual'; }
+  get cfg() { return CFG[this.dir]; }
+  get fam() { return this.cfg.family || this.dir; }
+  get sz() { return { ...DEF_SZ, ...(this.cfg.sz || {}) }; }
+  get mo() { return this.props.slow ? 4 : 1; }
+  D(ms) { return Math.round(ms * this.mo); }
+  reduced() { return !!this.props.reduced || (typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches); }
+  scale() { const r = this.rootRef.current; return r ? r.getBoundingClientRect().width / 1440 || 1 : 1; }
+
+  componentDidMount() {
+    this.snap = this.state;
+    this.measure(); this.measureSeg();
+    this.t1 = setTimeout(() => { this.measure(); this.measureSeg(); this.initScroll(); }, 80);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (!this.dead) { this.measure(); this.measureSeg(); this.initScroll(); } });
+    if (typeof ResizeObserver !== 'undefined' && this.rootRef.current) { this.ro = new ResizeObserver(() => this.schedule()); this.ro.observe(this.rootRef.current); }
+  }
+  componentWillUnmount() { this.dead = true; cancelAnimationFrame(this.raf); cancelAnimationFrame(this.trackRaf); clearTimeout(this.t1); clearTimeout(this.copyT); clearTimeout(this.scrollT); this.ro && this.ro.disconnect(); }
+
+  measure() {
+    const root = this.rootRef.current; if (!root) return;
+    const np = root.querySelector('[data-np]'); if (!np) return;
+    const pr = np.getBoundingClientRect(); if (!pr.width) return;
+    const boxes = {};
+    np.querySelectorAll('[data-t]').forEach(el => {
+      const r = el.getBoundingClientRect();
+      boxes[el.getAttribute('data-t')] = { left: (r.left - pr.left) / pr.width * 100, top: (r.top - pr.top) / pr.height * 100, width: r.width / pr.width * 100, height: r.height / pr.height * 100 };
+    });
+    this.setState({ boxes });
+  }
+  measureSeg() {
+    const seg = this.segRef.current; if (!seg) return;
+    const el = seg.querySelector(`[data-seg="${this.state.layer}"]`); if (!el) return;
+    const s = { left: el.offsetLeft, width: el.offsetWidth, top: el.offsetTop, height: el.offsetHeight };
+    const p = this.state.seg; if (!p || p.left !== s.left || p.width !== s.width) this.setState({ seg: s });
+  }
+  initScroll() {
+    if (this.didInit) return; const c = this.caseRef.current; if (!c) return;
+    const row = c.querySelector('[data-row="f4"]'); if (!row) return;
+    this.didInit = true; c.scrollTop = Math.max(0, row.offsetTop - 64); this.schedule();
+  }
+
+  schedule() { if (this.raf) return; this.raf = requestAnimationFrame(() => { this.raf = 0; this.computeConn(); }); }
+  computeConn() {
+    const root = this.rootRef.current; if (!root) return;
+    const s = this.scale(); const rr = root.getBoundingClientRect();
+    const R = el => { const r = el.getBoundingClientRect(); return { left: (r.left - rr.left) / s, top: (r.top - rr.top) / s, right: (r.right - rr.left) / s, bottom: (r.bottom - rr.top) / s, width: r.width / s, height: r.height / s }; };
+    const a = root.querySelector('[data-anchor="locus"]'), b = root.querySelector('[data-anchor="station-located"]'), fb = this.capRef.current, g = this.caseRef.current, fig = root.querySelector('[data-fig]');
+    const clear = () => { if (this.state.conn) this.setState({ conn: null }); };
+    if (!a || !b || !fb || !g || !this.state.sel || this.state.layer === 'none') return clear();
+    const ar = R(a), br = R(b), fr = R(fb);
+    const sy = ar.top - 4;
+    if (sy < fr.top + 4 || sy > fr.bottom - 4 || ar.right < fr.left || ar.left > fr.right) return clear();
+    const gx = R(g).left - 16, sx = Math.min(ar.right + 6, gx - 12);
+    const upper = 56 + 8, lower = 1000 - 8, raw = br.top + br.height / 2;
+    const off = raw < upper ? 'up' : raw > lower ? 'down' : null;
+    const ty = Math.min(Math.max(raw, upper), lower), tx = br.left - 3;
+    const figR = fig ? R(fig) : null; const edge = figR ? Math.min(Math.max(figR.right, sx), gx) : sx;
+    const d = off ? `M ${edge} ${sy} H ${gx} V ${ty}` : `M ${edge} ${sy} H ${gx} V ${ty} H ${tx}`;
+    const page = edge > sx + 1 ? `M ${sx} ${sy} H ${edge}` : '';
+    const arrow = off === 'up' ? `M ${gx - 5} ${ty + 6} L ${gx} ${ty} L ${gx + 5} ${ty + 6}` : off === 'down' ? `M ${gx - 5} ${ty - 6} L ${gx} ${ty} L ${gx + 5} ${ty - 6}` : '';
+    const conn = { d, page, arrow, dx: sx, dy: sy };
+    const sig = `${d}|${page}|${arrow}`;
+    const key = `${this.state.sel}:${this.state.occ}:${this.state.layer}:${this.state.stop}`;
+    if (!this.state.conn || this.lastSig !== sig) { this.lastSig = sig; this.setState({ conn }, () => this.drawConn(key)); }
+    else this.drawConn(key);
+  }
+  drawConn(key) {
+    if (this.drawnKey === key) return; this.drawnKey = key;
+    const root = this.rootRef.current; const p = root && root.querySelector('[data-conn="main"]'); if (!p || this.reduced()) return;
+    const c = this.cfg; const f = FB[this.state.sel];
+    if (c.conn === 'draw' && f && f.type !== 'review') {
+      const len = Math.ceil(p.getTotalLength ? p.getTotalLength() : 2000);
+      p.animate([{ strokeDasharray: `${len} ${len}`, strokeDashoffset: len }, { strokeDasharray: `${len} ${len}`, strokeDashoffset: 0 }], { duration: this.D(c.connDur), easing: 'cubic-bezier(0.2,0.7,0.2,1)' });
+    } else p.animate([{ opacity: 0 }, { opacity: 1 }], { duration: this.D(c.connDur), easing: 'ease-out' });
+  }
+
+  componentDidUpdate() {
+    const st = this.state; const ps = this.snap || st; this.snap = st;
+    if (ps === st) return;
+    const run = () => { if (!this.dead) this.afterUpdate(ps, st); };
+    if (typeof queueMicrotask === 'function') queueMicrotask(run); else Promise.resolve().then(run);
+  }
+  track(ms) {
+    const until = performance.now() + ms; cancelAnimationFrame(this.trackRaf);
+    const tick = () => { if (this.dead) return; this.computeConn(); if (performance.now() < until) this.trackRaf = requestAnimationFrame(tick); };
+    this.trackRaf = requestAnimationFrame(tick);
+  }
+  afterUpdate(ps, st) {
+    if (this.cfg.tween && !this.reduced() && ps.sel === st.sel && ps.occ !== st.occ && this.dimPrev && this.dimNow) {
+      const el = this.rootRef.current && this.rootRef.current.querySelector('[data-locus-cur] [data-p="label"]');
+      const a = this.dimPrev, b = this.dimNow, dur = this.D(this.cfg.travel), t0 = performance.now();
+      const step = now => { const k = Math.min(1, (now - t0) / dur); const e = 1 - Math.pow(1 - k, 3); if (el) el.textContent = `${Math.round(a.w + (b.w - a.w) * e)} × ${Math.round(a.h + (b.h - a.h) * e)}`; if (k < 1 && !this.dead) requestAnimationFrame(step); };
+      if (el) requestAnimationFrame(step);
+    }
+    this.dimPrev = this.dimNow;
+    if (ps.layer !== st.layer) this.measureSeg();
+    if (ps.sel !== st.sel || ps.occ !== st.occ || ps.layer !== st.layer || ps.stop !== st.stop) this.track(this.D(this.cfg.travel) + 120);
+    const reduced = this.reduced(); const c = this.cfg; const root = this.rootRef.current;
+    if (root && !reduced) {
+      if (ps.sel !== st.sel && st.sel) this.animateOpen(st.sel);
+      else if (ps.sel === st.sel && st.sel && ps.occ !== st.occ) this.animateSwap();
+      if (st.sel && (ps.sel !== st.sel || ps.occ !== st.occ || ps.layer !== st.layer)) this.acquire(ps.sel !== st.sel || ps.layer !== st.layer);
+      if (st.details && !ps.details) this.animateDisc('details');
+      if (st.how && !ps.how) this.animateDisc('how');
+      for (const g of ['check', 'recommend']) if (st.groups[g] && !ps.groups[g]) root.querySelectorAll(`[data-group="${g}"]`).forEach((el, i) => el.animate([{ opacity: 0, transform: `translateY(${c.rise}px)` }, { opacity: 1, transform: 'none' }], { duration: this.D(c.faithful ? 0 : 200), delay: this.D(i * 30), easing: 'ease-out', fill: 'backwards' }));
+      if (ps.layer !== st.layer && !c.faithful) { const ov = root.querySelector('[data-overlay]'); ov && ov.animate([{ opacity: 0 }, { opacity: 1 }], { duration: this.D(180), easing: 'ease-out' }); }
+    }
+    if (ps.sel !== st.sel && st.sel) this.scrollToRow(st.sel, st.origin);
+    this.schedule();
+  }
+  animateOpen(id) {
+    const sec = this.rootRef.current.querySelector(`[data-chain="${id}"]`); if (!sec) return; const c = this.cfg;
+    if (c.faithful) { sec.animate([{ opacity: 0, transform: 'translateY(4px)' }, { opacity: 1, transform: 'none' }], { duration: this.D(200), easing: 'ease-out' }); return; }
+    const h = sec.offsetHeight;
+    sec.animate([{ height: '0px' }, { height: h + 'px' }], { duration: this.D(c.open), easing: c.ease });
+    sec.querySelectorAll('[data-st]').forEach((el, i) => el.animate([{ opacity: 0, transform: `translateY(${c.rise}px)` }, { opacity: 1, transform: 'none' }], { duration: this.D(c.open), delay: this.D(60 + i * c.stagger), easing: c.ease, fill: 'backwards' }));
+    if (c.thread) this.rootRef.current.querySelectorAll(`[data-row="${id}"] [data-thread]`).forEach((el, i) => el.animate([{ transform: 'scaleY(0)', transformOrigin: 'top' }, { transform: 'scaleY(1)', transformOrigin: 'top' }], { duration: this.D(c.open + 120), delay: this.D(i * c.stagger), easing: c.ease, fill: 'backwards' }));
+  }
+  animateSwap() {
+    const c = this.cfg; if (c.faithful) return;
+    const sec = this.rootRef.current.querySelector(`[data-chain="${this.state.sel}"]`); if (!sec) return;
+    sec.querySelectorAll('[data-st-body]').forEach((el, i) => el.animate([{ opacity: 0.25 }, { opacity: 1 }], { duration: this.D(220), delay: this.D(i * 24), easing: 'ease-out', fill: 'backwards' }));
+  }
+  acquire(fresh) {
+    const el = this.rootRef.current.querySelector('[data-locus-cur]'); if (!el) return; const c = this.cfg; const D = x => this.D(x);
+    const parts = p => el.querySelectorAll(`[data-p="${p}"]`);
+    if (c.locus === 'corners') { if (fresh) el.animate([{ transform: 'scale(1.3)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: D(240), easing: 'cubic-bezier(0.2,0.7,0.2,1)' }); return; }
+    const lag = fresh ? 0 : c.travel * 0.6;
+    if (c.locus === 'dimension') {
+      parts('exth').forEach(e => e.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: D(220), delay: D(lag), easing: c.ease, fill: 'backwards' }));
+      parts('extv').forEach(e => e.animate([{ transform: 'scaleY(0)' }, { transform: 'scaleY(1)' }], { duration: D(220), delay: D(lag), easing: c.ease, fill: 'backwards' }));
+      parts('label').forEach(e => e.animate([{ opacity: 0 }, { opacity: 1 }], { duration: D(160), delay: D(lag + 140), easing: 'ease-out', fill: 'backwards' }));
+      if (fresh) parts('box').forEach(e => e.animate([{ opacity: 0 }, { opacity: 1 }], { duration: D(140), easing: 'ease-out' }));
+    } else if (c.locus === 'spot') {
+      if (fresh) el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: D(300), easing: 'ease-out' });
+    } else if (c.locus === 'danger') {
+      if (fresh) el.animate([{ opacity: 0, transform: 'scale(1.06)' }, { opacity: 1, transform: 'scale(1)' }], { duration: D(260), easing: c.ease });
+      else parts('line').forEach(e => e.animate([{ opacity: 0.2 }, { opacity: 1 }], { duration: D(200), delay: D(lag), easing: 'ease-out', fill: 'backwards' }));
+    } else if (c.locus === 'photo') {
+      ['tl', 'tr', 'br', 'bl'].forEach(k => parts(k).forEach(e => e.animate([{ transform: 'scale(0.4)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: D(220), delay: D(fresh ? 0 : lag), easing: 'ease-out', fill: 'backwards' })));
+    }
+  }
+  animateDisc(kind) {
+    const el = this.rootRef.current.querySelector(`[data-disc="${kind}"]`); if (!el) return; const c = this.cfg;
+    if (c.faithful) return;
+    const h = el.offsetHeight;
+    el.animate([{ height: '0px', opacity: 0 }, { height: h + 'px', opacity: 1 }], { duration: this.D(200), easing: c.ease });
+  }
+  scrollToRow(id, origin) {
+    clearTimeout(this.scrollT);
+    this.scrollT = setTimeout(() => {
+      const c = this.caseRef.current, root = this.rootRef.current; if (!c || !root) return;
+      const row = c.querySelector(`[data-row="${id}"]`); if (!row) return;
+      const behavior = this.reduced() ? 'auto' : 'smooth'; const s = this.scale(); const cr = c.getBoundingClientRect();
+      if (origin === 'row') {
+        const loc = row.querySelector('[data-anchor="station-located"]'); if (!loc) return;
+        const short = (loc.getBoundingClientRect().bottom - cr.bottom) / s + 140;
+        const room = (row.getBoundingClientRect().top - cr.top) / s - 16;
+        const delta = Math.min(short, room); if (delta > 0) c.scrollBy({ top: delta, behavior });
+      } else if (origin !== 'init') c.scrollTo({ top: Math.max(0, row.offsetTop - 8), behavior });
+    }, 60);
+  }
+
+  select(id, index = 0, origin = 'row') {
+    const f = FB[id]; if (!f) return; const o = f.occ[index];
+    const st = { sel: id, occ: index, origin, details: false, how: false, copied: null };
+    if (f.keyboard && o && o.stop) { st.stop = o.stop; if (this.state.layer !== 'none') st.layer = 'path'; }
+    else if (this.state.layer === 'path') st.layer = 'findings';
+    if (f.group !== 'fix' && !this.state.groups[f.group]) st.groups = { ...this.state.groups, [f.group]: true };
+    this.setState(st);
+  }
+  toggle(id) { if (this.state.sel === id) this.setState({ sel: null, origin: 'row' }); else this.select(id, 0, 'row'); }
+  pick(i) { const f = FB[this.state.sel]; if (!f) return; const st = { occ: i }; const o = f.occ[i]; if (f.keyboard && o && o.stop) st.stop = o.stop; this.setState(st); }
+  pickStop(n) { const st = { stop: n, layer: 'path' }; const f = FB[this.state.sel]; if (f) { const at = f.occ.findIndex(o => o.stop === n); if (at >= 0) st.occ = at; } this.setState(st); }
+  step(delta) { const ns = STOPS.map(s => s.n); const i = ns.indexOf(this.state.stop); const next = i < 0 ? ns[0] : ns[Math.max(0, Math.min(ns.length - 1, i + delta))]; this.pickStop(next); }
+  copy(which, value) {
+    try { navigator.clipboard && navigator.clipboard.writeText(value).catch(() => {}); } catch (e) {}
+    clearTimeout(this.copyT); this.setState({ copied: which }); this.copyT = setTimeout(() => this.setState({ copied: null }), 1800);
+  }
+
+  tagCss(sev, size, o = {}) {
+    const c = this.cfg; const circle = o.circle != null ? o.circle : c.tag === 'balloon';
+    const fs = size <= 18 ? 11.5 : size >= 26 ? 14 : 12.5;
+    const s = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box', height: size, minWidth: size, padding: circle ? '0 4px' : '0 5px', fontFamily: 'var(--f-tag)', fontStretch: 'var(--fs-tag)', fontWeight: 'var(--w-tag)', fontStyle: 'var(--i-tag)', fontSize: fs, lineHeight: 1, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums', userSelect: 'none', borderRadius: circle ? 999 : 'var(--r-tag)' };
+    if (!c.faithful) s.transition = `box-shadow ${this.D(140)}ms ease, background-color ${this.D(140)}ms ease, color ${this.D(140)}ms ease`;
+    const v = SV[sev] || SV.none, t = SVT[sev] || SVT.none; const sw = c.stroke || 1.5;
+    if (o.quiet) Object.assign(s, { border: '1px solid var(--tag-quiet, var(--ink2))', background: 'var(--surface)', color: 'var(--ink2)' });
+    else if (sev === 'review') Object.assign(s, { border: `${sw}px dashed var(--rev)`, background: 'var(--surface)', color: 'var(--rev-t)' });
+    else if (sev === 'none') Object.assign(s, { border: `${sw}px solid var(--ink2)`, background: 'var(--surface)', color: 'var(--ink)' });
+    else if (c.fill.includes(sev)) Object.assign(s, { background: v, color: 'var(--on-sev)', border: '0' });
+    else if (c.tag === 'slide') Object.assign(s, { background: 'var(--tag-ground)', border: `1px solid ${v}`, color: v });
+    else if (c.tag === 'tint') Object.assign(s, { background: `var(--tint-${sev})`, border: `${sw}px solid ${v}`, color: t });
+    else Object.assign(s, { background: 'var(--surface)', border: `${sw}px solid ${v}`, color: t });
+    const sh = [o.onPage ? 'var(--tag-halo)' : null, o.selected ? 'var(--ring)' : null].filter(Boolean).join(', ');
+    s.boxShadow = sh || 'none';
+    return s;
+  }
+  stopCss(size, o = {}) {
+    const sq = this.cfg.stop === 'square'; const fs = size <= 18 ? 11.5 : size >= 26 ? 14 : 12.5;
+    const s = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box', height: size, minWidth: size, padding: '0 4px', borderRadius: sq ? 0 : 999, fontFamily: 'var(--f-tag)', fontStretch: 'var(--fs-tag)', fontWeight: 'var(--w-tag)', fontStyle: 'var(--i-tag)', fontSize: fs, lineHeight: 1, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', userSelect: 'none' };
+    if (o.quiet) Object.assign(s, { border: `${this.cfg.stroke || 1.5}px solid var(--path)`, background: 'var(--surface)', color: 'var(--path)' });
+    else Object.assign(s, { background: 'var(--path)', color: 'var(--on-path)', border: '0' });
+    const sh = [o.onPage ? 'var(--tag-halo)' : null, o.selected ? 'var(--ring)' : null].filter(Boolean).join(', ');
+    s.boxShadow = sh || 'none';
+    return s;
+  }
+  dotCss() { return { display: 'block', width: 10, height: 10, boxSizing: 'border-box', borderRadius: this.cfg.stop === 'square' ? 0 : '50%', border: '2px solid var(--path)', background: 'var(--surface)', boxShadow: '0 0 0 1.5px var(--halo)' }; }
+  chev(open) { return { display: 'inline-block', flexShrink: 0, width: 7, height: 7, margin: '0 3px 0 1px', borderRight: '1.5px solid currentColor', borderBottom: '1.5px solid currentColor', color: 'var(--ink2)', transform: open ? 'translateY(-3px) rotate(45deg)' : 'translateY(-1px) rotate(-45deg)', transition: `transform ${this.D(150)}ms ease-out` }; }
+
+  glyph(kind, sev, end, measured) {
+    const d = this.dir; const o = { position: 'relative', display: 'block', flexShrink: 0, boxSizing: 'border-box' }; let inner = { display: 'none' }; let check = false;
+    if (kind === 'located') {
+      if (d === 'atual') { Object.assign(o, { width: 16, height: 16, background: 'var(--glyph-bg)' }); inner = { position: 'absolute', inset: 0, background: cornersBg('var(--ink)', '6px', 2) }; }
+      else if (this.fam === 'tecnico') Object.assign(o, { width: 15, height: 15, borderRadius: '50%', border: '1px solid var(--ink)', background: 'linear-gradient(var(--ink),var(--ink)) center / 1px 100% no-repeat, linear-gradient(var(--ink),var(--ink)) center / 100% 1px no-repeat, var(--glyph-bg)' });
+      else if (d === 'escura') Object.assign(o, { width: 11, height: 11, borderRadius: '50%', border: '1.5px solid var(--ink)', background: 'var(--glyph-bg)' });
+      else if (d === 'nautica') Object.assign(o, { width: 14, height: 14, borderRadius: '50%', border: '1.5px solid var(--ink)', background: 'radial-gradient(circle, var(--ink) 0 2px, transparent 2.5px), var(--glyph-bg)' });
+      else Object.assign(o, { width: 13, height: 13, background: 'linear-gradient(135deg, var(--accent) 0 5px, transparent 5px), linear-gradient(315deg, var(--accent) 0 5px, transparent 5px)' });
+    } else if (kind === 'evidence') {
+      const v = SV[sev] || SV.none;
+      if (measured) Object.assign(o, { width: 16, height: 16, border: `1.5px solid ${v}`, background: `var(--pat-${sev}), var(--glyph-bg)`, borderRadius: 'var(--r-glyph,0)' });
+      else Object.assign(o, { width: 16, height: 16, border: '1.5px dashed var(--rev)', background: 'var(--glyph-bg)', borderRadius: 'var(--r-glyph,0)' });
+    } else if (kind === 'change') {
+      Object.assign(o, { width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--glyph-bg)' });
+      inner = { display: 'block', width: 11, height: 11, boxSizing: 'border-box', transform: 'rotate(45deg)', border: '1.5px solid var(--glyph-change)', background: 'var(--glyph-bg)' };
+    } else {
+      Object.assign(o, { width: 18, height: 18, borderRadius: '50%' });
+      if (end === 'tested') { o.background = 'var(--ver)'; check = true; }
+      else if (end === 'person') { Object.assign(o, { border: '1.5px dashed var(--rev)', background: 'var(--glyph-bg)' }); inner = { position: 'absolute', left: '50%', top: '50%', width: 5, height: 5, margin: '-2.5px 0 0 -2.5px', borderRadius: '50%', background: 'var(--rev)' }; }
+      else Object.assign(o, { border: '1.5px solid var(--ink2)', background: 'var(--glyph-bg)' });
+    }
+    return { outer: o, inner, check };
+  }
+
+  locus(weight, r, sev, extra = 0) {
+    const kind = this.cfg.locus; const wrap = { position: 'absolute', left: r.x, top: r.y, width: r.w, height: r.h, pointerEvents: 'none' }; const parts = [];
+    const v = SV[sev] || 'var(--ink)'; const cur = weight === 'current';
+    if (kind === 'corners') {
+      const L = cur ? { inset: 5, arm: 'min(13px, 42%)', bar: 2.5, op: 1, halo: 3 } : { inset: 4, arm: 'min(8px, 40%)', bar: 1.5, op: 0.8, halo: 2 };
+      const ins = L.inset + extra; wrap.opacity = L.op;
+      parts.push({ p: 'halo', style: { position: 'absolute', inset: -(ins + L.halo / 2), background: cornersBg('var(--halo)', `calc(${L.arm} + ${L.halo}px)`, L.bar + L.halo) } });
+      parts.push({ p: 'ink', style: { position: 'absolute', inset: -ins, background: cornersBg('var(--ink)', L.arm, L.bar) } });
+    } else if (kind === 'dimension') {
+      const e = 3 + extra; const dm = { ext: 13, extOp: 1, labelBg: true, tint: 0.04, edge: false, ...(this.cfg.dim || {}) }; const X = dm.ext;
+      if (cur) {
+        const line = { position: 'absolute', background: 'var(--ink)', boxShadow: '0 0 0 1px var(--halo)', opacity: dm.extOp };
+        parts.push({ p: 'exth', style: { ...line, left: -e - X, right: -e - X, top: -e, height: 1 } });
+        parts.push({ p: 'exth', style: { ...line, left: -e - X, right: -e - X, bottom: -e, height: 1 } });
+        parts.push({ p: 'extv', style: { ...line, top: -e - X, bottom: -e - X, left: -e, width: 1 } });
+        parts.push({ p: 'extv', style: { ...line, top: -e - X, bottom: -e - X, right: -e, width: 1 } });
+        parts.push({ p: 'box', style: { position: 'absolute', inset: -e, background: dm.tint ? `color-mix(in srgb, var(--ink) ${dm.tint * 100}%, transparent)` : 'transparent', border: dm.edge ? '1px solid var(--ink)' : '0', boxShadow: dm.edge ? '0 0 0 1px var(--halo), inset 0 0 0 1px var(--halo)' : 'none' } });
+        const w = Math.round(r.w / FW * 1200), h = Math.round(r.h / FH * 800); this.dimNow = { w, h };
+        parts.push({ p: 'label', text: `${w} × ${h}`, style: { position: 'absolute', right: -e, top: `calc(100% + ${e + 5}px)`, padding: dm.labelBg ? '1px 4px' : '0 1px', fontFamily: 'var(--f-mono)', fontStretch: 'var(--fs-tag)', fontSize: 10.5, lineHeight: '13px', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', color: 'var(--ink)', background: dm.labelBg ? 'var(--halo)' : 'transparent', textShadow: dm.labelBg ? 'none' : '0 0 2px var(--halo), 0 0 2px var(--halo)' } });
+      } else { parts.push({ p: 'sib', style: { position: 'absolute', inset: -e, border: '1px dashed var(--ink)' } }); wrap.opacity = 0.6; }
+    } else if (kind === 'spot') {
+      if (cur) parts.push({ p: 'frame', style: { position: 'absolute', inset: -6 - extra, border: '1px solid rgba(14,13,12,0.85)', borderRadius: 3 } });
+      else { parts.push({ p: 'sib', style: { position: 'absolute', inset: -5 - extra, border: '1px dashed rgba(238,231,218,0.95)', borderRadius: 3, boxShadow: '0 0 0 1px rgba(14,13,12,0.35)' } }); }
+    } else if (kind === 'danger') {
+      if (cur) {
+        parts.push({ p: 'halo', style: { position: 'absolute', inset: -9 - extra, borderRadius: 10, border: '4px solid var(--halo)' } });
+        parts.push({ p: 'line', style: { position: 'absolute', inset: -8 - extra, borderRadius: 9, border: `2px dotted ${v}` } });
+      } else { parts.push({ p: 'sib', style: { position: 'absolute', inset: -6 - extra, borderRadius: 7, border: `1.5px dotted ${v}`, boxShadow: '0 0 0 1.5px var(--halo)' } }); wrap.opacity = 0.85; }
+    } else {
+      const z = cur ? 11 : 7, i = (cur ? -6 : -5) - extra;
+      const tri = (deg, pos) => ({ position: 'absolute', width: z, height: z, ...pos, background: `linear-gradient(${deg}deg, var(--accent) 50%, transparent 50%)`, filter: 'drop-shadow(0 0 1px rgba(255,255,255,0.9))', transformOrigin: Object.keys(pos).join(' ') });
+      parts.push({ p: 'tl', style: tri(135, { left: i, top: i }) }, { p: 'tr', style: tri(225, { right: i, top: i }) }, { p: 'br', style: tri(315, { right: i, bottom: i }) }, { p: 'bl', style: tri(45, { left: i, bottom: i }) });
+      if (!cur) wrap.opacity = 0.75;
+    }
+    return { wrap, parts: parts.map(p => ({ text: '', ...p })) };
+  }
+  ghost(r) { return { wrap: { position: 'absolute', left: r.x, top: r.y, width: r.w, height: r.h }, parts: [{ p: 'ghost', text: '', style: { position: 'absolute', inset: -4, border: '1.5px dashed var(--ser)', outline: '1px solid var(--halo)', background: 'var(--pat-serious)', WebkitMask: 'linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0)', mask: 'linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0)', padding: 3 } }] }; }
+
+  buildCapture(travelOk) {
+    const B = this.state.boxes; const out = { marks: [], loci: [], cur: [], path: { whole: '', wholeStyle: { display: 'none' }, segs: '', chev: '' }, caption: { show: false, text: '' }, spotRect: null };
+    if (!B) return out;
+    const px = t => { const b = B[t]; if (!b) return null; const r = { x: b.left / 100 * FW, y: b.top / 100 * FH, w: b.width / 100 * FW, h: b.height / 100 * FH }; return r.y > FH - 2 ? null : r; };
+    const { sel, occ, hover, layer, stop, whole } = this.state; const f = sel ? FB[sel] : null; const c = this.cfg; const S = this.sz;
+    const items = [];
+    const travel = travelOk && c.tagTravel ? `left ${this.D(c.travel)}ms ${c.tEase}, top ${this.D(c.travel)}ms ${c.tEase}` : 'none';
+    if (layer === 'findings') {
+      const cur = f && f.occ[occ] ? px(f.occ[occ].t) : null;
+      if (f && cur) {
+        const inset = 5; const text = tagOf(f, occ);
+        items.push({ key: 'cur', focus: null, text, size: S.page, circle: c.tag === 'balloon', anchor: cur, inset, yields: false, own: { x: cur.x - inset, y: cur.y - inset, w: cur.w + inset * 2, h: cur.h + inset * 2 }, z: 4, css: this.tagCss(f.sev, S.page, { onPage: 1, selected: 1 }), travel });
+        out.cur.push(this.locus('current', cur, f.sev)); out.spotRect = cur;
+      }
+      if (f) {
+        const total = f.occ.length; const beside = new Set([(occ + 1) % total, (occ - 1 + total) % total]);
+        const sib = f.occ.map((o, i) => ({ o, i })).filter(x => x.i !== occ).sort((a, b) => Math.abs(a.i - occ) - Math.abs(b.i - occ));
+        for (const { o, i } of sib) {
+          const r = px(o.t); if (!r) continue;
+          out.loci.push(this.locus('sibling', r, f.sev));
+          if (sib.length > 4 && !beside.has(i)) continue;
+          items.push({ key: `${f.id}:${i}`, focus: { fid: f.id, i }, text: tagOf(f, i), size: S.quiet, circle: c.tag === 'balloon', anchor: r, inset: 4, yields: true, z: 3, css: this.tagCss(f.sev, S.quiet, { quiet: 1, onPage: 1 }), aria: `Problema ${f.n}, ocorrência ${i + 1} de ${total}: ${f.title}` });
+        }
+      }
+      if (f && hover && hover !== sel && FB[hover]) for (const o of FB[hover].occ) { const r = px(o.t); if (r) out.loci.push(this.locus('sibling', r, FB[hover].sev)); }
+      for (const g of F) {
+        if (g.id === sel) continue; const r = g.occ[0] && px(g.occ[0].t); if (!r) continue;
+        const lit = !f || g.id === hover;
+        items.push({ key: `${g.id}:0`, focus: { fid: g.id, i: 0 }, text: String(g.n), size: lit ? S.page : S.quiet, circle: c.tag === 'balloon', anchor: r, inset: 4, yields: !!f, z: lit ? 2 : 1, css: this.tagCss(g.sev, lit ? S.page : S.quiet, { quiet: !lit, onPage: 1, selected: g.id === hover && !!f }), aria: `Problema ${g.n}, ${g.kind}: ${g.title}` });
+      }
+      if (!f) out.caption = { show: true, text: 'Selecione uma marca para abrir o problema dela.' };
+    } else if (layer === 'path') {
+      const list = STOPS.filter(s => px(s.t)); const pos = new Map(STOPS.map((s, i) => [s.n, i]));
+      const at = stop == null ? -1 : pos.get(stop); const near = n => at >= 0 && Math.abs(pos.get(n) - at) <= 2;
+      const shown = list.filter(s => whole || stop == null || near(s.n) || s.n === stop).sort((x, y) => Number(y.n === stop) - Number(x.n === stop) || Math.abs(pos.get(x.n) - at) - Math.abs(pos.get(y.n) - at));
+      for (const s of list.filter(s => !s.vis)) out.loci.push(this.ghost(px(s.t)));
+      for (const s of shown) {
+        const isNow = s.n === stop, close = near(s.n) || isNow, r = px(s.t);
+        const ex = s.vis ? 0 : 6;
+        items.push({ key: `stop:${s.n}`, focus: { stop: s.n }, text: close ? String(s.n) : '', size: close ? (isNow ? S.stopNow : S.stop) : 10, circle: c.stop !== 'square', anchor: close ? r : { x: r.x, y: r.y, w: 0, h: 0 }, inset: close ? (isNow ? 5 : 2) + ex : 0, yields: !close, own: isNow ? { x: r.x - 5 - ex, y: r.y - 5 - ex, w: r.w + 10 + ex * 2, h: r.h + 10 + ex * 2 } : undefined, z: isNow ? 4 : close ? 3 : 1, css: close ? this.stopCss(isNow ? S.stopNow : S.stop, { onPage: 1, selected: isNow }) : this.dotCss(), aria: s.vis ? `Etapa ${s.n} da ordem de tabulação: ${s.label || 'sem nome'}` : `Etapa ${s.n} da ordem de tabulação, sem foco visível: ${s.label}`, pressed: isNow ? 'true' : 'false', travel: isNow ? travel : 'none' });
+      }
+      if (stop != null) { const s = STOPS.find(x => x.n === stop); const r = s && px(s.t); if (r) { const L = this.locus('current', r, 'serious', s.vis ? 0 : 6); out.cur.push(L); out.spotRect = r; } }
+      else out.caption = { show: true, text: 'Escolha uma etapa no caminho do foco para acompanhá-la aqui.' };
+      this._pathPre = { list, pos, near, px };
+    }
+    const spots = place(items);
+    const centre = (key, r) => { const s = spots.get(key); return s ? { x: s.x + s.w / 2, y: s.y + s.h / 2 } : { x: r.x, y: r.y }; };
+    if (layer === 'path' && this._pathPre) {
+      const { list, near, px: P } = this._pathPre; const seq = STOPS.filter(s => P(s.t));
+      if (whole) { out.path.whole = 'M ' + seq.map(s => { const p = centre(`stop:${s.n}`, P(s.t)); return `${p.x.toFixed(1)} ${p.y.toFixed(1)}`; }).join(' L '); out.path.wholeStyle = { fill: 'none', stroke: 'var(--path)', strokeOpacity: 0.4, strokeWidth: '1.25px', strokeLinejoin: 'round' }; }
+      let segs = '', chev = '';
+      for (let i = 1; i < seq.length; i++) {
+        const a = seq[i - 1], b = seq[i]; if (!near(a.n) || !near(b.n)) continue;
+        const A = centre(`stop:${a.n}`, P(a.t)), Bp = centre(`stop:${b.n}`, P(b.t));
+        segs += `M ${A.x.toFixed(1)} ${A.y.toFixed(1)} L ${Bp.x.toFixed(1)} ${Bp.y.toFixed(1)} `;
+        const ang = Math.atan2(Bp.y - A.y, Bp.x - A.x), mx = (A.x + Bp.x) / 2, my = (A.y + Bp.y) / 2;
+        const rot = (x, y) => `${(mx + x * Math.cos(ang) - y * Math.sin(ang)).toFixed(1)} ${(my + x * Math.sin(ang) + y * Math.cos(ang)).toFixed(1)}`;
+        chev += `M ${rot(-5, -5)} L ${rot(1, 0)} L ${rot(-5, 5)} `;
+      }
+      out.path.segs = segs; out.path.chev = chev;
+    }
+    const visible = items.filter(it => spots.has(it.key));
+    const order = visible.filter(it => it.focus);
+    const active = Math.min(this.state.active, Math.max(order.length - 1, 0));
+    out.marks = visible.map(it => {
+      const r = spots.get(it.key); const fi = it.focus ? order.indexOf(it) : -1;
+      const style = { position: 'absolute', left: r.x + r.w / 2, top: r.y + r.h / 2, transform: 'translate(-50%, -50%)', zIndex: it.z, display: 'flex', minWidth: 24, minHeight: 24, alignItems: 'center', justifyContent: 'center', padding: 0, border: 0, background: 'transparent', cursor: it.focus ? 'pointer' : 'default', pointerEvents: it.focus ? 'auto' : 'none', transition: it.travel || 'none' };
+      const fo = it.focus;
+      return {
+        key: it.key, text: it.text, style, inner: it.css, fi, tabIndex: fo ? (fi === active ? 0 : -1) : -1, hidden: fo ? undefined : 'true', aria: it.aria, pressed: it.pressed,
+        onClick: fo ? () => { if (fo.stop != null) this.pickStop(fo.stop); else this.select(fo.fid, fo.i, 'mark'); } : undefined,
+        onFocus: fo ? () => { this.setState({ active: fi }); if (fo.fid) this.setState({ hover: fo.fid }); } : undefined,
+        onBlur: fo ? () => this.setState({ hover: null }) : undefined,
+        onEnter: fo && fo.fid ? () => this.setState({ hover: fo.fid }) : undefined,
+        onLeave: fo && fo.fid ? () => this.setState({ hover: null }) : undefined,
+      };
+    });
+    out.order = order.length;
+    return out;
+  }
+
+  station(kind, label, blocks, extra = {}) { return { kind, label, blocks, ...extra }; }
+  buildChain(f, oi) {
+    const o = f.occ[oi]; const S = []; const B = this.state.boxes;
+    const pBody = { margin: 0, fontSize: 15, lineHeight: 1.5, color: 'var(--ink2)', overflowWrap: 'anywhere', textWrap: 'pretty' };
+    const pInk = { ...pBody, color: 'var(--ink)' };
+    const pMuted = { margin: 0, fontSize: 13.5, lineHeight: 1.5, color: 'var(--muted)', textWrap: 'pretty' };
+    const T = (text, style, mt = 0) => ({ isText: true, text, style, wrap: { marginTop: mt } });
+    const L = [];
+    if (o.name) L.push({ isQuote: true, text: o.name, wrap: {} });
+    const code = [o.stop ? `Etapa ${o.stop}` : null, o.el, o.ctx].filter(Boolean).join(' · ');
+    L.push(T(code, { margin: 0, fontFamily: 'var(--f-mono)', fontStretch: 'var(--fs-tag)', fontSize: o.name ? 13 : 14.5, color: o.name ? 'var(--muted)' : 'var(--ink)', overflowWrap: 'anywhere' }, o.name ? 4 : 0));
+    if (f.occ.length > 1) L.push({ isOcc: true, wrap: { marginTop: 12 }, chips: f.occ.map((x, i) => ({ text: tagOf(f, i), pressed: i === oi ? 'true' : 'false', aria: `Ocorrência ${tagOf(f, i)}: ${x.el}`, onClick: () => this.pick(i), style: this.tagCss(f.sev, this.sz.chip, { quiet: i !== oi, selected: i === oi }) })) });
+    S.push(this.station('located', 'Localizado', L, { anchor: 'station-located' }));
+    const measured = f.type !== 'review';
+    if (f.type === 'contrast') {
+      S.push(this.station('evidence', 'Medido', [
+        { isRatio: true, wrap: {}, value: `${o.ratio.toFixed(2)}:1`, needed: '4.5:1 exigido' },
+        { isGauge: true, wrap: { marginTop: 12 }, g: this.gauge(o.ratio, 4.5, f.sev) },
+        this.sample(o.fg, o.bg, o.name, 'Na página', o.ratio, false, false),
+      ], { meta: f.crit }));
+      S.push(this.station('change', 'Mudança', [
+        { isCode: true, wrap: {}, removed: `color: ${o.fg};`, added: [{ t: `color: ${f.fix};` }] },
+        this.sample(f.fix, o.bg, o.name, 'Com a mudança', o.fixed, true, true),
+      ]));
+      S.push(this.station('end', 'Correção testada', [
+        { isVRatio: true, wrap: {}, value: `${o.fixed.toFixed(2)}:1`, passes: 'passa de 4.5:1', note: 'Testada em uma cópia da página.' },
+        { isHow: true, wrap: { marginTop: 10 }, open: this.state.how, onToggle: () => this.setState(s => ({ how: !s.how })), chev: this.chev(this.state.how), message: 'Aplicada por um instante em cada uma das 4 ocorrências. Após uma nova verificação, o problema não foi mais identificado em nenhuma.', note: 'As correções são testadas em uma cópia da página. northwind.example não foi alterado.' },
+      ], { end: 'tested' }));
+    } else if (f.type === 'name') {
+      S.push(this.station('evidence', 'Medido', [{ isHeard: true, wrap: {}, label: 'Leitores de tela dizem', role: f.role, name: null, noName: true, slot: { display: 'inline-block', width: '7ch', height: '1.05em', verticalAlign: '-0.18em', border: `1.5px solid ${SV[f.sev]}`, background: `var(--pat-${f.sev})` } }], { meta: f.crit }));
+      const ch = [T(f.action, pInk), { isCode: true, wrap: { marginTop: 12 }, removed: null, added: f.code.split('\n').map(t => ({ t })) }];
+      if (f.named) ch.push({ isHeard: true, wrap: { marginTop: 12 }, label: 'Com a mudança', role: f.role, name: f.named, noName: false });
+      ch.push(T('A mudança certa depende da estrutura da página, então confirme no contexto.', pMuted, 12));
+      S.push(this.station('change', 'Mudança', ch));
+      S.push(this.station('end', 'A correção precisa de revisão manual', [T(f.named ? CONTEXTUAL : PLACEHOLDER_NOTE, pBody)], { end: 'person' }));
+    } else if (f.type === 'focus') {
+      S.push(this.station('evidence', 'Medido', [T(o.reason, pBody), T(o.measured, pMuted, 6)], { meta: f.crit }));
+      S.push(this.station('change', 'Mudança', [T(f.action, pInk), { isCode: true, wrap: { marginTop: 12 }, removed: null, added: f.code.split('\n').map(t => ({ t })) }]));
+      S.push(this.station('end', 'Confirme com uma nova auditoria', [T(RECHECK, pBody)], { end: 'recheck' }));
+    } else if (f.type === 'target') {
+      S.push(this.station('evidence', 'Medido', [T(f.desc, pBody)], { meta: f.crit }));
+      S.push(this.station('change', 'Mudança', [T(f.action, pInk), { isCode: true, wrap: { marginTop: 12 }, removed: null, added: f.code.split('\n').map(t => ({ t })) }]));
+      S.push(this.station('end', 'Correção não testada', [T(RECHECK, pBody)], { end: 'untested' }));
+    } else if (f.type === 'review') {
+      S.push(this.station('evidence', 'Evidência', [T(f.desc, pBody)], { meta: f.crit }));
+      S.push(this.station('decide', 'Precisa de revisão manual', [{ isSteps: true, wrap: {}, how: f.how, steps: f.steps.map(t => ({ t })) }], { end: 'person' }));
+    } else {
+      S.push(this.station('evidence', 'Evidência', [T(f.desc, pBody), T('Boa prática, não um critério de sucesso da WCAG. Vale corrigir, mas não entra no resultado da WCAG.', pMuted, 8)]));
+      S.push(this.station('change', 'Mudança', [T(f.action, pInk), { isCode: true, wrap: { marginTop: 12 }, removed: null, added: f.code.split('\n').map(t => ({ t })) }]));
+    }
+    const closed = f.type === 'contrast';
+    return S.map((s, i) => {
+      const last = i === S.length - 1; const next = S[i + 1];
+      const dashed = !measured || (next && (next.kind === 'end') && !closed);
+      const g = s.kind === 'located' ? this.glyph('located', f.sev) : s.kind === 'evidence' ? this.glyph('evidence', f.sev, null, measured && f.type !== 'bp') : s.kind === 'change' ? this.glyph('change', f.sev) : this.glyph('end', f.sev, s.end);
+      return { ...s, key: s.kind, meta: s.meta || '', thread: !last, threadStyle: { position: 'absolute', top: 22, bottom: 0, left: 14, borderLeft: `var(--thread-w) ${dashed ? 'dashed' : 'solid'} var(--thread-c)` }, liStyle: { position: 'relative', paddingLeft: 44, paddingBottom: last ? 4 : 28 }, g, anchor: s.anchor || undefined };
+    });
+  }
+  gauge(meas, req, sev) {
+    const at = r => (Math.max(1, Math.min(7, r)) - 1) / 6 * 100; const from = at(meas), to = at(req); const v = SV[sev];
+    const mono = { fontFamily: 'var(--f-mono)', fontStretch: 'var(--fs-tag)', fontStyle: 'var(--i-num)', fontWeight: 'var(--w-mono)', whiteSpace: 'nowrap' };
+    return {
+      ticks: [1, 2, 3, 4, 5, 6, 7].map(x => ({ style: { position: 'absolute', top: 28, height: 5, width: 1, background: 'var(--rule)', left: `${at(x)}%` } })),
+      gap: { position: 'absolute', top: 20, height: 12, left: `${from}%`, width: `${to - from}%`, background: `var(--gauge-gap-${sev}, var(--pat-${sev}))` },
+      req: { position: 'absolute', top: 14, height: 26, width: 2, transform: 'translateX(-50%)', background: 'var(--ink)', left: `${to}%` },
+      reqLabel: { ...mono, position: 'absolute', top: 40, transform: 'translateX(-50%)', left: `${to}%`, fontSize: 12.5, lineHeight: '18px', color: 'var(--ink)' }, reqText: `${req} exigido`,
+      mea: { position: 'absolute', top: 12, height: 21, width: 2, transform: 'translateX(-50%)', background: v, left: `${from}%` },
+      meaLabel: { ...mono, position: 'absolute', top: 0, right: `calc(${100 - from}% + 5px)`, fontSize: 13, lineHeight: '14px', color: v }, meaText: meas.toFixed(2),
+      arrows: this.fam === 'tecnico',
+      dimLine: { position: 'absolute', top: 26, height: 1, left: `${from}%`, width: `${to - from}%`, background: v },
+      arrowL: { position: 'absolute', top: 22.5, left: `calc(${from}% + 1px)`, width: 0, height: 0, borderTop: '4px solid transparent', borderBottom: '4px solid transparent', borderRight: `7px solid ${v}` },
+      arrowR: { position: 'absolute', top: 22.5, left: `calc(${to}% - 8px)`, width: 0, height: 0, borderTop: '4px solid transparent', borderBottom: '4px solid transparent', borderLeft: `7px solid ${v}` },
+      dimLabel: { ...mono, position: 'absolute', top: 6, left: `${(from + to) / 2}%`, transform: 'translateX(-50%)', fontSize: 11, lineHeight: '14px', padding: '0 3px', color: 'var(--ser-t)', background: 'var(--glyph-bg)' }, dimText: `Δ ${(req - meas).toFixed(2)}`,
+    };
+  }
+  sample(fg, bg, text, caption, ratio, tested, showRatio) {
+    const sw = c => ({ display: 'inline-block', width: 12, height: 12, flexShrink: 0, border: '1px solid var(--rule)', background: c });
+    return { isSample: true, wrap: { marginTop: 12 }, aria: `${text}. ${fg} / ${bg}, ${ratio.toFixed(2)}:1`, box: { display: 'flex', minHeight: 44, alignItems: 'center', padding: '10px 14px', outline: '1px solid var(--hair)', outlineOffset: -1, background: bg, color: fg, borderRadius: 'var(--r-sample,0)' }, text, caption, showRatio, ratio: `${ratio.toFixed(2)}:1`, ratioStyle: { fontFamily: 'var(--f-mono)', fontStretch: 'var(--fs-tag)', fontStyle: 'var(--i-num)', fontWeight: 'var(--w-mono)', color: tested ? 'var(--ver)' : 'var(--ser-t)' }, fg, bg, fgSw: sw(fg), bgSw: sw(bg) };
+  }
+
+  renderVals() {
+    const st = this.state; const c = this.cfg; const dir = this.dir; const D = x => this.D(x);
+    const travelOk = this.prevSel === st.sel && this.prevLayer === st.layer;
+    this.prevSel = st.sel; this.prevLayer = st.layer;
+    const cap = this.buildCapture(travelOk);
+    const sr = st.spot;
+    let spot = { display: 'none' };
+    if (c.locus === 'spot') {
+      const r = cap.spotRect || this.lastSpot; if (cap.spotRect) this.lastSpot = cap.spotRect;
+      const show = !!cap.spotRect && st.layer !== 'none';
+      const tr = travelOk ? `left ${D(c.travel)}ms ${c.tEase}, top ${D(c.travel)}ms ${c.tEase}, width ${D(c.travel)}ms ${c.tEase}, height ${D(c.travel)}ms ${c.tEase}, opacity ${D(320)}ms ease` : `opacity ${D(320)}ms ease`;
+      spot = r ? { position: 'absolute', left: r.x - 6, top: r.y - 6, width: r.w + 12, height: r.h + 12, borderRadius: 3, boxShadow: '0 0 0 2400px var(--spot)', opacity: show ? 1 : 0, transition: tr, pointerEvents: 'none' } : { display: 'none' };
+    }
+    let proj = { top: { display: 'none' }, left: { display: 'none' } };
+    if (c.rulers && cap.spotRect && st.layer !== 'none') {
+      const r = cap.spotRect; const T = D(c.travel);
+      proj = { top: { position: 'absolute', top: -1, left: r.x, width: Math.max(r.w, 2), height: 3, background: 'var(--ink)', transition: travelOk ? `left ${T}ms ${c.tEase}, width ${T}ms ${c.tEase}` : 'none' },
+        left: { position: 'absolute', left: -1, top: r.y, height: Math.max(r.h, 2), width: 3, background: 'var(--ink)', transition: travelOk ? `top ${T}ms ${c.tEase}, height ${T}ms ${c.tEase}` : 'none' } };
+    }
+    const locTr = travelOk ? `left ${D(c.travel)}ms ${c.tEase}, top ${D(c.travel)}ms ${c.tEase}, width ${D(c.travel)}ms ${c.tEase}, height ${D(c.travel)}ms ${c.tEase}` : 'none';
+    const cur = cap.cur.map(l => ({ ...l, wrap: { ...l.wrap, transition: locTr } }));
+
+    const layersDef = [['findings', 'Problemas'], ['path', 'Caminho do foco'], ['none', 'Nenhuma']];
+    const layers = layersDef.map(([id, label]) => {
+      const on = st.layer === id;
+      const style = { position: 'relative', zIndex: 1, display: 'flex', height: 28, alignItems: 'center', padding: '0 10px', fontSize: 13.5, whiteSpace: 'nowrap', cursor: 'pointer', borderRadius: 'var(--r-seg)' };
+      if (c.seg === 'fill') Object.assign(style, { background: on ? 'var(--ink)' : 'transparent', color: on ? 'var(--surface)' : 'var(--ink2)', fontWeight: on ? 600 : 400 });
+      else Object.assign(style, { color: on ? 'var(--seg-sel-fg)' : 'var(--ink2)', fontWeight: 'var(--seg-w,500)', transition: `color ${D(180)}ms ease` });
+      return { id, label, checked: on, onChange: () => this.setState({ layer: id }), style };
+    });
+    let segInd = { display: 'none' };
+    if (c.seg !== 'fill' && st.seg) {
+      const tr = `left ${D(240)}ms ${c.tEase}, width ${D(240)}ms ${c.tEase}`;
+      if (c.seg === 'underline') segInd = { position: 'absolute', left: st.seg.left + 8, width: st.seg.width - 16, bottom: -1, height: 1.5, background: 'var(--seg-ind-bg)', transition: tr };
+      else if (c.seg === 'pill') segInd = { position: 'absolute', left: st.seg.left, width: st.seg.width, top: st.seg.top, height: st.seg.height, background: 'var(--seg-ind-bg)', borderRadius: 'var(--r-seg)', transition: tr };
+      else segInd = { position: 'absolute', left: st.seg.left, width: st.seg.width, top: st.seg.top, height: st.seg.height, border: '1px solid var(--ink)', background: 'var(--surface)', borderRadius: 'var(--r-seg)', transition: tr };
+    }
+
+    const hov = id => ({ onEnter: () => this.setState({ hover: id }), onLeave: () => this.setState({ hover: null }) });
+    const sumTag = (f, size) => ({ n: f.n, aria: `${f.n}. ${f.title}`, current: f.id === st.sel ? 'true' : undefined, onClick: () => this.select(f.id, 0, 'index'), style: this.tagCss(f.sev, size, { selected: f.id === st.sel }), ...hov(f.id) });
+    const fixTags = F.filter(f => f.group === 'fix').map(f => sumTag(f, this.sz.sum));
+    const checkTags = F.filter(f => f.group === 'check').map(f => sumTag(f, this.sz.check));
+
+    const B = st.boxes;
+    const rectOf = t => { const b = B && B[t]; return b ? `${Math.round(b.width * 12)}×${Math.round(b.height * 8)}px em ${Math.round(b.left * 12)}, ${Math.round(b.top * 8)}` : '—'; };
+    const items = [];
+    const groups = [['fix', 'A corrigir'], ['check', 'Conferir à mão'], ['recommend', 'Recomendações']];
+    for (const [g, label] of groups) {
+      const list = F.filter(f => f.group === g);
+      if (g === 'fix') items.push({ key: 'h-' + g, isFixHead: true, label, count: String(list.length) });
+      else { const open = st.groups[g]; items.push({ key: 'h-' + g, isToggleHead: true, label, count: String(list.length), open, chev: this.chev(open), onToggle: () => this.setState(s => ({ groups: { ...s.groups, [g]: !s.groups[g] } })) }); if (!open) continue; }
+      list.forEach((f, idx) => {
+        const open = st.sel === f.id; const hover = st.hover === f.id;
+        const row = {
+          key: f.id, isRow: true, id: f.id, group: g, domId: `${dir}-finding-${f.id}`, controls: `${dir}-inv-${f.id}`, open, closed: !open, n: f.n, title: f.title, label: f.label, gap: f.gap, extra: f.extra || '', impact: f.impact,
+          onToggle: () => this.toggle(f.id), ...hov(f.id),
+          liStyle: { scrollMarginTop: 96, background: open ? 'var(--row-open)' : hover ? 'var(--row-hover)' : 'transparent', boxShadow: open ? 'inset 0 1px 0 var(--row-open-line), inset 0 -1px 0 var(--row-open-line)' : 'none', transition: c.faithful ? 'none' : `background-color ${D(160)}ms ease, box-shadow ${D(160)}ms ease` },
+          btnStyle: { display: 'grid', width: '100%', gridTemplateColumns: 'auto minmax(0,1fr) auto', alignItems: 'start', columnGap: 14, padding: open ? '14px 24px 12px' : '14px 24px', border: 0, background: 'transparent', textAlign: 'left', cursor: 'pointer' },
+          tagWrap: { position: 'relative', alignSelf: open ? 'stretch' : 'start', paddingTop: open ? 0 : 1, display: 'block' },
+          tagStyle: this.tagCss(f.sev, open ? this.sz.open : this.sz.row),
+          threadStyle: { position: 'absolute', top: this.sz.open + 4, bottom: -12, left: Math.round(this.sz.open / 2) - 1, borderLeft: `var(--thread-w) ${f.type === 'review' ? 'dashed' : 'solid'} var(--thread-c)` },
+          titleStyle: open ? { display: 'block', fontFamily: 'var(--f-title, var(--f-ui))', fontStretch: 'var(--fs-title)', fontSize: 'var(--s-title, 19px)', fontWeight: 'var(--w-title, 700)', letterSpacing: 'var(--t-title, -0.01em)', lineHeight: 1.3, color: 'var(--ink)', overflowWrap: 'anywhere', textWrap: 'pretty' } : { display: 'block', fontSize: 15, fontWeight: 'var(--w-strong)', lineHeight: 1.375, color: 'var(--ink)', textWrap: 'pretty' },
+          gapStyle: { fontStyle: f.type === 'contrast' ? 'var(--i-num)' : 'normal' },
+          showStatus: !open && !!f.status, statusText: f.statusText || '', sg: this.glyph('end', f.sev, f.status),
+          chainLabel: `Investigação do problema ${f.n}`,
+        };
+        if (open) {
+          const o = f.occ[st.occ] || f.occ[0];
+          row.stations = this.buildChain(f, Math.min(st.occ, f.occ.length - 1));
+          const cs = which => ({ minHeight: 32, padding: '0 10px', border: '1px solid var(--border)', background: 'var(--btn-bg)', fontSize: 13, fontWeight: 'var(--w-strong)', color: st.copied === which ? 'var(--ver)' : 'var(--ink)', borderRadius: 'var(--r-btn)', cursor: 'pointer', transition: `color ${D(160)}ms ease, border-color ${D(160)}ms ease` });
+          row.det = { open: st.details, onToggle: () => this.setState(s => ({ details: !s.details })), chev: this.chev(st.details), selector: o.selector, rule: f.rule, crit: f.critName || 'Boa prática', html: o.html, measured: o.ratio ? `${o.fg} sobre ${o.bg}, ${o.ratio.toFixed(2)}:1` : (o.measured || ''), rect: rectOf(o.t),
+            copySel: () => this.copy('sel', o.selector), copyHtml: () => this.copy('html', o.html), selLabel: st.copied === 'sel' ? 'Copiado ✓' : 'Copiar seletor', htmlLabel: st.copied === 'html' ? 'Copiado ✓' : 'Copiar HTML', selStyle: cs('sel'), htmlStyle: cs('html') };
+          const prev = list[idx - 1], next = list[idx + 1];
+          const ns = (dis, strong) => ({ display: 'flex', minHeight: 32, alignItems: 'center', gap: 8, padding: 0, border: 0, background: 'transparent', fontSize: 13.5, fontWeight: strong && !dis ? 'var(--w-strong)' : 400, color: dis ? 'var(--disabled)' : 'var(--ink)', cursor: dis ? 'default' : 'pointer' });
+          row.nav = { noPrev: !prev, noNext: !next, prev: () => prev && this.select(prev.id, 0, 'nav'), next: () => next && this.select(next.id, 0, 'nav'), prevStyle: ns(!prev, false), nextStyle: ns(!next, true) };
+        }
+        items.push(row);
+      });
+    }
+
+    const pos = STOPS.findIndex(s => s.n === st.stop);
+    const seq = STOPS.map((s, i) => {
+      const now = s.n === st.stop; const al = ALERTS[s.n]; const af = al && FB[al[0][0]];
+      return { key: s.n, n: s.n, link: i > 0, current: now ? 'step' : undefined, aria: (s.vis ? `Etapa ${s.n} da ordem de tabulação: ${s.label || 'sem nome'}` : `Etapa ${s.n}, sem foco visível: ${s.label}`) + (af ? `, problema ${tagOf(af, al[0][1])}` : ''), onClick: () => this.pickStop(s.n),
+        wrap: { display: 'flex', borderRadius: this.cfg.stop === 'square' ? 2 : 999, padding: 3, background: af ? `var(--pat-${af.sev})` : 'transparent', boxShadow: now && af ? 'var(--ring)' : 'none' },
+        style: this.stopCss(now ? this.sz.stopNow : this.sz.stop, { quiet: !now, selected: now && !af }) };
+    });
+    const hs = pos >= 0 ? STOPS[pos] : null;
+    const here = { show: !!hs, pos: hs ? `Etapa ${pos + 1} de ${STOPS.length}` : '', label: hs ? hs.label : '', noFocus: hs ? !hs.vis : false, hasLinks: !!(hs && ALERTS[hs.n]), links: hs && ALERTS[hs.n] ? ALERTS[hs.n].map(([fid, i]) => ({ text: `Problema ${tagOf(FB[fid], i)}`, onClick: () => this.select(fid, i, 'stop') })) : [] };
+
+    const cn = st.conn; const f = st.sel ? FB[st.sel] : null; const dash = f && f.type === 'review' ? '5 4' : 'none';
+    const conn = cn ? {
+      d: cn.d, page: cn.page || 'M 0 0', arrow: cn.arrow || 'M 0 0', dx: cn.dx, dy: cn.dy,
+      style: { fill: 'none', stroke: 'var(--conn)', strokeOpacity: c.connOp || 1, strokeWidth: c.connW + 'px', strokeLinejoin: 'round', strokeDasharray: dash },
+      haloStyle: c.connHalo ? { fill: 'none', stroke: 'var(--halo)', strokeWidth: (c.connW + 1.5) + 'px', strokeLinejoin: 'round' } : { display: 'none' },
+      pageStyle: cn.page ? { fill: 'none', stroke: 'var(--conn)', strokeOpacity: 0.7, strokeWidth: '1px', strokeDasharray: f && f.type === 'review' ? '4 3' : 'none' } : { display: 'none' },
+      arrowStyle: cn.arrow ? { fill: 'none', stroke: 'var(--conn)', strokeWidth: '2px' } : { display: 'none' },
+      dotStyle: c.connDot ? { fill: 'var(--conn)', stroke: 'var(--halo)', strokeWidth: '1px' } : { display: 'none' },
+    } : { d: 'M 0 0', page: 'M 0 0', arrow: 'M 0 0', dx: 0, dy: 0, style: { display: 'none' }, haloStyle: { display: 'none' }, pageStyle: { display: 'none' }, arrowStyle: { display: 'none' }, dotStyle: { display: 'none' } };
+
+    return {
+      dir, reducedAttr: this.props.reduced ? 'true' : 'false', moVar: { display: 'contents', '--mo': String(this.mo) },
+      rootRef: this.rootRef, caseRef: this.caseRef, capRef: this.capRef, segRef: this.segRef,
+      onScroll: () => this.schedule(), noop: e => e && e.preventDefault && e.preventDefault(),
+      ids: { legend: `${dir}-capture-legend`, focus: `${dir}-focus-heading` }, radioName: `${dir}-capture-layer`,
+      layers, segInd, spot, proj, loci: cap.loci, cur, path: cap.path, marks: cap.marks, caption: cap.caption,
+      marksRole: cap.order ? 'group' : undefined, marksLabel: cap.order ? 'Marcas na captura. Use as setas para passar de uma a outra.' : undefined,
+      onMarksKey: e => {
+        const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }; const n = cap.order || 0; if (!n) return;
+        let next = null;
+        if (e.key in step) next = (Math.min(this.state.active, n - 1) + step[e.key] + n) % n; else if (e.key === 'Home') next = 0; else if (e.key === 'End') next = n - 1;
+        if (next === null) return; e.preventDefault();
+        this.setState({ active: next }, () => { const el = this.rootRef.current && this.rootRef.current.querySelector(`[data-markf="${next}"]`); el && el.focus(); });
+      },
+      fixTags, checkTags, items, seq, here, whole: st.whole, onWhole: e => this.setState({ whole: e.target.checked }),
+      stepPrev: () => this.step(-1), stepNext: () => this.step(1), conn,
+    };
+  }
+}
+</script>
+</body>
+</html>
