@@ -6,7 +6,7 @@ submitted automatically.
 ## Basics
 
 - **Item name:** AccessCheck
-- **Version:** 1.5.0
+- **Version:** 1.6.0
 - **Category:** Developer Tools
 - **Default language:** English (United States)
 - **Visibility:** Public
@@ -149,6 +149,23 @@ Certifications to accept, all of which the code supports:
 > Clicking the toolbar icon runs the whole audit, including the rules, the
 > extension's own checks and the fix verification, without attaching the
 > debugger at all.
+
+## What changed in 1.6.0
+
+- The panel moves from warm cream to a porcelain background with cool,
+  navy-tinted bands, so the panel, its cards and the audited page separate
+  more clearly. Navy ink stays.
+- Severities sit on one red scale, ordered by lightness: critical is dark
+  crimson with white numbers, serious and moderate are lighter with ink
+  numbers and a dark edge. They tell apart without relying on hue, in the
+  panel and in the marks drawn on the page.
+- Hatches, the measured ratio and other small text use the darker tone of
+  each severity, so they keep 4.5:1 on the panel's backgrounds.
+- Notices that are not findings, such as "Keyboard not checked yet", the
+  focus path notes and the Locate on page status, are steel blue instead of
+  a severity color. The partial coverage box gets a neutral border and a
+  steel mark.
+- The panel keeps Atkinson Hyperlegible.
 
 ## What changed in 1.5.0
 
