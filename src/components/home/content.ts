@@ -1,5 +1,3 @@
-import type { Severity } from "@/lib/scan/types";
-import type { Standing } from "@/lib/report/standing";
 import type { MessageKey } from "@/lib/i18n/t";
 
 export const CHROME_WEB_STORE_URL =
@@ -37,54 +35,5 @@ export const steps: Step[] = [
 ];
 
 export const exampleFinding = {
-  title: "home.example.title" as MessageKey,
-  elements: 7,
   measured: 2.1,
-  required: 4.5,
-  fixed: 4.62,
-  fromHex: "#8fb8a8",
-  toHex: "#2f6b57",
 };
-
-export const exampleScore = {
-  standing: "failing" as Standing,
-  score: 53,
-  passed: 39,
-  manualReview: 4,
-  needsReview: 1,
-  serious: 1,
-  moderate: 2,
-  deductions: [
-    {
-      severity: "serious" as Severity,
-      issues: 1,
-      elements: 7,
-      penalty: 25,
-      deduction: 41,
-      share: 86,
-      ifFixed: 91,
-      gain: 38,
-    },
-    {
-      severity: "moderate" as Severity,
-      issues: 2,
-      elements: 2,
-      penalty: 4,
-      deduction: 6,
-      share: 14,
-      ifFixed: 57,
-      gain: 4,
-    },
-  ],
-};
-
-export const exampleSummary: MessageKey = "home.example.summary";
-
-export const exampleMarkdownKeys: MessageKey[] = [
-  "home.md.line1",
-  "home.md.line2",
-  "home.md.line3",
-  "home.md.line4",
-  "home.md.line5",
-  "home.md.line6",
-];

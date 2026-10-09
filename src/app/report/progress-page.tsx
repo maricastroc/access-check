@@ -70,7 +70,7 @@ export function ProgressPage({ result }: { result: ScanResult }) {
           <div className="flex items-center gap-2.5 border-b border-hairline px-4 py-3">
             <span aria-hidden className="hatch-moderate size-2.5" />
             <span className="text-[13px] font-semibold text-ink">{t("severity.moderate")}</span>
-            <span className="font-cond text-[11px] tracking-[0.06em] text-moderate-text uppercase tabular-nums">
+            <span className="text-[11px] text-muted tabular-nums">
               {t("unit.finding", { count: result.counts.moderate })}
             </span>
           </div>
@@ -110,9 +110,7 @@ export function ProgressPage({ result }: { result: ScanResult }) {
           <div className="flex items-center gap-2.5 border-b border-hairline px-4 py-3">
             <span aria-hidden className="size-2.5 bg-verified" />
             <span className="text-[13px] font-semibold text-ink">{t("report.passedChecks")}</span>
-            <span className="font-cond text-[11px] tracking-[0.06em] text-verified uppercase tabular-nums">
-              {result.counts.passed}
-            </span>
+            <span className="text-[11px] text-muted tabular-nums">{result.counts.passed}</span>
           </div>
           <div className="grid grid-cols-2 gap-x-3 gap-y-2 p-4">
             {passedChecks(result, t)
@@ -211,10 +209,7 @@ export function ProgressPage({ result }: { result: ScanResult }) {
           {recs.map((r) => (
             <div key={r.term} className="border border-hairline p-4">
               <span aria-hidden className="inline-block h-1 w-6" style={{ background: r.color }} />
-              <div
-                className="mt-2.5 font-cond text-[9.5px] font-medium tracking-[0.12em] uppercase"
-                style={{ color: r.ink }}
-              >
+              <div className="mt-2.5 font-cond text-[11px] font-semibold" style={{ color: r.ink }}>
                 {r.term}
               </div>
               <div className="mt-1.5 text-[14px] font-semibold text-ink">{r.title}</div>

@@ -1,15 +1,17 @@
-import { BrandMark, ColorSwatch, Marker, Ruler, SectionKicker, StatusSeal } from "@/components/ui";
-import { STANDING_LABEL, STANDING_NOTE, STANDING_TONE } from "@/lib/report/standing";
-import {
-  axeRules,
-  complementaryPasses,
-  exampleFinding,
-  exampleMarkdownKeys,
-  exampleScore,
-  steps,
-} from "./content";
+import { SectionKicker } from "@/components/ui";
+import { NodeGlyph } from "@/components/investigation";
+import { axeRules, complementaryPasses, exampleFinding, steps } from "./content";
 import { UrlForm } from "./url-form";
-import { CapturePreview } from "./evidence-preview";
+import {
+  DEMO_SELECTOR,
+  DemoChain,
+  DemoFixTest,
+  DemoLocateStage,
+  DemoMarkdown,
+  DemoScreenshot,
+  DemoTestStage,
+  MiniReport,
+} from "./demo";
 import type { MessageKey, Translate } from "@/lib/i18n/t";
 
 function SectionHead({
@@ -52,62 +54,8 @@ function StageArtifact({ i, t }: { i: number; t: Translate }) {
       </div>
     );
   }
-  if (i === 1) {
-    return (
-      <div
-        aria-hidden
-        inert
-        className="relative h-17.5 overflow-hidden border border-hairline"
-        style={{ background: "#FBFAF7" }}
-      >
-        <div className="px-3 pt-3">
-          <div className="h-2 w-16 bg-ink/70" />
-          <span className="relative mt-3 inline-block">
-            <span
-              aria-hidden
-              className="absolute -inset-1 border-2"
-              style={{
-                borderColor: "var(--color-ink)",
-                background: "color-mix(in srgb, var(--color-serious) 10%, transparent)",
-              }}
-            />
-            <span
-              className="relative block px-2.5 py-1 text-[10px] font-semibold text-white"
-              style={{ background: "#8fb8a8" }}
-            >
-              {t("home.demo.order")}
-            </span>
-            <span className="absolute top-1/2 right-0 translate-x-[calc(100%+10px)] -translate-y-1/2">
-              <Marker
-                n={1}
-                state="selected"
-                label="2.1:1"
-                size={22}
-                ariaLabel={t("home.lens.locatedOccurrence")}
-              />
-            </span>
-          </span>
-        </div>
-      </div>
-    );
-  }
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2 text-[12px]">
-        <ColorSwatch hex={exampleFinding.fromHex} size={14} />
-        <span className="font-mono text-[11px] text-muted line-through">#8FB8A8</span>
-        <span aria-hidden className="text-muted">
-          →
-        </span>
-        <ColorSwatch hex={exampleFinding.toHex} size={14} />
-        <span className="font-mono text-[11px] text-ink">#2F6B57</span>
-        <span className="font-cond text-verified">4.62:1</span>
-      </div>
-      <StatusSeal t={t} status="verified">
-        {t("home.lens.verifiedInSandbox")}
-      </StatusSeal>
-    </div>
-  );
+  if (i === 1) return <DemoLocateStage />;
+  return <DemoTestStage />;
 }
 
 export function HowItWorks({ t }: { t: Translate }) {
@@ -222,9 +170,7 @@ export function ChecksIncluded({ t }: { t: Translate }) {
             <ul className="grid grid-cols-1 gap-y-2.5 px-5 py-5">
               {complementaryPasses.map((p) => (
                 <li key={p.label} className="grid grid-cols-[86px_1fr] items-baseline gap-3">
-                  <span className="font-cond text-[11px] tracking-widest text-steel uppercase">
-                    {t(p.label)}
-                  </span>
+                  <span className="text-[12.5px] font-semibold text-steel">{t(p.label)}</span>
                   <span className="text-[13.5px] text-body">{t(p.desc)}</span>
                 </li>
               ))}
@@ -249,138 +195,31 @@ export function EvidenceLensSection({ t }: { t: Translate }) {
           <p className="max-w-[46ch] text-[16px] leading-[1.55] text-body">{t("home.lens.body")}</p>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 gap-0 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
-          <div className="border border-ink bg-surface">
-            <div className="flex items-center justify-between gap-3 border-b border-ink px-4 py-2.5">
-              <SectionKicker>{t("home.lens.frameLabelFull")}</SectionKicker>
-            </div>
-            <CapturePreview t={t} height={340} />
-          </div>
-
-          <div className="relative pt-8 lg:pt-2 lg:pl-8">
-            <div className="flex items-center gap-2">
-              <span
-                aria-hidden
-                className="-ml-8 hidden h-px w-8 border-t border-dashed border-steel lg:block"
-              />
-              <span
-                aria-hidden
-                className="flex size-5 shrink-0 items-center justify-center bg-ink font-cond text-[12px] font-semibold text-surface"
-              >
-                1
-              </span>
-              <span aria-hidden className="h-px flex-1 border-t border-dashed border-steel" />
-              <span className="font-mono text-[12px] text-steel">a.hero__cta</span>
-            </div>
-
-            <div className="mt-3 flex items-center gap-2">
-              <span className="font-cond text-[11px] tracking-widest text-serious-text uppercase">
-                {t("severity.serious")}
-              </span>
-              <span className="ml-auto font-mono text-[12px] text-steel">1.4.3 AA</span>
-            </div>
-            <h3 className="mt-1.5 text-[16px] font-semibold text-ink">{t(exampleFinding.title)}</h3>
-            <p className="mt-1.5 text-[13.5px] leading-normal text-ink-2">
-              {t("home.lens.contrastStory")}
-            </p>
-
-            <div className="mt-4 border-t border-hairline pt-3">
-              <SectionKicker>{t("home.lens.measurement")}</SectionKicker>
-              <div className="mt-1.5 flex items-end gap-2">
-                <span className="font-cond text-[30px] leading-none text-serious tabular-nums">
-                  2.1:1
-                </span>
-                <span className="pb-1 text-[12px] text-muted">
-                  {t("ratio.minAAWithFix", {
-                    required: exampleFinding.required.toFixed(1),
-                    fixed: exampleFinding.fixed.toFixed(2),
-                  })}
-                </span>
-              </div>
-              <div className="mt-2">
-                <Ruler
-                  t={t}
-                  variant="ratio"
-                  found={exampleFinding.measured}
-                  required={exampleFinding.required}
-                  fixed={exampleFinding.fixed}
-                  height={16}
-                />
-              </div>
-            </div>
-
-            <div className="mt-4 border-t border-hairline pt-3">
-              <SectionKicker>{t("home.lens.suggestedFix")}</SectionKicker>
-              <div className="mt-2 flex flex-wrap items-center gap-2 text-[12.5px]">
-                <ColorSwatch hex={exampleFinding.fromHex} size={14} />
-                <span className="font-mono text-[11.5px] text-muted line-through">#8FB8A8</span>
-                <span aria-hidden className="text-muted">
-                  →
-                </span>
-                <ColorSwatch hex={exampleFinding.toHex} size={14} />
-                <span className="font-mono text-[11.5px] text-ink">#2F6B57</span>
-                <span className="text-muted">(color)</span>
-              </div>
-              <div className="mt-3">
-                <StatusSeal t={t} status="verified" />
-              </div>
-              <p className="mt-2 text-[12px] text-muted">{t("home.lens.sandboxNote")}</p>
-            </div>
+        <div className="mt-8 grid grid-cols-1 border border-hairline lg:grid-cols-[minmax(0,1fr)_400px]">
+          <DemoScreenshot sticky label={t("home.lens.frameLabelFull")} />
+          <div className="border-t border-hairline bg-canvas lg:border-t-0 lg:border-l">
+            <DemoChain />
           </div>
         </div>
 
         <div className="mt-4 flex flex-wrap gap-x-8 gap-y-1.5 text-[13px] text-muted">
           <span>
-            <span className="font-cond text-serious-text">2.1:1</span> {t("home.lens.measureFound")}
+            <span className="font-mono text-serious-text">
+              {exampleFinding.measured.toFixed(2)}:1
+            </span>{" "}
+            {t("home.lens.measureFound")}
           </span>
           <span>
-            <span className="font-mono text-steel">a.hero__cta</span> {t("home.lens.exactSelector")}
+            <span className="font-mono text-steel">{DEMO_SELECTOR}</span>{" "}
+            {t("home.lens.exactSelector")}
           </span>
           <span>
-            <span className="font-cond text-verified">{t("home.lens.sandbox")}</span>{" "}
+            <span className="font-semibold text-verified">{t("home.lens.sandbox")}</span>{" "}
             {t("home.lens.reauditedInCopy")}
           </span>
         </div>
       </div>
     </section>
-  );
-}
-
-function BeatButton({
-  hex,
-  ratio,
-  tone,
-  t,
-}: {
-  hex: string;
-  ratio: string;
-  tone: "serious" | "verified";
-  t: Translate;
-}) {
-  return (
-    <div>
-      <div
-        aria-hidden
-        inert
-        className="flex h-11 items-center justify-center text-[13px] font-semibold text-white"
-        style={{ background: hex }}
-      >
-        {t("home.demo.order")}
-      </div>
-      <div className="mt-1.5 flex items-center justify-between">
-        <span className="flex items-center gap-1.5 font-mono text-[11px] text-muted">
-          <ColorSwatch hex={hex} size={12} /> {hex.toUpperCase()}
-        </span>
-        <span
-          className="font-cond text-[15px] font-semibold"
-          style={{
-            color: tone === "verified" ? "var(--color-verified)" : "var(--color-serious-text)",
-          }}
-        >
-          {ratio}
-        </span>
-      </div>
-    </div>
   );
 }
 
@@ -395,113 +234,17 @@ export function SandboxSection({ t }: { t: Translate }) {
           </p>
         </div>
 
-        <div className="mt-8 border border-border bg-surface">
-          <div className="flex items-center justify-between border-b border-hairline px-4 py-2.5">
+        <div className="mt-8 border border-hairline bg-surface">
+          <div className="flex items-center justify-between border-b border-hairline px-5 py-3">
             <SectionKicker>{t("home.sandbox.measurement")}</SectionKicker>
-            <span className="font-mono text-[12px] text-steel">a.hero__cta</span>
+            <span className="font-mono text-[12px] text-steel">{DEMO_SELECTOR}</span>
           </div>
-
           <div className="p-6">
-            <div className="flex items-end gap-3">
-              <span className="font-cond text-[52px] leading-[0.8] text-serious tabular-nums">
-                2.1:1
-              </span>
-              <span className="pb-2 text-[13px] text-muted">
-                {t("home.sandbox.found", { required: exampleFinding.required })}
-              </span>
-            </div>
-            <div className="mt-3">
-              <Ruler
-                t={t}
-                variant="ratio"
-                found={exampleFinding.measured}
-                required={exampleFinding.required}
-                fixed={exampleFinding.fixed}
-                height={22}
-              />
-            </div>
-
-            <div className="mt-9 grid grid-cols-1 items-center gap-5 sm:grid-cols-[1fr_auto_1fr]">
-              <div>
-                <SectionKicker tone="steel">{t("home.lens.before")}</SectionKicker>
-                <div className="mt-2">
-                  <BeatButton hex={exampleFinding.fromHex} ratio="2.1:1" tone="serious" t={t} />
-                </div>
-              </div>
-              <div className="flex flex-col items-center gap-1 text-muted">
-                <span aria-hidden className="font-cond text-[22px] text-serious">
-                  →
-                </span>
-                <span className="max-w-[16ch] text-center text-[11px] leading-tight">
-                  {t("home.sandbox.nearestPassing")}
-                </span>
-              </div>
-              <div>
-                <div className="flex items-center justify-between">
-                  <SectionKicker tone="steel" className="text-verified!">
-                    {t("home.lens.after")}
-                  </SectionKicker>
-                  <StatusSeal t={t} status="verified">
-                    {t("home.cta.verified")}
-                  </StatusSeal>
-                </div>
-                <div className="mt-2">
-                  <BeatButton hex={exampleFinding.toHex} ratio="4.62:1" tone="verified" t={t} />
-                </div>
-              </div>
-            </div>
+            <DemoFixTest />
           </div>
         </div>
       </div>
     </section>
-  );
-}
-
-function MiniPdf({ t }: { t: Translate }) {
-  return (
-    <div className="border border-ink bg-surface p-4">
-      <div className="flex items-center justify-between border-b border-hairline pb-2">
-        <span className="flex items-center gap-1.5">
-          <BrandMark size={13} />
-          <span className="text-[10px] font-semibold text-ink">AccessCheck</span>
-        </span>
-        <span className="font-mono text-[8.5px] text-muted">aurora-coffee.com</span>
-      </div>
-      <div className="mt-3">
-        <span className="font-cond text-[8.5px] tracking-[0.12em] text-muted uppercase">
-          {t("standing.kicker")}
-        </span>
-        <p
-          className="mt-0.5 font-cond text-[24px] leading-[1.02]"
-          style={{ color: STANDING_TONE[exampleScore.standing] }}
-        >
-          {t(STANDING_LABEL[exampleScore.standing])}
-        </p>
-        <p className="mt-1 text-[9px] leading-tight text-muted">
-          {t(STANDING_NOTE[exampleScore.standing])}
-        </p>
-      </div>
-      <div className="mt-3 space-y-1.5">
-        <div className="border-l-2 border-serious bg-band px-2 py-1">
-          <div className="flex items-center justify-between text-[9px]">
-            <span className="font-cond tracking-[0.08em] text-serious-text uppercase">
-              {t("severity.serious")}
-            </span>
-            <span className="font-mono text-steel">1.4.3</span>
-          </div>
-          <div className="text-[10px] font-semibold text-ink">{t("home.example.title")}</div>
-        </div>
-        <div className="border-l-2 border-moderate bg-band px-2 py-1">
-          <div className="flex items-center justify-between text-[9px]">
-            <span className="font-cond tracking-[0.08em] text-moderate-text uppercase">
-              {t("severity.moderate")}
-            </span>
-            <span className="font-mono text-steel">1.3.1</span>
-          </div>
-          <div className="text-[10px] font-semibold text-ink">{t("home.example.headingSkip")}</div>
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -513,13 +256,13 @@ export function ExportSection({ t }: { t: Translate }) {
 
         <div className="mt-9 grid grid-cols-1 gap-6 md:grid-cols-2">
           <div className="grid grid-cols-[180px_1fr] gap-5">
-            <MiniPdf t={t} />
+            <MiniReport />
             <div>
               <div className="flex items-center gap-2">
-                <span className="border border-border bg-surface px-1.5 py-0.5 font-cond text-[10px] tracking-widest text-ink uppercase">
+                <span className="border border-border bg-surface px-1.5 py-0.5 font-mono text-[11px] font-semibold text-ink">
                   PDF
                 </span>
-                <span className="font-cond text-[11px] tracking-widest text-muted uppercase">
+                <span className="text-[12.5px] font-semibold text-muted">
                   {t("home.export.pdfFor")}
                 </span>
               </div>
@@ -532,30 +275,13 @@ export function ExportSection({ t }: { t: Translate }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-[1fr] gap-5 sm:grid-cols-[1fr_180px] sm:[&>*:first-child]:order-2">
-            <div className="border border-ink bg-surface">
-              <div className="flex items-center gap-2 border-b border-hairline px-3 py-1.5">
-                <span aria-hidden className="size-2 bg-steel" />
-                <span className="font-mono text-[10.5px] text-muted">{t("home.md.filename")}</span>
-              </div>
-              <div className="bg-code px-3 py-2.5 font-mono text-[12px] leading-[1.7]">
-                {exampleMarkdownKeys.map((key, i) => {
-                  const text = t(key);
-                  const tone = key === "home.md.line5" ? "text-muted" : "text-ink-2";
-                  return (
-                    <div key={i} className={key === "home.md.line6" ? "text-verified" : tone}>
-                      {text}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+          <div className="flex flex-col gap-5">
             <div>
               <div className="flex items-center gap-2">
-                <span className="border border-border bg-surface px-1.5 py-0.5 font-cond text-[10px] tracking-widest text-ink uppercase">
+                <span className="border border-border bg-surface px-1.5 py-0.5 font-mono text-[11px] font-semibold text-ink">
                   MD
                 </span>
-                <span className="font-cond text-[11px] tracking-widest text-muted uppercase">
+                <span className="text-[12.5px] font-semibold text-muted">
                   {t("home.export.mdFor")}
                 </span>
               </div>
@@ -565,6 +291,13 @@ export function ExportSection({ t }: { t: Translate }) {
               <p className="mt-1.5 text-[14px] leading-normal text-body">
                 {t("home.export.mdBody")}
               </p>
+            </div>
+            <div className="border border-hairline bg-surface">
+              <div className="flex items-center gap-2 border-b border-hairline px-3 py-1.5">
+                <span aria-hidden className="size-2 bg-steel" />
+                <span className="font-mono text-[10.5px] text-muted">{t("home.md.filename")}</span>
+              </div>
+              <DemoMarkdown />
             </div>
           </div>
         </div>
@@ -577,17 +310,17 @@ export function FinalCta({ t }: { t: Translate }) {
   return (
     <section className="bg-ink text-surface">
       <div className="mx-auto w-full max-w-300 px-6 py-16">
-        <div className="flex flex-wrap items-center gap-x-8 gap-y-2 border-b border-ink-2 pb-6 font-cond text-[13px] tracking-[0.06em] text-band uppercase">
-          <span className="flex items-center gap-2">
-            <span aria-hidden className="hatch-serious size-2.5" /> {t("home.cta.measured")}
+        <div className="flex flex-wrap items-center gap-x-8 gap-y-2 border-b border-ink-2 pb-6 text-[13.5px] font-semibold text-band">
+          <span className="flex items-center gap-2.5">
+            <NodeGlyph kind="located" sev="serious" /> {t("home.cta.located")}
           </span>
-          <span className="flex items-center gap-2">
-            <span aria-hidden className="size-2.5 bg-steel" /> {t("home.cta.located")}
+          <span className="flex items-center gap-2.5">
+            <NodeGlyph kind="evidence" sev="serious" /> {t("home.cta.measured")}
           </span>
-          <span className="flex items-center gap-2">
-            <span aria-hidden className="size-2.5 bg-verified" /> {t("home.cta.verified")}
+          <span className="flex items-center gap-2.5">
+            <NodeGlyph kind="end" sev="serious" end="tested" /> {t("home.cta.verified")}
           </span>
-          <span className="ml-auto font-sans text-[12px] tracking-normal text-disabled normal-case">
+          <span className="ml-auto text-[12px] font-normal text-disabled">
             {t("home.footerStandards")}
           </span>
         </div>

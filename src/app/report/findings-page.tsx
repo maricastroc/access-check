@@ -1,5 +1,5 @@
 import type { ScanResult, Severity } from "@/lib/scan/types";
-import { safeHost } from "./shared";
+import { findingsToFix, safeHost } from "./shared";
 import { GroupHeading, LegendChip, MiniHeader, PageShell, SectionKicker } from "./primitives";
 import { DetailedCard } from "./detailed-card";
 import { translator } from "@/lib/i18n/t";
@@ -8,6 +8,7 @@ export function FindingsPage({ result }: { result: ScanResult }) {
   const t = translator(result.locale);
   const host = safeHost(result.finalUrl);
   const detailed: Severity[] = ["critical", "serious"];
+  const numbers = new Map(findingsToFix(result).map((f) => [f.id, f.n]));
 
   return (
     <PageShell t={t} page={2} host={host}>
@@ -27,7 +28,7 @@ export function FindingsPage({ result }: { result: ScanResult }) {
         {(["critical", "serious", "moderate"] as Severity[]).map((s) => (
           <LegendChip t={t} key={s} sev={s} count={result.counts[s]} />
         ))}
-        <span className="inline-flex items-center gap-1.5 border border-border bg-surface px-3 py-1.5 text-[11px] font-medium text-ink">
+        <span className="inline-flex items-center gap-1.5 py-1 text-[11px] font-medium text-ink">
           <span aria-hidden className="size-2.5 bg-verified" />
           {t("report.passedLabel")}{" "}
           <b className="font-medium text-muted tabular-nums">{result.counts.passed}</b>
@@ -49,6 +50,7 @@ export function FindingsPage({ result }: { result: ScanResult }) {
                   t={t}
                   key={`${v.id}-${i}`}
                   v={v}
+                  n={numbers.get(`wcag:${v.id}`) ?? null}
                   identity={result.identities?.[v.where]}
                 />
               ))}

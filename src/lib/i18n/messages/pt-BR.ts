@@ -132,11 +132,6 @@ export const ptBR: Catalog = {
   "scanFail.engineVersion":
     "O motor de auditoria na página informa a versão {found}, mas este driver precisa da {needed}. Compile de novo com `npm run build:engine`.",
 
-  "home.lens.sharedColor": "Problema de contraste, outro elemento com a mesma cor",
-  "home.lens.locatedElement": "Problema de contraste, elemento localizado",
-  "home.lens.locatedVerified": "Elemento localizado, correção testada",
-  "home.example.headingSkip": "Níveis de título pulados",
-
   "api.internal": "Algo deu errado do nosso lado. Tente de novo.",
   "api.badRequest": "Não conseguimos ler essa requisição. Recarregue a página e tente de novo.",
   "api.noAddress":
@@ -392,21 +387,9 @@ export const ptBR: Catalog = {
   "standing.pending": "Ainda verificando",
   "standing.pendingNote":
     "Os primeiros resultados chegaram. Teclado, visualização em celular, menus expandidos, movimento e regiões dinâmicas ainda estão sendo verificados, e qualquer um deles pode mudar a avaliação desta página.",
-  "standing.issueCount": {
-    one: "{count} problema {severity}",
-    other: "{count} problemas {severity}",
-  },
   "standing.staleTitle": "Pontuado com um modelo anterior",
   "standing.staleBody":
     "Este resultado foi gerado antes do modelo de pontuação atual, que deixa as observações fora da contagem. As contagens e a ordenação seguem as regras antigas. Audite a página de novo para pontuá-la com o modelo atual.",
-  "priority.kicker": "O que corrigir primeiro",
-  "priority.note": "Ordenado por quanto do peso restante da página cada grupo carrega.",
-  "priority.share": "{share}% do que resta",
-  "priority.elements": {
-    one: "em {count} elemento",
-    other: "em {count} elementos",
-  },
-  "priority.nothing": "Nenhum problema afeta a avaliação desta página.",
   "summary.remaining": {
     one: " Resta {parts}, fora desta contagem.",
     other: " Restam {parts}, fora desta contagem.",
@@ -505,15 +488,9 @@ export const ptBR: Catalog = {
   "review.nested.s1": "Confirme que não há controles focalizáveis dentro de outros controles",
   "review.nested.s2": "Simplifique a marcação para que cada controle fique separado",
 
-  "home.lens.frameLabel": "Captura \u00b7 escala 43%",
+  "home.lens.frameLabel": "Captura · 1200 × 800",
 
   "home.md.filename": "accesscheck-aurora-coffee-com.md",
-  "home.md.line1": "## aurora-coffee.com · Com falhas",
-  "home.md.line2": "| severidade | problemas | elementos |",
-  "home.md.line3": "| grave    | 1 | 7 |",
-  "home.md.line4": "| moderado | 2 | 2 |",
-  "home.md.line5": "### Corrija primeiro",
-  "home.md.line6": "1. color-contrast · 1.4.3 · correção testada",
 
   "focusPath.insideScroller": "dentro de uma área rolável",
   "capture.markerHint": "Selecione uma marca para abrir o problema dela.",
@@ -533,8 +510,7 @@ export const ptBR: Catalog = {
     other:
       "Este resultado cobre apenas o que pode ser verificado automaticamente. Atender à WCAG também depende dos {count} itens de revisão manual listados na página 3.",
   },
-  "home.lens.frameLabelFull":
-    "Evidências \u00b7 aurora-coffee.com \u00b7 1200 \u00d7 800 \u00b7 escala 43%",
+  "home.lens.frameLabelFull": "Captura · aurora-coffee.com · 1200 × 800",
 
   "capture.notCaptured": "Ainda não capturada",
   "capture.notAvailable": "Indisponível",
@@ -630,19 +606,7 @@ export const ptBR: Catalog = {
   "results.partialNote":
     "Este resultado cobre só o que conseguimos medir. O que ficou de fora está listado abaixo, sem estimativas.",
 
-  "home.lens.locatedOccurrence": "Ocorrência localizada",
-  "home.lens.verifiedInSandbox": "Testado em uma cópia da página",
-  "home.lens.measurement": "Medição",
-  "home.lens.measuredLabel": "medido",
-  "home.lens.minLabel": "vs. mínimo",
-  "home.lens.shareThisColor": {
-    one: "{count} elemento usa esta cor",
-    other: "{count} elementos usam esta cor",
-  },
-  "home.lens.suggestedFix": "Correção sugerida",
   "home.lens.sandbox": "Cópia da página",
-  "home.lens.before": "Antes",
-  "home.lens.after": "Depois",
 
   "stages.opening": "Abrindo a página e esperando que ela estabilize",
   "stages.rules": "Executando as verificações WCAG A e AA (axe-core)",
@@ -691,7 +655,6 @@ export const ptBR: Catalog = {
     "Este resultado cobre apenas o que pode ser verificado automaticamente. A conformidade com a WCAG também depende de itens que precisam de revisão manual.",
   "ratio.minAA": "{value} mín. AA",
   "ratio.fixedAt": "{value} corrigido",
-  "ratio.minAAWithFix": "mín. AA {required}:1 \u00b7 corrigido {fixed}:1",
   "ratio.ariaLabel": "Contraste de {found} para 1, mínimo de {required} para 1",
   "ratio.ariaLabelFixed": ", a correção alcança {fixed} para 1",
   "score.ariaLabel": "Ordenação de prioridade: {score} de 100",
@@ -714,10 +677,7 @@ export const ptBR: Catalog = {
     "Selecione um problema e a marca dele acende na captura. Clique na marca e os detalhes abrem: imagem, medição e código no mesmo lugar.",
   "home.lens.title": "Veja a barreira no elemento que a causou",
   "home.lens.body":
-    "Elemento, seletor, medição e diagnóstico aparecem conectados. Ao selecionar um problema, a marca correspondente é destacada e mostra a razão de contraste. As outras ficam com contorno tracejado, então dá para diferenciá-las sem depender só da cor.",
-  "home.lens.contrastStory":
-    "O texto branco no botão verde-claro some para quem tem baixa visão ou para qualquer pessoa sob sol forte. E esse é o botão de finalizar a compra.",
-  "home.lens.sandboxNote": "Testado em uma cópia da página. O aurora-coffee.com não foi alterado.",
+    "Elemento, seletor, medição e diagnóstico ficam ligados. Ao selecionar um problema, o elemento ganha uma moldura na captura, com o mesmo número da lista. Os outros elementos com o mesmo problema ficam com uma moldura mais leve.",
   "home.form.exportNote": "Exporte em PDF ou Markdown",
   "home.demo.roasted": "Torrado no Porto toda terça e enviado na mesma semana.",
   "home.demo.navMenu": "Cardápio",
@@ -726,7 +686,7 @@ export const ptBR: Catalog = {
   "home.demo.headlineRest": "em pequenos lotes, desde 2011",
   "home.demo.order": "Peça agora",
 
-  "home.mostRecent": "Auditoria pública mais recente · como a página está",
+  "home.mostRecent": "Exemplo de auditoria · como a página está",
   "home.auditSite": "Auditar site",
   "home.auditPage": "Auditar página",
   "home.timing": "De 10 a 25 segundos por página",
@@ -735,11 +695,11 @@ export const ptBR: Catalog = {
   "home.stage.locate": "Localizar",
   "home.stage.verify": "Testar",
   "home.stage.browserReady": "Chromium \u00b7 axe-core injetado \u00b7 página estabilizada",
-  "home.axeRules.kicker": "regras do axe-core",
+  "home.axeRules.kicker": "Regras do axe-core",
   "home.axeRules.note": "aprova ou reprova, sem margem para interpretação",
   "home.axeRules.countLine1": "critérios de sucesso",
   "home.axeRules.countLine2": "verificados automaticamente",
-  "home.complementary.kicker": "verificações complementares",
+  "home.complementary.kicker": "Verificações complementares",
   "home.complementary.note": "o que depende do comportamento da página",
   "home.complementary.countLine1": "verificações que vão",
   "home.complementary.countLine2": "além do DOM estático",
@@ -763,9 +723,7 @@ export const ptBR: Catalog = {
   "home.sandbox.title": "Cada correção é testada em uma cópia. Seu site permanece intacto.",
   "home.sandbox.body":
     "Aplicamos a mudança em uma cópia da página, verificamos de novo e depois desfazemos. Se o problema deixa de aparecer, a correção é marcada como testada. Isso não é garantia, e o site original nunca é alterado.",
-  "home.sandbox.nearestPassing": "a luminosidade aprovada mais próxima, no mesmo matiz",
   "home.sandbox.measurement": "Medição de contraste \u00b7 1.4.3 AA",
-  "home.sandbox.found": "encontrado \u00b7 o mínimo para texto normal é {required}:1",
   "home.export.kicker": "Exportação",
   "home.export.title": "Duas exportações, dois públicos: quem decide e quem corrige",
   "home.export.pdfFor": "para quem decide",
@@ -775,7 +733,7 @@ export const ptBR: Catalog = {
   "home.export.mdFor": "para quem corrige",
   "home.export.mdTitle": "Seletor, trecho de código e status da correção",
   "home.export.mdBody":
-    "Tabela de severidade e lista priorizada, prontas para colar em um ticket ou pull request, já com as correções testadas marcadas.",
+    "Cada problema com o elemento, a medição, a correção sugerida e o resultado do teste, pronto para colar em um ticket ou pull request.",
 
   "home.cta.measured": "Medido",
   "home.cta.located": "Localizado",
@@ -820,7 +778,6 @@ export const ptBR: Catalog = {
   "home.step3.body":
     "Aplicamos a mudança em uma cópia da página, verificamos de novo e marcamos a correção como testada ou como pendente de revisão.",
 
-  "home.example.title": "Texto abaixo do contraste mínimo",
   "home.example.summary":
     "Nenhuma barreira crítica, mas 1 problema grave ainda deixa a página mais difícil de usar para quem depende de tecnologia assistiva.",
 
@@ -1007,9 +964,6 @@ export const ptBR: Catalog = {
   "stepper.previous": "Ocorrência anterior",
   "stepper.next": "Próxima ocorrência",
   "stepper.position": "Ocorrência {at} de {total}",
-  "seal.verified":
-    "Correção testada: aplicada por um instante, o problema não foi mais identificado",
-  "seal.needsReview": "Precisa de revisão: a sugestão sozinha não resolve",
 
   "site.score": "Nota do site",
   "site.runningAverage": "média parcial entre as páginas auditadas",
@@ -1384,7 +1338,6 @@ export const ptBR: Catalog = {
   "context.mobileViewport": "tela de {width}px",
   "report.levelsValue": "A e AA · 2.0 / 2.1 / 2.2",
   "report.effortImpact": "Esforço: {effort} · Impacto: {impact}",
-  "report.impactTag": "Impacto {impact}",
   "report.effort.quick": "baixo",
   "report.effort.moderate": "médio",
   "report.effort.involved": "alto",

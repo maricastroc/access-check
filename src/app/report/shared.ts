@@ -1,5 +1,6 @@
 import type { MessageKey } from "@/lib/i18n/t";
-import type { Severity } from "@/lib/scan/types";
+import type { ScanResult, Severity } from "@/lib/scan/types";
+import { workQueue, type FindingView } from "@/lib/report/findings";
 
 export type Status = "loading" | "done" | "error";
 
@@ -34,4 +35,18 @@ export function shortId(url: string): string {
   let h = 0;
   for (let i = 0; i < url.length; i++) h = (h * 31 + url.charCodeAt(i)) >>> 0;
   return String(1000 + (h % 9000));
+}
+
+export function findingsToFix(result: ScanResult): FindingView[] {
+  return workQueue(result).find((g) => g.group === "fix")?.findings ?? [];
+}
+
+export function ruleIdOfTitle(result: ScanResult, title: string): string | null {
+  const contexts = result.contexts;
+  const sources = [
+    ...result.violations,
+    ...(contexts?.mobile.onlyOnMobile ?? []),
+    ...(contexts?.dynamic.states.flatMap((state) => state.newIssues) ?? []),
+  ];
+  return sources.find((source) => source.title === title)?.id ?? null;
 }

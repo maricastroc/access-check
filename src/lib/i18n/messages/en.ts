@@ -123,11 +123,6 @@ export const en = {
   "scanFail.engineVersion":
     "The audit engine in the page reports version {found}, but this driver needs {needed}. Rebuild it with `npm run build:engine`.",
 
-  "home.lens.sharedColor": "Contrast finding, another element sharing this color",
-  "home.lens.locatedElement": "Contrast finding, located element",
-  "home.lens.locatedVerified": "Located element, fix tested",
-  "home.example.headingSkip": "Heading level skips",
-
   "api.internal": "Something went wrong on our side. Try again.",
   "api.badRequest": "We couldn't read that request. Reload the page and try again.",
   "api.noAddress": "No web address was provided. Enter a page address and try again.",
@@ -373,21 +368,9 @@ export const en = {
   "standing.pending": "Still checking",
   "standing.pendingNote":
     "The first results are in. Keyboard, mobile viewport, expanded menus, motion and live regions are still being checked, and any of them can change where this page stands.",
-  "standing.issueCount": {
-    one: "{count} {severity} finding",
-    other: "{count} {severity} findings",
-  },
   "standing.staleTitle": "Scored with an earlier model",
   "standing.staleBody":
     "This result was produced before the current scoring model, which leaves observations out of the count. Its counts and ranking follow the older rules. Audit the page again to score it with the current model.",
-  "priority.kicker": "What to fix first",
-  "priority.note": "Ordered by how much of the page's remaining weight each group carries.",
-  "priority.share": "{share}% of what is left",
-  "priority.elements": {
-    one: "across {count} element",
-    other: "across {count} elements",
-  },
-  "priority.nothing": "Nothing counts against this page.",
   "summary.remaining": {
     one: " {parts} remains, not counted here.",
     other: " {parts} remain, not counted here.",
@@ -479,15 +462,9 @@ export const en = {
   "review.nested.s1": "Confirm there aren't focusable controls inside other controls",
   "review.nested.s2": "Flatten the markup so each control stands on its own",
 
-  "home.lens.frameLabel": "Screenshot \u00b7 scale 43%",
+  "home.lens.frameLabel": "Screenshot · 1200 × 800",
 
   "home.md.filename": "accesscheck-aurora-coffee-com.md",
-  "home.md.line1": "## aurora-coffee.com · Failing",
-  "home.md.line2": "| severity | findings | elements |",
-  "home.md.line3": "| serious  | 1 | 7 |",
-  "home.md.line4": "| moderate | 2 | 2 |",
-  "home.md.line5": "### Fix first",
-  "home.md.line6": "1. color-contrast · 1.4.3 · fix tested",
 
   "focusPath.insideScroller": "inside a scrolling area",
   "capture.markerHint": "Select a mark to open its finding.",
@@ -507,8 +484,7 @@ export const en = {
     other:
       "This result covers only what a tool can decide on its own. Meeting WCAG also depends on the {count} manual-review items listed on page 3.",
   },
-  "home.lens.frameLabelFull":
-    "Evidence Lens \u00b7 aurora-coffee.com \u00b7 1200 \u00d7 800 \u00b7 scale 43%",
+  "home.lens.frameLabelFull": "Screenshot · aurora-coffee.com · 1200 × 800",
 
   "capture.notCaptured": "Not captured yet",
   "capture.notAvailable": "Not available",
@@ -602,19 +578,7 @@ export const en = {
   "results.partialNote":
     "This result covers only what we could measure. Anything we skipped is listed below, not guessed.",
 
-  "home.lens.locatedOccurrence": "Located occurrence",
-  "home.lens.verifiedInSandbox": "Tested on a copy",
-  "home.lens.measurement": "Measurement",
-  "home.lens.measuredLabel": "measured",
-  "home.lens.minLabel": "vs min",
-  "home.lens.shareThisColor": {
-    one: "{count} element shares this color",
-    other: "{count} elements share this color",
-  },
-  "home.lens.suggestedFix": "Suggested fix",
   "home.lens.sandbox": "Copy of the page",
-  "home.lens.before": "Before",
-  "home.lens.after": "After",
 
   "stages.opening": "Opening the page and waiting for it to settle",
   "stages.rules": "Running the WCAG A and AA checks (axe-core)",
@@ -663,7 +627,6 @@ export const en = {
     "This result covers the rules a tool can decide. WCAG conformance also depends on checks that no automated tool can settle on its own.",
   "ratio.minAA": "{value} min AA",
   "ratio.fixedAt": "{value} fixed",
-  "ratio.minAAWithFix": "min AA {required}:1 \u00b7 fixed {fixed}:1",
   "ratio.ariaLabel": "Contrast {found} to 1, minimum {required} to 1",
   "ratio.ariaLabelFixed": ", fix reaches {fixed} to 1",
   "score.ariaLabel": "Priority ranking {score} out of 100",
@@ -687,10 +650,7 @@ export const en = {
     "Select a finding and its mark lights up. Click the mark and the details open: the screenshot, the measurement and the code in one place.",
   "home.lens.title": "See the barrier on the element that caused it",
   "home.lens.body":
-    "Element, selector, measurement and diagnosis stay connected. Select a finding and its mark fills in. The located element is labeled with the ratio, and the others keep a dashed outline, so you can tell them apart without relying on color.",
-  "home.lens.contrastStory":
-    "The white text on the light-green button disappears for people with low vision, or for anyone in bright sunlight. And this is the checkout button.",
-  "home.lens.sandboxNote": "Tested on a copy of the page. aurora-coffee.com was not changed.",
+    "Element, selector, measurement and diagnosis stay connected. Select a finding and its element is framed on the screenshot, under the same number as in the list. The other elements with the same problem keep a lighter frame.",
   "home.form.exportNote": "Export as PDF or Markdown",
   "home.demo.roasted": "Roasted in Porto every Tuesday and shipped the same week.",
   "home.demo.navMenu": "Menu",
@@ -699,7 +659,7 @@ export const en = {
   "home.demo.headlineRest": "small batch, since 2011",
   "home.demo.order": "Order now",
 
-  "home.mostRecent": "Most recent public audit \u00b7 where the page stands",
+  "home.mostRecent": "Example audit · where the page stands",
   "home.auditSite": "Audit site",
   "home.auditPage": "Audit page",
   "home.timing": "About 10 to 25 seconds per page",
@@ -712,7 +672,7 @@ export const en = {
   "home.axeRules.note": "pass or fail, objectively",
   "home.axeRules.countLine1": "success criteria",
   "home.axeRules.countLine2": "checked automatically",
-  "home.complementary.kicker": "complementary checks",
+  "home.complementary.kicker": "Complementary checks",
   "home.complementary.note": "what a tool can't judge alone",
   "home.complementary.countLine1": "checks beyond",
   "home.complementary.countLine2": "the static DOM",
@@ -735,9 +695,7 @@ export const en = {
   "home.sandbox.title": "Every fix is tested on a copy, so your site is never touched",
   "home.sandbox.body":
     "We apply the change to a copy of the page, run the check again, then undo it. If the problem no longer shows up, the fix is marked as tested. That is not a guarantee, and your real site is never touched.",
-  "home.sandbox.nearestPassing": "nearest passing lightness, same hue",
   "home.sandbox.measurement": "Contrast measurement \u00b7 1.4.3 AA",
-  "home.sandbox.found": "found \u00b7 minimum for normal text is {required}:1",
   "home.export.kicker": "Export",
   "home.export.title":
     "Two exports for two readers: the person who decides and the person who fixes",
@@ -748,7 +706,7 @@ export const en = {
   "home.export.mdFor": "for the person who fixes",
   "home.export.mdTitle": "Selector, snippet and fix status",
   "home.export.mdBody":
-    "A severity table and a prioritized list, ready to paste into a ticket or a pull request, with the tested fixes already marked.",
+    "Each finding with its element, measurement, suggested fix and test status, ready to paste into a ticket or a pull request.",
 
   "home.cta.measured": "Measured",
   "home.cta.located": "Located",
@@ -791,7 +749,6 @@ export const en = {
   "home.step3.body":
     "We apply the change to a copy of the page, run the check again, then mark the fix as tested or as needing review.",
 
-  "home.example.title": "Text below the minimum contrast",
   "home.example.summary":
     "No critical barriers, but 1 serious finding still makes the page harder to use for people who rely on assistive technology.",
 
@@ -975,8 +932,6 @@ export const en = {
   "stepper.previous": "Previous occurrence",
   "stepper.next": "Next occurrence",
   "stepper.position": "Occurrence {at} of {total}",
-  "seal.verified": "Fix tested: applied for a moment, and the rule passed",
-  "seal.needsReview": "Needs review: the suggestion alone doesn't clear it",
 
   "site.score": "Site score",
   "site.runningAverage": "running average across audited pages",
@@ -1349,7 +1304,6 @@ export const en = {
   "context.mobileViewport": "{width}px viewport",
   "report.levelsValue": "A & AA · 2.0 / 2.1 / 2.2",
   "report.effortImpact": "Effort: {effort} · Impact: {impact}",
-  "report.impactTag": "{impact} impact",
   "report.effort.quick": "quick",
   "report.effort.moderate": "moderate",
   "report.effort.involved": "involved",
