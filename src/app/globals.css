@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+@source not "../../design_handoff_vegetal_2a";
+@source not "../../design_exploration_cor_tipo";
+
 @theme {
   --font-sans: var(--font-ui), ui-sans-serif, system-ui, sans-serif;
   --font-cond: var(--font-ui), ui-sans-serif, system-ui, sans-serif;
