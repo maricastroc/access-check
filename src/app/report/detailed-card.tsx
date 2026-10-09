@@ -2,19 +2,24 @@ import type { ElementIdentity } from "@/lib/scan/dom/identity";
 import type { ScanResult } from "@/lib/scan/types";
 import { parseContrastFix } from "@/lib/report/contrast";
 import { describeElement } from "@/lib/report/identity";
+import { humanImpact } from "@/lib/report/guidance";
+import { ruleTitle } from "@/lib/report/titles";
 import { toFixStatus } from "@/lib/report/severity";
 import { certifiedVerification, fixConfidenceOf } from "@/lib/scan/confidence";
-import { ColorSwatch, StatusSeal } from "@/components/ui";
-import { sevColor, sevInk, sevLabelKey } from "./shared";
+import { ColorSwatch } from "@/components/ui";
+import { NodeGlyph, Tag } from "@/components/investigation";
+import { sevLabelKey } from "./shared";
 import { FieldLabel } from "./primitives";
 import type { Translate } from "@/lib/i18n/t";
 
 export function DetailedCard({
   v,
+  n,
   identity,
   t,
 }: {
   v: ScanResult["violations"][number];
+  n: number | null;
   identity?: ElementIdentity;
   t: Translate;
 }) {
@@ -23,26 +28,26 @@ export function DetailedCard({
   const element = describeElement(v.where, identity, t);
 
   return (
-    <div
-      className="border border-hairline bg-surface"
-      style={{ borderLeft: `3px solid ${sevColor[v.severity]}` }}
-    >
+    <div className="border border-hairline bg-surface">
       <div className="grid grid-cols-[1fr_1.7in]">
         <div className="border-r border-hairline p-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[15px] font-semibold text-ink">{v.title}</span>
-            <span
-              className="px-1.5 py-0.5 font-cond text-[10px] font-medium tracking-[0.08em] uppercase"
-              style={{ color: sevInk[v.severity] }}
-            >
-              {t(sevLabelKey[v.severity])}
-            </span>
-            <span className="border border-border bg-canvas px-1.5 py-0.5 font-mono text-[9.5px] text-steel">
-              {v.criterion.replace(/^WCAG\s/, "").split(" · ")[0]}
-            </span>
+          <div className="grid grid-cols-[auto_1fr] items-start gap-x-3">
+            <Tag n={n ?? "·"} sev={v.severity} size={22} />
+            <div>
+              <span className="block text-[15px] leading-snug font-semibold text-ink">
+                {ruleTitle(v.id, t) ?? v.title}
+              </span>
+              <span className="mt-0.5 block text-[11.5px] text-muted">
+                <span className="font-semibold text-ink-2">{t(sevLabelKey[v.severity])}</span>
+                {" · "}
+                <span className="font-mono text-steel">
+                  {v.criterion.replace(/^WCAG\s/, "").split(" · ")[0]}
+                </span>
+              </span>
+            </div>
           </div>
 
-          <p className="mt-2 text-[11.5px] leading-[1.45] text-body">{v.desc}</p>
+          <p className="mt-2 text-[11.5px] leading-[1.45] text-body">{humanImpact(v.id, t)}</p>
 
           <div className="mt-2.5">
             <FieldLabel>{t("report.suggestedFix")}</FieldLabel>
@@ -85,10 +90,15 @@ export function DetailedCard({
 
             {status !== "unchecked" && (
               <>
-                <div className="mt-2">
-                  <StatusSeal t={t} status={status} />
-                </div>
-                <p className="mt-1.5 text-[9.5px] text-muted">{t("report.sandboxApplied")}</p>
+                <p className="mt-2.5 flex items-center gap-1.5 text-[11.5px] font-semibold text-ink-2">
+                  <NodeGlyph
+                    kind="end"
+                    sev={v.severity}
+                    end={status === "verified" ? "tested" : "failed"}
+                  />
+                  {t(status === "verified" ? "chain.end.tested" : "chain.end.failed")}
+                </p>
+                <p className="mt-1 text-[9.5px] text-muted">{t("report.sandboxApplied")}</p>
               </>
             )}
           </div>

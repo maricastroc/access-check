@@ -39,7 +39,7 @@ export function OccurrenceNav({
               aria-pressed={i === index}
               aria-label={t("chain.occurrenceAria", { tag, label })}
               onClick={() => onPick(i)}
-              className="flex min-h-6 min-w-6 cursor-pointer items-center justify-center"
+              className="ac-focus-tight flex min-h-6 min-w-6 cursor-pointer items-center justify-center"
             >
               <Tag n={tag} sev={sev} size={24} quiet={i !== index} selected={i === index} />
             </button>
@@ -63,7 +63,7 @@ export function OccurrenceNav({
         <span aria-hidden>←</span>
       </button>
       <Tag n={occurrenceTag(n, index, total)} sev={sev} size={24} selected />
-      <span aria-live="polite" className="text-[13px] text-muted tabular-nums">
+      <span aria-live="polite" className="text-[13.5px] text-muted tabular-nums">
         {t("stepper.position", { at: index + 1, total })}
         <span className="sr-only">
           , {occurrenceTag(n, index, total)}, {labels[index]}

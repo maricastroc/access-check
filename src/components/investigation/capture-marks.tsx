@@ -180,6 +180,11 @@ export function CaptureMarks({
   });
   const ringGap = ring ? 6 : 0;
   const items: TagItem[] = [];
+  const selectedTotal = current?.total ?? selected[0]?.total ?? 0;
+  const beside = new Set([
+    (occIndex + 1) % Math.max(selectedTotal, 1),
+    (occIndex - 1 + selectedTotal) % Math.max(selectedTotal, 1),
+  ]);
 
   if (layer === "findings") {
     if (current) {
@@ -203,11 +208,6 @@ export function CaptureMarks({
     const siblings = selected
       .filter((m) => m.index !== occIndex)
       .sort((x, y) => Math.abs(x.index - occIndex) - Math.abs(y.index - occIndex));
-    const total = current?.total ?? selected[0]?.total ?? 0;
-    const beside = new Set([
-      (occIndex + 1) % Math.max(total, 1),
-      (occIndex - 1 + total) % Math.max(total, 1),
-    ]);
     for (const m of siblings) {
       if (siblings.length > SIBLING_TAGS && !beside.has(m.index)) continue;
       const text = occurrenceTag(m.n, m.index, m.total);
@@ -292,7 +292,11 @@ export function CaptureMarks({
         ) : (
           <span
             aria-hidden
-            className="block size-2.5 rounded-full border-2 border-path bg-surface"
+            data-sev={s.visible ? undefined : "serious"}
+            className={cn(
+              "block size-2.5 rounded-full border-2 bg-surface",
+              s.visible ? "border-path" : "border-(--sev-ink)",
+            )}
             style={{ boxShadow: "0 0 0 1.5px var(--color-halo)" }}
           />
         ),
@@ -375,7 +379,9 @@ export function CaptureMarks({
 
       {layer === "findings" &&
         ring &&
-        selected.map((m) => <GhostRing key={`ring-${m.index}`} box={m.box} />)}
+        selected
+          .filter((m) => m.index === occIndex || beside.has(m.index))
+          .map((m) => <GhostRing key={`ring-${m.index}`} box={m.box} />)}
       {layer === "findings" &&
         selected.map((m) =>
           m.index === occIndex ? null : (
@@ -440,7 +446,7 @@ export function CaptureMarks({
             })}
           </svg>
           {stops
-            .filter((s) => !s.visible)
+            .filter((s) => !s.visible && (s.n === currentStop || near(s.n)))
             .map((s) => (
               <GhostRing key={`ring-${s.n}`} box={s.box} />
             ))}

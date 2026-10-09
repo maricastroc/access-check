@@ -672,6 +672,7 @@ async function runScanAttempt(
     });
 
     const passed = axe.passes.map((p) => p.help);
+    const passedRules = axe.passes.map((p) => p.id);
 
     const bestPractice = buildBestPractice(bpViolations);
     const incomplete = buildIncomplete(axe.incomplete, translator(locale));
@@ -717,6 +718,7 @@ async function runScanAttempt(
       incomplete,
       bestPractice,
       passed,
+      passedRules,
       markers,
       identities,
       fixFirst: buildFixFirst(violations),

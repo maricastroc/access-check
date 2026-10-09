@@ -29,7 +29,7 @@ export function LanguageSwitcher({ locale }: { locale: ReportLocale }) {
           type="button"
           aria-label={t("language.label")}
           disabled={pending}
-          className="flex cursor-pointer items-center gap-1.5 border border-transparent px-2 py-1.5 text-[13px] font-medium text-muted transition-colors outline-none hover:border-border hover:text-ink focus-visible:border-ink disabled:cursor-default"
+          className="flex cursor-pointer items-center gap-1.5 border border-transparent px-2 py-1.5 text-[13.5px] font-medium text-muted transition-colors outline-none hover:border-border hover:text-ink focus-visible:border-ink disabled:cursor-default"
         >
           <FontAwesomeIcon icon={faGlobe} className="text-[12px]" />
           {SHORT_NAME[locale]}
@@ -47,7 +47,7 @@ export function LanguageSwitcher({ locale }: { locale: ReportLocale }) {
               key={option}
               lang={option}
               onSelect={() => startTransition(() => setLocale(option))}
-              className="flex cursor-pointer items-center justify-between gap-3 px-3 py-1.5 text-[13px] text-body outline-none data-[highlighted]:bg-band data-[highlighted]:text-ink"
+              className="flex cursor-pointer items-center justify-between gap-3 px-3 py-1.5 text-[13.5px] text-body outline-none data-[highlighted]:bg-band data-[highlighted]:text-ink"
             >
               {NATIVE_NAME[option]}
               {option === locale && (

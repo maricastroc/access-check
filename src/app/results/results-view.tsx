@@ -273,14 +273,14 @@ export function ResultsView({
         {status === "done" && result && view && (
           <>
             {quickFromSite && (
-              <div className="flex flex-col items-start gap-2 border-b border-hairline bg-surface px-5 py-3 text-[14px] sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col items-start gap-2 border-b border-hairline bg-surface px-5 py-3 text-[13.5px] sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-ink-2">
                   <span className="font-semibold text-ink">{t("results.quickFromSite")}</span>{" "}
                   {t("results.runFullAuditNote")}
                 </p>
                 <button
                   onClick={() => scan(url, { force: true })}
-                  className="shrink-0 cursor-pointer bg-ink px-3.5 py-1.5 text-[14px] font-semibold text-surface hover:bg-ink-2"
+                  className="shrink-0 cursor-pointer bg-ink px-3.5 py-1.5 text-[13.5px] font-semibold text-surface hover:bg-ink-2"
                 >
                   {t("capture.runFull")}
                 </button>

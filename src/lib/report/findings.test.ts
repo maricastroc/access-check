@@ -707,7 +707,7 @@ describe("the work queue", () => {
     expect(first).toMatchObject({
       kind: "manual-review",
       ruleId: "color-contrast",
-      title: "Check color-contrast",
+      title: "Text contrast",
       elements: 2,
       affectedSelectors: [".color-contrast"],
       passLabel: "Manual review",

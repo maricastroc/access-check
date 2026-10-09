@@ -151,8 +151,6 @@ export function enrichViolations(
 ): Enriched[] {
   return violations.map((v) => {
     const severity = (v.impact ?? "minor") as Severity;
-    const firstNode = v.nodes[0];
-    const where = firstNode ? (firstTarget(firstNode.target) ?? "\u2014") : "\u2014";
 
     const perNode = v.nodes.map((n) => {
       const sel = firstTarget(n.target);
@@ -161,9 +159,15 @@ export function enrichViolations(
     });
     const clusters = clusterFixes(perNode);
 
-    const firstElInfo = where in elementInfos ? elementInfos[where] : undefined;
-    const result = concreteFix(v.id, firstNode, t, firstElInfo);
-    const summary = firstNode?.failureSummary;
+    const leadSelector = clusters[0]?.selectors[0];
+    const lead = Math.max(
+      0,
+      perNode.findIndex((p) => leadSelector !== undefined && p.selector === leadSelector),
+    );
+    const leadNode = v.nodes[lead];
+    const where = leadNode ? (firstTarget(leadNode.target) ?? "\u2014") : "\u2014";
+    const result = perNode[lead]?.result ?? null;
+    const summary = leadNode?.failureSummary;
     const fix = result?.text || (summary ? stripFailurePrefix(summary) : "") || v.help;
 
     return {

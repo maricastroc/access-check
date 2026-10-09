@@ -257,10 +257,24 @@ details[open] > summary .ac-chev {
   inset: 3px;
 }
 
+.ac-instrument .ac-focus-tight:focus-visible::after {
+  inset: -3px;
+}
+
 .ac-instrument :where(input, select, textarea):focus-visible {
   outline: 3px solid var(--color-ink);
   outline-offset: 2px;
   box-shadow: 0 0 0 6px var(--color-halo);
+}
+
+.ac-field:has(input:focus-visible) {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+}
+
+.ac-field input:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 
 .ac-draw {
@@ -335,6 +349,9 @@ details[open] > summary .ac-chev {
   }
   .ac-instrument :where(a, button, summary, [tabindex]):focus-visible::after {
     display: none;
+  }
+  .ac-field:has(input:focus-visible) {
+    outline-color: Highlight;
   }
 }
 

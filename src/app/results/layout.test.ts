@@ -66,7 +66,7 @@ describe("what describes the audit lives in About this audit", () => {
     expect(about).toContain('t("results.partialReport")');
     expect(about).toContain("<WarningList");
     expect(about).toContain('t("results.runAgainMoreTime")');
-    expect(about).toContain("result.passed.map");
+    expect(about).toContain("passedChecks(result, t).map");
     expect(about).toContain("<ProvenancePanel");
   });
 

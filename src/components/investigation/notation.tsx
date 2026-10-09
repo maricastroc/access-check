@@ -335,7 +335,7 @@ export function RatioGauge({
         style={{ left: `${from}%` }}
       />
       <span
-        className="absolute top-0 font-mono text-[13px] leading-[14px] font-semibold whitespace-nowrap text-(--sev-ink)"
+        className="absolute top-0 font-mono text-[12.5px] leading-[14px] font-semibold whitespace-nowrap text-(--sev-ink)"
         style={{ right: `calc(${100 - from}% + 5px)` }}
       >
         {measured.toFixed(2)}
@@ -369,7 +369,7 @@ export function Heard({
 }) {
   return (
     <div>
-      <p className="text-[13px] text-muted">{label}</p>
+      <p className="text-[13.5px] text-muted">{label}</p>
       <p className="mt-1 font-mono text-[16px] leading-7 break-words text-ink">
         “
         {name ? (
@@ -425,7 +425,7 @@ export function TextSample({
           {text}
         </p>
       </div>
-      <figcaption className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-muted">
+      <figcaption className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13.5px] text-muted">
         <span className="font-semibold text-ink-2">{caption}</span>
         {showRatio && (
           <span
@@ -457,7 +457,7 @@ export function CodeChange({ removed, added }: { removed?: string | null; added:
           <span aria-hidden className="text-critical">
             −
           </span>
-          <del className="break-all decoration-critical">{removed}</del>
+          <del className="wrap-anywhere decoration-critical">{removed}</del>
         </div>
       )}
       {added.split("\n").map((line, i) => (
@@ -465,7 +465,7 @@ export function CodeChange({ removed, added }: { removed?: string | null; added:
           <span aria-hidden className="text-verified">
             +
           </span>
-          <ins className="break-all whitespace-pre-wrap no-underline">{line}</ins>
+          <ins className="wrap-anywhere whitespace-pre-wrap no-underline">{line}</ins>
         </div>
       ))}
     </div>

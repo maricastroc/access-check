@@ -1,30 +1,18 @@
 import type { Severity } from "@/lib/scan/types";
 import { BrandMark } from "@/components/ui";
-import { sevColor, sevInk, sevLabelKey } from "./shared";
+import { sevColor, sevLabelKey } from "./shared";
 import type { Translate } from "@/lib/i18n/t";
 
 export function SectionKicker({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="font-cond text-[11px] font-medium tracking-[0.12em] text-steel uppercase">
-      {children}
-    </span>
-  );
+  return <span className="font-cond text-[12.5px] font-semibold text-steel">{children}</span>;
 }
 
 export function SectionKickerMuted({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="font-cond text-[11px] font-medium tracking-[0.12em] text-muted uppercase">
-      {children}
-    </span>
-  );
+  return <span className="font-cond text-[12.5px] font-semibold text-muted">{children}</span>;
 }
 
 export function FieldLabel({ children }: { children: React.ReactNode; tone?: "brand" }) {
-  return (
-    <div className="font-cond text-[9px] font-medium tracking-[0.12em] text-muted uppercase">
-      {children}
-    </div>
-  );
+  return <div className="font-cond text-[10.5px] font-semibold text-muted">{children}</div>;
 }
 
 export function PageShell({
@@ -75,7 +63,7 @@ export function MiniHeader({ host, t }: { host: string; t: Translate }) {
 
 export function LegendChip({ sev, count, t }: { sev: Severity; count: number; t: Translate }) {
   return (
-    <span className="inline-flex items-center gap-1.5 border border-border bg-surface px-3 py-1.5 text-[11px] font-medium text-ink">
+    <span className="inline-flex items-center gap-1.5 py-1 text-[11px] font-medium text-ink">
       <span aria-hidden className="size-2.5" style={{ background: sevColor[sev] }} />
       {t(sevLabelKey[sev])} <b className="font-medium text-muted tabular-nums">{count}</b>
     </span>
@@ -87,12 +75,7 @@ export function GroupHeading({ sev, count, t }: { sev: Severity; count: number; 
     <div className="flex items-center gap-2.5">
       <span aria-hidden className="size-2.5" style={{ background: sevColor[sev] }} />
       <span className="text-[13px] font-semibold text-ink">{t(sevLabelKey[sev])}</span>
-      <span
-        className="px-2 py-0.5 font-cond text-[10px] font-medium tracking-[0.08em] uppercase"
-        style={{ color: sevInk[sev] }}
-      >
-        {t("unit.finding", { count })}
-      </span>
+      <span className="text-[11px] text-muted tabular-nums">{t("unit.finding", { count })}</span>
       <span aria-hidden className="h-px flex-1 bg-hairline" />
     </div>
   );

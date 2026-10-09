@@ -65,7 +65,7 @@ export default async function PrivacyPage() {
   return (
     <div className="flex min-h-screen flex-col bg-canvas font-sans text-ink">
       <SiteHeader locale={locale} />
-      <main className="mx-auto w-full max-w-2xl px-5 py-10">
+      <main id="main" className="mx-auto w-full max-w-2xl px-5 py-10">
         {blocks.map((block, i) => {
           if (block.kind === "h1") {
             return (

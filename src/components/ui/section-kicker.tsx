@@ -30,8 +30,8 @@ export function SectionKicker({
       id={id}
       className={cn(
         variant === "section"
-          ? "font-cond text-[14px] font-semibold"
-          : "font-cond text-[11px] font-medium tracking-[0.12em] uppercase",
+          ? "font-cond text-[13.5px] font-semibold"
+          : "font-cond text-[12.5px] font-semibold",
         toneClass[tone],
         className,
       )}

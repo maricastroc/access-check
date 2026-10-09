@@ -46,7 +46,7 @@ export function StatusPill({ children, tone, className }: StatusPillProps) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-2 text-[13px] font-medium",
+        "inline-flex items-center gap-2 text-[13.5px] font-medium",
         toneText[tone],
         className,
       )}

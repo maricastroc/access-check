@@ -1,9 +1,11 @@
 import type { Effort, ScanResult } from "@/lib/scan/types";
 import { wcagReadingOf } from "@/lib/report/wcag";
 import { WcagChips } from "@/components/ui";
-import { standingOf, STANDING_LABEL, STANDING_NOTE, type Standing } from "@/lib/report/standing";
-import { safeHost, sevColor, sevInk, shortId } from "./shared";
+import { StandingMark, Tag, sevOf } from "@/components/investigation";
+import { standingOf, STANDING_LABEL, STANDING_NOTE } from "@/lib/report/standing";
+import { findingsToFix, ruleIdOfTitle, safeHost, sevColor, shortId } from "./shared";
 import { PageShell, SectionKicker, SectionKickerMuted } from "./primitives";
+import { ruleTitle } from "@/lib/report/titles";
 import { translator, type MessageKey } from "@/lib/i18n/t";
 
 const EFFORT_KEY: Record<Effort, MessageKey> = {
@@ -16,13 +18,6 @@ const IMPACT_KEY: Record<"High" | "Medium" | "Low", MessageKey> = {
   High: "report.impact.high",
   Medium: "report.impact.medium",
   Low: "report.impact.low",
-};
-
-const STANDING_COLOR: Record<Standing, string> = {
-  blocked: sevColor.critical,
-  failing: sevColor.serious,
-  gaps: sevInk.moderate,
-  clean: "var(--color-verified)",
 };
 
 export function SummaryPage({ result }: { result: ScanResult }) {
@@ -61,9 +56,17 @@ export function SummaryPage({ result }: { result: ScanResult }) {
     },
   ];
 
+  const queue = findingsToFix(result);
   const fixes = result.fixFirst.map((f) => {
+    const id = ruleIdOfTitle(result, f.title);
     const v = result.violations.find((x) => x.title === f.title);
-    return { ...f, criterion: v?.criterion };
+    const view = queue.find((q) => (id ? q.ruleId === id : q.title === f.title)) ?? null;
+    return {
+      ...f,
+      title: (id && ruleTitle(id, t)) ?? f.title,
+      criterion: v?.criterion ?? (view?.criterionSc ? `WCAG ${view.criterionSc}` : undefined),
+      view,
+    };
   });
 
   return (
@@ -83,9 +86,7 @@ export function SummaryPage({ result }: { result: ScanResult }) {
       <div className="mt-4 grid grid-cols-4 border border-hairline">
         {meta.map((m, i) => (
           <div key={m.label} className={`px-4 py-2.5 ${i > 0 ? "border-l border-hairline" : ""}`}>
-            <div className="font-cond text-[9px] font-medium tracking-[0.12em] text-muted uppercase">
-              {m.label}
-            </div>
+            <div className="font-cond text-[10.5px] font-semibold text-muted">{m.label}</div>
             <div className="mt-1 text-[13.5px] font-medium text-ink">{m.value}</div>
           </div>
         ))}
@@ -94,10 +95,8 @@ export function SummaryPage({ result }: { result: ScanResult }) {
       <div className="mt-4 grid grid-cols-[2.5in_1fr] gap-4">
         <div className="border border-border p-4">
           <SectionKickerMuted>{t("standing.kicker")}</SectionKickerMuted>
-          <p
-            className="mt-1 font-cond text-[34px] leading-[1.05]"
-            style={{ color: STANDING_COLOR[standing] }}
-          >
+          <p className="mt-2 flex items-center gap-2.5 text-[26px] leading-[1.05] font-bold tracking-[-0.02em] text-ink">
+            <StandingMark standing={standing} size={18} />
             {t(STANDING_LABEL[standing])}
           </p>
           <p className="mt-1 text-[11.5px] leading-normal text-body">
@@ -145,13 +144,15 @@ export function SummaryPage({ result }: { result: ScanResult }) {
             {fixes.map((f, i) => (
               <div
                 key={f.n}
-                className={`grid grid-cols-[36px_1fr_92px] items-center gap-3 px-4 py-2.5 ${
+                className={`grid grid-cols-[auto_1fr] items-start gap-3 px-4 py-2.5 ${
                   i < fixes.length - 1 ? "border-b border-hairline" : ""
                 }`}
               >
-                <span className="font-cond text-[26px] leading-none font-semibold text-serious tabular-nums">
-                  {i + 1}
-                </span>
+                <Tag
+                  n={f.view?.n ?? i + 1}
+                  sev={f.view ? sevOf(f.view) : f.impact === "High" ? "critical" : "serious"}
+                  size={22}
+                />
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-[14px] font-semibold text-ink">{f.title}</span>
@@ -168,12 +169,6 @@ export function SummaryPage({ result }: { result: ScanResult }) {
                     })}
                   </div>
                 </div>
-                <span
-                  className="justify-self-end px-2 py-1 font-cond text-[11px] font-medium tracking-[0.06em] uppercase"
-                  style={{ color: f.impact === "High" ? sevInk.critical : sevInk.serious }}
-                >
-                  {t("report.impactTag", { impact: t(IMPACT_KEY[f.impact]) })}
-                </span>
               </div>
             ))}
           </div>

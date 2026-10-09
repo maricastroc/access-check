@@ -105,8 +105,8 @@ export function TopBar({
             </Button>
           )}
           {result && (
-            <div className="hidden min-w-0 items-baseline gap-3 text-[13px] text-muted lg:flex">
-              <span className="truncate font-mono text-[14px] font-semibold text-ink">
+            <div className="hidden min-w-0 items-baseline gap-3 text-[13.5px] text-muted lg:flex">
+              <span className="truncate font-mono text-[13.5px] font-semibold text-ink">
                 {result.finalUrl}
               </span>
               {pending ? (
@@ -119,46 +119,42 @@ export function TopBar({
           )}
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            icon={faArrowRotateRight}
-            aria-label={t("results.reauditPage")}
-            onClick={onRerun}
-            disabled={busy}
-          >
-            <span className="hidden sm:inline">{t("results.reaudit")}</span>
-          </Button>
-          <div className="hidden items-center gap-2 lg:flex">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={onMarkdown}
-              disabled={!result || pending}
-            >
-              {t("results.exportMarkdown")}
-            </Button>
-            {result && pending ? (
-              <Button variant="primary" size="sm" disabled>
-                {t("results.exportPdf")}
-              </Button>
-            ) : result ? (
+          {result ? (
+            <>
               <Button
-                href={`/report?url=${encodeURIComponent(result.finalUrl)}`}
-                variant="primary"
+                variant="secondary"
                 size="sm"
+                icon={faArrowRotateRight}
+                aria-label={t("results.reauditPage")}
+                onClick={onRerun}
+                disabled={busy}
               >
-                {t("results.exportPdf")}
+                <span className="hidden sm:inline">{t("results.reaudit")}</span>
               </Button>
-            ) : (
-              <Link
-                href="/"
-                className="inline-flex h-9 items-center justify-center bg-ink px-4 text-[13.5px] font-semibold text-surface hover:bg-ink-2"
-              >
-                {t("results.newAudit")}
-              </Link>
-            )}
-          </div>
+              <div className="hidden items-center gap-2 lg:flex">
+                <Button variant="secondary" size="sm" onClick={onMarkdown} disabled={pending}>
+                  {t("results.exportMarkdown")}
+                </Button>
+                {pending ? (
+                  <Button variant="primary" size="sm" disabled>
+                    {t("results.exportPdf")}
+                  </Button>
+                ) : (
+                  <Button
+                    href={`/report?url=${encodeURIComponent(result.finalUrl)}`}
+                    variant="primary"
+                    size="sm"
+                  >
+                    {t("results.exportPdf")}
+                  </Button>
+                )}
+              </div>
+            </>
+          ) : (
+            <Button href="/" variant="secondary" size="sm">
+              {t("results.newAudit")}
+            </Button>
+          )}
         </div>
       </div>
     </header>
