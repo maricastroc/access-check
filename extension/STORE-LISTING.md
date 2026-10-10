@@ -6,7 +6,7 @@ submitted automatically.
 ## Basics
 
 - **Item name:** AccessCheck
-- **Version:** 1.6.0
+- **Version:** 1.7.0
 - **Category:** Developer Tools
 - **Default language:** English (United States)
 - **Visibility:** Public
@@ -149,6 +149,38 @@ Certifications to accept, all of which the code supports:
 > Clicking the toolbar icon runs the whole audit, including the rules, the
 > extension's own checks and the fix verification, without attaching the
 > debugger at all.
+
+## What changed in 1.7.0
+
+- Findings have titles of their own, in English and Portuguese, instead of
+  axe-core's rule sentences: "Text below the minimum contrast" rather than
+  "Elements must meet minimum color contrast ratio thresholds". Manual reviews
+  and the checks that passed use the name of the check, such as "Text
+  contrast".
+- A finding row shows a status only when it tells something: fix tested, still
+  fails or audit again to confirm, always on its own line. The violet "needs a
+  person" mark no longer repeats on findings to fix, where it read like a
+  manual review.
+- The evidence step names the automated check instead of repeating axe-core's
+  description. For a manual review it says why the check could not be settled,
+  and the next step lists only how to check.
+- A finding with several elements leads with the first element of its largest
+  fix group, the same one the web report shows, so the measured value in the
+  row and the note on how the fix was tested speak of the same element.
+- Every state of the panel is headed by the AccessCheck mark. "Nothing audited
+  yet" has an Audit this tab button, and the running state has a title.
+- The standing appears in the bar only after the summary scrolls away, so the
+  page title is no longer cut short beside a copy of the heading.
+- The panel says once that the keyboard is not in the count until it is
+  checked, and the coverage note no longer repeats the list of checks under it.
+- With a focus finding open, hatched rings are drawn on the current element and
+  the ones beside it, instead of on every element at once.
+- The panel's text keeps to one scale, and the impact of a finding is no longer
+  set smaller than the text below it.
+- Smaller things: focus brackets clear the neighboring tags, suggested code
+  wraps between words, the open finding has a hairline above and below, hovered
+  rows show a tint, and a raw selector is quieter when an element could not be
+  named.
 
 ## What changed in 1.6.0
 
