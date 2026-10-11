@@ -23,9 +23,9 @@ const token = (name) => {
 if (!svg.includes(PACKAGED.ink) || !svg.includes(PACKAGED.canvas)) {
   throw new Error("extension/icon.svg no longer uses the colors the store icon is recolored from");
 }
-const inProductColors = svg
-  .replaceAll(PACKAGED.ink, token("ink"))
-  .replaceAll(PACKAGED.canvas, token("canvas"));
+const onInk = svg
+  .replaceAll(PACKAGED.canvas, token("ink"))
+  .replaceAll(PACKAGED.ink, token("canvas"));
 
 async function render(page, size, artwork, transparent, source = svg) {
   const pad = (size - artwork) / 2;
@@ -53,11 +53,11 @@ for (const size of TOOLBAR) {
   written.push(`icon-${size}.png (${png.length} bytes)`);
 }
 
-const store = await render(page, STORE.size, STORE.artwork, true, inProductColors);
+const store = await render(page, STORE.size, STORE.artwork, true, onInk);
 mkdirSync(STORE_OUT, { recursive: true });
 writeFileSync(join(STORE_OUT, "store-icon-128.png"), store);
 written.push(
-  `store-icon-128.png (${store.length} bytes, ${STORE.artwork}px artwork on a ${STORE.size}px transparent canvas, in ${token("ink")})`,
+  `store-icon-128.png (${store.length} bytes, ${STORE.artwork}px artwork on a ${STORE.size}px transparent canvas, the symbol on ${token("ink")})`,
 );
 
 await browser.close();
