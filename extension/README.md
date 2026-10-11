@@ -249,8 +249,8 @@ Every audit does this, so no reading from this build is marked
 ## Release
 
 ```bash
-npm run build:icons       # extension icons + store/store-icon-128.png
-npm run build:tile        # store/promo-tile-440x280.png, from the product lockup
+npm run build:icons       # extension icons + store/store-icon-128.png, in the product colors
+npm run build:tile        # store/promo-tile-440x280.png, the symbol marked as the product marks a page
 npm run build:screenshots # store/screenshots/*.png, from a real audit of a fixture
 npm run pack              # builds, validates and writes release/accesscheck-<version>.zip
 npm run check:release     # unzips that archive, loads it in a real Chrome, checks the store assets
