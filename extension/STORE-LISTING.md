@@ -39,14 +39,18 @@ Typed into the dashboard once per language. Paste the files as they are:
 
 ## Screenshots
 
-The three files in `store/screenshots/`, in order, all 1280×800 and captured at
-125% zoom:
+The five files in `store/screenshots/`, in order, all 1280×800. Each one sets
+real captures of the page and of the panel side by side, enlarged so they still
+read at the 640×400 the store shows them at:
 
-1. `1-focus-path.png`: the real tab order across the page, with the stops where
+1. `1-overview.png`: the page and the panel together, with what the audit found
+2. `2-focus-path.png`: the real tab order across the page, with the stops where
    it meets a problem
-2. `2-overview.png`: every problem to fix, marked on the page under its number
-   in the queue
-3. `3-verified-fix.png`: a contrast problem measured, changed and tested on the
+3. `3-findings.png`: three problems marked on their elements, beside the queue
+   that names them
+4. `4-inspection.png`: one problem, from its mark on the page to the accessible
+   name it lacks and the change to make
+5. `5-verified-fix.png`: a contrast problem measured, changed and tested on the
    page
 
 Regenerate them with `npm run build:screenshots`.
@@ -173,6 +177,10 @@ Certifications to accept, all of which the code supports:
   page title is no longer cut short beside a copy of the heading.
 - The panel says once that the keyboard is not in the count until it is
   checked, and the coverage note no longer repeats the list of checks under it.
+- For an element with no accessible name, the evidence step is labelled
+  "Accessible name and role" instead of "Screen readers say". That is what the
+  audit measures, and each screen reader words its own announcement. The fix
+  text no longer quotes an announcement either.
 - With a focus finding open, hatched rings are drawn on the current element and
   the ones beside it, instead of on every element at once.
 - The panel's text keeps to one scale, and the impact of a finding is no longer
