@@ -11,7 +11,15 @@ import { ruleCheck } from "@/lib/report/titles";
 import { translator, type MessageKey, type Translate } from "@/lib/i18n/t";
 import { REPORT_LOCALES } from "@/lib/i18n/locale";
 import { cn } from "@/lib/cn";
-import { CodeChange, Heard, NodeGlyph, RatioGauge, TextSample, sevOf, type Sev } from "./notation";
+import {
+  CodeChange,
+  NameAndRole,
+  NodeGlyph,
+  RatioGauge,
+  TextSample,
+  sevOf,
+  type Sev,
+} from "./notation";
 import { OccurrenceNav } from "./occurrence-nav";
 import { ElementDetails } from "./element-details";
 
@@ -264,11 +272,11 @@ function Evidence({
       <>
         <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
           {figure}
-          <Heard
+          <NameAndRole
             role={t(ROLE_KEY[evidence.role])}
             name={null}
             sev={sev}
-            label={t("chain.heardAs")}
+            label={t("chain.nameAndRole")}
             missing={t("chain.noName")}
           />
         </div>
@@ -368,7 +376,7 @@ function Change({
       {action && <p className="text-[15px] leading-normal break-words text-ink">{action}</p>}
       {code && <CodeChange added={code} />}
       {named && evidence.kind === "unnamed" && (
-        <Heard
+        <NameAndRole
           role={t(ROLE_KEY[evidence.role])}
           name={named}
           sev={sevOf(f)}
