@@ -4,7 +4,7 @@ export {
   GhostRing,
   NodeGlyph,
   RatioGauge,
-  Heard,
+  NameAndRole,
   TextSample,
   CodeChange,
   sevOf,

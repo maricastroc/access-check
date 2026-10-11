@@ -354,7 +354,7 @@ export function NameSlot({ sev }: { sev: Sev }) {
   );
 }
 
-export function Heard({
+export function NameAndRole({
   role,
   name,
   sev,

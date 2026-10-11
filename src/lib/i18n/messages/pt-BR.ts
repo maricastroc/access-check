@@ -763,7 +763,8 @@ export const ptBR: Catalog = {
   "home.pass.motionDesc":
     "Verifica se a página respeita a preferência de movimento reduzido de quem acessa",
   "home.pass.live": "Dinâmico",
-  "home.pass.liveDesc": "Observa atualizações anunciadas a leitores de tela (regiões dinâmicas)",
+  "home.pass.liveDesc":
+    "Verifica as regiões que anunciam atualizações a leitores de tela (regiões dinâmicas)",
   "home.pass.review": "Revisão",
   "home.pass.reviewDesc":
     "Lista o que ainda precisa de revisão manual, com o passo a passo para conferir",
@@ -840,7 +841,7 @@ export const ptBR: Catalog = {
   "fix.metaViewport":
     "A meta tag viewport bloqueia o zoom por pinça, do qual quem tem baixa visão depende. Remova user-scalable=no e qualquer maximum-scale abaixo de 5.",
   "fix.ariaName":
-    'Este {noun} não tem nome acessível, então os leitores de tela anunciam apenas "{noun}". Adicione texto visível dentro dele, ou um aria-label.',
+    "Este {noun} não tem nome acessível, então a tecnologia assistiva não tem como chamá-lo. Adicione texto visível dentro dele, ou um aria-label.",
   "fix.nounLink": "link",
   "fix.nounButton": "botão",
   "fix.ariaRequired":
@@ -1275,7 +1276,7 @@ export const ptBR: Catalog = {
   "chain.notRemeasured":
     "A mesma correção foi aplicada a este elemento, mas o resultado não foi verificado novamente.",
   "chain.howVerified": "Como foi testado",
-  "chain.heardAs": "Leitores de tela dizem",
+  "chain.nameAndRole": "Nome acessível e função",
   "chain.role.button": "botão",
   "chain.role.link": "link",
   "chain.role.field": "campo",

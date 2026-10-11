@@ -735,7 +735,7 @@ export const en = {
   "home.pass.motion": "Motion",
   "home.pass.motionDesc": "Checks that the page respects the visitor's reduced-motion setting",
   "home.pass.live": "Live",
-  "home.pass.liveDesc": "Watches for updates announced to screen readers (live regions)",
+  "home.pass.liveDesc": "Checks the regions that announce updates to screen readers (live regions)",
   "home.pass.review": "Review",
   "home.pass.reviewDesc": "Lists what a person still needs to check, with the steps to confirm it",
 
@@ -811,7 +811,7 @@ export const en = {
   "fix.metaViewport":
     "The viewport meta tag blocks pinch-zoom, which low-vision users rely on. Remove user-scalable=no and any maximum-scale below 5.",
   "fix.ariaName":
-    'This {noun} has no accessible name, so screen readers announce it as just "{noun}". Add visible text inside it, or an aria-label.',
+    "This {noun} has no accessible name, so assistive technology has nothing to call it. Add visible text inside it, or an aria-label.",
   "fix.nounLink": "link",
   "fix.nounButton": "button",
   "fix.ariaRequired":
@@ -1242,7 +1242,7 @@ export const en = {
   "chain.notRemeasured":
     "This element takes the change tested on another one, but was not measured again itself.",
   "chain.howVerified": "How this was tested",
-  "chain.heardAs": "Screen readers say",
+  "chain.nameAndRole": "Accessible name and role",
   "chain.role.button": "button",
   "chain.role.link": "link",
   "chain.role.field": "field",

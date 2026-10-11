@@ -87,11 +87,11 @@ A tool that measures contrast shouldn't have questionable contrast of its own, s
 <p align="center"><em>The side panel: every problem to fix marked on the live page, and the focus path drawn across it.</em></p>
 
 <p align="center">
-  <img src="store/screenshots/2-overview.png" alt="AccessCheck's side panel beside a sample bookshop page: six problems to fix, each marked on its element with the same number and color as in the panel's verdict" width="820" />
+  <img src="store/screenshots/1-overview.png" alt="A sample bookshop page with seven numbered marks on its problems, beside AccessCheck's side panel: the page has critical barriers, seven problems to fix and two to check by hand" width="820" />
 </p>
 
 <p align="center">
-  <img src="store/screenshots/1-focus-path.png" alt="The keyboard focus path drawn across the bookshop page as numbered blue stops, with hatched rings on the stops that have a problem and the current stop naming its problem" width="820" />
+  <img src="store/screenshots/2-focus-path.png" alt="The keyboard focus path drawn across the bookshop page as numbered blue stops, with hatched rings on the stops that have a problem. Below it, the side panel's strip of all 19 stops, with the current one naming its problem" width="820" />
 </p>
 
 <br/>

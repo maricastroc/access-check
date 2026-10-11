@@ -6,7 +6,7 @@ submitted automatically.
 ## Basics
 
 - **Item name:** AccessCheck
-- **Version:** 1.6.0
+- **Version:** 1.7.0
 - **Category:** Developer Tools
 - **Default language:** English (United States)
 - **Visibility:** Public
@@ -39,14 +39,18 @@ Typed into the dashboard once per language. Paste the files as they are:
 
 ## Screenshots
 
-The three files in `store/screenshots/`, in order, all 1280×800 and captured at
-125% zoom:
+The five files in `store/screenshots/`, in order, all 1280×800. Each one sets
+real captures of the page and of the panel side by side, enlarged so they still
+read at the 640×400 the store shows them at:
 
-1. `1-focus-path.png`: the real tab order across the page, with the stops where
+1. `1-overview.png`: the page and the panel together, with what the audit found
+2. `2-focus-path.png`: the real tab order across the page, with the stops where
    it meets a problem
-2. `2-overview.png`: every problem to fix, marked on the page under its number
-   in the queue
-3. `3-verified-fix.png`: a contrast problem measured, changed and tested on the
+3. `3-findings.png`: three problems marked on their elements, beside the queue
+   that names them
+4. `4-inspection.png`: one problem, from its mark on the page to the accessible
+   name it lacks and the change to make
+5. `5-verified-fix.png`: a contrast problem measured, changed and tested on the
    page
 
 Regenerate them with `npm run build:screenshots`.
@@ -149,6 +153,42 @@ Certifications to accept, all of which the code supports:
 > Clicking the toolbar icon runs the whole audit, including the rules, the
 > extension's own checks and the fix verification, without attaching the
 > debugger at all.
+
+## What changed in 1.7.0
+
+- Findings have titles of their own, in English and Portuguese, instead of
+  axe-core's rule sentences: "Text below the minimum contrast" rather than
+  "Elements must meet minimum color contrast ratio thresholds". Manual reviews
+  and the checks that passed use the name of the check, such as "Text
+  contrast".
+- A finding row shows a status only when it tells something: fix tested, still
+  fails or audit again to confirm, always on its own line. The violet "needs a
+  person" mark no longer repeats on findings to fix, where it read like a
+  manual review.
+- The evidence step names the automated check instead of repeating axe-core's
+  description. For a manual review it says why the check could not be settled,
+  and the next step lists only how to check.
+- A finding with several elements leads with the first element of its largest
+  fix group, the same one the web report shows, so the measured value in the
+  row and the note on how the fix was tested speak of the same element.
+- Every state of the panel is headed by the AccessCheck mark. "Nothing audited
+  yet" has an Audit this tab button, and the running state has a title.
+- The standing appears in the bar only after the summary scrolls away, so the
+  page title is no longer cut short beside a copy of the heading.
+- The panel says once that the keyboard is not in the count until it is
+  checked, and the coverage note no longer repeats the list of checks under it.
+- For an element with no accessible name, the evidence step is labelled
+  "Accessible name and role" instead of "Screen readers say". That is what the
+  audit measures, and each screen reader words its own announcement. The fix
+  text no longer quotes an announcement either.
+- With a focus finding open, hatched rings are drawn on the current element and
+  the ones beside it, instead of on every element at once.
+- The panel's text keeps to one scale, and the impact of a finding is no longer
+  set smaller than the text below it.
+- Smaller things: focus brackets clear the neighboring tags, suggested code
+  wraps between words, the open finding has a hairline above and below, hovered
+  rows show a tint, and a raw selector is quieter when an element could not be
+  named.
 
 ## What changed in 1.6.0
 
