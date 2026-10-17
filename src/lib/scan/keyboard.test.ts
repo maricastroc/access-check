@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   buildKeyboardReport,
+  focusVisibleSelector,
+  outlineFixes,
   readingOrderInversions,
   type FocusRect,
   type FocusStop,
@@ -758,5 +760,114 @@ describe("what an incomplete walk is allowed to say about reach", () => {
     expect(f?.count).toBe(60);
     expect(f?.occurrences.length).toBeLessThanOrEqual(24);
     expect(f?.selectors).toHaveLength(8);
+  });
+});
+
+describe("the rule that removes the outline", () => {
+  const unfocused = (backgroundColor: string) => ({
+    outlineStyle: "none",
+    outlineWidth: "0px",
+    outlineColor: "rgb(20, 52, 43)",
+    boxShadow: "none",
+    borderTopWidth: "1px",
+    borderTopColor: "rgb(20, 52, 43)",
+    backgroundColor,
+  });
+  const invisible = (n: number, selector: string, extra: Partial<FocusStop>): FocusStop => ({
+    ...stop(n, 10, 10 * n, { focusVisible: false, selector }),
+    baseStyle: unfocused("rgba(0, 0, 0, 0)"),
+    ...extra,
+  });
+
+  it.each([
+    ["button.ghost.plain", "button.ghost.plain:focus-visible"],
+    [".btn:focus", ".btn:focus-visible"],
+    ["a:focus:hover", "a:focus-visible:hover"],
+    ["a:focus-visible", "a:focus-visible"],
+    [".menu:focus-within a", ".menu:focus-within a:focus-visible"],
+  ])("moves %s to :focus-visible", (selector, expected) => {
+    expect(focusVisibleSelector(selector)).toBe(expected);
+  });
+
+  it("suggests one change per rule, replacing it with a :focus-visible style", () => {
+    const rule = { selector: "button.ghost.plain", declaration: "outline: none", href: null };
+    const fixes = outlineFixes(
+      [
+        invisible(1, "#gift", { outline: { rule, unreadable: 0 } }),
+        invisible(2, "#gift-2", { outline: { rule, unreadable: 0 } }),
+        invisible(3, "#offers", {
+          outline: {
+            rule: {
+              selector: "nav a.plain",
+              declaration: "outline: none",
+              href: "https://shop.test/css/site.css?v=3",
+            },
+            unreadable: 0,
+          },
+        }),
+      ],
+      t,
+    );
+    expect(fixes).toHaveLength(2);
+    expect(fixes[0]).toMatchObject({
+      text: "This rule removes the outline when the element has focus. Replace it with a :focus-visible style.",
+      removed: "button.ghost.plain { outline: none }",
+      code: "button.ghost.plain:focus-visible {\n  outline: 2px solid currentColor;\n  outline-offset: 2px;\n}",
+      note: "Rule found in the <style> on this page.",
+      selectors: ["#gift", "#gift-2"],
+      verification: "unchecked",
+    });
+    expect(fixes[1].note).toBe("Rule found in site.css.");
+  });
+
+  it("draws the outline in the element's fill when it has one", () => {
+    const [fix] = outlineFixes(
+      [
+        invisible(1, "#buy", {
+          baseStyle: unfocused("rgb(20, 52, 43)"),
+          outline: {
+            rule: { selector: ".btn:focus", declaration: "outline: 0px", href: null },
+            unreadable: 0,
+          },
+        }),
+      ],
+      t,
+    );
+    expect(fix.code).toContain("outline: 2px solid #14342b;");
+  });
+
+  it("falls back to the general advice when no readable rule removes the outline", () => {
+    const fixes = outlineFixes(
+      [
+        invisible(1, "#remote", { outline: { rule: null, unreadable: 2 } }),
+        invisible(2, "#scripted", {}),
+      ],
+      t,
+    );
+    expect(fixes).toEqual([
+      {
+        text: "",
+        note:
+          "If another rule removes the outline, your :focus-visible rule needs to be at least as specific, or it won't show. " +
+          "2 stylesheets from another domain couldn't be read, so the rule may be in one of them.",
+        count: 2,
+        selectors: ["#remote", "#scripted"],
+        verification: "unchecked",
+      },
+    ]);
+  });
+
+  it("travels with the finding", () => {
+    const rule = { selector: "button.ghost.plain", declaration: "outline: none", href: null };
+    const r = buildKeyboardReport(
+      {
+        ...rawBase,
+        focusPath: [stop(1, 10, 10), invisible(2, "#gift", { outline: { rule, unreadable: 0 } })],
+      },
+      t,
+    );
+    expect(r.findings.find((f) => f.id === "focus-not-visible")?.fixes?.[0].removed).toBe(
+      "button.ghost.plain { outline: none }",
+    );
   });
 });

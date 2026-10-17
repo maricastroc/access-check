@@ -50,6 +50,8 @@ export type EvidenceClass = "deterministic" | "measured" | "heuristic";
 export type FixGroup = {
   text: string;
   code?: string;
+  removed?: string;
+  note?: string;
   count: number;
   selectors: string[];
   confidence?: FixConfidence;

@@ -367,14 +367,19 @@ function Change({
     );
   }
 
-  const action = f.guidance?.action ?? f.fixText;
-  const code = f.fixCode ?? f.guidance?.example?.code ?? null;
+  const group =
+    f.kind === "keyboard" && occ
+      ? f.fixGroups?.find((g) => g.selectors.includes(occ.selector))
+      : undefined;
+  const action = group?.text || (f.guidance?.action ?? f.fixText);
+  const code = group?.code ?? f.fixCode ?? f.guidance?.example?.code ?? null;
   const named = evidence.kind === "unnamed" ? suggestedName(f.fixCode) : null;
 
   return (
     <div className="space-y-3">
       {action && <p className="text-[15px] leading-normal break-words text-ink">{action}</p>}
-      {code && <CodeChange added={code} />}
+      {code && <CodeChange removed={group?.removed} added={code} />}
+      {group?.note && <p className="text-[13.5px] leading-normal text-muted">{group.note}</p>}
       {named && evidence.kind === "unnamed" && (
         <NameAndRole
           role={t(ROLE_KEY[evidence.role])}

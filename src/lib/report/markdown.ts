@@ -64,7 +64,16 @@ function findingBlock(f: FindingView, out: string[], t: Translate) {
         })
       : f.fixText,
   );
-  if (f.fixCode) out.push("", "```", f.fixCode, "```");
+  if (f.kind === "keyboard" && f.fixGroups) {
+    for (const g of f.fixGroups) {
+      const code = g.code ?? f.guidance?.example?.code;
+      if (g.text) out.push("", g.text);
+      if (g.removed && code)
+        out.push("", "```diff", `- ${g.removed}`, ...code.split("\n").map((l) => `+ ${l}`), "```");
+      else if (code) out.push("", "```css", code, "```");
+      if (g.note) out.push("", `_${g.note}_`);
+    }
+  } else if (f.fixCode) out.push("", "```", f.fixCode, "```");
   else if (f.guidance?.example)
     out.push("", "```" + f.guidance.example.lang, f.guidance.example.code, "```");
   const label = verdictLabel(f.verdict, t);

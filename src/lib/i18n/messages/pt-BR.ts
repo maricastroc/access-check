@@ -1054,6 +1054,17 @@ export const ptBR: Catalog = {
   },
   "keyboard.invisible.fix":
     "Dê a ele um estilo :focus-visible visível, como outline: 2px solid com outline-offset: 2px, em vez de remover o contorno.",
+  "keyboard.invisible.ruleFix":
+    "Esta regra remove o contorno quando o elemento recebe foco. Troque por um estilo em :focus-visible.",
+  "keyboard.invisible.ruleSource": "Regra encontrada em {source}.",
+  "keyboard.invisible.ruleInStyle": "Regra encontrada no <style> desta página.",
+  "keyboard.invisible.specificity":
+    "Se outra regra remove o contorno, sua regra em :focus-visible precisa ser no mínimo tão específica quanto ela, senão não aparece.",
+  "keyboard.invisible.unreadable": {
+    one: "{count} folha de estilo de outro domínio não pôde ser lida, e a regra pode estar nela.",
+    other:
+      "{count} folhas de estilo de outro domínio não puderam ser lidas, e a regra pode estar em uma delas.",
+  },
 
   "keyboard.unclear.title": {
     one: "{count} indicador de foco precisa de revisão manual",

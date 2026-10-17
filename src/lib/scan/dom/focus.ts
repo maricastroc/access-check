@@ -1,4 +1,5 @@
 import { accessibleName, identityOf, type ElementIdentity } from "./identity";
+import { forgetOutlineRules, outlineSourceOf, type OutlineSource } from "./outline";
 import { overlayClear } from "./overlay";
 import { flowOffsetOf } from "./rects";
 import { cssPath } from "./selector";
@@ -43,6 +44,7 @@ export type FocusProbe = {
   hasShadowRoot: boolean;
   style: FocusStyle;
   scope?: FocusScopePart[];
+  outline?: OutlineSource;
   rect: {
     x: number;
     y: number;
@@ -293,6 +295,7 @@ export function focusRelativeToSeed(): "before" | "at" | "after" | "unknown" {
 
 export function focusProbeStart(): void {
   overlayClear();
+  forgetOutlineRules();
   visited = [];
   seeded = null;
   const active = document.activeElement;
@@ -322,6 +325,8 @@ export function readFocusedStop(record = true): FocusProbe {
   if (record) visited.push(el);
   const r = el.getBoundingClientRect();
   const flow = flowOffsetOf(el);
+  const style = styleOf(el);
+  const unoutlined = style.outlineStyle === "none" || parseFloat(style.outlineWidth) === 0;
   return {
     isBody: false,
     selector: cssPath(el),
@@ -331,8 +336,9 @@ export function readFocusedStop(record = true): FocusProbe {
     html: htmlOf(el),
     isIframe: el.tagName === "IFRAME",
     hasShadowRoot: el.shadowRoot !== null,
-    style: styleOf(el),
+    style,
     scope: record ? focusScope(el) : undefined,
+    outline: record && unoutlined ? outlineSourceOf(el) : undefined,
     rect:
       r.width > 0 || r.height > 0
         ? {
