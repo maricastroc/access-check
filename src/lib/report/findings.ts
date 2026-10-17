@@ -163,6 +163,7 @@ type PassFinding = {
   count: number;
   selectors: string[];
   occurrences?: KeyboardOccurrence[];
+  fixes?: FixGroup[];
 };
 
 function complementaryFinding(
@@ -196,7 +197,7 @@ function complementaryFinding(
     impact: humanImpact(f.id, t, kind),
     fixText: f.fix,
     fixCode: null,
-    fixGroups: null,
+    fixGroups: f.fixes && f.fixes.length > 0 ? f.fixes : null,
     guidance: fixGuidance(f.id, t, kind),
     measurement: null,
     preview: null,

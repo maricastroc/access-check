@@ -1020,6 +1020,17 @@ export const en = {
   },
   "keyboard.invisible.fix":
     "Give it a visible :focus-visible style, such as outline: 2px solid with outline-offset: 2px, instead of removing the outline.",
+  "keyboard.invisible.ruleFix":
+    "This rule removes the outline when the element has focus. Replace it with a :focus-visible style.",
+  "keyboard.invisible.ruleSource": "Rule found in {source}.",
+  "keyboard.invisible.ruleInStyle": "Rule found in the <style> on this page.",
+  "keyboard.invisible.specificity":
+    "If another rule removes the outline, your :focus-visible rule needs to be at least as specific, or it won't show.",
+  "keyboard.invisible.unreadable": {
+    one: "{count} stylesheet from another domain couldn't be read, so the rule may be there.",
+    other:
+      "{count} stylesheets from another domain couldn't be read, so the rule may be in one of them.",
+  },
 
   "keyboard.unclear.title": {
     one: "{count} focus indicator needs a human check",

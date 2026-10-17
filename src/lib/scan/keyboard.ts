@@ -1,7 +1,8 @@
 import type { Page } from "playwright-core";
 import type { DomWorld } from "./world";
-import type { EvidenceClass, Severity } from "./types";
+import type { EvidenceClass, FixGroup, Severity } from "./types";
 import type { FocusProbe, FocusReach, FocusScopePart, FocusStyle, RestingStyle } from "./dom/focus";
+import type { OutlineRule, OutlineSource } from "./dom/outline";
 import type { ElementIdentity } from "./dom/identity";
 import { severityOrder } from "./derive";
 import { criterionLabel } from "./wcag";
@@ -49,6 +50,7 @@ export type FocusStop = {
   focusIndicator?: FocusIndicator;
   indicatorOn?: string | null;
   indicatorSharedWith?: number;
+  outline?: OutlineSource;
 };
 
 export type FocusIndicator = "own" | "component" | "shared" | "opaque" | "none";
@@ -84,6 +86,7 @@ export type KeyboardFinding = {
   count: number;
   selectors: string[];
   occurrences: KeyboardOccurrence[];
+  fixes?: FixGroup[];
 };
 
 export type KeyboardReport = {
@@ -316,6 +319,76 @@ function invisibleMeasured(stop: FocusStop, t: Translate): string | null {
   return t("keyboard.invisible.measured", { unchanged: unchanged.join("; ") });
 }
 
+export function focusVisibleSelector(selector: string): string {
+  if (/:focus-visible(?![\w-])/.test(selector)) return selector;
+  if (/:focus(?![\w-])/.test(selector))
+    return selector.replace(/:focus(?![\w-])/g, ":focus-visible");
+  return `${selector}:focus-visible`;
+}
+
+function opaqueHex(value: string | undefined): string | null {
+  const m = value?.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)$/);
+  if (!m || (m[4] !== undefined && Number(m[4]) < 1)) return null;
+  return `#${[m[1], m[2], m[3]].map((n) => Number(n).toString(16).padStart(2, "0")).join("")}`;
+}
+
+function outlineColorFor(stops: FocusStop[]): string {
+  const fills = new Set(stops.map((s) => opaqueHex(s.baseStyle?.backgroundColor)));
+  const [only] = fills;
+  return fills.size === 1 && only ? only : "currentColor";
+}
+
+function fileName(href: string): string {
+  try {
+    const url = new URL(href);
+    return url.pathname.split("/").filter(Boolean).pop() ?? url.host;
+  } catch {
+    return href;
+  }
+}
+
+export function outlineFixes(stops: FocusStop[], t: Translate): FixGroup[] {
+  const byRule = new Map<string, { rule: OutlineRule; stops: FocusStop[] }>();
+  const unknown: FocusStop[] = [];
+  let unreadable = 0;
+  for (const stop of stops) {
+    unreadable = Math.max(unreadable, stop.outline?.unreadable ?? 0);
+    const rule = stop.outline?.rule;
+    if (!rule) {
+      unknown.push(stop);
+      continue;
+    }
+    const key = `${rule.href ?? ""} ${rule.selector}`;
+    const group = byRule.get(key) ?? { rule, stops: [] };
+    group.stops.push(stop);
+    byRule.set(key, group);
+  }
+
+  const fixes: FixGroup[] = [...byRule.values()].map(({ rule, stops: own }) => ({
+    text: t("keyboard.invisible.ruleFix"),
+    removed: `${rule.selector} { ${rule.declaration} }`,
+    code: `${focusVisibleSelector(rule.selector)} {\n  outline: 2px solid ${outlineColorFor(own)};\n  outline-offset: 2px;\n}`,
+    note: rule.href
+      ? t("keyboard.invisible.ruleSource", { source: fileName(rule.href) })
+      : t("keyboard.invisible.ruleInStyle"),
+    count: own.length,
+    selectors: own.map((s) => s.selector),
+    verification: "unchecked",
+  }));
+  if (unknown.length > 0) {
+    const notes = [t("keyboard.invisible.specificity")];
+    if (unreadable > 0) notes.push(t("keyboard.invisible.unreadable", { count: unreadable }));
+    fixes.push({
+      text: "",
+      note: notes.join(" "),
+      count: unknown.length,
+      selectors: unknown.map((s) => s.selector),
+      verification: "unchecked",
+    });
+  }
+  return fixes;
+}
+
 function measuredOn(
   stop: FocusStop,
   basis: OrderBasis,
@@ -447,6 +520,7 @@ export function buildKeyboardReport(raw: RawKeyboard, t: Translate): KeyboardRep
           measured: invisibleMeasured(s, t),
         }),
       ),
+      fixes: outlineFixes(invisible, t),
     });
   }
 
@@ -788,6 +862,7 @@ export async function collectFocusPath(
         onScreen,
         focusStyle: s.style,
         baseStyle: base ? stripScope(base) : null,
+        ...(s.outline ? { outline: s.outline } : {}),
         ...(reading && indicator
           ? {
               focusIndicator: indicator,

@@ -149,3 +149,64 @@ describe("where a reading-order observation lands in the report", () => {
     expect(md.indexOf("## Findings")).toBeLessThan(md.indexOf("## Observations"));
   });
 });
+
+describe("a missing focus indicator with the rule that removes the outline", () => {
+  const md = buildReportMarkdown(
+    result({
+      keyboard: {
+        totalStops: 3,
+        totalInteractive: 3,
+        reachableInteractive: 3,
+        truncated: false,
+        cycleComplete: true,
+        startedAtTop: true,
+        stoppedBy: "cycle",
+        focusPath: [],
+        findings: [
+          {
+            id: "focus-not-visible",
+            severity: "serious",
+            evidence: "measured",
+            criterion: "WCAG 2.4.7 · Focus Visible",
+            title: "No visible focus indicator on 2 elements",
+            desc: "desc",
+            fix: "fix",
+            count: 2,
+            selectors: ["#gift", "#remote"],
+            occurrences: [],
+            fixes: [
+              {
+                text: "This rule removes the outline when the element has focus. Replace it with a :focus-visible style.",
+                removed: "button.ghost.plain { outline: none }",
+                code: "button.ghost.plain:focus-visible {\n  outline: 2px solid currentColor;\n  outline-offset: 2px;\n}",
+                note: "Rule found in the <style> on this page.",
+                count: 1,
+                selectors: ["#gift"],
+                verification: "unchecked",
+              },
+              {
+                text: "",
+                note: "If another rule removes the outline, your :focus-visible rule needs to be at least as specific, or it won't show.",
+                count: 1,
+                selectors: ["#remote"],
+                verification: "unchecked",
+              },
+            ],
+          },
+        ],
+      },
+    }),
+  );
+
+  it("writes the change as a diff, with where the rule was found", () => {
+    expect(md).toContain(
+      "```diff\n- button.ghost.plain { outline: none }\n+ button.ghost.plain:focus-visible {\n+   outline: 2px solid currentColor;",
+    );
+    expect(md).toContain("_Rule found in the <style> on this page._");
+  });
+
+  it("keeps the general example, with the caution, where no rule was found", () => {
+    expect(md).toContain("```css\n:focus-visible {\n  outline: 2px solid #17181a;");
+    expect(md).toContain("_If another rule removes the outline");
+  });
+});
