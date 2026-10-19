@@ -3,8 +3,10 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import type { Translate } from "@/lib/i18n/t";
 import { occurrenceTag } from "@/lib/report/occurrences";
+import type { TextBox } from "@/lib/scan/types";
 import { cn } from "@/lib/cn";
 import { GhostRing, Locus, Tag, type Box, type Sev } from "./notation";
+import { placeTags, type PlacedTag } from "./tag-places";
 
 export type PlacedMark = {
   findingId: string;
@@ -29,9 +31,7 @@ type Focusable = {
 };
 
 const NEIGHBOURS = 2;
-const GAP = 3;
 const SIBLING_TAGS = 4;
-const MARGIN = 18;
 
 type Rect = { x: number; y: number; w: number; h: number };
 
@@ -45,6 +45,7 @@ type TagItem = {
   anchor: Rect;
   inset: number;
   yields: boolean;
+  fixed?: boolean;
   own?: Rect;
   z: number;
 };
@@ -53,57 +54,6 @@ function tagSize(text: string, size: number, shape: "square" | "circle") {
   const font = size <= 18 ? 11.5 : size >= 26 ? 14 : 12.5;
   const w = Math.max(size, Math.ceil(text.length * font * 0.62 + (shape === "circle" ? 8 : 10)));
   return { w, h: size };
-}
-
-function clash(a: Rect, b: Rect): boolean {
-  return (
-    a.x < b.x + b.w + GAP && b.x < a.x + a.w + GAP && a.y < b.y + b.h + GAP && b.y < a.y + a.h + GAP
-  );
-}
-
-function placeTags(items: TagItem[], bounds: { w: number; h: number }) {
-  const taken: Rect[] = [];
-  const placed = new Map<string, Rect>();
-  for (const item of items) {
-    const { w, h } = tagSize(item.text, item.size, item.shape);
-    const a = item.anchor;
-    const i = item.inset;
-    const candidates: Rect[] =
-      item.shape === "circle"
-        ? [
-            { x: a.x - i - w, y: a.y - i - h, w, h },
-            { x: a.x - i, y: a.y - i - h - 2, w, h },
-            { x: a.x - i - w - 2, y: a.y - i, w, h },
-            { x: a.x - i - w, y: a.y + a.h + i, w, h },
-            { x: a.x - w / 2, y: a.y - h / 2, w, h },
-          ]
-        : [
-            { x: a.x - i, y: a.y - i - h - 2, w, h },
-            { x: a.x - i, y: a.y + a.h + i + 2, w, h },
-            { x: a.x - i - w - 2, y: a.y - i, w, h },
-            ...(item.yields
-              ? []
-              : [1, -1, 2, -2, 3].map((k) => ({
-                  x: a.x - i + k * (w + GAP),
-                  y: a.y - i - h - 2,
-                  w,
-                  h,
-                }))),
-          ];
-    const fits = (r: Rect) =>
-      r.y >= -MARGIN &&
-      r.y + r.h <= bounds.h + MARGIN &&
-      r.x >= -MARGIN &&
-      r.x + r.w <= bounds.w + i;
-    const free = candidates.find((r) => fits(r) && !taken.some((o) => clash(r, o)));
-    const chosen = free ?? (item.yields ? null : (candidates.find(fits) ?? candidates[0]));
-    if (!chosen) continue;
-    const r = { ...chosen, x: Math.min(Math.max(chosen.x, -MARGIN), bounds.w + i - chosen.w) };
-    taken.push(r);
-    if (item.own) taken.push(item.own);
-    placed.set(item.key, r);
-  }
-  return placed;
 }
 
 export function CaptureMarks({
@@ -123,6 +73,7 @@ export function CaptureMarks({
   onSelect,
   onSelectStop,
   onHover,
+  texts = [],
   t,
 }: {
   marks: PlacedMark[];
@@ -141,6 +92,7 @@ export function CaptureMarks({
   onSelect?: (findingId: string, index: number) => void;
   onSelectStop?: (n: number) => void;
   onHover?: (findingId: string | null) => void;
+  texts?: TextBox[];
   t: Translate;
 }) {
   const root = useRef<HTMLDivElement>(null);
@@ -175,8 +127,8 @@ export function CaptureMarks({
   const px = (box: Box): Rect => ({
     x: (box.left / 100) * size.w,
     y: (box.top / 100) * size.h,
-    w: (box.width / 100) * size.w,
-    h: (box.height / 100) * size.h,
+    w: ((box.width || 0) / 100) * size.w,
+    h: ((box.height || 0) / 100) * size.h,
   });
   const ringGap = ring ? 6 : 0;
   const items: TagItem[] = [];
@@ -306,6 +258,7 @@ export function CaptureMarks({
         anchor: close ? p : { x: p.x, y: p.y, w: 0, h: 0 },
         inset: close ? (isNow ? 5 : 2) + (s.visible ? 0 : 6) : 0,
         yields: !close,
+        fixed: !close,
         own: isNow
           ? {
               x: p.x - 5 - (s.visible ? 0 : 6),
@@ -319,10 +272,25 @@ export function CaptureMarks({
     }
   }
 
-  const spots = size.w > 0 ? placeTags(items, size) : new Map<string, Rect>();
+  const obstacles = {
+    texts: texts.map(([left, top, width, height]) => px({ left, top, width, height })),
+    marked: layer === "path" ? stops.map((s) => px(s.box)) : marks.map((m) => px(m.box)),
+  };
+  const spots =
+    size.w > 0
+      ? placeTags(
+          items.map((item) => ({ ...item, ...tagSize(item.text, item.size, item.shape) })),
+          size,
+          obstacles,
+        )
+      : new Map<string, PlacedTag>();
   const visible = items.filter((item) => spots.has(item.key));
+  const leaders = visible.flatMap((item) => {
+    const leader = spots.get(item.key)?.leader;
+    return leader ? [{ key: item.key, ...leader }] : [];
+  });
   const centre = (n: number, box: Box) => {
-    const spot = spots.get(`stop:${n}`);
+    const spot = spots.get(`stop:${n}`)?.spot;
     return spot ? { x: spot.x + spot.w / 2, y: spot.y + spot.h / 2 } : point(box);
   };
   const whole = sequence
@@ -463,6 +431,25 @@ export function CaptureMarks({
         </>
       )}
 
+      {leaders.length > 0 && (
+        <svg aria-hidden className="absolute inset-0 h-full w-full overflow-visible">
+          {leaders.map(({ key, x1, y1, x2, y2 }) => (
+            <g key={key} data-leader={key}>
+              <line
+                x1={x1}
+                y1={y1}
+                x2={x2}
+                y2={y2}
+                stroke="var(--color-halo)"
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
+              <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="var(--color-ink)" strokeWidth="1" />
+            </g>
+          ))}
+        </svg>
+      )}
+
       <div
         role={interactive && order.length > 0 ? "group" : undefined}
         aria-label={interactive && order.length > 0 ? t("marks.group") : undefined}
@@ -470,7 +457,7 @@ export function CaptureMarks({
         onKeyDown={interactive ? onKey : undefined}
       >
         {visible.map((item) => {
-          const r = spots.get(item.key)!;
+          const r = spots.get(item.key)!.spot;
           const style = {
             left: r.x + r.w / 2,
             top: r.y + r.h / 2,

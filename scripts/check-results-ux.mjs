@@ -92,6 +92,35 @@ const overflow = (page) =>
     return { overflow: doc.scrollWidth - doc.clientWidth, past };
   });
 
+const tagsOverText = (page, boxes) =>
+  page.evaluate((texts) => {
+    const figure = document.getElementById("capture-figure");
+    const image = figure?.querySelector("img")?.getBoundingClientRect();
+    if (!image) return { tags: 0, covering: [], leaders: 0 };
+    const words = texts.map(([left, top, width, height]) => ({
+      left: image.left + (left / 100) * image.width,
+      top: image.top + (top / 100) * image.height,
+      right: image.left + ((left + width) / 100) * image.width,
+      bottom: image.top + ((top + height) / 100) * image.height,
+    }));
+    const tags = [...figure.querySelectorAll('button[aria-label^="Finding "] > span')].map((t) =>
+      t.getBoundingClientRect(),
+    );
+    const covering = tags
+      .filter((tag) =>
+        words.some(
+          (w) =>
+            tag.left < w.right && w.left < tag.right && tag.top < w.bottom && w.top < tag.bottom,
+        ),
+      )
+      .map((tag) => `${Math.round(tag.left)},${Math.round(tag.top)}`);
+    return {
+      tags: tags.length,
+      covering,
+      leaders: figure.querySelectorAll("[data-leader]").length,
+    };
+  }, boxes);
+
 const legend = (page) =>
   page.evaluate(() => document.getElementById("capture-legend")?.textContent.trim() ?? "");
 
@@ -217,6 +246,19 @@ try {
     check(
       zoomed.overflow <= 0,
       `the results page overflows ${width}px at 200% zoom by ${zoomed.overflow}px (${zoomed.past.join(", ")})`,
+    );
+    await context.close();
+  }
+
+  for (const width of [1440, 420]) {
+    const { page, context } = await open(width);
+    await page.waitForTimeout(400);
+    const overText = await tagsOverText(page, FIXTURE.textBoxes);
+    console.log(`tags over the capture's text at ${width}px:`, JSON.stringify(overText));
+    check(overText.tags > 0, `no finding tag is drawn on the capture at ${width}px`);
+    check(
+      overText.covering.length === 0,
+      `tags cover the capture's text at ${width}px: ${overText.covering.join(" ")}`,
     );
     await context.close();
   }

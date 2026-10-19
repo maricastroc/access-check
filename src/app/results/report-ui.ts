@@ -3,7 +3,7 @@ import { occurrencesOf, type Occurrence } from "@/lib/report/occurrences";
 import { severityLabel } from "@/lib/report/severity";
 import type { FocusStop } from "@/lib/scan/keyboard";
 import { captureOf, stopPlacement, type StopPlacement } from "@/lib/scan/placement";
-import { VIEWPORT_CAPTURE, type ScanRegion } from "@/lib/scan/types";
+import { VIEWPORT_CAPTURE, type ScanRegion, type TextBox } from "@/lib/scan/types";
 import { sevOf, type Box, type PlacedMark, type PlacedStop } from "@/components/investigation";
 import type { Translate } from "@/lib/i18n/t";
 
@@ -55,17 +55,25 @@ export type ActiveCapture = {
   image: string | null;
   docY: number;
   missed?: ScanRegion["missed"];
+  textBoxes?: TextBox[];
 };
 
 export function captureById(
   id: string,
   screenshot: string | null,
   regions: ScanRegion[],
+  textBoxes?: TextBox[],
 ): ActiveCapture {
-  if (id === VIEWPORT_CAPTURE) return { id, image: screenshot, docY: 0 };
+  if (id === VIEWPORT_CAPTURE) return { id, image: screenshot, docY: 0, textBoxes };
   const region = regions.find((r) => r.id === id);
-  if (!region) return { id: VIEWPORT_CAPTURE, image: screenshot, docY: 0 };
-  return { id: region.id, image: region.image, docY: region.docY, missed: region.missed };
+  if (!region) return { id: VIEWPORT_CAPTURE, image: screenshot, docY: 0, textBoxes };
+  return {
+    id: region.id,
+    image: region.image,
+    docY: region.docY,
+    missed: region.missed,
+    textBoxes: region.textBoxes,
+  };
 }
 
 export type Place = { captureId: string; box: Box };

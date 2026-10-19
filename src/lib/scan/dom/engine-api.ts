@@ -9,9 +9,10 @@ import type { VerifyOp } from "./verify";
 import type { FixVerification } from "../types";
 import type { OverlayMark, OverlayOptions, OverlayReport } from "./overlay";
 import type { PreviewRequest } from "./preview";
+import type { TextBoxes } from "./text-boxes";
 import type { PaintCalm, PrimeReport } from "./prime";
 
-export const DOM_ENGINE_VERSION = 29;
+export const DOM_ENGINE_VERSION = 30;
 
 export type DomEngine = {
   version: number;
@@ -19,6 +20,7 @@ export type DomEngine = {
   collectElementInfo(selectors: string[]): Record<string, ElementInfo>;
   collectIdentities(selectors: string[]): Record<string, ElementIdentity>;
   collectRects(selectors: string[]): (DomRect | null)[];
+  readTextBoxes(top: number, bottom: number): TextBoxes;
   readViewport(): { width: number; height: number };
   documentHeight(): number;
   stickyInset(): number;

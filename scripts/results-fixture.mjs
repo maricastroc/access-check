@@ -42,6 +42,10 @@ export const FIXTURE = {
   scannedAt: new Date("2026-09-20T12:00:00Z").toISOString(),
   scoringVersion: 5,
   screenshot: shot(),
+  textBoxes: [
+    [6, 13, 40, 5.5],
+    [6, 31.5, 40, 4],
+  ],
   score: 61,
   counts: {
     critical: 1,
@@ -163,6 +167,7 @@ export const FIXTURE = {
       height: 800,
       image: shot(),
       stops: [{ n: 12, left: 22, top: 40, width: 10, height: 5 }],
+      textBoxes: [[14, 48.5, 40, 5]],
     },
     {
       id: "r2",

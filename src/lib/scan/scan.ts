@@ -51,6 +51,7 @@ import {
   type AxeResults,
 } from "./violations";
 import { captureScreenshot, SCREENSHOT_MIME, SCREENSHOT_QUALITY } from "./screenshot";
+import { compactTextBoxes } from "./capture-text";
 import { installNetworkGuard } from "./ssrf";
 import { openIsolatedWorld, type DomWorld, type IsolatedWorld } from "./world";
 import type {
@@ -63,6 +64,7 @@ import type {
   ScanResult,
   ScanViolation,
   ScanWarningCode,
+  TextBox,
 } from "./types";
 import { axeLocaleFor } from "../i18n/axe-locale";
 import { DEFAULT_REPORT_LOCALE, type ReportLocale } from "../i18n/locale";
@@ -227,6 +229,7 @@ async function captureRegions(
     markerNumbers: MarkerNumbers;
     budget: RegionBudget;
     onMarker: (markers: ScanMarker[]) => void;
+    readTexts: () => Promise<TextBox[] | undefined>;
   },
 ): Promise<{ regions: ScanRegion[]; coverage: Coverage } | undefined> {
   const page_ = await world.evaluate(() => ({
@@ -282,6 +285,7 @@ async function captureRegions(
           stopSelectors,
         ),
       ]);
+      const textBoxes = await input.readTexts();
 
       const shot = await page
         .screenshot({
@@ -313,6 +317,7 @@ async function captureRegions(
         docY: landedAt,
         image,
         stops: placeStops(input.stops, freshStops, VIEWPORT),
+        textBoxes,
       });
     }
   } finally {
@@ -735,7 +740,23 @@ async function runScanAttempt(
     }
 
     let screenshot: string | null = null;
+    let textBoxes: TextBox[] | undefined;
     let regions: ScanRegion[] | undefined;
+
+    const readTexts = async (): Promise<TextBox[] | undefined> => {
+      const t0 = Date.now();
+      try {
+        const read = await world.evaluate(
+          (bottom) => window.__accessCheckDom!.readTextBoxes(0, bottom),
+          VIEWPORT.height,
+        );
+        return compactTextBoxes([...read.free, ...read.pinned], VIEWPORT);
+      } catch {
+        return undefined;
+      } finally {
+        timings.textBoxes = (timings.textBoxes ?? 0) + (Date.now() - t0);
+      }
+    };
     let coverage: Coverage | undefined;
     let audits: AuditsReport | undefined;
     let keyboard: KeyboardReport | undefined;
@@ -790,6 +811,7 @@ async function runScanAttempt(
         );
         screenshot = shot.value;
         if (!screenshot) policy.skip("screenshot");
+        else textBoxes = await readTexts();
       },
 
       keyboard: async () => {
@@ -838,6 +860,7 @@ async function runScanAttempt(
                 markerNumbers,
                 budget: { ...REGION_BUDGET, maxMs: Math.min(REGION_BUDGET.maxMs, allowanceMs) },
                 onMarker: (found) => markers.push(...found),
+                readTexts,
               }),
             undefined,
           ),
@@ -892,6 +915,7 @@ async function runScanAttempt(
       regions,
       durationMs: Date.now() - startedAt,
       screenshot,
+      textBoxes,
       keyboard,
       contexts,
       audits,

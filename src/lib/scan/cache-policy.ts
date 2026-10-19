@@ -14,9 +14,14 @@ export function freshFor(result: Pick<ScanResult, "partial">): number {
 
 export const MAX_CACHED_SCREENSHOT_CHARS = 1_000_000;
 
+const textWeight = (boxes: ScanResult["textBoxes"]) => (boxes ? JSON.stringify(boxes).length : 0);
+
 function weight(result: ScanResult): number {
-  const shot = result.screenshot?.length ?? 0;
-  const regions = (result.regions ?? []).reduce((n, r) => n + (r.image?.length ?? 0), 0);
+  const shot = (result.screenshot?.length ?? 0) + textWeight(result.textBoxes);
+  const regions = (result.regions ?? []).reduce(
+    (n, r) => n + (r.image?.length ?? 0) + textWeight(r.textBoxes),
+    0,
+  );
   return shot + regions;
 }
 
@@ -26,11 +31,13 @@ export function trimForCache(result: ScanResult): ScanResult {
   const lighter: ScanResult = {
     ...result,
     regions: (result.regions ?? []).map((region) =>
-      region.image ? { ...region, image: null, missed: "bytes" as const } : region,
+      region.image
+        ? { ...region, image: null, missed: "bytes" as const, textBoxes: undefined }
+        : region,
     ),
   };
   if (lighter.regions?.length === 0) delete lighter.regions;
 
   if (weight(lighter) <= MAX_CACHED_SCREENSHOT_CHARS) return lighter;
-  return { ...lighter, screenshot: null };
+  return { ...lighter, screenshot: null, textBoxes: undefined };
 }
