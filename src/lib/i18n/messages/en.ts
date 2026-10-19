@@ -246,6 +246,7 @@ export const en = {
   "background.tabUnreachable":
     "This tab moved to another page, so the audited page can no longer be reached from here.",
   "background.markupFailed": "The marks could not be drawn on the page.",
+  "background.previewFailed": "The preview could not be applied to the page.",
   "background.tabBehind":
     "This report is for another tab. Go back to it to locate findings on the page or check the keyboard.",
 
@@ -1112,11 +1113,6 @@ export const en = {
   "panel.count.manualReview": "manual review",
   "panel.toFix": { one: "{count} to fix", other: "{count} to fix" },
   "panel.toCheck": { one: "{count} to check by hand", other: "{count} to check by hand" },
-  "panel.notOnScreen": {
-    one: "1 finding to fix has no mark on screen right now. Open it from the list to find it.",
-    other:
-      "{count} findings to fix have no mark on screen right now. Open them from the list to find them.",
-  },
   "panel.wholePage": {
     one: "1 finding to fix applies to the whole page, so it has no mark.",
     other: "{count} findings to fix apply to the whole page, so they have no mark.",
@@ -1125,6 +1121,73 @@ export const en = {
     one: "1 finding to fix is inside a shadow root, which the marks can't reach.",
     other: "{count} findings to fix are inside a shadow root, which the marks can't reach.",
   },
+
+  "panel.page.label": "On the page",
+  "panel.page.all": "All findings",
+  "panel.page.marked": {
+    one: "{shown} of {count} marked here",
+    other: "{shown} of {count} marked here",
+  },
+  "panel.page.tabOrder": "Tab order",
+  "panel.page.nothing": "Nothing marked",
+  "panel.page.clear": "Clear",
+  "panel.page.offScreen": "off screen",
+  "panel.page.above": "above",
+  "panel.page.below": "below",
+
+  "panel.since.title": "Since the last audit",
+  "panel.since.cleared": { one: "{count} cleared", other: "{count} cleared" },
+  "panel.since.added": { one: "{count} new", other: "{count} new" },
+  "panel.since.still": { one: "{count} still to fix", other: "{count} still to fix" },
+  "panel.since.noneLeft": "nothing left to fix",
+  "panel.since.nothing": {
+    one: "Nothing changed: {count} still to fix.",
+    other: "Nothing changed: {count} still to fix.",
+  },
+  "panel.since.nothingClean": "Nothing changed: nothing to fix.",
+  "panel.since.held": "Still at {standing}.",
+  "panel.since.heldBy": "Still at {standing}: {reason}.",
+  "panel.since.moved": "Now at {standing}, was {before}.",
+  "panel.since.movedBy": "Now at {standing}, was {before}: {reason}.",
+  "panel.since.theNewCritical": "the new finding is critical",
+  "panel.since.newCritical": {
+    one: "{count} new finding is critical",
+    other: "{count} new findings are critical",
+  },
+  "panel.since.theNewSerious": "the new finding is serious",
+  "panel.since.newSerious": {
+    one: "{count} new finding is serious",
+    other: "{count} new findings are serious",
+  },
+  "panel.since.was": "cleared, was {n}",
+  "panel.since.new": "new",
+
+  "panel.preview.start": "Preview on this page",
+  "panel.preview.scopeColor": {
+    one: "Applies the new color to the element in this tab only, until you undo it, audit again or leave the page.",
+    other:
+      "Applies the new color to all {count} elements in this tab only, until you undo it, audit again or leave the page.",
+  },
+  "panel.preview.scopeFocus": {
+    one: "Applies the new focus outline to the element in this tab only, until you undo it, audit again or leave the page.",
+    other:
+      "Applies the new focus outline to all {count} elements in this tab only, until you undo it, audit again or leave the page.",
+  },
+  "panel.preview.label": "Preview",
+  "panel.preview.before": "Before",
+  "panel.preview.after": "After",
+  "panel.preview.undo": "Undo",
+  "panel.preview.active": "Previewing on this page. Nothing is saved.",
+  "panel.preview.tryTabOrder": "Try it in the tab order",
+  "panel.preview.bar": "AccessCheck · Previewing fix {n} on this page · nothing is saved",
+  "panel.preview.on": "Previewing fix {n} on this page. Nothing is saved.",
+  "panel.preview.showBefore": "Showing the page before the fix.",
+  "panel.preview.showAfter": "Showing the page with the fix.",
+  "panel.preview.undone": "Preview undone. The page is as it was.",
+
+  "panel.follow.label": "Follow my keyboard",
+  "panel.follow.hint": "Press Tab on the page. The current stop follows the focus.",
+  "panel.follow.outside": "The element with focus is not in the recorded tab order.",
 
   "panel.screenshot": "Screenshot of the visible page",
   "panel.evidenceNote": "viewport screenshot",
@@ -1261,6 +1324,7 @@ export const en = {
   "chain.noName": "no name",
   "chain.onThePage": "On the page",
   "chain.withChange": "With the change",
+  "chain.previewing": "Previewing the change on this page.",
   "chain.needed": "needed",
   "chain.passes": "passes {required}:1",
   "chain.atRest": "At rest",

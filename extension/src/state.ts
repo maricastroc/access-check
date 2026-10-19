@@ -1,10 +1,15 @@
 import type { ScanResult } from "../../src/lib/scan/types";
 import type {
+  OVERLAY_HOVER,
   OVERLAY_PICK,
   OVERLAY_VIEW,
+  OverlayAway,
   OverlayMark,
   OverlayReport,
 } from "../../src/lib/scan/dom/overlay";
+import type { PREVIEW_UNDO, PreviewRequest } from "../../src/lib/scan/dom/preview";
+import type { FOLLOW_FOCUS } from "../../src/lib/scan/dom/follow";
+import type { StopRef } from "../../src/lib/scan/dom/focus";
 import type { MessageKey } from "../../src/lib/i18n/t";
 
 export type AuditStage = "structure" | "rules" | "focus" | "report";
@@ -29,6 +34,10 @@ export type HighlightRequest = {
 
 export type HighlightReply = { ok: true; report: OverlayReport } | { ok: false; message: string };
 
+export type PreviewReply = { ok: true; applied: number } | { ok: false; message: string };
+
+export type FollowReply = { ok: true } | { ok: false; message: string };
+
 export type PanelMessage =
   | { type: "panel:hello" }
   | { type: "panel:audit" }
@@ -36,11 +45,21 @@ export type PanelMessage =
   | HighlightRequest
   | { type: "panel:continue-walk" }
   | { type: "panel:clear-highlight" }
+  | { type: "panel:hover"; key: string | null }
+  | ({ type: "panel:preview" } & PreviewRequest)
+  | { type: "panel:preview-side"; after: boolean }
+  | { type: "panel:preview-clear" }
+  | { type: "panel:preview-ended" }
+  | { type: typeof PREVIEW_UNDO }
+  | { type: "panel:follow"; stops: StopRef[] }
+  | { type: "panel:follow-stop" }
+  | { type: typeof FOLLOW_FOCUS; stops: number[] }
   | { type: "panel:restore-scroll" }
   | { type: "panel:state"; state: PanelState }
   | { type: "panel:page-changed" }
   | { type: typeof OVERLAY_PICK; key: string }
-  | { type: typeof OVERLAY_VIEW; shown: number; total: number };
+  | { type: typeof OVERLAY_VIEW; shown: number; total: number; away: OverlayAway }
+  | { type: typeof OVERLAY_HOVER; key: string | null };
 
 const BLOCKED: { test: (url: string) => boolean; reason: MessageKey }[] = [
   {

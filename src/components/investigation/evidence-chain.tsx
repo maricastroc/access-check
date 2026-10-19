@@ -171,21 +171,30 @@ function Contrast({
   reading,
   text,
   sev,
+  previewing,
   t,
 }: {
   reading: ContrastReading;
   text: string;
   sev: Sev;
+  previewing: boolean;
   t: Translate;
 }) {
+  const fixed = previewing && reading.fixed != null && reading.toHex ? reading.fixed : null;
+  const ratio = fixed ?? reading.measured;
+  const fg = fixed !== null && reading.prop === "color" ? reading.toHex : reading.fromHex;
+  const bg = fixed !== null && reading.prop === "background" ? reading.toHex : reading.bgHex;
   return (
     <div>
       <p className="flex flex-wrap items-baseline gap-x-3">
         <span
-          className="font-mono text-[30px] leading-none font-semibold tracking-[-0.02em] text-(--sev-ink)"
+          className={cn(
+            "font-mono text-[30px] leading-none font-semibold tracking-[-0.02em]",
+            fixed !== null ? "text-verified" : "text-(--sev-ink)",
+          )}
           data-sev={sev}
         >
-          {reading.measured.toFixed(2)}:1
+          {ratio.toFixed(2)}:1
         </span>
         <span className="text-[15px] text-ink-2">
           {reading.required}:1 {t("chain.needed")}
@@ -194,21 +203,26 @@ function Contrast({
       </p>
       <div className="mt-3">
         <RatioGauge
-          measured={reading.measured}
+          measured={ratio}
           required={reading.required}
-          sev={sev}
+          sev={fixed !== null ? "none" : sev}
           neededLabel={t("chain.needed")}
         />
       </div>
-      {reading.fromHex && reading.bgHex && (
+      {fixed !== null && (
+        <p className="mt-1 text-[13.5px] leading-normal font-semibold text-ink-2">
+          {t("chain.previewing")}
+        </p>
+      )}
+      {fg && bg && (
         <div className="mt-3">
           <TextSample
-            fg={reading.fromHex}
-            bg={reading.bgHex}
+            fg={fg}
+            bg={bg}
             text={text}
-            caption={t("chain.onThePage")}
-            ratio={reading.measured}
-            tone="measured"
+            caption={fixed !== null ? t("chain.withChange") : t("chain.onThePage")}
+            ratio={ratio}
+            tone={fixed !== null ? "tested" : "measured"}
             showRatio={false}
           />
         </div>
@@ -222,12 +236,14 @@ function Evidence({
   chain,
   occ,
   figure,
+  previewing,
   t,
 }: {
   finding: FindingView;
   chain: Chain;
   occ: Occurrence | null;
   figure?: ReactNode;
+  previewing: boolean;
   t: Translate;
 }) {
   const sev = sevOf(f);
@@ -260,6 +276,7 @@ function Evidence({
           reading={evidence.reading}
           text={quotedName(occ) ?? t("detail.sampleText")}
           sev={sev}
+          previewing={previewing}
           t={t}
         />
         {notes}
@@ -486,6 +503,8 @@ export function EvidenceChain({
   located,
   figure,
   footer,
+  change,
+  previewing = false,
 }: {
   finding: FindingView;
   occurrences: Occurrence[];
@@ -498,6 +517,8 @@ export function EvidenceChain({
   located?: ReactNode;
   figure?: ReactNode;
   footer?: ReactNode;
+  change?: ReactNode;
+  previewing?: boolean;
 }) {
   const occ = occurrences[index] ?? null;
   const chain = chainOf(finding, occ);
@@ -534,12 +555,26 @@ export function EvidenceChain({
           ? t("chain.measured")
           : t("chain.evidence"),
       glyph: <NodeGlyph kind="evidence" sev={chain.measured ? sev : "review"} />,
-      content: <Evidence finding={finding} chain={chain} occ={occ} figure={figure} t={t} />,
+      content: (
+        <Evidence
+          finding={finding}
+          chain={chain}
+          occ={occ}
+          figure={figure}
+          previewing={previewing}
+          t={t}
+        />
+      ),
     },
     change: {
       label: t("chain.change"),
       glyph: <NodeGlyph kind="change" sev={sev} />,
-      content: <Change finding={finding} chain={chain} occ={occ} t={t} />,
+      content: (
+        <>
+          <Change finding={finding} chain={chain} occ={occ} t={t} />
+          {change}
+        </>
+      ),
     },
     decide: {
       label: t("chain.decide"),

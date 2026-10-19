@@ -1,4 +1,6 @@
 import { PALETTE, withAlpha } from "../../palette";
+import { candidates, chooseSpot, clash, leaderOf, type Rect } from "./label-spots";
+import { readTextBoxes, type TextBoxes } from "./text-boxes";
 
 export type OverlayTone =
   | "critical"
@@ -19,6 +21,7 @@ export type OverlayMark = {
   ring?: boolean;
   label?: string;
   pick?: string;
+  hover?: string;
   alternates?: { selector: string; pick?: string }[];
   alert?: OverlayTone;
   badge?: { tag: string; tone: OverlayTone; pick?: string };
@@ -43,6 +46,9 @@ export type OverlayReport = {
 
 export const OVERLAY_PICK = "overlay:pick";
 export const OVERLAY_VIEW = "overlay:view";
+export const OVERLAY_HOVER = "overlay:hover";
+
+export type OverlayAway = Record<string, "above" | "below">;
 
 const ROOT_ID = "accesscheck-overlay";
 const SVG = "http://www.w3.org/2000/svg";
@@ -136,6 +142,11 @@ const STYLE = `
 .edge[data-side="below"] { bottom: 10px; right: 14px; }
 .edge[data-side="left"] { left: 10px; transform: translateY(-50%); }
 .edge[data-side="right"] { right: 10px; transform: translateY(-50%); }
+.stage[data-hover] .locus:not([data-lit]),
+.stage[data-hover] .ring:not([data-lit]),
+.stage[data-hover] .tag:not([data-lit]),
+.stage[data-hover] .layer > :not([data-lit]) { opacity: .4 !important; }
+.tag[data-lit] { z-index: 1; }
 @media (forced-colors: active) {
   .corners { --ink: CanvasText !important; }
   .tag, .edge { forced-color-adjust: none; }
@@ -150,8 +161,7 @@ const LOCUS = {
 const RING = 6;
 const SIBLING_TAGS = 4;
 const NUDGES = 4;
-
-type Rect = { x: number; y: number; w: number; h: number };
+const TEXT_REFRESH_MS = 120;
 
 type Choice = { el: Element; pick: string | undefined };
 
@@ -168,16 +178,25 @@ type Painted = {
   visible: boolean;
   rect: DOMRect;
   spot: Rect | null;
+  around: Rect | null;
+  lit: boolean;
 };
 
+type TextCache = TextBoxes & { x: number; y: number; at: number };
+
 let painted: Painted[] = [];
+let stage: HTMLElement | null = null;
 let lines: SVGSVGElement | null = null;
 let edge: HTMLElement | null = null;
 let drawPath = false;
-let onMove: (() => void) | null = null;
+let onMove: ((e: Event) => void) | null = null;
 let watcher: MutationObserver | null = null;
 let viewTotal: number | null = null;
-let lastShown = -1;
+let lastView = "";
+let hovered: string | null = null;
+let texts: TextCache | null = null;
+let textStale = false;
+let textTimer = 0;
 let frame = 0;
 let timer = 0;
 let sessionScroll: { x: number; y: number } | null = null;
@@ -191,7 +210,7 @@ function css(el: Element, props: Record<string, string>): void {
   for (const [prop, value] of Object.entries(props)) style.setProperty(prop, value);
 }
 
-function post(message: { type: string } & Record<string, unknown>): void {
+export function post(message: { type: string } & Record<string, unknown>): void {
   const runtime = (
     globalThis as {
       chrome?: { runtime?: { id?: string; sendMessage?: (message: unknown) => unknown } };
@@ -212,9 +231,16 @@ function tell(key: string): void {
 function reportView(): void {
   if (viewTotal === null) return;
   const shown = painted.filter((p) => p.visible).length;
-  if (shown === lastShown) return;
-  lastShown = shown;
-  post({ type: OVERLAY_VIEW, shown, total: viewTotal });
+  const away: OverlayAway = {};
+  for (const p of painted) {
+    if (p.visible || !p.mark.hover) continue;
+    const side = sideOf(p.rect);
+    if (side === "above" || side === "below") away[p.mark.hover] = side;
+  }
+  const view = `${shown}|${JSON.stringify(away)}`;
+  if (view === lastView) return;
+  lastView = view;
+  post({ type: OVERLAY_VIEW, shown, total: viewTotal, away });
 }
 
 function swallow(el: HTMLElement, act: () => void): void {
@@ -247,15 +273,8 @@ function corners(cfg: (typeof LOCUS)[keyof typeof LOCUS], halo: boolean): HTMLEl
   return el;
 }
 
-function locusFor(mark: OverlayMark, current: boolean): HTMLElement {
-  const cfg = current ? LOCUS.current : LOCUS.sibling;
-  const el = document.createElement("div");
-  el.className = "locus";
-  el.dataset.mark = String(mark.n);
-  el.dataset.tag = mark.tag;
-  el.dataset.tone = mark.tone;
-  el.dataset.current = String(current);
-  if (mark.ring) el.dataset.ring = "true";
+function paintCorners(el: HTMLElement, mark: OverlayMark, strong: boolean): void {
+  const cfg = strong ? LOCUS.current : LOCUS.sibling;
   const extra = mark.ring ? RING : 0;
   const halo = corners(cfg, true);
   const ink = corners(cfg, false);
@@ -263,7 +282,18 @@ function locusFor(mark: OverlayMark, current: boolean): HTMLElement {
     css(halo, { inset: `${-(cfg.inset + cfg.halo / 2 + extra)}px` });
     css(ink, { inset: `${-(cfg.inset + extra)}px` });
   }
-  el.append(halo, ink);
+  el.replaceChildren(halo, ink);
+}
+
+function locusFor(mark: OverlayMark, current: boolean): HTMLElement {
+  const el = document.createElement("div");
+  el.className = "locus";
+  el.dataset.mark = String(mark.n);
+  el.dataset.tag = mark.tag;
+  el.dataset.tone = mark.tone;
+  el.dataset.current = String(current);
+  if (mark.ring) el.dataset.ring = "true";
+  paintCorners(el, mark, current);
   if (!current) css(el, { opacity: mark.quiet ? "0.8" : "1" });
   return el;
 }
@@ -291,6 +321,16 @@ function tagFor(mark: OverlayMark, current: boolean): HTMLElement {
     swallow(el, () => {
       if (el.dataset.pick) tell(el.dataset.pick);
     });
+  }
+  const key = mark.hover;
+  if (key) {
+    const point = (on: boolean) => (e: Event) => {
+      if (!e.isTrusted) return;
+      overlayHover(on ? key : null);
+      post({ type: OVERLAY_HOVER, key: on ? key : null });
+    };
+    el.addEventListener("mouseenter", point(true));
+    el.addEventListener("mouseleave", point(false));
   }
   return el;
 }
@@ -451,10 +491,6 @@ function placeEdge(current: Painted | null): void {
   hide();
 }
 
-function clash(a: Rect, b: Rect): boolean {
-  return a.x < b.x + b.w + 3 && b.x < a.x + a.w + 3 && a.y < b.y + b.h + 3 && b.y < a.y + a.h + 3;
-}
-
 function nearestFree(c: Rect, taken: Rect[]): Rect {
   for (let step = 1; step <= NUDGES; step++) {
     for (const dir of [1, -1]) {
@@ -466,11 +502,20 @@ function nearestFree(c: Rect, taken: Rect[]): Rect {
   return c;
 }
 
-function placeTags(): void {
-  for (const p of painted) p.spot = null;
+function boxOf(r: DOMRect): Rect {
+  return { x: r.left, y: r.top, w: r.width, h: r.height };
+}
+
+function placeTags(texts: Rect[]): void {
+  for (const p of painted) {
+    p.spot = null;
+    p.around = null;
+  }
   const current = painted.find((p) => p.current && p.visible) ?? null;
   const taken: Rect[] = [];
   const tags: Rect[] = [];
+  const marked = painted.filter((p) => p.visible).map((p) => boxOf(p.rect));
+  const view = { w: innerWidth, h: innerHeight };
   const siblings = painted.filter((p) => p.visible && !p.current && p.mark.quiet);
   const last = Math.max(0, ...painted.map((p) => p.mark.n));
   const beside = current
@@ -497,24 +542,18 @@ function placeTags(): void {
     const inset =
       (circle && !p.current ? 2 : p.current ? LOCUS.current.inset : LOCUS.sibling.inset) +
       (p.mark.ring ? RING : 0);
-    const candidates: Rect[] = circle
-      ? [
-          { x: r.left - inset - w, y: r.top - inset - h, w, h },
-          { x: r.left - inset, y: r.top - inset - h - 2, w, h },
-          { x: r.left - inset - w - 2, y: r.top - inset, w, h },
-          { x: r.left - inset - w, y: r.bottom + inset, w, h },
-          { x: r.left - w / 2, y: r.top - h / 2, w, h },
-        ]
-      : [
-          { x: r.left - inset, y: r.top - inset - h - 2, w, h },
-          { x: r.left - inset, y: r.bottom + inset + 2, w, h },
-          { x: r.left - inset - w - 2, y: r.top - inset, w, h },
-        ];
+    const around = {
+      x: r.left - inset,
+      y: r.top - inset,
+      w: r.width + inset * 2,
+      h: r.height + inset * 2,
+    };
+    const shape = circle ? "circle" : "square";
+    const spot = chooseSpot({ around, size: { w, h }, shape, view, texts, marked, taken });
     const fits = (c: Rect) =>
       c.y >= 0 && c.y + c.h <= innerHeight && c.x + c.w > 0 && c.x < innerWidth;
-    const free = candidates.find((c) => fits(c) && !taken.some((o) => clash(c, o)));
-    const chosen =
-      free ?? (sibling ? null : nearestFree(candidates.find(fits) ?? candidates[0], taken));
+    const near = candidates(around, { w, h }, shape).filter((c) => !c.far);
+    const chosen = spot ?? (sibling ? null : nearestFree(near.find(fits) ?? near[0], taken));
     if (!chosen) {
       p.tag.style.setProperty("display", "none");
       continue;
@@ -522,6 +561,7 @@ function placeTags(): void {
     const x = Math.min(Math.max(chosen.x, 2), innerWidth - w - 2);
     const y = Math.min(Math.max(chosen.y, 2), innerHeight - h - 2);
     p.spot = { x, y, w, h };
+    p.around = spot?.far ? around : null;
     taken.push({ x, y, w, h });
     tags.push({ x, y, w, h });
     if (p.current) {
@@ -538,6 +578,67 @@ function placeTags(): void {
   for (const p of order) {
     if (p.badge && p.spot) placeBadge(p.badge, p.spot, tags);
   }
+}
+
+function drawLeaders(layer: SVGSVGElement): void {
+  for (const p of painted) {
+    if (!p.visible || !p.spot || !p.around) continue;
+    const { x1, y1, x2, y2 } = leaderOf(p.spot, p.around);
+    const g = svg("g", { class: "leader", "data-for": p.mark.n });
+    if (p.lit) g.dataset.lit = "true";
+    g.append(
+      svg("line", { x1, y1, x2, y2, stroke: HALO, "stroke-width": 3, "stroke-linecap": "round" }),
+      svg("line", { x1, y1, x2, y2, stroke: INK, "stroke-width": 1 }),
+    );
+    layer.append(g);
+  }
+}
+
+function textsNow(): Rect[] {
+  const now = performance.now();
+  const drift =
+    texts !== null &&
+    (Math.abs(scrollY - texts.y) > innerHeight / 2 || Math.abs(scrollX - texts.x) > innerWidth / 2);
+  if (!texts || ((textStale || drift) && now - texts.at >= TEXT_REFRESH_MS)) {
+    texts = { ...readTextBoxes(-innerHeight, innerHeight * 2), x: scrollX, y: scrollY, at: now };
+    textStale = false;
+  } else if ((textStale || drift) && !textTimer) {
+    textTimer = setTimeout(() => {
+      textTimer = 0;
+      schedule();
+    }, TEXT_REFRESH_MS) as unknown as number;
+  }
+  const dx = scrollX - texts.x;
+  const dy = scrollY - texts.y;
+  return [...texts.pinned, ...texts.free.map((b) => ({ ...b, x: b.x - dx, y: b.y - dy }))];
+}
+
+function lightUp(): void {
+  if (!stage) return;
+  const shown = painted.filter((p) => p.visible);
+  const lit = hovered ? shown.filter((p) => p.mark.hover === hovered) : [];
+  const on = lit.length > 0 && lit.length < shown.length;
+  for (const p of painted) {
+    const now = on && lit.includes(p);
+    if (now !== p.lit && !p.current) paintCorners(p.locus, p.mark, now);
+    p.lit = now;
+    for (const el of [p.locus, p.tag, p.ring, p.badge]) {
+      if (!el) continue;
+      if (now) el.dataset.lit = "true";
+      else delete el.dataset.lit;
+    }
+  }
+  for (const g of lines?.querySelectorAll<SVGGElement>("g.leader") ?? []) {
+    if (lit.some((p) => String(p.mark.n) === g.dataset.for) && on) g.dataset.lit = "true";
+    else delete g.dataset.lit;
+  }
+  if (on) stage.dataset.hover = "true";
+  else delete stage.dataset.hover;
+}
+
+export function overlayHover(key: string | null): void {
+  hovered = key;
+  lightUp();
 }
 
 function place(): void {
@@ -569,13 +670,15 @@ function place(): void {
     css(p.locus, box);
     if (p.ring) css(p.ring, box);
   }
-  placeTags();
+  placeTags(textsNow());
   reportView();
   if (!lines) return;
   lines.replaceChildren();
+  drawLeaders(lines);
   const current = painted.find((p) => p.current) ?? null;
   if (drawPath) drawPathLines(lines, current);
   placeEdge(current);
+  lightUp();
 }
 
 function schedule(): void {
@@ -598,6 +701,13 @@ export function overlayClear(): void {
     cancelAnimationFrame(frame);
     frame = 0;
   }
+  if (textTimer) {
+    clearTimeout(textTimer);
+    textTimer = 0;
+  }
+  texts = null;
+  textStale = false;
+  hovered = null;
   sessionScroll = null;
   if (onMove) {
     removeEventListener("scroll", onMove, true);
@@ -607,8 +717,9 @@ export function overlayClear(): void {
   watcher?.disconnect();
   watcher = null;
   viewTotal = null;
-  lastShown = -1;
+  lastView = "";
   painted = [];
+  stage = null;
   lines = null;
   edge = null;
   drawPath = false;
@@ -713,6 +824,8 @@ export function overlayShow(
       visible: false,
       rect: el.getBoundingClientRect(),
       spot: null,
+      around: null,
+      lit: false,
     });
   }
 
@@ -744,8 +857,11 @@ export function overlayShow(
     );
   }
 
-  shadow.append(lines, marksLayer, badgesLayer, tagsLayer);
-  if (edge) shadow.append(edge);
+  stage = document.createElement("div");
+  stage.className = "stage";
+  stage.append(lines, marksLayer, badgesLayer, tagsLayer);
+  if (edge) stage.append(edge);
+  shadow.append(stage);
   document.documentElement.appendChild(root);
 
   if (opts.scroll && found) {
@@ -757,10 +873,16 @@ export function overlayShow(
   }
 
   place();
-  onMove = schedule;
+  onMove = (e) => {
+    if (e.type === "resize" || e.target !== document || texts?.sticky) textStale = true;
+    schedule();
+  };
   addEventListener("scroll", onMove, { passive: true, capture: true });
   addEventListener("resize", onMove, { passive: true });
-  watcher = new MutationObserver(schedule);
+  watcher = new MutationObserver(() => {
+    textStale = true;
+    schedule();
+  });
   watcher.observe(document.documentElement, { subtree: true, childList: true, attributes: true });
 
   if (current && current.visible && !calm()) {

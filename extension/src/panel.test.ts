@@ -29,6 +29,8 @@ const pt = translator("pt-BR");
 
 const panel = file("./panel.tsx");
 const overlay = file("../../src/lib/scan/dom/overlay.ts");
+const spots = file("../../src/lib/scan/dom/label-spots.ts");
+const texts = file("../../src/lib/scan/dom/text-boxes.ts");
 const shared = (name: string) => file(`../../src/components/investigation/${name}`);
 const summary = shared("summary.tsx");
 const list = shared("finding-list.tsx");
@@ -176,28 +178,41 @@ describe("the panel reuses the product's own report", () => {
     );
     expect(settle).toMatch(/return;\s*\}\s*showOverview\(\);/);
     expect(settle).toContain("}, [inv.selectedId, walking, overview]);");
-    expect(report).not.toContain("clear()");
+    expect(report).not.toContain("overlayClear");
   });
 
-  it("says how many findings to fix have no mark on screen, and how many apply to the whole page, only while the overview is up", () => {
+  it("goes back to every finding from anywhere, restoring the scroll the tab order moved", () => {
+    const all = between(panel, "const showAll = () => {", "const clearPage = () => {");
+    expect(all).toContain('const fromPath = drawn.current === "path";');
+    expect(all).toContain("const next = () => (open ? inv.clear() : void showOverview());");
+    expect(all).toContain("if (fromPath) void restoreScroll().then(next);");
+  });
+
+  it("clears the marks in turn with the drawings, and leaves them off until the reader asks again", () => {
+    const clear = between(panel, "const clearPage = () => {", "const pausedForWalk");
+    expect(clear).toContain("drawn.current = null;");
+    expect(clear).toContain("setView(null);");
+    expect(clear).toContain("void wipe();");
     expect(panel).toContain(
-      "setUnseen(reply?.ok ? reply.report.missing.length + reply.report.offScreen.length : 0);",
+      'const done = drawing.then(() => send({ type: "panel:clear-highlight" }));',
+    );
+  });
+
+  it("says how many findings to fix are marked on screen in the page line, and how many apply to the whole page under the verdict", () => {
+    expect(panel).toContain(
+      "shown: reply?.ok ? reply.report.drawn - reply.report.offScreen.length : 0,",
     );
     expect(panel).toMatch(
-      /message\.type === OVERLAY_VIEW && drawn\.current === "overview"[\s\S]{0,60}setUnseen\(message\.total - message\.shown\);/,
+      /message\.type === OVERLAY_VIEW && drawn\.current === "overview"[\s\S]{0,60}setMarked\(\{ shown: message\.shown, total: message\.total \}\);/,
     );
     expect(panel).toMatch(/notices=\{\s*inv\.selectedId === null && !showing && walking === null/);
-    expect(panel).toContain('unseen > 0 ? t("panel.notOnScreen", { count: unseen }) : null,');
+    expect(panel).not.toContain("panel.notOnScreen");
     expect(panel).toContain('wholePage > 0 ? t("panel.wholePage", { count: wholePage }) : null,');
     expect(panel).toContain(".filter(appliesToWholePage).length");
     expect(overlay).toContain("viewTotal = focus === null ? marks.length : null;");
-    expect(overlay).toContain("post({ type: OVERLAY_VIEW, shown, total: viewTotal });");
-    expect(t("panel.notOnScreen", { count: 2 })).toBe(
-      "2 findings to fix have no mark on screen right now. Open them from the list to find them.",
-    );
-    expect(pt("panel.notOnScreen", { count: 1 })).toBe(
-      "1 problema não está destacado na página. Abra-o pela lista para localizar os elementos.",
-    );
+    expect(overlay).toContain("post({ type: OVERLAY_VIEW, shown, total: viewTotal, away });");
+    expect(t("panel.page.marked", { shown: 5, count: 7 })).toBe("5 of 7 marked here");
+    expect(pt("panel.page.marked", { shown: 5, count: 7 })).toBe("5 de 7 marcados aqui");
     expect(t("panel.wholePage", { count: 1 })).toBe(
       "1 finding to fix applies to the whole page, so it has no mark.",
     );
@@ -229,7 +244,9 @@ describe("the panel reuses the product's own report", () => {
     expect(panel).toContain("keepPort()");
     expect(panel).toMatch(/const draw: Draw = \([^)]*\) => \{\s*keepPort\(\);/);
     expect(panel).toMatch(/port = null;\s*setTimeout\(keepPort, 250\);/);
-    expect(background).toContain("void restore().then(clearOverlay);");
+    expect(background).toMatch(
+      /port\.onDisconnect\.addListener\(\(\) => \{\s*void restore\(\)\s*\.then\(clearOverlay\)\s*\.then\(\(\) => endPreview\(false\)\)\s*\.then\(endFollow\);/,
+    );
   });
 
   it("sends one drawing at a time, in the order the reader asked for them", () => {
@@ -483,6 +500,13 @@ describe("the deep audit reuses the shared focus analysis", () => {
       '"panel:continue-walk"',
       '"panel:highlight"',
       '"panel:restore-scroll"',
+      '"panel:hover"',
+      '"panel:preview"',
+      '"panel:preview-side"',
+      '"panel:preview-clear"',
+      '"panel:follow"',
+      '"panel:follow-stop"',
+      "PREVIEW_UNDO",
       '"panel:clear-highlight"',
       '"panel:audit"',
     ]);
@@ -851,8 +875,11 @@ describe("the panel is an inspector, not a squeezed report", () => {
 
   it("inspects the tab order as a mode with one way out", () => {
     const focus = between(panel, "function FocusPath(", "function Running(");
+    const line = between(panel, "function PageLine(", "function SinceLastAudit(");
     expect(focus).toMatch(/!showing \?[\s\S]{0,200}t\("panel\.showFocusPath"\)/);
-    expect(focus).toContain("onClick={onExit}");
+    expect(focus).not.toContain("onExit");
+    expect(line).toContain("onClick={onExit}");
+    expect(line.match(/t\("panel\.exitInspection"\)/g)).toHaveLength(1);
     expect(focus).not.toContain("panel.clearOverlay");
     expect(focus).not.toContain("panel.backToWhereYouWere");
     expect(t("panel.showFocusPath")).toBe("Inspect tab order");
@@ -882,7 +909,7 @@ describe("the panel is an inspector, not a squeezed report", () => {
   it("does not paint an ordinary stop like a failure", () => {
     const stops = between(panel, "function stopMarks(", "function windowAround(");
     expect(stops).toContain('tone: "path"');
-    expect(stops).toContain("ring: current && !s.focusVisible,");
+    expect(stops).toContain("ring: current && !s.focusVisible && !previewed.has(s.selector),");
     expect(stops).toContain("alert: alert?.tone,");
     expect(stops).toContain(
       "badge: current && alert ? { tag: alert.tag, tone: alert.tone, pick: alert.pick } : undefined,",
@@ -901,16 +928,37 @@ describe("the panel is an inspector, not a squeezed report", () => {
   });
 
   it("puts a mark's tag beside the element instead of over what is being read", () => {
-    const tags = between(overlay, "function placeTags(", "function place(");
-    expect(tags).toContain("{ x: r.left - inset, y: r.top - inset - h - 2, w, h }");
-    expect(tags).toContain("{ x: r.left - inset, y: r.bottom + inset + 2, w, h }");
+    const tags = between(overlay, "function placeTags(", "function drawLeaders(");
+    expect(overlay).toContain("placeTags(textsNow());");
+    expect(tags).toContain(
+      "const spot = chooseSpot({ around, size: { w, h }, shape, view, texts, marked, taken });",
+    );
+    expect(spots).toContain("above: (a, w, h, g) => ({ x: a.x, y: a.y - h - g, w, h }),");
+    expect(spots).toContain("below: (a, w, h, g) => ({ x: a.x, y: a.y + a.h + g, w, h }),");
+  });
+
+  it("ties a tag that had to move away back to its element with a thin line", () => {
+    const leaders = between(overlay, "function drawLeaders(", "function textsNow(");
+    expect(overlay).toContain("p.around = spot?.far ? around : null;");
+    expect(leaders).toContain('stroke: HALO, "stroke-width": 3');
+    expect(leaders).toContain('stroke: INK, "stroke-width": 1');
+  });
+
+  it("measures the page's text once a frame at most, and only again when the page changes", () => {
+    expect(overlay).toContain("if (!frame) frame = requestAnimationFrame(place);");
+    expect(overlay).toContain("const TEXT_REFRESH_MS = 120;");
+    expect(overlay).toMatch(/watcher = new MutationObserver\(\(\) => \{\s*textStale = true;/);
+    expect(overlay).toContain(
+      'addEventListener("scroll", onMove, { passive: true, capture: true });',
+    );
+    expect(texts).toContain("range.getClientRects()");
   });
 
   it("lets the other occurrences give way when the page is crowded", () => {
-    const tags = between(overlay, "function placeTags(", "function place(");
+    const tags = between(overlay, "function placeTags(", "function drawLeaders(");
     expect(overlay).toContain("const SIBLING_TAGS = 4;");
     expect(tags).toContain("siblings.length > SIBLING_TAGS && !beside.has(p.mark.n)");
-    expect(tags).toContain("free ?? (sibling ? null : nearestFree(");
+    expect(tags).toContain("spot ?? (sibling ? null : nearestFree(");
   });
 
   it("runs the focus path through the numbered circles", () => {
@@ -1174,7 +1222,7 @@ describe("the panel reads as a document, not a stack of boxes", () => {
     expect(panel).toMatch(/function Shell\([\s\S]{0,200}<main /);
     expect(panel.match(/<main /g)).toHaveLength(1);
     expect(panel.match(/<h1 /g)).toHaveLength(1);
-    expect(panel).toMatch(/function StickyBar\([\s\S]{0,400}<h1 /);
+    expect(panel).toMatch(/function StickyBar\([\s\S]{0,700}<h1 /);
   });
 
   it("wraps every screen in that one shell, and heads each with the sticky bar", () => {
@@ -1429,5 +1477,238 @@ describe("the extension takes no contextual captures", () => {
   it("publishes only the visible tab as its capture", () => {
     expect(background).toContain("captureVisibleTab");
     expect(background).not.toContain("captureBeyondViewport");
+  });
+});
+
+describe("the panel and the page point at each other", () => {
+  it("brings a finding's mark forward on the page while its row or number has the pointer or focus", () => {
+    const report = between(panel, "function Report(", "function Message(");
+    expect(report).toContain('if (drawn.current === "overview") void pointAt(id);');
+    expect(report.match(/onHover=\{hover\}/g)).toHaveLength(2);
+    expect(summary).toContain("onFocus={() => onHover?.(f.id)}");
+    expect(list).toContain("onBlur: () => onHover?.(null),");
+    expect(between(panel, "function overviewMarks(", "type StopAlert")).toContain("hover: f.id,");
+    expect(background).toContain("window.__accessCheckDom?.overlayHover(k)");
+  });
+
+  it("sends only the latest pointer to the page, after the drawing it belongs to", () => {
+    const point = between(panel, "async function pointAt(", "function LanguageChoice(");
+    expect(point).toContain("if (pointing) return;");
+    expect(point).toContain("await drawing;");
+    expect(point).toContain('await send({ type: "panel:hover", key: now });');
+    expect(panel).toContain("if (hovering.current) void pointAt(hovering.current);");
+  });
+
+  it("lights the row of a tag the reader points at on the page", () => {
+    expect(overlay).toContain("post({ type: OVERLAY_HOVER, key: on ? key : null });");
+    expect(overlay).toContain("if (!e.isTrusted) return;");
+    expect(panel).toContain("if (message.type === OVERLAY_HOVER) setPointed(message.key);");
+    expect(panel).toContain("hoveredId={pointed}");
+  });
+
+  it("says in the row which way the mark is when it is off screen, without moving the page", () => {
+    const aside = between(panel, "const aside = (f: FindingView) => {", "<PageLine");
+    expect(aside).toContain('const side = view === "overview" ? offScreen[f.id] : undefined;');
+    expect(aside).toContain("sr-only group-hover:not-sr-only group-focus-visible:not-sr-only");
+    expect(aside).toContain('t("panel.page.offScreen")');
+    expect(list).toContain('"ac-focus-inset group grid');
+    expect(panel).toContain("setOffScreen(message.away);");
+    expect(between(panel, "const hover = (id", "const showPath")).not.toContain("scroll");
+    expect(t("panel.page.offScreen")).toBe("off screen");
+    expect(pt("panel.page.offScreen")).toBe("fora da tela");
+  });
+
+  it("says in the pinned bar what the page shows now, and announces each change politely", () => {
+    const bar = between(panel, "function StickyBar(", "type PageShows");
+    const line = between(panel, "function PageLine(", "function SinceLastAudit(");
+    expect(bar).toContain("{children}");
+    expect(line).toContain('<span role="status" aria-live="polite" className="sr-only">');
+    expect(line).toContain('{`${t("panel.page.label")}: ${said}`}');
+    expect(line).toContain("said = `${all}, ${count(told)}`;");
+    expect(line).toContain('t("panel.page.clear")');
+    expect(line).toContain('aria-label={t("panel.previousStop")}');
+    expect(line).toContain('aria-label={t("panel.nextStop")}');
+    expect(line).toContain("{at}/{stops}");
+    expect(panel).toMatch(/<StickyBar[\s\S]{0,300}>\s*<PageLine/);
+    expect(t("panel.page.label")).toBe("On the page");
+    expect(t("panel.page.all")).toBe("All findings");
+    expect(pt("panel.page.all")).toBe("Todos os problemas");
+  });
+
+  it("keeps the count that changes with every scroll out of what is announced", () => {
+    const report = between(panel, "function Report(", "function Message(");
+    expect(report).toContain("setTold(count);");
+    expect(report.match(/setTold\(/g)).toHaveLength(1);
+  });
+});
+
+describe("what changed since the last audit", () => {
+  it("compares an audit with the one before it on the same address, only in the open panel", () => {
+    const shell = between(panel, "function Panel(", "async function boot(");
+    expect(shell).toContain("lastDone.result.scannedAt !== state.result.scannedAt");
+    expect(shell).toContain(
+      "sameDocument(lastDone.result.finalUrl, state.result.finalUrl) ? lastDone.result : null,",
+    );
+    expect(panel).toContain("earlier ? sinceLast(earlier, result) : null");
+    expect(panel).not.toMatch(/chrome\.storage|localStorage|sessionStorage/);
+  });
+
+  it("says it right under the verdict, and marks the new findings in the list", () => {
+    expect(summary).toMatch(/STANDING_NOTE\[standing\]\)\}\s*<\/p>\s*\{afterNote\}/);
+    expect(panel).toContain("since={since && <SinceLastAudit");
+    expect(panel).toContain('t("panel.since.new")');
+    expect(t("panel.since.was", { n: 4 })).toBe("cleared, was 4");
+    expect(pt("panel.since.was", { n: 4 })).toBe("resolvido, era o 4");
+  });
+
+  it("opens a new finding from its severity tag", () => {
+    const since = between(panel, "function SinceLastAudit(", "function Header(");
+    expect(since).toContain("onClick={() => onOpen(f.id)}");
+    expect(since).toContain("<Tag n={f.n} sev={sevOf(f)} size={22} />");
+    expect(since).toContain('<NodeGlyph kind="end" sev="none" end="tested" />');
+  });
+});
+
+describe("previewing a fix on the page", () => {
+  const preview = file("../../src/lib/scan/dom/preview.ts");
+
+  it("changes the page through one style of its own, and takes it away whole", () => {
+    expect(preview).toContain("style.id = PREVIEW_STYLE_ID;");
+    expect(preview).toContain("document.documentElement.append(style, host);");
+    expect(preview).toContain("sheet.disabled = !after;");
+    expect(preview).toContain("find(`#${PREVIEW_STYLE_ID}`), find(`#${PREVIEW_BAR_ID}`)");
+    expect(preview).not.toMatch(/setAttribute\("style"|\.style\.setProperty\("(color|outline)/);
+    expect(preview).toContain(
+      "export function previewShow(req: PreviewRequest): { applied: number } {\n  previewClear();",
+    );
+  });
+
+  it("turns the preview off before anything is measured", () => {
+    const run = between(background, "async function runAudit(", "async function addFocusPath(");
+    const walk = between(
+      background,
+      "async function addFocusPath(",
+      "async function inAuditedTab<T>(",
+    );
+    expect(run.indexOf("await endPreview();")).toBeGreaterThan(-1);
+    expect(run.indexOf("await endPreview();")).toBeLessThan(run.indexOf("executeScript"));
+    expect(walk.indexOf("await endPreview();")).toBeLessThan(walk.indexOf("withFocusPath("));
+    expect(background).toContain('if (running) throw new Error("busy");');
+  });
+
+  it("cleans up when the page navigates or reloads, the tab changes, or the panel closes", () => {
+    expect(background).toMatch(
+      /if \(!change\.url && change\.status !== "loading"\) return;\s*void restore\(\)\.then\(\(\) => \(tabId === previewTabId \? endPreview\(\) : undefined\)\);/,
+    );
+    expect(background).toMatch(/previewTabId !== null && tabId !== previewTabId \? endPreview\(\)/);
+    expect(background).toContain(".then(() => endPreview(false))");
+    expect(background).toContain('const message: PanelMessage = { type: "panel:preview-ended" };');
+  });
+
+  it("offers it only where the result is calculated, and says how far it reaches", () => {
+    const controls = between(panel, "function PreviewControls(", "function Report(");
+    expect(controls).toContain("if (!plan) return null;");
+    expect(controls).toContain('aria-describedby="preview-scope"');
+    expect(controls).toContain("count: plan.selectors.length,");
+    expect(t("panel.preview.scopeColor", { count: 6 })).toBe(
+      "Applies the new color to all 6 elements in this tab only, until you undo it, audit again or leave the page.",
+    );
+    expect(t("panel.preview.bar", { n: 4 })).toBe(
+      "AccessCheck · Previewing fix 4 on this page · nothing is saved",
+    );
+    expect(pt("panel.preview.bar", { n: 4 })).toBe(
+      "AccessCheck · Pré-visualizando a correção 4 nesta página · nada é salvo",
+    );
+  });
+
+  it("lets the reader switch before and after, and says every change of state", () => {
+    const controls = between(panel, "function PreviewControls(", "function Report(");
+    const report = between(panel, "function Report(", "function Message(");
+    expect(controls).toContain("aria-pressed={active.after === after}");
+    expect(controls).toContain('aria-label={t("panel.preview.label")}');
+    expect(report).toContain('t("panel.preview.on", { n: f.n })');
+    expect(report).toContain('t(after ? "panel.preview.showAfter" : "panel.preview.showBefore")');
+    expect(report.match(/t\("panel\.preview\.undone"\)/g)).toHaveLength(2);
+    expect(report).toContain('<p role="status" aria-live="polite" className="sr-only">');
+    expect(panel).toContain(
+      'if (message.type === "panel:preview-ended" || message.type === PREVIEW_UNDO) previewEnded();',
+    );
+  });
+
+  it("moves the contrast gauge to the ratio with the change, and says it is a preview", () => {
+    expect(chain).toContain(
+      "const fixed = previewing && reading.fixed != null && reading.toHex ? reading.fixed : null;",
+    );
+    expect(chain).toContain("measured={ratio}");
+    expect(chain).toContain('t("chain.previewing")');
+    expect(report()).toContain("previewing={preview?.id === f.id && preview.after}");
+  });
+
+  it("opens the tab order at the stop the focus fix is for, without the missing-focus ring", () => {
+    expect(report()).toContain("() => void showPath(inv.occurrences[inv.occIndex].stop!)");
+    expect(report()).toContain('plans.get(f.id)?.kind === "focus"');
+    expect(report()).toContain(
+      "const previewed = new Set(now?.after ? plans.get(now.id)?.selectors : []);",
+    );
+  });
+
+  function report() {
+    return between(panel, "function Report(", "function Message(");
+  }
+});
+
+describe("following the real keyboard in the tab order", () => {
+  const follow = file("../../src/lib/scan/dom/follow.ts");
+
+  it("listens to focus in the page, with no debugger", () => {
+    expect(follow).toContain('document.addEventListener("focusin", listener, true);');
+    expect(follow).toContain('document.removeEventListener("focusin", listener, true);');
+    expect(follow).toContain('el.closest("[data-accesscheck]")');
+    expect(follow).not.toContain("debugger");
+    expect(
+      between(background, "async function startFollow(", "async function clearOverlay("),
+    ).not.toContain("chrome.debugger");
+  });
+
+  it("moves the current stop with the focus, and says so instead of guessing when the element is not recorded", () => {
+    const report = between(panel, "function Report(", "function Message(");
+    expect(report).toContain('if (!following || drawn.current !== "path") return;');
+    expect(report).toContain('setFollowNote(t("panel.follow.outside"));');
+    expect(report).toContain(
+      "void showPath(found.find((n) => n > at) ?? found[0], complete, false);",
+    );
+    expect(t("panel.follow.outside")).toBe(
+      "The element with focus is not in the recorded tab order.",
+    );
+    expect(pt("panel.follow.label")).toBe("Seguir meu teclado");
+  });
+
+  it("switches off on every way out of the tab order, and before the keyboard is measured", () => {
+    const report = between(panel, "function Report(", "function Message(");
+    for (const exit of [
+      "const exitPath = () => {",
+      "const showAll = () => {",
+      "const pausedForWalk = (start: () => void) => () => {",
+      'const go = (id: string, index = 0, origin: Origin = "nav") => {',
+    ]) {
+      const body = report.slice(report.indexOf(exit), report.indexOf(exit) + 220);
+      expect(body, exit).toContain("quitFollowing();");
+    }
+    const run = between(background, "async function runAudit(", "async function addFocusPath(");
+    const walk = between(
+      background,
+      "async function addFocusPath(",
+      "async function inAuditedTab<T>(",
+    );
+    expect(run).toContain("await endFollow();");
+    expect(walk.indexOf("await endFollow();")).toBeLessThan(walk.indexOf("withFocusPath("));
+    expect(background).toContain(".then(() => endPreview(false))\n      .then(endFollow);");
+  });
+
+  it("offers the option as a labelled checkbox and announces what it does", () => {
+    const focus = between(panel, "function FocusPath(", "function Running(");
+    expect(focus).toContain('t("panel.follow.label")');
+    expect(focus).toContain('aria-describedby="follow-note"');
+    expect(focus).toMatch(/id="follow-note"\s*role="status"/);
   });
 });

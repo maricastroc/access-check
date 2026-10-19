@@ -2,6 +2,7 @@ import type { ScanResult } from "../../src/lib/scan/types";
 import type { KeyboardReport } from "../../src/lib/scan/keyboard";
 import type { StopRef } from "../../src/lib/scan/dom/focus";
 import type { OverlayMark, OverlayOptions, OverlayReport } from "../../src/lib/scan/dom/overlay";
+import { PREVIEW_UNDO, type PreviewRequest } from "../../src/lib/scan/dom/preview";
 import { workQueue } from "../../src/lib/report/findings";
 import { stopCandidates } from "../../src/lib/report/occurrences";
 import { withScoring } from "../../src/lib/scan/scored";
@@ -9,7 +10,7 @@ import type { AuditContext } from "./audit";
 import { walkChangedPage, warningsAfterDeepAudit } from "./coverage";
 import { CONTENT_SIGNATURE } from "../../src/lib/scan/page-ready";
 import { axeLocaleFor } from "../../src/lib/i18n/axe-locale";
-import { translator } from "../../src/lib/i18n/t";
+import { translator, type MessageKey } from "../../src/lib/i18n/t";
 import { browserLocale, LOCALE_KEY, readLocale } from "./locale-preference";
 import { DeepAuditCancelled, DeepAuditError, runDeepAudit } from "./deep";
 import {
@@ -19,7 +20,9 @@ import {
   type AuditStage,
   type HighlightReply,
   type PanelMessage,
+  type FollowReply,
   type PanelState,
+  type PreviewReply,
 } from "./state";
 
 const SCREENSHOT_QUALITY = 72;
@@ -41,16 +44,28 @@ chrome.storage.onChanged.addListener((changes, area) => {
 let state: PanelState = { kind: "idle" };
 let auditedTabId: number | null = null;
 let deepTabId: number | null = null;
+let previewTabId: number | null = null;
 let running = false;
+
+function save(): void {
+  void chrome.storage.session
+    .set({ [STORE]: { state, auditedTabId, deepTabId, previewTabId } })
+    .catch(() => {});
+}
 
 function publish(next: PanelState): void {
   state = next;
-  void chrome.storage.session.set({ [STORE]: { state, auditedTabId, deepTabId } }).catch(() => {});
+  save();
   const message: PanelMessage = { type: "panel:state", state };
   chrome.runtime.sendMessage(message).catch(() => {});
 }
 
-type Stored = { state: PanelState; auditedTabId: number | null; deepTabId?: number | null };
+type Stored = {
+  state: PanelState;
+  auditedTabId: number | null;
+  deepTabId?: number | null;
+  previewTabId?: number | null;
+};
 
 async function restore(): Promise<PanelState> {
   await syncLocale();
@@ -61,6 +76,7 @@ async function restore(): Promise<PanelState> {
 
   state = saved.state;
   auditedTabId = saved.auditedTabId;
+  previewTabId = saved.previewTabId ?? null;
 
   if (state.kind === "running") {
     if (typeof saved.deepTabId === "number") {
@@ -159,6 +175,8 @@ async function runAudit(tab: chrome.tabs.Tab): Promise<void> {
 
   try {
     await clearOverlay();
+    await endPreview();
+    await endFollow();
     const blocked = unsupportedReason(tab.url);
     if (blocked) {
       auditedTabId = null;
@@ -243,6 +261,8 @@ async function addFocusPath(opts: { resume?: boolean } = {}): Promise<void> {
       publish({ kind: "done", result: previous, deepError: t("background.tabUnreachable") });
       return;
     }
+    await endPreview();
+    await endFollow();
     stage(url, "focus-path", "focus");
     const walked = await withFocusPath(
       previous,
@@ -278,13 +298,13 @@ async function inFront(tabId: number): Promise<boolean> {
   return tab?.active !== false;
 }
 
-function drawFailure(e: unknown): string {
+function drawFailure(e: unknown, otherwise: MessageKey = "background.markupFailed"): string {
   if (e instanceof Behind) return t("background.tabBehind");
   if (e instanceof MovedOn) return t("background.tabUnreachable");
   if (e instanceof Error && /Cannot access|No tab with id|Frame with ID/i.test(e.message)) {
     return t("background.tabUnreachable");
   }
-  return t("background.markupFailed");
+  return t(otherwise);
 }
 
 async function showsPage(tabId: number, audited: string): Promise<boolean> {
@@ -329,6 +349,88 @@ async function restoreOverlayScroll(): Promise<void> {
     .catch(() => {});
 }
 
+async function hoverOverlay(key: string | null): Promise<void> {
+  if (auditedTabId === null || state.kind !== "done") return;
+  await chrome.scripting
+    .executeScript({
+      target: { tabId: auditedTabId },
+      func: (k: string | null) => window.__accessCheckDom?.overlayHover(k),
+      args: [key],
+    })
+    .catch(() => {});
+}
+
+async function showPreview(request: PreviewRequest): Promise<number> {
+  if (running) throw new Error("busy");
+  if (auditedTabId !== null && !(await onAuditedPage(auditedTabId))) {
+    await clearOverlay();
+    throw new MovedOn();
+  }
+  if (auditedTabId !== null && !(await inFront(auditedTabId))) throw new Behind();
+  return inAuditedTab(async (tabId) => {
+    const [{ result }] = await chrome.scripting.executeScript({
+      target: { tabId },
+      func: (r: PreviewRequest) => window.__accessCheckDom!.previewShow(r),
+      args: [request],
+    });
+    previewTabId = tabId;
+    save();
+    return (result as { applied: number }).applied;
+  });
+}
+
+async function sidePreview(after: boolean): Promise<void> {
+  if (previewTabId === null) return;
+  await chrome.scripting
+    .executeScript({
+      target: { tabId: previewTabId },
+      func: (a: boolean) => window.__accessCheckDom?.previewSide(a),
+      args: [after],
+    })
+    .catch(() => {});
+}
+
+async function endPreview(tell = true): Promise<void> {
+  const tabId = previewTabId ?? auditedTabId;
+  const was = previewTabId !== null;
+  previewTabId = null;
+  if (was) save();
+  if (tabId !== null) {
+    await chrome.scripting
+      .executeScript({
+        target: { tabId },
+        func: () => window.__accessCheckDom?.previewClear() ?? false,
+      })
+      .catch(() => {});
+  }
+  if (was && tell) {
+    const message: PanelMessage = { type: "panel:preview-ended" };
+    chrome.runtime.sendMessage(message).catch(() => {});
+  }
+}
+
+async function startFollow(stops: StopRef[]): Promise<void> {
+  if (running) throw new Error("busy");
+  if (auditedTabId !== null && !(await onAuditedPage(auditedTabId))) throw new MovedOn();
+  await inAuditedTab((tabId) =>
+    chrome.scripting.executeScript({
+      target: { tabId },
+      func: (s: StopRef[]) => window.__accessCheckDom!.followStart(s),
+      args: [stops],
+    }),
+  );
+}
+
+async function endFollow(): Promise<void> {
+  if (auditedTabId === null) return;
+  await chrome.scripting
+    .executeScript({
+      target: { tabId: auditedTabId },
+      func: () => window.__accessCheckDom?.followStop(),
+    })
+    .catch(() => {});
+}
+
 async function clearOverlay(): Promise<void> {
   if (auditedTabId === null) return;
   await chrome.scripting
@@ -347,7 +449,10 @@ chrome.action.onClicked.addListener(async (tab) => {
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name !== "panel") return;
   port.onDisconnect.addListener(() => {
-    void restore().then(clearOverlay);
+    void restore()
+      .then(clearOverlay)
+      .then(() => endPreview(false))
+      .then(endFollow);
   });
 });
 
@@ -394,6 +499,67 @@ chrome.runtime.onMessage.addListener((message: PanelMessage, _sender, sendRespon
       .then(() => restoreOverlayScroll())
       .then(() => sendResponse({ ok: true }));
     return true;
+  }
+
+  if (message.type === "panel:hover") {
+    void restore()
+      .then(() => hoverOverlay(message.key))
+      .then(() => sendResponse({ ok: true }));
+    return true;
+  }
+
+  if (message.type === "panel:preview") {
+    const { css, text, undo, lang, avoid } = message;
+    void restore()
+      .then(() => showPreview({ css, text, undo, lang, avoid }))
+      .then(
+        (applied) => sendResponse({ ok: true, applied } satisfies PreviewReply),
+        (e: unknown) =>
+          sendResponse({
+            ok: false,
+            message: drawFailure(e, "background.previewFailed"),
+          } satisfies PreviewReply),
+      );
+    return true;
+  }
+
+  if (message.type === "panel:preview-side") {
+    void restore()
+      .then(() => sidePreview(message.after))
+      .then(() => sendResponse({ ok: true }));
+    return true;
+  }
+
+  if (message.type === "panel:preview-clear") {
+    void restore()
+      .then(() => endPreview(false))
+      .then(() => sendResponse({ ok: true }));
+    return true;
+  }
+
+  if (message.type === "panel:follow") {
+    void restore()
+      .then(() => startFollow(message.stops))
+      .then(
+        () => sendResponse({ ok: true } satisfies FollowReply),
+        (e: unknown) => sendResponse({ ok: false, message: drawFailure(e) } satisfies FollowReply),
+      );
+    return true;
+  }
+
+  if (message.type === "panel:follow-stop") {
+    void restore()
+      .then(endFollow)
+      .then(() => sendResponse({ ok: true }));
+    return true;
+  }
+
+  if (message.type === PREVIEW_UNDO) {
+    void restore().then(() => {
+      previewTabId = null;
+      save();
+    });
+    return;
   }
 
   if (message.type === "panel:clear-highlight") {
@@ -444,8 +610,23 @@ chrome.tabs.onActivated.addListener(() => {
   });
 });
 
+chrome.tabs.onUpdated.addListener((tabId, change) => {
+  if (!change.url && change.status !== "loading") return;
+  void restore().then(() => (tabId === previewTabId ? endPreview() : undefined));
+});
+
+chrome.tabs.onActivated.addListener(({ tabId }) => {
+  void restore().then(() =>
+    previewTabId !== null && tabId !== previewTabId ? endPreview() : undefined,
+  );
+});
+
 chrome.tabs.onRemoved.addListener((tabId) => {
   void restore().then(() => {
+    if (tabId === previewTabId) {
+      previewTabId = null;
+      save();
+    }
     if (tabId !== auditedTabId) return;
     auditedTabId = null;
     publish({ kind: "idle" });
