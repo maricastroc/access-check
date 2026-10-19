@@ -1530,6 +1530,9 @@ describe("the panel and the page point at each other", () => {
     expect(line).toContain('aria-label={t("panel.nextStop")}');
     expect(line).toContain("{at}/{stops}");
     expect(line).toContain("font-semibold text-muted max-[379px]:hidden");
+    expect(line).toContain("px-3 py-1 text-[13.5px]");
+    expect(line.match(/className=\{LINE_ACTION\}/g)).toHaveLength(2);
+    expect(panel).toContain("const LINE_ACTION = `inline-flex min-h-6 items-center ${LINK}`;");
     expect(panel).toMatch(/<StickyBar[\s\S]{0,300}>\s*<PageLine/);
     expect(t("panel.page.label")).toBe("On the page");
     expect(t("panel.page.all")).toBe("All findings");
@@ -1610,6 +1613,12 @@ describe("previewing a fix on the page", () => {
     const controls = between(panel, "function PreviewControls(", "function Report(");
     expect(controls).toContain("if (!plan) return null;");
     expect(controls).toContain('aria-describedby="preview-scope"');
+    expect(controls).toContain('{t("panel.preview.scopeShort")}');
+    expect(controls.indexOf('t("panel.preview.scopeShort")')).toBeLessThan(
+      controls.indexOf("count: plan.selectors.length,"),
+    );
+    expect(t("panel.preview.scopeShort")).toBe("Changes this tab only, until you undo it.");
+    expect(pt("panel.preview.scopeShort")).toBe("Muda só esta aba, até você desfazer.");
     expect(controls).toContain("count: plan.selectors.length,");
     expect(t("panel.preview.scopeColor", { count: 6 })).toBe(
       "Applies the new color to all 6 elements in this tab only, until you undo it, audit again or leave the page.",
@@ -1646,7 +1655,8 @@ describe("previewing a fix on the page", () => {
   });
 
   it("opens the tab order at the stop the focus fix is for, without the missing-focus ring", () => {
-    expect(report()).toContain("() => void showPath(inv.occurrences[inv.occIndex].stop!)");
+    expect(report()).toContain("void showPath(inv.occurrences[inv.occIndex].stop!);");
+    expect(report()).toContain("if (!following) void follow(true);");
     expect(report()).toContain('plans.get(f.id)?.kind === "focus"');
     expect(report()).toContain(
       "const previewed = new Set(now?.after ? plans.get(now.id)?.selectors : []);",
