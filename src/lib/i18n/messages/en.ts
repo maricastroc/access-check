@@ -1177,7 +1177,7 @@ export const en = {
   "panel.preview.before": "Before",
   "panel.preview.after": "After",
   "panel.preview.undo": "Undo",
-  "panel.preview.active": "Previewing on this page. Nothing is saved.",
+  "panel.preview.scopeShort": "Changes this tab only, until you undo it.",
   "panel.preview.tryTabOrder": "Try it in the tab order",
   "panel.preview.bar": "AccessCheck · Previewing fix {n} on this page · nothing is saved",
   "panel.preview.on": "Previewing fix {n} on this page. Nothing is saved.",

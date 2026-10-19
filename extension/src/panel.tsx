@@ -265,7 +265,9 @@ const LINK =
   "cursor-pointer font-semibold text-ink underline decoration-1 underline-offset-4 hover:decoration-2";
 
 const STEP_BUTTON =
-  "flex size-8 cursor-pointer items-center justify-center border border-border bg-surface text-[15px] hover:border-ink";
+  "flex size-6 cursor-pointer items-center justify-center border border-border bg-surface text-[13.5px] hover:border-ink";
+
+const LINE_ACTION = `inline-flex min-h-6 items-center ${LINK}`;
 
 function PageLine({
   shows,
@@ -367,7 +369,7 @@ function PageLine({
 
   if (shows === "overview" || shows === "finding") {
     controls = (
-      <button type="button" onClick={onClear} className={QUIET_BUTTON}>
+      <button type="button" onClick={onClear} className={LINE_ACTION}>
         {t("panel.page.clear")}
       </button>
     );
@@ -398,7 +400,7 @@ function PageLine({
           </span>
           <span className="sr-only">{t("panel.stopOf", { at, total: stops })}</span>
         </span>
-        <button type="button" onClick={onExit} className={QUIET_BUTTON}>
+        <button type="button" onClick={onExit} className={LINE_ACTION}>
           {t("panel.exitInspection")}
         </button>
       </>
@@ -410,7 +412,7 @@ function PageLine({
   return (
     <div
       data-page-line
-      className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-hairline px-3 py-1.5 text-[13.5px] text-ink-2"
+      className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-hairline px-3 py-1 text-[13.5px] text-ink-2"
     >
       <p
         className={`flex min-w-0 flex-wrap items-baseline gap-x-1.5 ${shows === "path" ? "flex-auto" : "flex-1"}`}
@@ -1110,9 +1112,7 @@ function PreviewControls({
           {t("panel.preview.start")}
         </button>
         <p id="preview-scope" className="mt-1.5 text-[13.5px] leading-normal text-muted">
-          {t(plan.kind === "contrast" ? "panel.preview.scopeColor" : "panel.preview.scopeFocus", {
-            count: plan.selectors.length,
-          })}
+          {t("panel.preview.scopeShort")}
         </p>
         {note && (
           <p role="alert" className="mt-1.5 text-[13.5px] leading-normal text-critical-text">
@@ -1151,7 +1151,11 @@ function PreviewControls({
           {t("panel.preview.undo")}
         </button>
       </div>
-      <p className="mt-1.5 text-[13.5px] leading-normal text-muted">{t("panel.preview.active")}</p>
+      <p className="mt-1.5 text-[13.5px] leading-normal text-muted">
+        {t(plan.kind === "contrast" ? "panel.preview.scopeColor" : "panel.preview.scopeFocus", {
+          count: plan.selectors.length,
+        })}
+      </p>
       {onTry && (
         <button type="button" onClick={onTry} className={`${QUIET_BUTTON} mt-2.5`}>
           {t("panel.preview.tryTabOrder")}
@@ -1644,7 +1648,10 @@ function Report({
                   onUndo={undoPreview}
                   onTry={
                     plans.get(f.id)?.kind === "focus" && inv.occurrences[inv.occIndex]?.stop
-                      ? () => void showPath(inv.occurrences[inv.occIndex].stop!)
+                      ? () => {
+                          void showPath(inv.occurrences[inv.occIndex].stop!);
+                          if (!following) void follow(true);
+                        }
                       : null
                   }
                 />

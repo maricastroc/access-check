@@ -64,6 +64,7 @@ try {
     panel.evaluate(() => {
       const el = document.querySelector("[data-page-line]");
       return {
+        height: Math.round(el?.getBoundingClientRect().height ?? 0),
         shown: [...(el?.querySelector("p")?.children ?? [])]
           .slice(1)
           .filter((n) => !n.classList.contains("sr-only"))
@@ -124,6 +125,7 @@ try {
 
   const overview = await marks(PAGE_TEXT);
   const atOverview = await line();
+  check(atOverview.height <= 34, `the page line is ${atOverview.height}px tall over the overview`);
   console.log("overview:", JSON.stringify({ overview, atOverview }));
   await shoot("overview");
   check(overview.tags.length > 3, `the overview drew ${overview.tags.length} tags`);
@@ -164,6 +166,7 @@ try {
     await new Promise((r) => setTimeout(r, 700));
   });
   const opened = await line();
+  check(opened.height <= 34, `the page line is ${opened.height}px tall with a finding open`);
   console.log("a finding open:", JSON.stringify(opened));
   await shoot("finding");
   check(
@@ -369,6 +372,11 @@ try {
         document.querySelector('[id="finding-wcag:color-contrast"] section')?.textContent ?? "",
     }));
 
+  const differs = (was, now) => {
+    let i = 0;
+    while (i < was.length && was[i] === now[i]) i++;
+    return JSON.stringify({ was: was.slice(i - 60, i + 80), now: now.slice(i - 60, i + 80) });
+  };
   const gone = () =>
     page
       .waitForFunction(
@@ -420,7 +428,10 @@ try {
   await press("Undo");
   await gone();
   const undone = { page: await trace(), panel: await panelSays() };
-  check(undone.page.html === clean.html, "Undo left the page different from how it was");
+  check(
+    undone.page.html === clean.html,
+    `Undo left the page different from how it was: ${differs(clean.html, undone.page.html)}`,
+  );
   check(!undone.page.style && undone.page.bar === null, "Undo left the style or the bar behind");
   check(undone.panel.offer, "after Undo the panel does not offer the preview again");
   check(
@@ -442,7 +453,10 @@ try {
   await other.bringToFront();
   await gone();
   const switched = { page: await trace(), panel: await panelSays() };
-  check(switched.page.html === fresh.html, "the preview stayed on the page after the tab changed");
+  check(
+    switched.page.html === fresh.html,
+    `the preview stayed on the page after the tab changed: ${differs(fresh.html, switched.page.html)}`,
+  );
   check(switched.panel.offer, "after changing tab the panel still shows the preview as on");
   await page.bringToFront();
   await other.close();
@@ -453,7 +467,10 @@ try {
   await page.mouse.click(atBar.undo.x, atBar.undo.y);
   await gone();
   const fromBar = { page: await trace(), panel: await panelSays() };
-  check(fromBar.page.html === fresh.html, "Undo on the page left something behind");
+  check(
+    fromBar.page.html === fresh.html,
+    `Undo on the page left something behind: ${differs(fresh.html, fromBar.page.html)}`,
+  );
   check(fromBar.panel.offer, "Undo on the page did not reach the panel");
 
   await openFinding("keyboard:focus-not-visible");
@@ -462,6 +479,17 @@ try {
   check(/:focus-visible \{/.test(focus.css), `the focus preview injected ${focus.css}`);
   await press("Try it in the tab order");
   const tried = await line();
+  const triedFollow = await panel.evaluate(() => ({
+    on: [...document.querySelectorAll("label")]
+      .find((l) => l.textContent.trim() === "Follow my keyboard")
+      ?.querySelector("input").checked,
+    note: document.getElementById("follow-note")?.textContent ?? null,
+  }));
+  check(
+    triedFollow.on === true &&
+      triedFollow.note === "Press Tab on the page. The current stop follows the focus.",
+    `Try it did not turn on Follow my keyboard: ${JSON.stringify(triedFollow)}`,
+  );
   console.log("trying the focus fix in the tab order:", JSON.stringify({ css: focus.css, tried }));
   await shoot("preview-focus");
   check(tried.shown === "All findings › Tab order", `Try it opened ${tried.shown}`);
@@ -469,7 +497,10 @@ try {
   await press("Undo");
   await gone();
   const afterFocus = await trace();
-  check(afterFocus.html === fresh.html, "the focus preview left something behind");
+  check(
+    afterFocus.html === fresh.html,
+    `the focus preview left something behind: ${differs(fresh.html, afterFocus.html)}`,
+  );
 
   await page.evaluate(() => {
     document.querySelector(".cart").setAttribute("aria-label", "Basket");

@@ -1211,7 +1211,7 @@ export const ptBR: Catalog = {
   "panel.preview.before": "Antes",
   "panel.preview.after": "Depois",
   "panel.preview.undo": "Desfazer",
-  "panel.preview.active": "Pré-visualizando nesta página. Nada é salvo.",
+  "panel.preview.scopeShort": "Muda só esta aba, até você desfazer.",
   "panel.preview.tryTabOrder": "Testar na ordem de tabulação",
   "panel.preview.bar": "AccessCheck · Pré-visualizando a correção {n} nesta página · nada é salvo",
   "panel.preview.on": "Pré-visualizando a correção {n} nesta página. Nada é salvo.",
