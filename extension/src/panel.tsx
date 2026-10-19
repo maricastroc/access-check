@@ -415,7 +415,10 @@ function PageLine({
       <p
         className={`flex min-w-0 flex-wrap items-baseline gap-x-1.5 ${shows === "path" ? "flex-auto" : "flex-1"}`}
       >
-        <span aria-hidden className="shrink-0 text-[12.5px] font-semibold text-muted">
+        <span
+          aria-hidden
+          className="shrink-0 text-[12.5px] font-semibold text-muted max-[379px]:hidden"
+        >
           {t("panel.page.label")}
         </span>
         {trail}

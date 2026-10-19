@@ -1529,6 +1529,7 @@ describe("the panel and the page point at each other", () => {
     expect(line).toContain('aria-label={t("panel.previousStop")}');
     expect(line).toContain('aria-label={t("panel.nextStop")}');
     expect(line).toContain("{at}/{stops}");
+    expect(line).toContain("font-semibold text-muted max-[379px]:hidden");
     expect(panel).toMatch(/<StickyBar[\s\S]{0,300}>\s*<PageLine/);
     expect(t("panel.page.label")).toBe("On the page");
     expect(t("panel.page.all")).toBe("All findings");
