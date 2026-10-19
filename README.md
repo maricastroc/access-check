@@ -64,7 +64,7 @@ A tool that measures contrast shouldn't have questionable contrast of its own, s
 | **⌨️ Keyboard Path**      | Tabs through the page in a real browser and maps the focus order — flagging invisible focus, keyboard traps, positive `tabindex`, and controls that can't be reached by keyboard.                                                      |
 | **📱 Context-Aware Scan** | Re-audits at a mobile viewport and after opening menus / disclosures, catching violations that only surface on small screens or once the UI is expanded.                                                                               |
 | **📈 Change Over Time**   | Signed-in audits are saved, and each new one is diffed rule by rule against the last — which barriers cleared, which came back, and whether that moved where the page stands. A page that passes today can fail after the next deploy. |
-| **🧩 Chrome Extension**   | A Manifest V3 side panel that audits the tab you are already on — including a keyboard focus path walked with real `Tab` presses — and points at the offending element in the live page.                                               |
+| **🧩 Chrome Extension**   | A Manifest V3 side panel that audits the tab you are already on — including a keyboard focus path walked with real `Tab` presses — and points at the offending element in the live page, where a fix can be previewed.                 |
 
 <br/>
 
@@ -186,6 +186,10 @@ The web app audits a URL. The extension audits **the tab you are already looking
 - **The debugger is opt-in, not the price of admission.** Clicking the icon runs the rules, the own-rule audits and the fix verification without ever attaching `chrome.debugger`. **Check keyboard** is a separate action that states its cost before you press it, and **Continue where it stopped** picks up a round that reached its limit instead of starting over.
 - **A real focus path, not a simulated one.** The walk attaches `chrome.debugger` and dispatches genuine `Tab` / `Shift+Tab` through CDP, so the order it reports is the order Chrome actually produces — including what the browser skips. The debugger is attached for that step only and released before the report appears; a walk that is cut short still releases it.
 - **It names the element, not just its CSS path.** axe points at `.bg-gradient-left.dark\:bg-gradient-left-dark…` — 501 characters of compiled Tailwind on react.dev. The report reads `span.text-gray-30 “example.com/”  ·  in <article>`, built from the tag, one stable attribute, the accessible name and the enclosing landmark, with generated ids and hashed classes deliberately left out. Repeated elements that would read the same way are numbered (`1 of 3`) rather than invented. The selector is kept beside the name for **Locate on page** and **Copy selector** — identity is for people, the locator is for `querySelector`.
+- **The panel and the page point at each other.** Pointing at a finding in the panel brings its mark forward on the page, a tag on the page lights its row, and each tag looks for a place that leaves the page's text readable.
+- **A fix can be seen before it is written.** For contrast and focus, **Preview on this page** shows the change in that tab with Before and After, through one style element that Undo, a reload, another audit or closing the panel removes, leaving the page's markup byte for byte as it was.
+- **Audit again says what changed.** A new audit of the same page says what was cleared, what is new and what is still to fix.
+- **The focus path can follow your own keyboard.** **Follow my keyboard** moves the current stop as you press Tab on the page, without the debugger.
 - **It says what it could not check.** Coverage is stated next to the verdict (_"Partial coverage · 3 checks unavailable"_) rather than quietly rounded away, and the reading is never called complete when checks were skipped.
 - **Narrow permissions.** `activeTab`, `scripting`, `sidePanel`, `storage`, `debugger` — no host permissions, and nothing is loaded over the network at runtime.
 
@@ -246,7 +250,7 @@ npm run build:extension
 > Run the browser gates (each drives a real Chrome through Playwright):
 
 ```bash
-npm run check:manifest && npm run check:extension && npm run check:deep && npm run check:panel
+npm run check:manifest && npm run check:extension && npm run check:deep && npm run check:panel && npm run check:marks
 ```
 
 > And the one for the web report, which builds the app and drives it against a fixed

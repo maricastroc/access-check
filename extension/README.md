@@ -56,6 +56,13 @@ says why the keyboard was not checked. A round that stops at its limit keeps the
 reached, and **Continue where it stopped** picks up from there instead of
 starting over. A partial audit is never turned into a total failure.
 
+**Audit again** reads the page as it is now. On the same address, the panel then
+says what changed since the previous audit: what was cleared, what is new, what
+is still to fix, and whether the verdict moved. A finding is matched by its rule
+and its element's selector, not by its number in the queue, which changes.
+Keyboard findings are compared only when both audits walked the whole tab order.
+The comparison lives in the open panel and is gone when it closes.
+
 ## Naming the element
 
 A finding is only useful if you can tell which element it means. axe answers
@@ -101,10 +108,22 @@ once, on the first of its elements that can be seen, tagged with its number in
 the queue and coloured by its severity. The tag moves to another element of the
 same finding as the page scrolls, and clicking it opens the finding at that
 element. An element that is transparent, hidden, or scrolled out of the box that
-holds it gets no tag. When findings to fix have no mark on screen, a line under
-the verdict says how many, and another says how many apply to the whole page,
-such as a missing title or language, which never get a mark. The marks and those
-lines add up to the number to fix, so an empty page never reads as a clean one.
+holds it gets no tag. The line under the panel's title says what the page shows,
+such as "All findings · 5 of 7 marked here", and a line under the verdict says
+how many findings apply to the whole page, such as a missing title or language,
+which never get a mark. The marks, the ones off screen and those findings add up
+to the number to fix, so an empty page never reads as a clean one.
+
+Pointing at a finding in the panel, with the mouse or the keyboard, brings its
+mark forward with the strong bracket and quiets the others, without scrolling the
+page. When that mark is off screen, the finding's row says which way it is.
+Pointing at a tag on the page lights its row in the panel.
+
+Each tag looks for a place beside its element that leaves the page readable. It
+tries the sides and corners at three distances, weighs each place by how much of
+the page's text it would cover, then by how much of the other marked elements,
+then by its distance, and never lands on another tag. A tag that has to move away
+is tied to its element by a thin line.
 
 Opening a finding marks its own elements instead, with the current one
 bracketed, and says where to look when the element is above or below the
@@ -112,17 +131,27 @@ screen. **Locate on page** re-queries the selector and brings the element into
 view only if it is not already visible, scrolling the box that holds it when
 that box scrolls on its own. It says so plainly when the element is no longer in
 the page, or is on the page but not showing, as in a closed menu, and draws no
-mark over what an element is scrolled out of.
+mark over what an element is scrolled out of. The line under the title follows
+the finding, as in "All findings › 4 · Text below the minimum contrast › 4·2".
+**Clear** takes the marks off the page, and **All findings** draws the overview
+again.
 
 **Inspect tab order** opens a navigator, Previous, `Stop N of M` and Next, that
 draws the current stop and two either side, so a long path stays readable.
 **Show complete path** draws them all, and **Exit** puts the page back where
-inspecting began. A stop where the path meets a finding carries a hatched ring
+inspecting began. Previous, Next, the counter and Exit also sit in the line under
+the title, so they stay in reach while the panel scrolls. A stop where the path meets a finding carries a hatched ring
 in that finding's colour, on the page and in the panel's list of stops, and the
 stop's accessible name says which finding it is. Only the current stop shows the
 finding's tag beside its number and, for a focus finding, a ring around the
 element. Clicking a stop's number moves the inspection there, and clicking the
 finding's tag opens it.
+
+**Follow my keyboard** moves the current stop with the real focus as you press
+Tab on the page. It listens to focus changes in the page, without the debugger.
+When the focused element is not one of the recorded stops, the panel says so
+instead of picking the nearest one. It turns off on every way out of the tab
+order and before the keyboard is checked again.
 
 The marks read by text as well as colour: every tag carries a number, stops are
 blue circles, and the current mark is larger and ringed while the others stay
@@ -131,7 +160,7 @@ lighter.
 The drawing lives in one container at the document root, in its own shadow root
 and `aria-hidden`. It adds nothing to the tab order and never touches the
 audited elements. Only its numbers and the arrow shown for an element off screen
-take a click, and a click never moves focus or starts a selection on the page. It
+take a click or the pointer, and a click never moves focus or starts a selection on the page. It
 follows the page as it scrolls, resizes, or moves and removes elements. It is
 removed when the panel closes, at the start of any audit, when the tab moves to
 another page or another route of the same app, and when the report gives way to
@@ -146,6 +175,27 @@ The page scrolls only when you ask: Locate on page, an element chip, a step
 along the tab order, or the arrow. That is not the same thing as the audit
 putting your scroll position back.
 
+## Previewing a fix
+
+For a contrast or focus finding, the Change step offers **Preview on this page**.
+It is the one change the extension makes to the page because you asked, and only
+for these two kinds of fix, where the result is calculated:
+
+- contrast gives each element the color its own fix names, as the fix
+  verification does;
+- focus adds the Change step's code exactly as it is written, so a fix that
+  would lose to the page's own rule shows no change.
+
+The change goes in through one style element of its own, with a bar on the page
+that says nothing is saved and has its own Undo. **Before** and **After** switch
+that style on and off, and while a contrast fix is shown, the gauge under
+Measured shows the ratio with the change. **Undo** removes both, and the page's
+markup is the same as before, byte for byte. A reload, Audit again, another page
+or route, another tab and closing the panel do the same, and the preview is
+always off before anything is measured. Only one preview is on at a time. For a
+focus fix, **Try it in the tab order** opens the tab order at the element's stop
+and turns on Follow my keyboard.
+
 ## Automated check
 
 ```bash
@@ -158,6 +208,16 @@ what the report rendered, plus a before/after comparison of the audited DOM.
 It patches a **copy** of the build to grant `<all_urls>`, because `activeTab` is
 only granted by a genuine toolbar click and an automated browser cannot produce
 one. The shipped manifest is untouched and stays `activeTab`-only.
+
+```bash
+npm run check:marks
+```
+
+Audits the Northwind fixture (`scripts/northwind-fixture.mjs`) with the built
+extension. It checks that the tags leave the page's text readable, that the panel
+and the page point at each other, the line under the title, the comparison after
+Audit again and Follow my keyboard. It also checks that a preview leaves nothing
+behind after Undo, a reload, a tab change, Audit again or closing the panel.
 
 ## What this build checks
 
