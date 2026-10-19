@@ -6,13 +6,15 @@ COMO FUNCIONA
 • A fila é dividida em A corrigir, Conferir à mão e Recomendações, com os problemas mais graves primeiro.
 • A própria página mostra onde estão os problemas: cada problema a corrigir que estiver na tela aparece no seu elemento, com o número da fila. Clique no número para abrir o problema.
 • Abra um problema e os elementos dele ganham marcações numeradas na página. O painel dá a cada um o nome que uma pessoa reconheceria, e "Localizar na página" rola até ele. Clique numa marcação na página e o painel vai para aquele elemento.
+• Aponte para um problema no painel e a marcação dele ganha destaque na página, com as outras mais claras. Uma linha no alto do painel diz o que a página está mostrando.
 • Cada problema segue uma ordem: por que importa, onde está, o que foi medido, o que mudar, com código para copiar, e se a correção foi testada. O seletor, o HTML e os números brutos ficam em Detalhes.
 • Quando dá para calcular a correção, como uma cor de contraste, o AccessCheck aplica a mudança na página por um instante, verifica de novo e devolve a página ao que era. Se o problema não for mais identificado, a correção aparece como "Correção testada".
-• Corrija no seu código e clique em "Auditar de novo", de qualquer ponto do painel.
+• Nos problemas de contraste e de foco, "Pré-visualizar nesta página" aplica a correção na aba aberta para você comparar Antes e Depois. Nada é salvo, e Desfazer devolve a página ao que era.
+• Corrija no seu código e clique em "Auditar de novo", de qualquer ponto do painel. O painel diz o que foi resolvido, o que é novo e o que ainda falta corrigir.
 
 TECLADO
 
-"Verificar teclado" pressiona Tab de verdade pela página e registra cada etapa da ordem de tabulação. Os problemas encontrados, como foco invisível ou controles que o Tab nunca alcança, entram na mesma fila. Cada verificação cobre até 200 etapas e diz o que encontrou, e "Inspecionar ordem de tabulação" desenha o caminho que o Tab percorre pela página. As etapas em que o caminho encontra um problema ganham um anel hachurado na cor do problema, e a etapa atual diz qual é. O Chrome exibe o aviso de depuração durante a verificação, porque pressionar Tab de verdade exige o depurador, e ele é desconectado assim que a verificação termina.
+"Verificar teclado" pressiona Tab de verdade pela página e registra cada etapa da ordem de tabulação. Os problemas encontrados, como foco invisível ou controles que o Tab nunca alcança, entram na mesma fila. Cada verificação cobre até 200 etapas e diz o que encontrou, e "Inspecionar ordem de tabulação" desenha o caminho que o Tab percorre pela página. As etapas em que o caminho encontra um problema ganham um anel hachurado na cor do problema, e a etapa atual diz qual é. Com "Seguir meu teclado" ligado, a etapa atual acompanha os seus próprios Tabs na página. O Chrome exibe o aviso de depuração durante a verificação, porque pressionar Tab de verdade exige o depurador, e ele é desconectado assim que a verificação termina.
 
 O QUE ELE VERIFICA
 
@@ -30,7 +32,8 @@ COMO ELE TRATA O SEU NAVEGADOR
 
 • Sem conta, sem login, sem telemetria
 • Só lê uma aba depois que você clica no ícone da barra naquela aba
-• A página auditada continua como estava. Qualquer mudança feita para testar uma correção é desfeita na hora, e as marcações que ele desenha ficam numa camada própria, nunca tiram o foco da página e são apagadas quando você fecha o painel, audita de novo ou a aba muda de página
+• A página auditada só muda quando você pré-visualiza uma correção, e só naquela aba. Desfazer, recarregar, auditar de novo, sair da página ou fechar o painel devolve a página ao que era
+• Qualquer mudança feita para testar uma correção durante a auditoria é desfeita na hora, e as marcações que ele desenha ficam numa camada própria, nunca tiram o foco da página e são apagadas quando você fecha o painel, audita de novo ou a aba muda de página
 • Nada é enviado para lugar nenhum, e a auditoria acontece inteira no seu navegador
 
 IDIOMAS

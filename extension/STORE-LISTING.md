@@ -6,7 +6,7 @@ submitted automatically.
 ## Basics
 
 - **Item name:** AccessCheck
-- **Version:** 1.7.0
+- **Version:** 1.8.0
 - **Category:** Developer Tools
 - **Default language:** English (United States)
 - **Visibility:** Public
@@ -65,13 +65,19 @@ Regenerate them with `npm run build:screenshots`.
    page. Its elements are marked on the page with numbers,
    and the problem reads in order: where it is, what was measured, what to
    change and whether the fix was tested. Press "Locate on page" to scroll to an
-   element, or pick another one from the numbered chips.
-4. Press "Check keyboard" to follow the real tab order. Chrome shows its own
+   element, or pick another one from the numbered chips. Pointing at a problem
+   in the panel brings its mark forward on the page, and the line under the
+   title says what the page shows, with Clear to remove the marks.
+4. For a contrast or focus problem, press "Preview on this page" in the Change
+   step. The fix shows on the page with a bar that says nothing is saved.
+   Switch Before and After, then press Undo.
+5. Press "Check keyboard" to follow the real tab order. Chrome shows its own
    banner while the debugger is attached and releases it when the check ends.
    The top of the panel then says what the round found.
-5. Press "Inspect tab order" under Focus path to step through the stops on the
+6. Press "Inspect tab order" under Focus path to step through the stops on the
    page, and "Exit" to leave. A stop where the path meets a problem carries a
-   hatched ring in the problem's color, on the page and in the panel.
+   hatched ring in the problem's color, on the page and in the panel. Turn on
+   "Follow my keyboard" and press Tab on the page to move the current stop.
 
 ## Permission justifications
 
@@ -87,7 +93,11 @@ Short answers for the dashboard fields, one per permission.
   report is open, showing where each problem is and the keyboard focus order.
   To confirm a computed contrast fix, it temporarily applies that single style
   to the element, runs the one rule again, and restores the original attribute
-  immediately."
+  immediately. When the user asks to preview a contrast or focus fix, it adds
+  one style element and a small bar to the page until the user undoes it,
+  audits again, leaves the page or closes the panel. While the user follows the
+  tab order with their own keyboard, it notes which element has focus to move
+  the current stop."
 - **sidePanel**: "AccessCheck uses the Chrome Side Panel to display the audit
   verdict, the list of problems to fix, element details, the keyboard focus
   order and the coverage of the audit, alongside the page being inspected."
@@ -126,7 +136,7 @@ off the device.
 | Personal communications             | No                                                                                                                                                        | No                       |
 | Location                            | No                                                                                                                                                        | No                       |
 | Web history                         | No                                                                                                                                                        | No                       |
-| User activity                       | No                                                                                                                                                        | No                       |
+| User activity                       | Yes: which element has focus, only while "Follow my keyboard" is on, compared with the recorded stops and not kept                                        | No                       |
 | Website content                     | Yes: the DOM, computed styles, a screenshot of the visible viewport, selectors and abbreviated HTML of the audited tab, held only for the browser session | No                       |
 
 Certifications to accept, all of which the code supports:
@@ -153,6 +163,32 @@ Certifications to accept, all of which the code supports:
 > Clicking the toolbar icon runs the whole audit, including the rules, the
 > extension's own checks and the fix verification, without attaching the
 > debugger at all.
+
+## What changed in 1.8.0
+
+- The panel and the page point at each other. Pointing at a problem in the
+  panel, with the mouse or the keyboard, brings its mark forward on the page and
+  quiets the others. Pointing at a number on the page lights its row. When the
+  mark is off screen, the row says which way it is and the page does not move.
+- A line under the title says what the page shows: every problem with how many
+  are marked on screen, one problem and its element, or the tab order with its
+  arrows and counter. Every view has Clear or Exit, and screen readers hear each
+  change.
+- The numbers on the page keep clear of the text around their element and of
+  the other marks. A number that has to move away is tied to its element by a
+  thin line.
+- After "Audit again" on the same page, the panel says what was cleared, what
+  is new and what is still to fix, and new problems carry "new" in the list.
+- Contrast and focus problems can be previewed on the page from the Change
+  step, with Before and After and Undo. A bar on the page says nothing is saved.
+  Undo, a reload, Audit again, leaving the page, changing tab or closing the
+  panel put the page back as it was, and nothing is measured while a preview is
+  on. During a contrast preview the gauge shows the ratio with the change.
+- In the tab order, "Follow my keyboard" moves the current stop as you press Tab
+  on the page, and says when the focused element is not in the recorded order.
+- When a stylesheet rule removes the focus outline, the Change step names that
+  rule and where it was found, and suggests the same selector on
+  `:focus-visible`, so the suggestion wins over the rule it replaces.
 
 ## What changed in 1.7.0
 
