@@ -8,9 +8,10 @@ import type { FocusProbe, FocusReach, RestingStyle, StopRef } from "./focus";
 import type { VerifyOp } from "./verify";
 import type { FixVerification } from "../types";
 import type { OverlayMark, OverlayOptions, OverlayReport } from "./overlay";
+import type { PreviewRequest } from "./preview";
 import type { PaintCalm, PrimeReport } from "./prime";
 
-export const DOM_ENGINE_VERSION = 28;
+export const DOM_ENGINE_VERSION = 29;
 
 export type DomEngine = {
   version: number;
@@ -43,7 +44,13 @@ export type DomEngine = {
   matchStops(stops: StopRef[], selectors: string[]): Record<string, number>;
   overlayShow(marks: OverlayMark[], focus: number | null, opts?: OverlayOptions): OverlayReport;
   overlayClear(): void;
+  overlayHover(key: string | null): void;
   overlayRestoreScroll(): boolean;
+  previewShow(req: PreviewRequest): { applied: number };
+  previewSide(after: boolean): boolean;
+  previewClear(): boolean;
+  followStart(stops: StopRef[]): void;
+  followStop(): void;
   AXE_TAGS: string[];
 };
 

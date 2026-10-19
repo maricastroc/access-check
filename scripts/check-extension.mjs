@@ -474,20 +474,16 @@ try {
   );
   check(Boolean(contrastTag), "the low-contrast paragraph has no mark in the overview");
 
-  const readOffScreen = () =>
-    report.evaluate(
-      () =>
-        [...document.querySelectorAll('[aria-labelledby="verdict-heading"] p')]
-          .map((p) => p.textContent)
-          .find((text) => /no mark on screen right now/.test(text)) ?? null,
-    );
+  const readPageLine = () =>
+    report.evaluate(() => document.querySelector("[data-page-line]")?.textContent ?? null);
   const hiddenMarks = overview.filter((m) => !m.shown).length;
-  const offScreenNotice = await readOffScreen();
-  console.log("findings not on screen:", JSON.stringify({ hiddenMarks, offScreenNotice }));
+  const pageLine = await readPageLine();
+  const [, shownHere, markedAll] = pageLine?.match(/(\d+) of (\d+) marked here/) ?? [];
+  console.log("findings not on screen:", JSON.stringify({ hiddenMarks, pageLine }));
   check(hiddenMarks === 1, `the link in the closed drawer should be the one mark not shown`);
   check(
-    offScreenNotice?.startsWith("1 finding to fix has no mark on screen right now") ?? false,
-    `the panel does not say a finding to fix is off screen: ${offScreenNotice}`,
+    Number(markedAll) - Number(shownHere) === 1 && Number(markedAll) === overview.length,
+    `the page line does not say one finding to fix is off screen: ${pageLine}`,
   );
 
   await page.bringToFront();
@@ -498,7 +494,11 @@ try {
   );
   console.log("clicking the overview mark opened:", opened);
   check(opened === "finding-wcag:color-contrast", `clicking the mark opened ${opened}`);
-  check((await readOffScreen()) === null, "the off-screen notice stays up while a finding is open");
+  const lineWhileOpen = (await readPageLine()) ?? "";
+  check(
+    !/marked here/.test(lineWhileOpen) && /Text below the minimum contrast/.test(lineWhileOpen),
+    `the page line does not follow the finding that opened: ${lineWhileOpen}`,
+  );
 
   await page.goto(`${origin}/another-page`, { waitUntil: "domcontentloaded" });
   const moved = await report.evaluate(async () => {
@@ -636,6 +636,9 @@ try {
         .map((p) => p.textContent)
         .filter((text) => /no mark|marks can't reach/.test(text)),
     ),
+    pageLine: await report.evaluate(
+      () => document.querySelector("[data-page-line]")?.textContent ?? "",
+    ),
     shadowReason: await report.evaluate(async () => {
       document.querySelector('li[id="finding-wcag:button-name"] h3 > button')?.click();
       await new Promise((r) => setTimeout(r, 600));
@@ -646,7 +649,8 @@ try {
   };
   const counted = (pattern) =>
     Number(overviewSays.lines.find((line) => pattern.test(line))?.match(/^\d+/)?.[0] ?? 0);
-  const unmarked = counted(/no mark on screen/);
+  const [, shownNow, markable] = overviewSays.pageLine.match(/(\d+) of (\d+) marked here/) ?? [];
+  const unmarked = Number(markable ?? 0) - Number(shownNow ?? 0);
   const wholePage = counted(/whole page/);
   const inShadowRoot = counted(/shadow root/);
   console.log("findings to fix and what the overview says of them:", JSON.stringify(overviewSays));

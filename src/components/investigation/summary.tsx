@@ -40,6 +40,7 @@ export function Summary({
   host,
   t,
   compact = false,
+  afterNote,
   children,
 }: {
   standing: Standing;
@@ -53,6 +54,7 @@ export function Summary({
   host: string;
   t: Translate;
   compact?: boolean;
+  afterNote?: ReactNode;
   children?: ReactNode;
 }) {
   const of = (g: QueueGroup) => groups.find((x) => x.group === g)?.findings ?? [];
@@ -118,6 +120,7 @@ export function Summary({
       >
         {t(STANDING_NOTE[standing])}
       </p>
+      {afterNote}
       {(toFix.length > 0 || toCheck.length > 0) && (
         <div className={cn("space-y-2", compact ? "mt-4" : "mt-6")}>
           {line(t("panel.toFix", { count: toFix.length }), toFix, true)}

@@ -13,7 +13,9 @@ import {
   readFocusedStop,
 } from "./focus";
 import { DOM_ENGINE_VERSION, type DomEngine } from "./engine-api";
-import { overlayClear, overlayRestoreScroll, overlayShow } from "./overlay";
+import { overlayClear, overlayHover, overlayRestoreScroll, overlayShow } from "./overlay";
+import { previewClear, previewShow, previewSide } from "./preview";
+import { followStart, followStop } from "./follow";
 import { collectLiveRegionsRaw } from "./live-regions";
 import { primeLazyContent, waitForPaintCalm } from "./prime";
 import { collectRects, documentHeight, readViewport, scrollToDocY, stickyInset } from "./rects";
@@ -49,7 +51,13 @@ const engine: DomEngine = {
   matchStops,
   overlayShow,
   overlayClear,
+  overlayHover,
   overlayRestoreScroll,
+  previewShow,
+  previewSide,
+  previewClear,
+  followStart,
+  followStop,
   AXE_TAGS,
 };
 

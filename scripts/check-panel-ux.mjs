@@ -106,6 +106,24 @@ try {
       seen.levels[0] === 1 && seen.levels.every((l, i, a) => i === 0 || l <= a[i - 1] + 1),
       `heading levels skip at ${width}px: ${JSON.stringify(seen.levels)}`,
     );
+    await panel
+      .waitForFunction(
+        () => /marked here/.test(document.querySelector("[data-page-line]")?.textContent ?? ""),
+        null,
+        { timeout: 5000 },
+      )
+      .catch(() => {});
+    const line = await panel.evaluate(() => {
+      const el = document.querySelector("[data-page-line]");
+      return {
+        text: el?.textContent ?? "",
+        cut: [...(el?.querySelectorAll(".truncate") ?? [])]
+          .filter((s) => s.scrollWidth > s.clientWidth + 1)
+          .map((s) => s.textContent),
+      };
+    });
+    check(/marked here/.test(line.text), `the page line at ${width}px reads ${line.text}`);
+    check(line.cut.length === 0, `the page line is cut at ${width}px: ${line.cut.join(", ")}`);
     await panel.close();
   }
 

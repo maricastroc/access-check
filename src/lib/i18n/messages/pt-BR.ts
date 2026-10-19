@@ -262,6 +262,7 @@ export const ptBR: Catalog = {
   "background.tabUnreachable":
     "Esta aba mudou de página, então a página auditada não pode mais ser acessada daqui.",
   "background.markupFailed": "Não foi possível desenhar as marcas na página.",
+  "background.previewFailed": "Não foi possível aplicar a pré-visualização na página.",
   "background.tabBehind":
     "Este relatório é de outra aba. Volte para ela para localizar os problemas na página ou verificar o teclado.",
 
@@ -1146,11 +1147,6 @@ export const ptBR: Catalog = {
   "panel.count.manualReview": "revisão manual",
   "panel.toFix": { one: "{count} para corrigir", other: "{count} para corrigir" },
   "panel.toCheck": { one: "{count} para conferir à mão", other: "{count} para conferir à mão" },
-  "panel.notOnScreen": {
-    one: "1 problema não está destacado na página. Abra-o pela lista para localizar os elementos.",
-    other:
-      "{count} problemas não estão destacados na página. Abra-os pela lista para localizar os elementos.",
-  },
   "panel.wholePage": {
     one: "1 problema afeta a página inteira e, por isso, não aparece destacado.",
     other: "{count} problemas afetam a página inteira e, por isso, não aparecem destacados.",
@@ -1159,6 +1155,73 @@ export const ptBR: Catalog = {
     one: "1 problema está dentro de um shadow root e, por isso, não aparece destacado.",
     other: "{count} problemas estão dentro de um shadow root e, por isso, não aparecem destacados.",
   },
+
+  "panel.page.label": "Na página",
+  "panel.page.all": "Todos os problemas",
+  "panel.page.marked": {
+    one: "{shown} de {count} marcado aqui",
+    other: "{shown} de {count} marcados aqui",
+  },
+  "panel.page.tabOrder": "Ordem de tabulação",
+  "panel.page.nothing": "Nada marcado",
+  "panel.page.clear": "Limpar",
+  "panel.page.offScreen": "fora da tela",
+  "panel.page.above": "acima",
+  "panel.page.below": "abaixo",
+
+  "panel.since.title": "Desde a última auditoria",
+  "panel.since.cleared": { one: "{count} resolvido", other: "{count} resolvidos" },
+  "panel.since.added": { one: "{count} novo", other: "{count} novos" },
+  "panel.since.still": { one: "{count} ainda a corrigir", other: "{count} ainda a corrigir" },
+  "panel.since.noneLeft": "nada mais a corrigir",
+  "panel.since.nothing": {
+    one: "Nada mudou: {count} ainda a corrigir.",
+    other: "Nada mudou: {count} ainda a corrigir.",
+  },
+  "panel.since.nothingClean": "Nada mudou: nada a corrigir.",
+  "panel.since.held": "Mesmo resultado de antes: {standing}.",
+  "panel.since.heldBy": "Mesmo resultado de antes: {standing}, porque {reason}.",
+  "panel.since.moved": "Resultado agora: {standing}. Antes: {before}.",
+  "panel.since.movedBy": "Resultado agora: {standing}, porque {reason}. Antes: {before}.",
+  "panel.since.theNewCritical": "o problema novo é crítico",
+  "panel.since.newCritical": {
+    one: "{count} problema novo é crítico",
+    other: "{count} problemas novos são críticos",
+  },
+  "panel.since.theNewSerious": "o problema novo é grave",
+  "panel.since.newSerious": {
+    one: "{count} problema novo é grave",
+    other: "{count} problemas novos são graves",
+  },
+  "panel.since.was": "resolvido, era o {n}",
+  "panel.since.new": "novo",
+
+  "panel.preview.start": "Pré-visualizar nesta página",
+  "panel.preview.scopeColor": {
+    one: "Aplica a nova cor ao elemento só nesta aba, até você desfazer, auditar de novo ou sair da página.",
+    other:
+      "Aplica a nova cor aos {count} elementos só nesta aba, até você desfazer, auditar de novo ou sair da página.",
+  },
+  "panel.preview.scopeFocus": {
+    one: "Aplica o novo contorno de foco ao elemento só nesta aba, até você desfazer, auditar de novo ou sair da página.",
+    other:
+      "Aplica o novo contorno de foco aos {count} elementos só nesta aba, até você desfazer, auditar de novo ou sair da página.",
+  },
+  "panel.preview.label": "Pré-visualização",
+  "panel.preview.before": "Antes",
+  "panel.preview.after": "Depois",
+  "panel.preview.undo": "Desfazer",
+  "panel.preview.active": "Pré-visualizando nesta página. Nada é salvo.",
+  "panel.preview.tryTabOrder": "Testar na ordem de tabulação",
+  "panel.preview.bar": "AccessCheck · Pré-visualizando a correção {n} nesta página · nada é salvo",
+  "panel.preview.on": "Pré-visualizando a correção {n} nesta página. Nada é salvo.",
+  "panel.preview.showBefore": "Mostrando a página antes da correção.",
+  "panel.preview.showAfter": "Mostrando a página com a correção.",
+  "panel.preview.undone": "Pré-visualização desfeita. A página voltou ao que era.",
+
+  "panel.follow.label": "Seguir meu teclado",
+  "panel.follow.hint": "Pressione Tab na página. A etapa atual acompanha o foco.",
+  "panel.follow.outside": "O elemento com foco não está na ordem de tabulação gravada.",
 
   "panel.screenshot": "Captura da parte visível da página",
   "panel.evidenceNote": "captura da área visível",
@@ -1295,6 +1358,7 @@ export const ptBR: Catalog = {
   "chain.noName": "sem nome",
   "chain.onThePage": "Na página",
   "chain.withChange": "Com a mudança",
+  "chain.previewing": "Pré-visualizando a mudança nesta página.",
   "chain.needed": "exigido",
   "chain.passes": "passa de {required}:1",
   "chain.atRest": "Em repouso",

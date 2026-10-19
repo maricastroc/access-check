@@ -30,7 +30,8 @@
     "build:screenshots": "node scripts/build-store-screenshots.mjs",
     "build:tile": "node scripts/build-promo-tile.mjs",
     "check:panel": "node scripts/check-panel-ux.mjs",
-    "check:results": "node scripts/check-results-ux.mjs"
+    "check:results": "node scripts/check-results-ux.mjs",
+    "check:marks": "node scripts/check-page-marks.mjs"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.3.0",

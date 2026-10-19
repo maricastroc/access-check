@@ -761,9 +761,9 @@ describe("the overlay as an overview, and along the focus path", () => {
 
       const report = window.__accessCheckDom!.overlayShow(
         [
-          { n: 1, selector: "#near-view", tag: "1", tone: "critical", alternates: [] },
-          { n: 2, selector: "#far-view", tag: "2", tone: "serious", alternates: [] },
-          { n: 3, selector: "#nowhere", tag: "3", tone: "serious", alternates: [] },
+          { n: 1, selector: "#near-view", tag: "1", tone: "critical", hover: "a", alternates: [] },
+          { n: 2, selector: "#far-view", tag: "2", tone: "serious", hover: "b", alternates: [] },
+          { n: 3, selector: "#nowhere", tag: "3", tone: "serious", hover: "c", alternates: [] },
         ],
         null,
         {},
@@ -800,11 +800,251 @@ describe("the overlay as an overview, and along the focus path", () => {
     expect(seen.missing).toEqual([3]);
     expect(seen.offScreen).toEqual([2]);
     expect(seen.sent).toEqual([
-      { type: "overlay:view", shown: 1, total: 3 },
-      { type: "overlay:view", shown: 0, total: 3 },
-      { type: "overlay:view", shown: 1, total: 3 },
+      { type: "overlay:view", shown: 1, total: 3, away: { b: "below" } },
+      { type: "overlay:view", shown: 0, total: 3, away: { b: "below" } },
+      { type: "overlay:view", shown: 1, total: 3, away: { a: "above" } },
     ]);
     expect(seen.fromFinding).toBe(0);
+  });
+
+  it("keeps a tag off the heading above its element, and the stop numbers off the links beside them", async () => {
+    const seen = await page.evaluate(() => {
+      const dom = window.__accessCheckDom!;
+      const box = document.createElement("div");
+      const link = "color:#f4efe2;font-size:14.5px;text-decoration:none";
+      box.innerHTML = `
+        <header style="display:flex;align-items:center;gap:20px;padding:12px 28px;background:#14342b;color:#f4efe2;font:16px/1.55 sans-serif">
+          <strong>Northwind Books</strong>
+          <nav style="display:flex;gap:18px;margin-left:8px">
+            <a id="nw-1" href="/c" style="${link}">Catalogue</a>
+            <a id="nw-2" href="/o" style="${link}">Offers</a>
+            <a id="nw-3" href="/e" style="${link}">Events</a>
+          </nav>
+        </header>
+        <div style="padding:22px 28px;font:16px/1.55 sans-serif">
+          <h3 id="nw-h3" style="font-size:20px;margin:0 0 2px">This month on the table</h3>
+          <p id="nw-muted" style="margin:0;color:#a09a8a">Twelve titles, restocked weekly.</p>
+        </div>`;
+      document.body.prepend(box);
+      window.scrollTo(0, 0);
+      const shown = () =>
+        [
+          ...document
+            .getElementById("accesscheck-overlay")!
+            .shadowRoot!.querySelectorAll<HTMLElement>(".tag"),
+        ]
+          .filter((t) => t.style.display !== "none")
+          .map((t) => t.getBoundingClientRect());
+      const textOf = (selector: string) => {
+        const range = document.createRange();
+        range.selectNodeContents(document.querySelector(selector)!);
+        return [...range.getClientRects()];
+      };
+      const hits = (tag: DOMRect, texts: DOMRect[]) =>
+        texts.some(
+          (t) =>
+            tag.left < t.right && t.left < tag.right && tag.top < t.bottom && t.top < tag.bottom,
+        );
+
+      dom.overlayShow(
+        [{ n: 4, selector: "#nw-muted", tag: "4", tone: "moderate", hover: "x", alternates: [] }],
+        null,
+        {},
+      );
+      const [four] = shown();
+      const overHeading = hits(four, textOf("#nw-h3"));
+
+      dom.overlayShow(
+        ["#nw-1", "#nw-2", "#nw-3"].map((selector, i) => ({
+          n: i + 1,
+          selector,
+          tag: String(i + 1),
+          tone: "path" as const,
+          shape: "circle" as const,
+          pick: `s:${i + 1}`,
+        })),
+        2,
+        { path: true },
+      );
+      const stops = shown();
+      const links = ["#nw-1", "#nw-2", "#nw-3"].flatMap(textOf);
+      const overLinks = stops.filter((t) => hits(t, links)).length;
+
+      dom.overlayClear();
+      box.remove();
+      return { overHeading, stops: stops.length, overLinks };
+    });
+
+    expect(seen).toEqual({ overHeading: false, stops: 3, overLinks: 0 });
+  });
+
+  it("ties a tag that had to step away from the text back to its element with a line", async () => {
+    const seen = await page.evaluate(() => {
+      const dom = window.__accessCheckDom!;
+      const box = document.createElement("div");
+      const line = "position:absolute;font:16px/24px sans-serif;white-space:nowrap;overflow:hidden";
+      const words = "Words packed around the element on every side ".repeat(6);
+      box.style.cssText = "position:fixed;left:0;top:0;width:1000px;height:800px;background:#fff";
+      box.innerHTML = `
+        <div style="${line};left:0;top:572px;width:1000px">${words}</div>
+        <div style="${line};left:0;top:600px;width:396px;text-align:right">${words}</div>
+        <span id="lead-target" style="${line};left:400px;top:600px">target</span>
+        <div style="${line};left:452px;top:600px;width:548px">${words}</div>
+        <div style="${line};left:0;top:624px;width:1000px">${words}</div>`;
+      document.body.append(box);
+      dom.overlayShow(
+        [{ n: 1, selector: "#lead-target", tag: "1", tone: "serious", alternates: [] }],
+        null,
+        {},
+      );
+      const root = document.getElementById("accesscheck-overlay")!.shadowRoot!;
+      const tag = root.querySelector<HTMLElement>(".tag")!.getBoundingClientRect();
+      const texts = [...box.querySelectorAll("div")].flatMap((el) => {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        return [...range.getClientRects()];
+      });
+      const overText = texts.some(
+        (t) => tag.left < t.right && t.left < tag.right && tag.top < t.bottom && t.top < tag.bottom,
+      );
+      const leaders = [...root.querySelectorAll("g.leader")].map((g) => ({
+        lines: g.querySelectorAll("line").length,
+        ink: g.querySelectorAll("line")[1]?.getAttribute("stroke-width"),
+      }));
+      dom.overlayClear();
+      box.remove();
+      return { overText, leaders };
+    });
+
+    expect(seen).toEqual({ overText: false, leaders: [{ lines: 2, ink: "1" }] });
+  });
+
+  it("brings one finding forward and quiets the rest while it is pointed at, then puts them back", async () => {
+    const seen = await page.evaluate(() => {
+      const dom = window.__accessCheckDom!;
+      const box = document.createElement("div");
+      box.style.cssText = "position:fixed;left:40px;top:300px;display:flex;gap:120px";
+      box.innerHTML = `<button id="h-1">One</button><button id="h-2">Two</button>`;
+      const far = document.createElement("p");
+      far.id = "h-far";
+      far.textContent = "Far below";
+      far.style.marginTop = "3000px";
+      document.body.append(box, far);
+      window.scrollTo(0, 0);
+      dom.overlayShow(
+        [
+          { n: 1, selector: "#h-1", tag: "1", tone: "serious", hover: "a", alternates: [] },
+          { n: 2, selector: "#h-2", tag: "2", tone: "serious", hover: "b", alternates: [] },
+          { n: 3, selector: "#h-far", tag: "3", tone: "serious", hover: "c", alternates: [] },
+        ],
+        null,
+        {},
+      );
+      const root = document.getElementById("accesscheck-overlay")!.shadowRoot!;
+      const read = () => ({
+        dimmed: root.querySelector<HTMLElement>(".stage")!.dataset.hover === "true",
+        tags: [...root.querySelectorAll<HTMLElement>(".tag")].map(
+          (t) => getComputedStyle(t).opacity,
+        ),
+        bars: [...root.querySelectorAll<HTMLElement>(".locus")].map((l) =>
+          (l.lastElementChild as HTMLElement).style.getPropertyValue("--bar"),
+        ),
+      });
+      dom.overlayHover("b");
+      const pointed = read();
+      dom.overlayHover("c");
+      const offScreen = read();
+      dom.overlayHover(null);
+      const after = read();
+      dom.overlayClear();
+      box.remove();
+      far.remove();
+      return { pointed, offScreen, after };
+    });
+
+    expect(seen.pointed).toEqual({
+      dimmed: true,
+      tags: ["0.4", "1", "0.4"],
+      bars: ["1.5px", "2.5px", "1.5px"],
+    });
+    expect(seen.offScreen.dimmed).toBe(false);
+    expect(seen.after).toEqual({
+      dimmed: false,
+      tags: ["1", "1", "1"],
+      bars: ["1.5px", "1.5px", "1.5px"],
+    });
+  });
+
+  it("tells the panel which finding the reader points at on the page, only from the real pointer", async () => {
+    await page.evaluate(() => {
+      const sent: unknown[] = [];
+      (window as unknown as { __sent: unknown[] }).__sent = sent;
+      Object.defineProperty(window, "chrome", {
+        configurable: true,
+        writable: true,
+        value: {
+          runtime: { id: "test", sendMessage: (m: unknown) => (sent.push(m), Promise.resolve()) },
+        },
+      });
+      const target = document.createElement("button");
+      target.id = "point-me";
+      target.textContent = "Point at my tag";
+      target.style.cssText = "position:fixed;left:300px;top:400px";
+      document.body.append(target);
+      window.__accessCheckDom!.overlayShow(
+        [
+          {
+            n: 1,
+            selector: "#point-me",
+            tag: "1",
+            tone: "serious",
+            pick: "f:a:0",
+            hover: "a",
+            alternates: [],
+          },
+        ],
+        null,
+        {},
+      );
+      const tag = document
+        .getElementById("accesscheck-overlay")!
+        .shadowRoot!.querySelector<HTMLElement>(".tag")!;
+      tag.dispatchEvent(new MouseEvent("mouseenter"));
+    });
+    const box = await page.evaluate(() => {
+      const r = document
+        .getElementById("accesscheck-overlay")!
+        .shadowRoot!.querySelector<HTMLElement>(".tag")!
+        .getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    });
+    await page.mouse.move(box.x, box.y);
+    const inside = await page.evaluate(() => ({
+      sent: (window as unknown as { __sent: { type: string }[] }).__sent.filter(
+        (m) => m.type === "overlay:hover",
+      ),
+      dimmed:
+        document
+          .getElementById("accesscheck-overlay")!
+          .shadowRoot!.querySelector<HTMLElement>(".stage")!.dataset.hover ?? null,
+    }));
+    await page.mouse.move(5, 5);
+    const left = await page.evaluate(() => {
+      const sent = (window as unknown as { __sent: { type: string }[] }).__sent.filter(
+        (m) => m.type === "overlay:hover",
+      );
+      window.__accessCheckDom!.overlayClear();
+      document.getElementById("point-me")!.remove();
+      delete (window as unknown as { chrome?: unknown }).chrome;
+      return sent;
+    });
+
+    expect(inside.sent).toEqual([{ type: "overlay:hover", key: "a" }]);
+    expect(inside.dimmed).toBeNull();
+    expect(left).toEqual([
+      { type: "overlay:hover", key: "a" },
+      { type: "overlay:hover", key: null },
+    ]);
   });
 
   it("matches each finding's element to the stop it is, or sits inside", async () => {
@@ -827,6 +1067,254 @@ describe("the overlay as an overview, and along the focus path", () => {
     });
 
     expect(matched).toEqual({ "#ms-img": 1, "#ms-btn": 2 });
+  });
+});
+
+describe("previewing a fix leaves the page exactly as it was", () => {
+  it("adds one style of its own and a bar, switches between before and after, and leaves no trace when undone", async () => {
+    const seen = await page.evaluate(() => {
+      const dom = window.__accessCheckDom!;
+      const target = document.createElement("p");
+      target.id = "pv-text";
+      target.style.color = "rgb(180, 180, 180)";
+      target.textContent = "Faint text to preview";
+      document.body.append(target);
+      const before = document.documentElement.outerHTML;
+      const color = () => getComputedStyle(target).color;
+
+      const report = dom.previewShow({
+        css: "#pv-text { color: #123456 !important; }",
+        text: "AccessCheck · Previewing fix 4 on this page · nothing is saved",
+        undo: "Undo",
+        lang: "en",
+        avoid: ["#pv-text", "#nowhere"],
+      });
+      const during = {
+        applied: report.applied,
+        styles: document.querySelectorAll("#accesscheck-preview").length,
+        bars: document.querySelectorAll("#accesscheck-preview-bar").length,
+        text: document.getElementById("accesscheck-preview-bar")!.shadowRoot!.querySelector(".bar")!
+          .textContent,
+        after: color(),
+      };
+      dom.previewSide(false);
+      const sideBefore = color();
+      dom.previewSide(true);
+      const sideAfter = color();
+      const removed = dom.previewClear();
+      const again = dom.previewClear();
+      const after = document.documentElement.outerHTML;
+      const restored = color();
+      target.remove();
+      return { during, sideBefore, sideAfter, removed, again, same: before === after, restored };
+    });
+
+    expect(seen.during).toEqual({
+      applied: 1,
+      styles: 1,
+      bars: 1,
+      text: "AccessCheck · Previewing fix 4 on this page · nothing is savedUndo",
+      after: "rgb(18, 52, 86)",
+    });
+    expect(seen.sideBefore).toBe("rgb(180, 180, 180)");
+    expect(seen.sideAfter).toBe("rgb(18, 52, 86)");
+    expect(seen).toMatchObject({ removed: true, again: false, same: true });
+    expect(seen.restored).toBe("rgb(180, 180, 180)");
+  });
+
+  it("keeps one preview at a time", async () => {
+    const counts = await page.evaluate(() => {
+      const dom = window.__accessCheckDom!;
+      const ask = (css: string) => ({ css, text: "Preview", undo: "Undo", lang: "en", avoid: [] });
+      dom.previewShow(ask("h1 { color: #111111 !important; }"));
+      dom.previewShow(ask("h1 { color: #222222 !important; }"));
+      const out = {
+        styles: document.querySelectorAll("#accesscheck-preview").length,
+        bars: document.querySelectorAll("#accesscheck-preview-bar").length,
+        css: document.getElementById("accesscheck-preview")!.textContent,
+      };
+      dom.previewClear();
+      return out;
+    });
+
+    expect(counts).toEqual({ styles: 1, bars: 1, css: "h1 { color: #222222 !important; }" });
+  });
+
+  it("moves its bar to another corner when it would cover the element being fixed", async () => {
+    const seen = await page.evaluate(() => {
+      const dom = window.__accessCheckDom!;
+      const target = document.createElement("button");
+      target.id = "pv-corner";
+      target.textContent = "Fixed in the corner";
+      target.style.cssText = "position:fixed;right:0;bottom:0;width:420px;height:90px";
+      document.body.append(target);
+      dom.previewShow({
+        css: "#pv-corner { color: #000000 !important; }",
+        text: "AccessCheck · Previewing fix 2 on this page · nothing is saved",
+        undo: "Undo",
+        lang: "en",
+        avoid: ["#pv-corner"],
+      });
+      const bar = document
+        .getElementById("accesscheck-preview-bar")!
+        .shadowRoot!.querySelector<HTMLElement>(".bar")!;
+      const a = bar.getBoundingClientRect();
+      const b = target.getBoundingClientRect();
+      const out = {
+        corner: bar.dataset.corner,
+        covers: a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom,
+      };
+      dom.previewClear();
+      target.remove();
+      return out;
+    });
+
+    expect(seen.corner).not.toBe("bottom-right");
+    expect(seen.covers).toBe(false);
+  });
+
+  it("undoes from its own button on the page, only from a real click, and keeps the click to itself", async () => {
+    await page.evaluate(() => {
+      const sent: unknown[] = [];
+      const heard: string[] = [];
+      Object.assign(window, { __sent: sent, __heard: heard });
+      Object.defineProperty(window, "chrome", {
+        configurable: true,
+        writable: true,
+        value: {
+          runtime: { id: "test", sendMessage: (m: unknown) => (sent.push(m), Promise.resolve()) },
+        },
+      });
+      for (const type of ["mousedown", "click", "keydown"]) {
+        document.addEventListener(type, () => heard.push(type));
+      }
+      window.__accessCheckDom!.previewShow({
+        css: "h1 { color: #333333 !important; }",
+        text: "Preview",
+        undo: "Undo",
+        lang: "en",
+        avoid: [],
+      });
+      document
+        .getElementById("accesscheck-preview-bar")!
+        .shadowRoot!.querySelector<HTMLButtonElement>("button")!
+        .click();
+    });
+    const untrusted = await page.evaluate(
+      () => document.getElementById("accesscheck-preview") !== null,
+    );
+    const box = await page.evaluate(() => {
+      const r = document
+        .getElementById("accesscheck-preview-bar")!
+        .shadowRoot!.querySelector("button")!
+        .getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    });
+    await page.mouse.click(box.x, box.y);
+    const after = await page.evaluate(() => {
+      const out = {
+        style: document.getElementById("accesscheck-preview") !== null,
+        bar: document.getElementById("accesscheck-preview-bar") !== null,
+        sent: (window as unknown as { __sent: unknown[] }).__sent,
+        heard: (window as unknown as { __heard: string[] }).__heard,
+      };
+      delete (window as unknown as { chrome?: unknown }).chrome;
+      return out;
+    });
+
+    expect(untrusted).toBe(true);
+    expect(after).toEqual({
+      style: false,
+      bar: false,
+      sent: [{ type: "preview:undo" }],
+      heard: [],
+    });
+  });
+
+  it("leaves nothing behind when the page reloads", async () => {
+    await page.evaluate(() =>
+      window.__accessCheckDom!.previewShow({
+        css: "h1 { color: #444444 !important; }",
+        text: "Preview",
+        undo: "Undo",
+        lang: "en",
+        avoid: [],
+      }),
+    );
+    await page.reload({ waitUntil: "domcontentloaded" });
+    const left = await page.evaluate(() => ({
+      style: document.getElementById("accesscheck-preview") !== null,
+      bar: document.getElementById("accesscheck-preview-bar") !== null,
+    }));
+    await page.addScriptTag({ path: HOSTED_ENGINE });
+
+    expect(left).toEqual({ style: false, bar: false });
+  });
+});
+
+describe("following the real keyboard through the recorded tab order", () => {
+  it("names the recorded stop the focus lands on, says when it lands outside, and stops listening when asked", async () => {
+    await page.evaluate(() => {
+      const sent: unknown[] = [];
+      Object.assign(window, { __sent: sent });
+      Object.defineProperty(window, "chrome", {
+        configurable: true,
+        writable: true,
+        value: {
+          runtime: { id: "test", sendMessage: (m: unknown) => (sent.push(m), Promise.resolve()) },
+        },
+      });
+      const box = document.createElement("div");
+      box.id = "follow-box";
+      box.innerHTML = `<button id="fw-1">One</button><button id="fw-2">Two</button><button id="fw-3">Three</button>`;
+      document.body.prepend(box);
+      window.__accessCheckDom!.followStart([
+        { n: 1, selector: "#fw-1" },
+        { n: 2, selector: "#fw-2" },
+        { n: 5, selector: "#fw-1" },
+      ]);
+      window.__accessCheckDom!.previewShow({
+        css: "",
+        text: "Preview",
+        undo: "Undo",
+        lang: "en",
+        avoid: [],
+      });
+      document.getElementById("fw-1")!.focus();
+    });
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Tab");
+    await page.evaluate(() =>
+      document
+        .getElementById("accesscheck-preview-bar")!
+        .shadowRoot!.querySelector<HTMLButtonElement>("button")!
+        .focus(),
+    );
+    const whileOn = await page.evaluate(() =>
+      (window as unknown as { __sent: { type: string }[] }).__sent.filter(
+        (m) => m.type === "follow:focus",
+      ),
+    );
+    await page.evaluate(() => {
+      window.__accessCheckDom!.followStop();
+      document.getElementById("fw-1")!.focus();
+    });
+    const afterStop = await page.evaluate(() => {
+      const sent = (window as unknown as { __sent: { type: string }[] }).__sent.filter(
+        (m) => m.type === "follow:focus",
+      );
+      window.__accessCheckDom!.previewClear();
+      document.getElementById("follow-box")!.remove();
+      delete (window as unknown as { chrome?: unknown }).chrome;
+      return sent.length;
+    });
+
+    expect(whileOn).toEqual([
+      { type: "follow:focus", stops: [1, 5] },
+      { type: "follow:focus", stops: [2] },
+      { type: "follow:focus", stops: [] },
+    ]);
+    expect(afterStop).toBe(3);
   });
 });
 

@@ -8,6 +8,7 @@ import {
   FindingList,
   FocusSequence,
   Locus,
+  NodeGlyph,
   ProblemNav,
   StandingMark,
   Summary,
@@ -19,6 +20,8 @@ import {
   type RelatedFinding,
 } from "../../src/components/investigation";
 import { workQueue, type FindingView } from "../../src/lib/report/findings";
+import { sinceLast, type SinceLast } from "../../src/lib/report/since";
+import { pagePreviewOf, type PagePreview } from "../../src/lib/report/page-preview";
 import { describeElement } from "../../src/lib/report/identity";
 import {
   appliesToWholePage,
@@ -32,12 +35,16 @@ import {
 } from "../../src/lib/report/occurrences";
 import { captureOf } from "../../src/lib/scan/placement";
 import {
+  OVERLAY_HOVER,
   OVERLAY_PICK,
   OVERLAY_VIEW,
+  type OverlayAway,
   type OverlayMark,
   type OverlayOptions,
   type OverlayTone,
 } from "../../src/lib/scan/dom/overlay";
+import { PREVIEW_UNDO } from "../../src/lib/scan/dom/preview";
+import { FOLLOW_FOCUS } from "../../src/lib/scan/dom/follow";
 import { VIEWPORT_CAPTURE, type ScanResult } from "../../src/lib/scan/types";
 import { langAttrs, REPORT_LOCALES } from "../../src/lib/i18n/locale";
 import type { ReportLocale } from "../../src/lib/i18n/locale";
@@ -59,7 +66,16 @@ import {
   writePreference,
   type LocalePreference,
 } from "./locale-preference";
-import type { AuditStage, AuditTask, HighlightReply, PanelMessage, PanelState } from "./state";
+import {
+  sameDocument,
+  type AuditStage,
+  type AuditTask,
+  type HighlightReply,
+  type FollowReply,
+  type PanelMessage,
+  type PanelState,
+  type PreviewReply,
+} from "./state";
 
 type DoneState = Extract<PanelState, { kind: "done" }>;
 
@@ -109,6 +125,23 @@ function keepPort(): void {
 
 function send(message: PanelMessage): Promise<unknown> {
   return chrome.runtime.sendMessage(message).catch(() => undefined);
+}
+
+let pointer: { key: string | null; ask: number } = { key: null, ask: 0 };
+let pointing = false;
+
+async function pointAt(key: string | null): Promise<void> {
+  pointer = { key, ask: pointer.ask + 1 };
+  if (pointing) return;
+  pointing = true;
+  let done = 0;
+  while (done !== pointer.ask) {
+    const { key: now, ask } = pointer;
+    done = ask;
+    await drawing;
+    await send({ type: "panel:hover", key: now });
+  }
+  pointing = false;
 }
 
 function LanguageChoice({ preference }: { preference: LocalePreference }) {
@@ -176,46 +209,304 @@ function StickyBar({
   onTop,
   onReaudit,
   busy = false,
+  children,
 }: {
   title?: string;
   standing?: Standing;
   onTop?: () => void;
   onReaudit?: () => void;
   busy?: boolean;
+  children?: React.ReactNode;
 }) {
   const layout = title ? "truncate" : "flex items-center gap-2";
   return (
-    <div className="sticky top-0 z-30 flex min-h-12 flex-wrap items-center gap-x-2 gap-y-1.5 border-b border-hairline bg-canvas px-3 py-2">
-      <h1 className={`min-w-0 flex-1 text-[13.5px] font-semibold text-ink ${layout}`}>
-        {title ?? (
+    <div className="sticky top-0 z-30 border-b border-hairline bg-canvas">
+      <div className="flex min-h-12 flex-wrap items-center gap-x-2 gap-y-1.5 px-3 py-2">
+        <h1 className={`min-w-0 flex-1 text-[13.5px] font-semibold text-ink ${layout}`}>
+          {title ?? (
+            <>
+              <BrandMark size={16} />
+              AccessCheck
+            </>
+          )}
+        </h1>
+        {onReaudit && (
+          <button
+            type="button"
+            onClick={onReaudit}
+            disabled={busy}
+            className={`${QUIET_BUTTON} shrink-0`}
+          >
+            {t("panel.reaudit")}
+          </button>
+        )}
+        {standing && onTop && (
+          <button
+            type="button"
+            onClick={onTop}
+            className="flex min-h-8 shrink-0 cursor-pointer items-center gap-1.5 px-1.5 text-[13.5px] font-semibold text-ink hover:underline"
+          >
+            <StandingMark standing={standing} size={12} />
+            <span className="max-[359px]:sr-only">{t(STANDING_LABEL[standing])}</span>
+            <span className="sr-only">{t("panel.backToSummary")}</span>
+          </button>
+        )}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+type PageShows = "overview" | "finding" | "path" | null;
+
+type Marked = { shown: number; total: number };
+
+const LINK =
+  "cursor-pointer font-semibold text-ink underline decoration-1 underline-offset-4 hover:decoration-2";
+
+const STEP_BUTTON =
+  "flex size-8 cursor-pointer items-center justify-center border border-border bg-surface text-[15px] hover:border-ink";
+
+function PageLine({
+  shows,
+  marked,
+  told,
+  finding,
+  occurrence,
+  at,
+  stops,
+  onAll,
+  onClear,
+  onExit,
+  onStep,
+}: {
+  shows: PageShows;
+  marked: Marked;
+  told: Marked;
+  finding: FindingView | null;
+  occurrence: string | null;
+  at: number;
+  stops: number;
+  onAll: (() => void) | null;
+  onClear: () => void;
+  onExit: () => void;
+  onStep: (delta: 1 | -1) => void;
+}) {
+  const all = t("panel.page.all");
+  const count = (m: Marked) =>
+    m.total > 0
+      ? t("panel.page.marked", { shown: m.shown, count: m.total })
+      : t("panel.page.nothing");
+  const back = onAll && (
+    <button type="button" onClick={onAll} className={`shrink-0 ${LINK}`}>
+      {all}
+    </button>
+  );
+  const sep = (mark: string) => (
+    <span aria-hidden className="shrink-0 text-muted">
+      {mark}
+    </span>
+  );
+
+  let trail: React.ReactNode;
+  let said: string;
+  let controls: React.ReactNode = null;
+  if (shows === "overview") {
+    trail = (
+      <>
+        <span aria-hidden className="shrink-0 font-semibold text-ink">
+          {all}
+        </span>
+        {sep("·")}
+        <span aria-hidden className="min-w-12 flex-1 basis-0 truncate tabular-nums">
+          {count(marked)}
+        </span>
+      </>
+    );
+    said = `${all}, ${count(told)}`;
+  } else if (shows === "finding" && finding) {
+    trail = (
+      <>
+        {back}
+        {sep("›")}
+        <span aria-hidden className="min-w-12 flex-1 basis-0 truncate">
+          <span className="tabular-nums">{finding.n}</span> · {finding.title}
+        </span>
+        {occurrence && (
           <>
-            <BrandMark size={16} />
-            AccessCheck
+            {sep("›")}
+            <span aria-hidden className="shrink-0 tabular-nums">
+              {occurrence}
+            </span>
           </>
         )}
-      </h1>
-      {onReaudit && (
-        <button
-          type="button"
-          onClick={onReaudit}
-          disabled={busy}
-          className={`${QUIET_BUTTON} shrink-0`}
-        >
-          {t("panel.reaudit")}
+      </>
+    );
+    said = [t("chain.investigation", { n: finding.n }), finding.title, occurrence]
+      .filter(Boolean)
+      .join(", ");
+  } else if (shows === "path") {
+    trail = (
+      <>
+        {back}
+        {sep("›")}
+        <span aria-hidden className="min-w-12 flex-1 basis-0 truncate">
+          {t("panel.page.tabOrder")}
+        </span>
+      </>
+    );
+    said = t("panel.page.tabOrder");
+  } else {
+    trail = (
+      <span aria-hidden className="min-w-12 flex-1 basis-0 truncate">
+        {t("panel.page.nothing")}
+      </span>
+    );
+    said = t("panel.page.nothing");
+  }
+
+  if (shows === "overview" || shows === "finding") {
+    controls = (
+      <button type="button" onClick={onClear} className={QUIET_BUTTON}>
+        {t("panel.page.clear")}
+      </button>
+    );
+  } else if (shows === "path") {
+    controls = (
+      <>
+        <span className="flex gap-1">
+          <button
+            type="button"
+            onClick={() => onStep(-1)}
+            aria-label={t("panel.previousStop")}
+            className={STEP_BUTTON}
+          >
+            <span aria-hidden>←</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => onStep(1)}
+            aria-label={t("panel.nextStop")}
+            className={STEP_BUTTON}
+          >
+            <span aria-hidden>→</span>
+          </button>
+        </span>
+        <span className="text-[13.5px] text-ink-2 tabular-nums">
+          <span aria-hidden>
+            {at}/{stops}
+          </span>
+          <span className="sr-only">{t("panel.stopOf", { at, total: stops })}</span>
+        </span>
+        <button type="button" onClick={onExit} className={QUIET_BUTTON}>
+          {t("panel.exitInspection")}
         </button>
-      )}
-      {standing && onTop && (
-        <button
-          type="button"
-          onClick={onTop}
-          className="flex min-h-8 shrink-0 cursor-pointer items-center gap-1.5 px-1.5 text-[13.5px] font-semibold text-ink hover:underline"
+      </>
+    );
+  } else {
+    controls = back;
+  }
+
+  return (
+    <div
+      data-page-line
+      className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-t border-hairline px-3 py-1.5 text-[13.5px] text-ink-2"
+    >
+      <p
+        className={`flex min-w-0 flex-wrap items-baseline gap-x-1.5 ${shows === "path" ? "flex-auto" : "flex-1"}`}
+      >
+        <span
+          aria-hidden
+          className="shrink-0 text-[12.5px] font-semibold text-muted max-[379px]:hidden"
         >
-          <StandingMark standing={standing} size={12} />
-          <span className="max-[359px]:sr-only">{t(STANDING_LABEL[standing])}</span>
-          <span className="sr-only">{t("panel.backToSummary")}</span>
-        </button>
-      )}
+          {t("panel.page.label")}
+        </span>
+        {trail}
+        <span role="status" aria-live="polite" className="sr-only">
+          {`${t("panel.page.label")}: ${said}`}
+        </span>
+      </p>
+      {controls && <span className="flex flex-wrap items-center gap-2">{controls}</span>}
     </div>
+  );
+}
+
+function SinceLastAudit({ since, onOpen }: { since: SinceLast; onOpen: (id: string) => void }) {
+  const { cleared, added, still, before, after, because } = since;
+  const changed = cleared.length > 0 || added.length > 0;
+  const tally = [
+    cleared.length > 0 ? t("panel.since.cleared", { count: cleared.length }) : null,
+    added.length > 0 ? t("panel.since.added", { count: added.length }) : null,
+    still > 0
+      ? t("panel.since.still", { count: still })
+      : added.length === 0
+        ? t("panel.since.noneLeft")
+        : null,
+  ]
+    .filter(Boolean)
+    .join(", ");
+  const reason = because
+    ? because.count === added.length && added.length === 1
+      ? t(because.holds === "critical" ? "panel.since.theNewCritical" : "panel.since.theNewSerious")
+      : t(because.holds === "critical" ? "panel.since.newCritical" : "panel.since.newSerious", {
+          count: because.count,
+        })
+    : null;
+  const vars = {
+    standing: t(STANDING_LABEL[after]),
+    before: t(STANDING_LABEL[before]),
+    reason: reason ?? "",
+  };
+  const where =
+    before === after
+      ? t(reason ? "panel.since.heldBy" : "panel.since.held", vars)
+      : t(reason ? "panel.since.movedBy" : "panel.since.moved", vars);
+  const line = changed
+    ? `${tally}. ${where}`
+    : still > 0
+      ? t("panel.since.nothing", { count: still })
+      : t("panel.since.nothingClean");
+
+  return (
+    <section aria-labelledby="since-heading" className="mt-3 border-l-2 border-border pl-3">
+      <h3 id="since-heading" className="text-[13.5px] font-semibold text-ink-2">
+        {t("panel.since.title")}
+      </h3>
+      <p className="mt-0.5 text-[13.5px] leading-normal text-ink-2">{line}</p>
+      {cleared.length > 0 && (
+        <ul className="mt-2 space-y-1.5">
+          {cleared.map((f) => (
+            <li key={f.id} className="flex items-start gap-2 text-[13.5px] leading-normal">
+              <span className="mt-px shrink-0">
+                <NodeGlyph kind="end" sev="none" end="tested" />
+              </span>
+              <span className="min-w-0 break-words text-ink">
+                {f.title} <span className="text-muted">· {t("panel.since.was", { n: f.n })}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {added.length > 0 && (
+        <ul className="mt-2 space-y-1.5">
+          {added.map((f) => (
+            <li key={f.id} className="flex items-center gap-2 text-[13.5px] leading-normal">
+              <button
+                type="button"
+                aria-label={`${f.n}. ${f.title}`}
+                onClick={() => onOpen(f.id)}
+                className="ac-focus-tight flex min-h-6 min-w-6 shrink-0 cursor-pointer items-center justify-center"
+              >
+                <Tag n={f.n} sev={sevOf(f)} size={22} />
+              </button>
+              <span aria-hidden className="min-w-0 break-words text-ink">
+                {f.title}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 
@@ -231,11 +522,15 @@ function Header({
   onContinue,
   onShowKeyboard,
   notices,
+  onHover,
+  since,
 }: {
   result: ScanResult;
   groups: FindingGroups;
   selectedId: string | null;
   onSelect: (id: string) => void;
+  onHover: (id: string | null) => void;
+  since: React.ReactNode;
   walking: AuditStage | null;
   deepError?: string;
   round: RoundOutcome | null;
@@ -257,6 +552,8 @@ function Header({
           passed={result.counts.passed}
           selectedId={selectedId}
           onSelect={onSelect}
+          onHover={onHover}
+          afterNote={since}
           heading="h2"
           headingId="verdict-heading"
           host={result.title}
@@ -565,6 +862,7 @@ function overviewMarks(fix: FindingView[]): OverlayMark[] {
         ring: f.ruleId === "focus-not-visible",
         label: f.title,
         pick: `${FINDING_KEY}${f.id}:${first.index}`,
+        hover: f.id,
         alternates: rest.map((o) => ({
           selector: o.selector,
           pick: `${FINDING_KEY}${f.id}:${o.index}`,
@@ -591,7 +889,12 @@ function stopAlerts(found: StopFinding[], findings: FindingView[]): Map<number, 
   return alerts;
 }
 
-function stopMarks(result: ScanResult, alerts: Map<number, StopAlert>, at: number): OverlayMark[] {
+function stopMarks(
+  result: ScanResult,
+  alerts: Map<number, StopAlert>,
+  at: number,
+  previewed: ReadonlySet<string>,
+): OverlayMark[] {
   return (result.keyboard?.focusPath ?? []).map((s) => {
     const alert = alerts.get(s.n);
     const current = s.n === at;
@@ -601,7 +904,7 @@ function stopMarks(result: ScanResult, alerts: Map<number, StopAlert>, at: numbe
       tag: String(s.n),
       tone: "path",
       shape: "circle",
-      ring: current && !s.focusVisible,
+      ring: current && !s.focusVisible && !previewed.has(s.selector),
       alert: alert?.tone,
       badge: current && alert ? { tag: alert.tag, tone: alert.tone, pick: alert.pick } : undefined,
       label: s.label || t("panel.mark.stop"),
@@ -629,7 +932,9 @@ function FocusPath({
   onPick,
   onStep,
   onComplete,
-  onExit,
+  following,
+  followNote,
+  onFollow,
 }: {
   result: ScanResult;
   notice: string | null;
@@ -641,7 +946,9 @@ function FocusPath({
   onPick: (n: number) => void;
   onStep: (delta: 1 | -1) => void;
   onComplete: (on: boolean) => void;
-  onExit: () => void;
+  following: boolean;
+  followNote: string | null;
+  onFollow: (on: boolean) => void;
 }) {
   const walked = result.keyboard;
   if (!walked) return null;
@@ -686,9 +993,23 @@ function FocusPath({
                 </p>
               }
             />
-            <button type="button" className={`${QUIET_BUTTON} mt-3`} onClick={onExit}>
-              {t("panel.exitInspection")}
-            </button>
+            <label className="mt-2 flex w-fit cursor-pointer items-center gap-2 text-[13.5px] text-ink-2">
+              <input
+                type="checkbox"
+                checked={following}
+                onChange={(e) => onFollow(e.target.checked)}
+                aria-describedby="follow-note"
+                className="size-4 accent-ink"
+              />
+              {t("panel.follow.label")}
+            </label>
+            <p
+              id="follow-note"
+              role="status"
+              className="mt-1 text-[13.5px] leading-normal text-steel empty:mt-0"
+            >
+              {followNote ?? (following ? t("panel.follow.hint") : "")}
+            </p>
           </div>
         ))}
 
@@ -754,23 +1075,113 @@ function pathNotice(marks: OverlayMark[], reply: Drawn): string | null {
   return null;
 }
 
+type Previewing = { id: string; after: boolean };
+
+function PreviewControls({
+  plan,
+  active,
+  busy,
+  note,
+  onStart,
+  onSide,
+  onUndo,
+  onTry,
+}: {
+  plan: PagePreview | null;
+  active: Previewing | null;
+  busy: boolean;
+  note: string | null;
+  onStart: () => void;
+  onSide: (after: boolean) => void;
+  onUndo: () => void;
+  onTry: (() => void) | null;
+}) {
+  if (!plan) return null;
+  if (!active) {
+    return (
+      <div className="mt-3">
+        <button
+          type="button"
+          onClick={onStart}
+          disabled={busy}
+          aria-describedby="preview-scope"
+          className={SECONDARY_BUTTON}
+        >
+          {t("panel.preview.start")}
+        </button>
+        <p id="preview-scope" className="mt-1.5 text-[13.5px] leading-normal text-muted">
+          {t(plan.kind === "contrast" ? "panel.preview.scopeColor" : "panel.preview.scopeFocus", {
+            count: plan.selectors.length,
+          })}
+        </p>
+        {note && (
+          <p role="alert" className="mt-1.5 text-[13.5px] leading-normal text-critical-text">
+            {note}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <div
+          role="group"
+          aria-label={t("panel.preview.label")}
+          className="inline-flex border border-border"
+        >
+          {[false, true].map((after) => (
+            <button
+              key={String(after)}
+              type="button"
+              aria-pressed={active.after === after}
+              onClick={() => onSide(after)}
+              className={`min-h-8 cursor-pointer px-3 text-[13.5px] font-semibold ${
+                active.after === after
+                  ? "bg-band text-ink underline decoration-2 underline-offset-4"
+                  : "bg-surface text-muted hover:text-ink"
+              }`}
+            >
+              {t(after ? "panel.preview.after" : "panel.preview.before")}
+            </button>
+          ))}
+        </div>
+        <button type="button" onClick={onUndo} className={QUIET_BUTTON}>
+          {t("panel.preview.undo")}
+        </button>
+      </div>
+      <p className="mt-1.5 text-[13.5px] leading-normal text-muted">{t("panel.preview.active")}</p>
+      {onTry && (
+        <button type="button" onClick={onTry} className={`${QUIET_BUTTON} mt-2.5`}>
+          {t("panel.preview.tryTabOrder")}
+        </button>
+      )}
+    </div>
+  );
+}
+
 function Report({
   result,
+  earlier,
   deepError,
   walking,
   onReaudit,
   onWalk,
   onContinue,
   draw,
+  wipe,
   restoreScroll,
 }: {
   result: ScanResult;
+  earlier: ScanResult | null;
   deepError?: string;
   walking: AuditStage | null;
   onReaudit: () => void;
   onWalk: () => void;
   onContinue: () => void;
   draw: Draw;
+  wipe: () => Promise<unknown>;
   restoreScroll: () => Promise<unknown>;
 }) {
   const groups = useMemo(() => workQueue(result), [result]);
@@ -796,21 +1207,35 @@ function Report({
     [groups, result],
   );
   const alerts = useMemo(() => stopAlerts(atStops, findings), [atStops, findings]);
+  const since = useMemo(() => (earlier ? sinceLast(earlier, result) : null), [earlier, result]);
+  const added = useMemo(() => new Set(since?.added.map((f) => f.id)), [since]);
   const inv = useInvestigation(findings);
   const [onPage, setOnPage] = useState<{ busy: boolean; notice: string | null }>({
     busy: false,
     notice: null,
   });
   const [notice, setNotice] = useState<string | null>(null);
-  const [unseen, setUnseen] = useState(0);
+  const [marked, setMarked] = useState<Marked>({ shown: 0, total: 0 });
+  const [told, setTold] = useState<Marked>({ shown: 0, total: 0 });
+  const [offScreen, setOffScreen] = useState<OverlayAway>({});
+  const [pointed, setPointed] = useState<string | null>(null);
   const [away, setAway] = useState<string | null>(null);
+  const [view, setView] = useState<PageShows>(null);
+  const [preview, setPreview] = useState<Previewing | null>(null);
+  const [previewSaid, setPreviewSaid] = useState("");
+  const [previewNote, setPreviewNote] = useState<{ id: string; message: string } | null>(null);
+  const [following, setFollowing] = useState(false);
+  const [followNote, setFollowNote] = useState<string | null>(null);
+  const previewing = useRef<Previewing | null>(null);
+  const plans = useMemo(() => new Map(findings.map((f) => [f.id, pagePreviewOf(f)])), [findings]);
   const [showing, setShowing] = useState(false);
   const [complete, setComplete] = useState(false);
   const [at, setAt] = useState(1);
   const [roundFrom, setRoundFrom] = useState<number | null>(null);
   const [wasWalking, setWasWalking] = useState(walking !== null);
   const latest = useRef(0);
-  const drawn = useRef<"overview" | "finding" | "path" | null>(null);
+  const drawn = useRef<PageShows>(null);
+  const hovering = useRef<string | null>(null);
   const [verdictShown, setVerdictShown] = useState(true);
   const scope = auditScope(result, t);
   const stops = result.keyboard?.focusPath.length ?? 0;
@@ -838,12 +1263,40 @@ function Report({
       timeoutMs: 0,
     });
     if (ask !== latest.current) return;
+    setView("finding");
     setOnPage({ busy: false, notice: findingNotice(reply) });
+  };
+
+  const follow = async (on: boolean) => {
+    setFollowNote(null);
+    if (!on) {
+      setFollowing(false);
+      void send({ type: "panel:follow-stop" });
+      return;
+    }
+    const reply = (await send({
+      type: "panel:follow",
+      stops: (result.keyboard?.focusPath ?? []).map(({ n, selector }) => ({ n, selector })),
+    })) as FollowReply | undefined;
+    if (!reply?.ok) {
+      setFollowing(false);
+      setFollowNote(reply?.message ?? t("panel.pageUnreachable"));
+      return;
+    }
+    setFollowing(true);
+  };
+
+  const quitFollowing = () => {
+    if (!following) return;
+    setFollowing(false);
+    setFollowNote(null);
+    void send({ type: "panel:follow-stop" });
   };
 
   const go = (id: string, index = 0, origin: Origin = "nav") => {
     const f = findings.find((x) => x.id === id);
     if (!f) return;
+    quitFollowing();
     inv.select(id, index, origin);
     void showFinding(f, index, false);
   };
@@ -871,8 +1324,20 @@ function Report({
     drawn.current = "overview";
     const reply = await draw(overview, null, { scroll: false, path: false, timeoutMs: 0 });
     if (ask !== latest.current) return;
+    setView("overview");
     setAway(reply?.ok === false ? reply.message : null);
-    setUnseen(reply?.ok ? reply.report.missing.length + reply.report.offScreen.length : 0);
+    const count = {
+      shown: reply?.ok ? reply.report.drawn - reply.report.offScreen.length : 0,
+      total: overview.length,
+    };
+    setMarked(count);
+    setTold(count);
+    if (hovering.current) void pointAt(hovering.current);
+  };
+
+  const hover = (id: string | null) => {
+    hovering.current = id;
+    if (drawn.current === "overview") void pointAt(id);
   };
 
   const showPath = async (focus: number, everything = complete, scroll = true) => {
@@ -881,16 +1346,21 @@ function Report({
     drawn.current = "path";
     setAt(next);
     setShowing(true);
-    const marks = stopMarks(result, alerts, next);
+    const now = previewing.current;
+    const previewed = new Set(now?.after ? plans.get(now.id)?.selectors : []);
+    const marks = stopMarks(result, alerts, next, previewed);
     const shown = everything ? wholePath(marks, next) : windowAround(marks, next);
     const reply = await draw(shown, next, { scroll, path: true, timeoutMs: 0 });
     if (ask !== latest.current) return;
+    setView("path");
     setNotice(pathNotice(shown, reply));
   };
 
   const exitPath = () => {
+    quitFollowing();
     ++latest.current;
     drawn.current = null;
+    setView(null);
     setShowing(false);
     setNotice(null);
     const open = inv.selected;
@@ -898,9 +1368,77 @@ function Report({
     void restoreScroll().then(open ? () => showFinding(open, index, false) : showOverview);
   };
 
-  const pausedForWalk = (start: () => void) => () => {
+  const stepPath = (delta: 1 | -1) => void showPath(((at - 1 + delta + stops) % stops) + 1);
+
+  const changePreview = (next: Previewing | null, said: string) => {
+    previewing.current = next;
+    setPreview(next);
+    setPreviewSaid(said);
+    if (drawn.current === "path") void showPath(at, complete, false);
+  };
+
+  const startPreview = async (f: FindingView) => {
+    const plan = plans.get(f.id);
+    if (!plan) return;
+    setPreviewNote(null);
+    const reply = (await send({
+      type: "panel:preview",
+      css: plan.css,
+      text: t("panel.preview.bar", { n: f.n }),
+      undo: t("panel.preview.undo"),
+      lang: UI_LOCALE,
+      avoid: plan.selectors,
+    })) as PreviewReply | undefined;
+    if (!reply?.ok) {
+      setPreviewNote({ id: f.id, message: reply?.message ?? t("panel.pageUnreachable") });
+      return;
+    }
+    changePreview({ id: f.id, after: true }, t("panel.preview.on", { n: f.n }));
+  };
+
+  const sidePreview = (after: boolean) => {
+    const now = previewing.current;
+    if (!now || now.after === after) return;
+    void send({ type: "panel:preview-side", after });
+    changePreview(
+      { ...now, after },
+      t(after ? "panel.preview.showAfter" : "panel.preview.showBefore"),
+    );
+  };
+
+  const undoPreview = () => {
+    if (!previewing.current) return;
+    void send({ type: "panel:preview-clear" });
+    changePreview(null, t("panel.preview.undone"));
+  };
+
+  const showAll = () => {
+    const fromPath = drawn.current === "path";
+    quitFollowing();
     ++latest.current;
     drawn.current = null;
+    setView(null);
+    setShowing(false);
+    setNotice(null);
+    const open = inv.selectedId !== null;
+    const next = () => (open ? inv.clear() : void showOverview());
+    if (fromPath) void restoreScroll().then(next);
+    else next();
+  };
+
+  const clearPage = () => {
+    ++latest.current;
+    drawn.current = null;
+    setView(null);
+    setOnPage({ busy: false, notice: null });
+    void wipe();
+  };
+
+  const pausedForWalk = (start: () => void) => () => {
+    quitFollowing();
+    ++latest.current;
+    drawn.current = null;
+    setView(null);
     setShowing(false);
     setNotice(null);
     start();
@@ -928,10 +1466,26 @@ function Report({
     go(rest.slice(0, cut), index, "mark");
   });
 
+  const followed = useEffectEvent((found: number[]) => {
+    if (!following || drawn.current !== "path") return;
+    if (found.length === 0) {
+      setFollowNote(t("panel.follow.outside"));
+      return;
+    }
+    setFollowNote(null);
+    void showPath(found.find((n) => n > at) ?? found[0], complete, false);
+  });
+
+  const previewEnded = useEffectEvent(() => {
+    if (previewing.current) changePreview(null, t("panel.preview.undone"));
+  });
+
   const redraw = useEffectEvent(() => {
     if (walking !== null) return;
-    if (drawn.current === "path") void showPath(at, complete, false);
-    else if (drawn.current === "finding" && inv.selected) {
+    if (drawn.current === "path") {
+      void showPath(at, complete, false);
+      if (following) void follow(true);
+    } else if (drawn.current === "finding" && inv.selected) {
       void showFinding(inv.selected, inv.occIndex, false);
     } else if (drawn.current === "overview") void showOverview();
   });
@@ -940,8 +1494,12 @@ function Report({
     const listener = (message: PanelMessage) => {
       if (message.type === "panel:page-changed") redraw();
       if (message.type === OVERLAY_PICK) fromPage(message.key);
+      if (message.type === OVERLAY_HOVER) setPointed(message.key);
+      if (message.type === "panel:preview-ended" || message.type === PREVIEW_UNDO) previewEnded();
+      if (message.type === FOLLOW_FOCUS) followed(message.stops);
       if (message.type === OVERLAY_VIEW && drawn.current === "overview") {
-        setUnseen(message.total - message.shown);
+        setMarked({ shown: message.shown, total: message.total });
+        setOffScreen(message.away);
       }
     };
     chrome.runtime.onMessage.addListener(listener);
@@ -971,6 +1529,29 @@ function Report({
     return () => watch.disconnect();
   }, []);
 
+  const aside = (f: FindingView) => {
+    const side = view === "overview" ? offScreen[f.id] : undefined;
+    return (
+      <>
+        {added.has(f.id) && (
+          <>
+            <span aria-hidden>·</span>
+            <span className="font-semibold text-ink">{t("panel.since.new")}</span>
+          </>
+        )}
+        {side && (
+          <span className="sr-only group-hover:not-sr-only group-focus-visible:not-sr-only">
+            <span aria-hidden>· {side === "above" ? "↑" : "↓"} </span>
+            {t("panel.page.offScreen")}
+            <span className="sr-only">
+              , {t(side === "above" ? "panel.page.above" : "panel.page.below")}
+            </span>
+          </span>
+        )}
+      </>
+    );
+  };
+
   return (
     <>
       <StickyBar
@@ -979,7 +1560,28 @@ function Report({
         onTop={() => window.scrollTo({ top: 0, behavior: "instant" })}
         onReaudit={onReaudit}
         busy={walking !== null}
-      />
+      >
+        <PageLine
+          shows={walking !== null || (view === "overview" && away) ? null : view}
+          marked={marked}
+          told={told}
+          finding={inv.selected}
+          occurrence={
+            inv.selected && inv.occurrences.length > 1
+              ? occurrenceTag(inv.selected.n, inv.occIndex, inv.occurrences.length)
+              : null
+          }
+          at={at}
+          stops={stops}
+          onAll={walking === null ? showAll : null}
+          onClear={clearPage}
+          onExit={exitPath}
+          onStep={stepPath}
+        />
+      </StickyBar>
+      <p role="status" aria-live="polite" className="sr-only">
+        {previewSaid}
+      </p>
       <p className="mt-2 truncate px-3 font-mono text-[12.5px] text-muted">{result.finalUrl}</p>
       <ReadingLanguage locale={result.locale} onReaudit={onReaudit} />
       <Header
@@ -987,6 +1589,8 @@ function Report({
         groups={groups}
         selectedId={inv.selectedId}
         onSelect={(id) => go(id, 0, "index")}
+        onHover={hover}
+        since={since && <SinceLastAudit since={since} onOpen={(id) => go(id, 0, "index")} />}
         walking={walking}
         deepError={deepError}
         round={round}
@@ -1000,7 +1604,6 @@ function Report({
             ? away
               ? [away]
               : [
-                  unseen > 0 ? t("panel.notOnScreen", { count: unseen }) : null,
                   wholePage > 0 ? t("panel.wholePage", { count: wholePage }) : null,
                   inShadowRoot > 0 ? t("panel.inShadowRoot", { count: inShadowRoot }) : null,
                 ].filter((line): line is string => line !== null)
@@ -1012,6 +1615,9 @@ function Report({
           groups={groups}
           selectedId={inv.selectedId}
           onToggle={toggle}
+          hoveredId={pointed}
+          onHover={hover}
+          aside={aside}
           compact
           empty={t("panel.noFailures")}
           rowAttrs={langAttrs(result.locale, UI_LOCALE)}
@@ -1026,6 +1632,23 @@ function Report({
               testedOn="page"
               compact
               t={t}
+              previewing={preview?.id === f.id && preview.after}
+              change={
+                <PreviewControls
+                  plan={plans.get(f.id) ?? null}
+                  active={preview?.id === f.id ? preview : null}
+                  busy={walking !== null}
+                  note={previewNote?.id === f.id ? previewNote.message : null}
+                  onStart={() => void startPreview(f)}
+                  onSide={sidePreview}
+                  onUndo={undoPreview}
+                  onTry={
+                    plans.get(f.id)?.kind === "focus" && inv.occurrences[inv.occIndex]?.stop
+                      ? () => void showPath(inv.occurrences[inv.occIndex].stop!)
+                      : null
+                  }
+                />
+              }
               located={
                 inv.occurrences.length > 0 ? (
                   <OnPage busy={onPage.busy} notice={onPage.notice} onLocate={locate} />
@@ -1045,12 +1668,14 @@ function Report({
         related={related}
         onShow={() => void showPath(at)}
         onPick={(n) => void showPath(n)}
-        onStep={(delta) => void showPath(((at - 1 + delta + stops) % stops) + 1)}
+        onStep={stepPath}
         onComplete={(on) => {
           setComplete(on);
           void showPath(at, on);
         }}
-        onExit={exitPath}
+        following={following}
+        followNote={followNote}
+        onFollow={(on) => void follow(on)}
       />
 
       <Collapsed title={t("panel.aboutAudit")} note={scope.summary}>
@@ -1104,7 +1729,15 @@ function Panel({
 }) {
   const [state, setState] = useState<PanelState>({ kind: "idle" });
   const [lastDone, setLastDone] = useState<DoneState | null>(null);
-  if (state.kind === "done" && state !== lastDone) setLastDone(state);
+  const [earlier, setEarlier] = useState<ScanResult | null>(null);
+  if (state.kind === "done" && state !== lastDone) {
+    if (lastDone && lastDone.result.scannedAt !== state.result.scannedAt) {
+      setEarlier(
+        sameDocument(lastDone.result.finalUrl, state.result.finalUrl) ? lastDone.result : null,
+      );
+    }
+    setLastDone(state);
+  }
 
   useEffect(() => {
     const listener = (message: PanelMessage) => {
@@ -1145,6 +1778,12 @@ function Panel({
     );
     drawing = reply.catch(() => undefined);
     return reply.then((r) => r ?? null);
+  };
+
+  const wipe = () => {
+    const done = drawing.then(() => send({ type: "panel:clear-highlight" }));
+    drawing = done.catch(() => undefined);
+    return done;
   };
 
   const running = state.kind === "running";
@@ -1202,12 +1841,14 @@ function Panel({
         <Report
           key={shown.result.scannedAt}
           result={shown.result}
+          earlier={earlier}
           deepError={walking ? undefined : shown.deepError}
           walking={walking}
           onReaudit={() => void send({ type: "panel:audit" })}
           onWalk={() => void send({ type: "panel:focus-path" })}
           onContinue={() => void send({ type: "panel:continue-walk" })}
           draw={draw}
+          wipe={wipe}
           restoreScroll={() => send({ type: "panel:restore-scroll" })}
         />
       )}
