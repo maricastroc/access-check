@@ -1,6 +1,6 @@
 # Extensão AccessCheck: política de privacidade
 
-**Em vigor desde 5 de outubro de 2026.** Esta política cobre a extensão de
+**Em vigor desde 19 de outubro de 2026.** Esta política cobre a extensão de
 navegador do AccessCheck. O analisador hospedado no site do AccessCheck é um
 produto separado, com armazenamento próprio; esta política trata apenas da
 extensão.
@@ -29,10 +29,13 @@ aquela aba:
   de propósito, porque guarda o que você digitou num campo de formulário, e do
   `href` sobra apenas o caminho. A query string, onde costumam ficar tokens, é
   removida.
+- **Qual elemento está com o foco**, só enquanto "Seguir meu teclado" estiver
+  ligado na ordem de tabulação, para mover a etapa atual junto. Ele é comparado
+  com as etapas gravadas e não é guardado.
 
 ## O que a extensão escreve
 
-Ela escreve na sua página de duas formas apenas:
+Ela escreve na sua página de três formas apenas:
 
 - **Para testar uma correção.** Durante a auditoria, quando a correção pode ser
   calculada a partir de valores medidos, o que na prática significa uma cor de
@@ -56,6 +59,14 @@ Ela escreve na sua página de duas formas apenas:
   página auditada, depois de voltar a ela ou recarregá-la. Tudo o que ela
   desenhou também é removido quando o
   painel fecha e no início de qualquer auditoria.
+- **Para pré-visualizar uma correção, quando você pede.** Num problema de
+  contraste ou de foco, "Pré-visualizar nesta página" acrescenta um único
+  elemento de estilo próprio e uma pequena faixa que avisa que nada é salvo.
+  Antes e Depois ligam e desligam esse estilo. Desfazer, recarregar, Auditar de
+  novo, outra página na aba, outra aba ou fechar o painel remove os dois, e o
+  markup da página volta a ser o mesmo de antes. Uma verificação automatizada do
+  projeto compara isso byte a byte. Nada é medido enquanto a pré-visualização
+  está ligada.
 
 O que você digita num campo de formulário nunca é lido, escrito nem guardado.
 
@@ -101,8 +112,9 @@ quebra o build caso um relatório chegue a ser publicado com ele ainda conectado
 
 - **activeTab**: dá acesso apenas à aba em que você clicou, e somente depois
   desse clique. A extensão não pede acesso permanente a nenhum site.
-- **scripting**: injeta a auditoria naquela aba e desenha as marcas
-  numeradas descritas acima enquanto o relatório está aberto.
+- **scripting**: injeta a auditoria naquela aba, desenha as marcas numeradas
+  descritas acima enquanto o relatório está aberto e aplica a pré-visualização
+  que você pedir.
 - **sidePanel**: mostra o relatório ao lado da página.
 - **storage**: `chrome.storage.session` para o único relatório descrito acima,
   e `chrome.storage.local` para o idioma do relatório que você escolheu. Nada

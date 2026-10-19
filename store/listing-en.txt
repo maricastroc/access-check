@@ -6,13 +6,15 @@ HOW IT WORKS
 • The queue is split into To fix, To check by hand and Recommendations, with the most serious problems first.
 • The page itself shows where the problems are: each problem to fix that is on screen gets its number from the queue, on its element. Click a number to open that problem.
 • Open a problem and its elements are marked on the page with numbers. The panel names each one the way a person would recognize it, and "Locate on page" scrolls to it. Click a mark on the page and the panel jumps to that element.
+• Point at a problem in the panel and its mark comes forward on the page while the others fade. A line at the top of the panel says what the page is showing.
 • Each problem reads in order: why it matters, where it is, what was measured, what to change with code you can copy, and whether the fix was tested. The selector, the HTML and the raw numbers sit under Details.
 • When a fix can be computed, such as a contrast color, AccessCheck applies it to the page for a moment, runs that rule again and puts the page back. If the rule passes, the fix is marked "Fix tested".
-• Fix it in your code, then press "Audit again" from anywhere in the panel.
+• For contrast and focus problems, "Preview on this page" applies the fix to the open tab so you can compare Before and After. Nothing is saved, and Undo puts the page back.
+• Fix it in your code, then press "Audit again" from anywhere in the panel. The panel says what was cleared, what is new and what is still to fix.
 
 KEYBOARD
 
-"Check keyboard" presses Tab through the page for real and records every stop. The problems it finds, like focus you can't see or controls that Tab never reaches, join the same queue. Each round covers up to 200 stops and tells you what it found, and "Inspect tab order" draws the path the Tab key takes across the page. Stops where the path meets a problem carry a hatched ring in the problem's color, and the current stop names it. Chrome shows its debugging banner during the check, because real Tab presses need the debugger, and it is released as soon as the check ends.
+"Check keyboard" presses Tab through the page for real and records every stop. The problems it finds, like focus you can't see or controls that Tab never reaches, join the same queue. Each round covers up to 200 stops and tells you what it found, and "Inspect tab order" draws the path the Tab key takes across the page. Stops where the path meets a problem carry a hatched ring in the problem's color, and the current stop names it. With "Follow my keyboard" on, the current stop follows your own Tab presses on the page. Chrome shows its debugging banner during the check, because real Tab presses need the debugger, and it is released as soon as the check ends.
 
 WHAT IT CHECKS
 
@@ -30,7 +32,8 @@ HOW IT TREATS YOUR BROWSER
 
 • No account, no sign-in, no telemetry
 • It only reads a tab after you click the toolbar icon on that tab
-• The audited page is left as it was. Any change made to test a fix is undone right away, and the marks it draws live in their own layer, never take focus from the page and are cleared when you close the panel, audit again or the tab moves to another page
+• The audited page changes only when you preview a fix, and only in that tab. Undo, a reload, auditing again, leaving the page or closing the panel puts it back as it was
+• Any change made to test a fix during the audit is undone right away, and the marks it draws live in their own layer, never take focus from the page and are cleared when you close the panel, audit again or the tab moves to another page
 • Nothing is uploaded, and the audit runs entirely in your browser
 
 LANGUAGES

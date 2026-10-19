@@ -1,6 +1,6 @@
 # AccessCheck extension: privacy policy
 
-**Effective 5 October 2026.** This policy covers the AccessCheck browser
+**Effective 19 October 2026.** This policy covers the AccessCheck browser
 extension. The hosted scanner at the AccessCheck website is a separate product
 with its own storage; this policy is only about the extension.
 
@@ -26,10 +26,13 @@ tab:
   element's text. The `value` attribute is deliberately left out, because it
   holds what you typed into a form field, and `href` keeps only its path. The
   query string, where tokens usually live, is removed.
+- **Which element has focus**, only while "Follow my keyboard" is on in the tab
+  order, to move the current stop with it. It is compared with the recorded
+  stops and not kept.
 
 ## What the extension writes
 
-It writes to your page in two ways only:
+It writes to your page in three ways only:
 
 - **Testing a fix.** During the audit, where a fix can be computed from measured
   values, which in practice means a contrast color, the extension sets that one
@@ -51,6 +54,13 @@ It writes to your page in two ways only:
   when the tab shows the audited page again, after going back to it or
   reloading it. Everything it drew is also
   removed when the panel closes and at the start of any audit.
+- **Previewing a fix, when you ask.** For a contrast or focus problem, "Preview
+  on this page" adds one style element of its own and a small bar that says
+  nothing is saved. Before and After switch that style on and off. Undo, a
+  reload, Audit again, another page in the tab, another tab or closing the panel
+  removes both, and the page's markup is the same as before. An automated check
+  in the project compares it byte for byte. Nothing is measured while a preview
+  is on.
 
 What you type into a form field is never read, written or stored.
 
@@ -94,8 +104,8 @@ fails the build if the report is ever published while it is still attached.
 
 - **activeTab**: grants access to the one tab you clicked on, and only after
   that click. The extension asks for no standing access to any site.
-- **scripting**: injects the audit into that tab and draws the numbered marks
-  described above while the report is open.
+- **scripting**: injects the audit into that tab, draws the numbered marks
+  described above while the report is open, and applies a preview you ask for.
 - **sidePanel**: shows the report beside the page.
 - **storage**: `chrome.storage.session` for the single report described above,
   and `chrome.storage.local` for the report language you picked. Nothing else.

@@ -40,14 +40,19 @@ const layouts = {
   },
   path: ({ page, panel }) => {
     const s = WIDTH / page.width;
-    const p = 1.6;
     const from = panel.strip - 14;
+    const current = page.marks
+      .filter((m) => m.kind.includes("current") || m.kind.includes("badge"))
+      .map((m) => m.y + m.h + 6);
+    const cut = Math.floor(Math.max(page.hero.y + page.hero.h, ...current) * s);
+    const height = panel.links + 9 - from;
+    const p = Math.min(1.6, (HEIGHT - cut - 1) / height);
     return {
       s,
       p,
-      cut: Math.floor((page.hero.y + page.hero.h) * s),
+      cut,
       side: Math.round(panel.width * p),
-      excerpt: { y: from, height: panel.links + 9 - from },
+      excerpt: { y: from, height },
     };
   },
   details: ({ page, panel }) => {
@@ -82,7 +87,7 @@ const layouts = {
     const [, card] = page.cards;
     const s = HEIGHT / 300;
     const p = 1.5;
-    const height = panel.change + 40;
+    const height = panel.change + 40 - panel.line;
     return {
       s,
       p,
@@ -94,7 +99,7 @@ const layouts = {
     };
   },
   fix: ({ page, panel }) => {
-    const height = Math.ceil(panel.end + 12);
+    const height = Math.ceil(panel.end + 12 - panel.from);
     const p = HEIGHT / height;
     const [sample] = panel.samples;
     const bracket = page.muted.y - 5;
@@ -104,9 +109,8 @@ const layouts = {
       p,
       height,
       lead: WIDTH - Math.round(panel.width * p),
-      top: Math.round(sample.top * p - 4 * s),
+      top: Math.round((sample.top - panel.from) * p - 4 * s),
       from: bracket - 4,
-      bar: Math.round(panel.bar * p),
     };
   },
 };
@@ -287,7 +291,8 @@ const gather = async () => {
       const ratios = [...section.querySelectorAll("span.font-mono")]
         .map((s) => s.textContent.trim())
         .filter((text) => /^\d+\.\d\d:1$/.test(text));
-      return { bar, end, samples, ratios };
+      const from = Math.floor(stations[1].getBoundingClientRect().top - 14);
+      return { bar, from, end, samples, ratios };
     });
     const shelf = await framePage(
       { width: 704, height: 640 },
@@ -298,7 +303,7 @@ const gather = async () => {
       throw new Error("5-verified-fix: the mark's tag no longer sits below the marked text");
     }
     const fix = layouts.fix({ page: shelf, panel: chain });
-    await shootPanel("fix-panel", chain, fix.p, { y: 0, height: fix.height });
+    await shootPanel("fix-panel", chain, fix.p, { y: chain.from, height: fix.height });
     await shootPage("fix-page", shelf, fix.s, {
       x: 0,
       y: fix.from,
@@ -470,6 +475,7 @@ const gather = async () => {
       window.scrollTo(0, Math.floor(target / 10) * 10);
       await new Promise((r) => setTimeout(r, 400));
       return {
+        line: document.querySelector("[data-page-line]").getBoundingClientRect().top,
         change: find("With the change").bottom,
         person: find("The fix needs a person").top,
         named: (item.innerText.match(/“[^”]*”, image/g) ?? []).map((line) =>
@@ -479,7 +485,7 @@ const gather = async () => {
     });
     console.log("  inspection:", `mark ${card.marks[0].text}, ${named.named.join(" then ")}`);
     const inspection = layouts.inspection({ page: card, panel: named });
-    if (named.named.length !== 2 || inspection.height > named.person - 6) {
+    if (named.named.length !== 2 || named.line + inspection.height > named.person - 6) {
       throw new Error("4-inspection: the panel excerpt no longer ends on the changed name");
     }
     await shootPage("inspection-page", card, inspection.s, {
@@ -487,7 +493,10 @@ const gather = async () => {
       width: inspection.lead / inspection.s,
       height: HEIGHT / inspection.s,
     });
-    await shootPanel("inspection-panel", named, inspection.p, { y: 0, height: inspection.height });
+    await shootPanel("inspection-panel", named, inspection.p, {
+      y: named.line,
+      height: inspection.height,
+    });
 
     return { images, opening, path, details, inspection, fix };
   } finally {
@@ -588,7 +597,7 @@ const screenshots = [
     name: "5-verified-fix",
     caption: "a contrast fix measured, changed and tested on the page",
     html: frame(
-      `${lockup(MARGIN, Math.round((fix.bar - 20) / 2))}
+      `${lockup(MARGIN, 30)}
       ${headline(HEADLINES.fix, MARGIN, fix.top - 128, 44)}
       ${placed("fix-page", { x: 0, y: fix.top, width: fix.lead, height: HEIGHT - fix.top }, `border-top:${rule}`)}
       ${placed("fix-panel", { x: fix.lead, y: 0, width: WIDTH - fix.lead, height: HEIGHT }, `border-left:${rule}`)}`,
