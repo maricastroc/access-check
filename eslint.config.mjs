@@ -16,8 +16,6 @@ const eslintConfig = defineConfig([
     "src/generated/**",
     "extension/dist/**",
     ".claude/**",
-    "design_handoff_vegetal_2a/**",
-    "design_exploration_cor_tipo/**",
   ]),
 ]);
 
