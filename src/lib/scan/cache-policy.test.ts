@@ -97,6 +97,42 @@ describe("what the cache drops first when a scan is heavy", () => {
   });
 });
 
+describe("the text boxes that travel with each capture", () => {
+  const boxes = (n: number) =>
+    Array.from({ length: n }, (_, i) => [i % 100, 10, 20, 2] as [number, number, number, number]);
+
+  it("counts them in what a reading weighs", () => {
+    const shot = "a".repeat(MAX_CACHED_SCREENSHOT_CHARS - 100);
+    expect(trimForCache(result({ screenshot: shot })).screenshot).toBe(shot);
+    const heavy = trimForCache(result({ screenshot: shot, textBoxes: boxes(50) }));
+    expect(heavy.screenshot).toBeNull();
+    expect(heavy.textBoxes).toBeUndefined();
+  });
+
+  it("drops a capture's boxes together with its image", () => {
+    const trimmed = trimForCache(
+      result({
+        screenshot: "data:x",
+        textBoxes: boxes(3),
+        regions: [
+          {
+            id: "r1",
+            docY: 1_000,
+            width: 1200,
+            height: 800,
+            image: "x".repeat(MAX_CACHED_SCREENSHOT_CHARS),
+            stops: [],
+            textBoxes: boxes(3),
+          },
+        ],
+      }),
+    );
+    expect(trimmed.regions?.[0]).toMatchObject({ image: null, missed: "bytes" });
+    expect(trimmed.regions?.[0].textBoxes).toBeUndefined();
+    expect(trimmed.textBoxes).toEqual(boxes(3));
+  });
+});
+
 describe("how long a reading stays fresh", () => {
   it("keeps a whole reading the full window", () => {
     expect(freshFor({})).toBe(SCAN_FRESH_MS);

@@ -1347,6 +1347,36 @@ describe("the engine reads the page the same way from either caller", () => {
   });
 });
 
+describe("the text a capture keeps, so tags can step around it", () => {
+  it("reads the text boxes of the first screenshot and of every region it takes", async () => {
+    const result = await runScan(`${origin}/tall`, {
+      keyboard: false,
+      contexts: false,
+      verifyFixes: false,
+    });
+    const inRange = (boxes: ScanResult["textBoxes"]) =>
+      (boxes ?? []).every(
+        ([left, top, width, height]) =>
+          left >= 0 &&
+          top >= 0 &&
+          width > 0 &&
+          height > 0 &&
+          left + width <= 100.1 &&
+          top + height <= 100.1,
+      );
+
+    expect(result.screenshot).not.toBeNull();
+    expect(result.textBoxes?.length).toBeGreaterThan(0);
+    expect(inRange(result.textBoxes)).toBe(true);
+    const taken = (result.regions ?? []).filter((r) => r.image);
+    expect(taken.length).toBeGreaterThan(0);
+    for (const region of taken) {
+      expect(region.textBoxes?.length).toBeGreaterThan(0);
+      expect(inRange(region.textBoxes)).toBe(true);
+    }
+  }, 60_000);
+});
+
 describe("ScanResult parity: hosted runScan vs the extension bundle", () => {
   let hosted: ScanResult;
   let extension: ScanResult;

@@ -259,6 +259,7 @@ export function InvestigationSurface({
           onSelect={onSelectMark}
           onSelectStop={onSelectStop}
           onHover={onHover}
+          texts={capture.textBoxes}
           t={t}
         />
       </div>

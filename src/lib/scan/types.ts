@@ -89,6 +89,8 @@ export type RegionStop = {
   height: number;
 };
 
+export type TextBox = [left: number, top: number, width: number, height: number];
+
 export type ScanRegion = {
   id: string;
   docY: number;
@@ -97,6 +99,7 @@ export type ScanRegion = {
   image: string | null;
   missed?: RegionMiss;
   stops: RegionStop[];
+  textBoxes?: TextBox[];
 };
 
 export type ScanMarker = {
@@ -157,6 +160,7 @@ export type ScanResult = {
   markers: ScanMarker[];
   identities?: Record<string, ElementIdentity>;
   regions?: ScanRegion[];
+  textBoxes?: TextBox[];
   keyboard?: KeyboardReport;
   contexts?: ContextReport;
   audits?: AuditsReport;

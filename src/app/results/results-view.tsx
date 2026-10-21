@@ -132,7 +132,7 @@ export function ResultsView({
   );
 
   const capture = useMemo(
-    () => captureById(captureId, result?.screenshot ?? null, regions),
+    () => captureById(captureId, result?.screenshot ?? null, regions, result?.textBoxes),
     [captureId, result, regions],
   );
   const marks = useMemo(

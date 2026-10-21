@@ -19,6 +19,7 @@ import { followStart, followStop } from "./follow";
 import { collectLiveRegionsRaw } from "./live-regions";
 import { primeLazyContent, waitForPaintCalm } from "./prime";
 import { collectRects, documentHeight, readViewport, scrollToDocY, stickyInset } from "./rects";
+import { readTextBoxes } from "./text-boxes";
 import { cssPath } from "./selector";
 import { verifyFixes } from "./verify";
 import { collectTargetSizeRaw } from "./target-size";
@@ -29,6 +30,7 @@ const engine: DomEngine = {
   collectElementInfo,
   collectIdentities,
   collectRects,
+  readTextBoxes,
   readViewport,
   documentHeight,
   stickyInset,

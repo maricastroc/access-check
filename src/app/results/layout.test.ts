@@ -18,6 +18,8 @@ const summary = read("../../components/investigation/summary.tsx");
 const list = read("../../components/investigation/finding-list.tsx");
 const chain = read("../../components/investigation/evidence-chain.tsx");
 const marks = read("../../components/investigation/capture-marks.tsx");
+const places = read("../../components/investigation/tag-places.ts");
+const spots = read("../../lib/scan/dom/label-spots.ts");
 const nav = read("../../components/investigation/occurrence-nav.tsx");
 const sequence = read("../../components/investigation/focus-sequence.tsx");
 const connector = read("../../components/investigation/connector.tsx");
@@ -167,7 +169,12 @@ describe("the capture stays readable when the page is crowded", () => {
   });
 
   it("keeps tags beside the element and lets the other occurrences give way", () => {
-    expect(marks).toContain("{ x: a.x - i, y: a.y - i - h - 2, w, h }");
+    expect(marks).toContain("placeTags(");
+    expect(marks).toContain(
+      "texts: texts.map(([left, top, width, height]) => px({ left, top, width, height })),",
+    );
+    expect(places).toContain("const chosen = chooseSpot({");
+    expect(spots).toContain("above: (a, w, h, g) => ({ x: a.x, y: a.y - h - g, w, h }),");
     expect(marks).toContain("const SIBLING_TAGS = 4;");
     expect(marks).toContain("siblings.length > SIBLING_TAGS && !beside.has(m.index)");
   });
