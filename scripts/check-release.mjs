@@ -203,7 +203,10 @@ try {
     }),
   );
 
-  check(loaded.manifest.name === "AccessCheck", "Chrome loaded a different name");
+  check(
+    shipped("name", "extName").some(([, name]) => name === loaded.manifest.name),
+    "Chrome loaded a different name",
+  );
   check(loaded.manifest.version === manifest.version, "Chrome loaded a different version");
   check(
     JSON.stringify(loaded.granted) ===
