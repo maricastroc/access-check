@@ -1,7 +1,12 @@
 # Chrome Web Store listing
 
-Two fields, two places.
+Three fields, two places.
 
+- **Name**, at most 75 characters. It lives in
+  `extension/_locales/<locale>/messages.json` as `extName` and becomes
+  `manifest.name`. Store search ranks mostly by the words in the name, so after
+  the brand it carries the terms people search for. `npm run check:release`
+  fails the build if it goes over or stops starting with "AccessCheck".
 - **Summary**, at most 132 characters. It lives in
   `extension/_locales/<locale>/messages.json` as `extDescription`, ships inside
   the package and becomes `manifest.description`. `npm run check:release` fails
@@ -15,12 +20,17 @@ The rest of what the dashboard asks for, from permission justifications to the
 notes for the reviewer, is in
 [`extension/STORE-LISTING.md`](../extension/STORE-LISTING.md).
 
+## Name
+
+- EN (52): AccessCheck: WCAG and Keyboard Accessibility Checker
+- PT (60): AccessCheck: verificador de acessibilidade WCAG e de teclado
+
 ## Summary
 
-- EN (110): Inspect accessibility problems in the current tab: what failed, where it is, and the real keyboard focus path.
-- PT (110): Veja os problemas de acessibilidade da aba atual: o que falhou, onde está e o caminho real do foco do teclado.
+- EN (122): Find WCAG problems on the page you're on, marked where they are. Follow the real tab order and copy tested contrast fixes.
+- PT (130): Encontre problemas de WCAG na página, marcados onde estão. Siga a ordem real de tabulação e copie correções de contraste testadas.
 
-Changing either one means editing `extDescription` in the matching
+Changing any of them means editing `extName` or `extDescription` in the matching
 `messages.json`, then running `npm run build:extension`, `npm run pack` and
 `npm run check:release`, and bumping the version, because the package itself
 changes.

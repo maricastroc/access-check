@@ -1,10 +1,10 @@
 {
   "extName": {
-    "message": "AccessCheck",
+    "message": "AccessCheck: verificador de acessibilidade WCAG e de teclado",
     "description": "Extension name shown in Chrome and on the Web Store listing."
   },
   "extDescription": {
-    "message": "Veja os problemas de acessibilidade da aba atual: o que falhou, onde está e a ordem real de tabulação.",
+    "message": "Encontre problemas de WCAG na página, marcados onde estão. Siga a ordem real de tabulação e copie correções de contraste testadas.",
     "description": "Store listing summary. The Web Store caps this at 132 characters."
   },
   "actionTitle": {
