@@ -5,8 +5,9 @@ submitted automatically.
 
 ## Basics
 
-- **Item name:** AccessCheck
-- **Version:** 1.8.0
+- **Item name:** AccessCheck: WCAG and Keyboard Accessibility Checker (from
+  `extName`, so it changes only with a new package)
+- **Version:** 1.8.1
 - **Category:** Developer Tools
 - **Default language:** English (United States)
 - **Visibility:** Public
@@ -21,10 +22,10 @@ Everything the extension does serves that one purpose: running the rules,
 checking the keyboard focus order, and marking on the page where the problems
 are.
 
-## Short description (110 / 132 characters)
+## Short description (122 / 132 characters)
 
-> Inspect accessibility problems in the current tab: what failed, where it is,
-> and the real keyboard focus path.
+> Find WCAG problems on the page you're on, marked where they are. Follow the
+> real tab order and copy tested contrast fixes.
 
 It ships inside the package as `extDescription` in
 `extension/_locales/<locale>/messages.json`. The Portuguese version lives in
@@ -163,6 +164,16 @@ Certifications to accept, all of which the code supports:
 > Clicking the toolbar icon runs the whole audit, including the rules, the
 > extension's own checks and the fix verification, without attaching the
 > debugger at all.
+
+## What changed in 1.8.1
+
+- The name now says what the extension does after the brand: "AccessCheck:
+  WCAG and Keyboard Accessibility Checker", and in Portuguese "AccessCheck:
+  verificador de acessibilidade WCAG e de teclado". Chrome shows the same name
+  in the extensions menu, in the side panel and in its debugging banner during
+  the keyboard check.
+- The summary starts with the real tab order and the tested contrast fixes.
+- Nothing changes in the panel or on the page.
 
 ## What changed in 1.8.0
 
