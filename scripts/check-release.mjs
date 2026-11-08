@@ -56,19 +56,27 @@ for (const file of files) {
   );
 }
 check(!/prototype/i.test(JSON.stringify(manifest)), 'the shipped manifest says "prototype"');
+const shipped = (field, key) =>
+  manifest[field] === `__MSG_${key}__`
+    ? files
+        .filter((file) => /^_locales\/[^/]+\/messages\.json$/.test(file))
+        .map((file) => [file, JSON.parse(readFileSync(join(unpacked, file), "utf8"))[key]?.message])
+    : [["manifest.json", manifest[field]]];
 if (manifest.name === "__MSG_extName__") {
   const fallback = `_locales/${manifest.default_locale}/messages.json`;
   check(Boolean(manifest.default_locale), "the archive localizes its name with no default_locale");
   check(files.includes(fallback), `${fallback} is missing from the archive`);
-  const named = files.includes(fallback)
-    ? JSON.parse(readFileSync(join(unpacked, fallback), "utf8")).extName?.message
-    : null;
-  check(named === "AccessCheck", `${fallback} names the extension "${named}"`);
-} else {
-  check(manifest.name === "AccessCheck", `the shipped name is "${manifest.name}"`);
+}
+for (const [file, name] of shipped("name", "extName")) {
+  check(
+    Boolean(name?.startsWith("AccessCheck")) && name.length <= 75,
+    `${file} names the extension "${name}"`,
+  );
 }
 check(/^\d+\.\d+\.\d+$/.test(manifest.version), `version is not x.y.z: ${manifest.version}`);
-check((manifest.description ?? "").length <= 132, "the description is over 132 characters");
+for (const [file, summary] of shipped("description", "extDescription")) {
+  check((summary ?? "").length <= 132, `the description in ${file} is over 132 characters`);
+}
 check(manifest.host_permissions === undefined, "the archive asks for host permissions");
 check(manifest.optional_permissions === undefined, "the archive declares optional permissions");
 
