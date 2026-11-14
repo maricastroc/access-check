@@ -104,6 +104,7 @@ export async function injectDomEngine(
   try {
     await world.addScript(enginePath);
   } catch (err) {
+    if (isBrowserGone(err)) throw err;
     throw new ScanFailure(
       t("scanFail.engineMissing", {
         path: enginePath,

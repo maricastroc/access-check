@@ -2,6 +2,7 @@ import { statfs } from "fs/promises";
 import os from "os";
 import type { Browser } from "playwright-core";
 import { childProcesses, killProcessGroups } from "./processes";
+import { deletedOpenMb, largestEntries } from "./tmp-usage";
 
 export interface BrowserExecutor {
   launch(): Promise<Browser>;
@@ -12,6 +13,7 @@ export interface BrowserExecutor {
 export const CLOSE_GRACE_MS = 3_000;
 
 const MB = 1024 * 1024;
+const TMP_LOW_MB = 200;
 
 const noop = (): void => undefined;
 
@@ -202,5 +204,10 @@ export async function browserHealth(): Promise<Record<string, number>> {
   if (tmp) health.tmpFreeMb = Math.round((tmp.bavail * tmp.bsize) / MB);
   const strays = await executor.strays?.().catch(() => undefined);
   if (strays !== undefined) health.strayBrowsers = strays;
+  if (health.tmpFreeMb !== undefined && health.tmpFreeMb < TMP_LOW_MB) {
+    Object.assign(health, await largestEntries(os.tmpdir()).catch(() => ({})));
+    const held = await deletedOpenMb(os.tmpdir()).catch(() => undefined);
+    if (held !== undefined) health.tmpDeletedOpenMb = held;
+  }
   return health;
 }
