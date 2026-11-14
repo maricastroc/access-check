@@ -1,6 +1,7 @@
 import { statfs } from "fs/promises";
 import os from "os";
 import type { Browser } from "playwright-core";
+import { removeCoreDumps, withoutCoreDumps } from "./core-dumps";
 import { childProcesses, killProcessGroups } from "./processes";
 import { deletedOpenMb, largestEntries } from "./tmp-usage";
 
@@ -70,6 +71,8 @@ class ServerlessChromiumExecutor implements BrowserExecutor {
     const args = [...chromium.args, ...extraArgs.filter((flag) => !chromium.args.includes(flag))];
     const executablePath = await chromium.executablePath();
     this.executable = executablePath;
+    await removeCoreDumps(os.tmpdir());
+    const launcher = await withoutCoreDumps(executablePath, os.tmpdir());
 
     for (const [browser] of this.owned) {
       if (!browser.isConnected()) this.owned.delete(browser);
@@ -77,7 +80,7 @@ class ServerlessChromiumExecutor implements BrowserExecutor {
     killProcessGroups(await this.unowned(executablePath));
 
     const before = new Set(await this.children(executablePath));
-    const browser = await playwright.launch({ args, executablePath, headless: true });
+    const browser = await playwright.launch({ args, executablePath: launcher, headless: true });
     const after = await this.children(executablePath);
     this.owned.set(
       browser,
